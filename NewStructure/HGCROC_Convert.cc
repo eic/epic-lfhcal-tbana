@@ -7,7 +7,7 @@
 #include "CommonHelperFunctions.h"
 #include "Setup.h"
 
-#include "include/h2g_decode/run_decoder.h"
+#include "include/h2g_decode/hgc_decoder.h"
 
 
 int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builder) {
@@ -68,9 +68,14 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     analysis->event.SetROtype(ReadOut::Type::Hgcroc);
 
     // Run the event builder
-    std::list<aligned_event*> *events = run_event_builder((char*)analysis->ASCIIinputName.Data());
+    auto decoder = new hgc_decoder((char*)analysis->ASCIIinputName.Data(), 1, 4);
+    std::list<aligned_event*> *events = new std::list<aligned_event*>();
+    for (auto event : *decoder) {
+        events->push_back(event);
+    }
 
-    std::cout << "completed HGCROC event builder!\n" << std::endl;
+    std::cout << "\ncompleted HGCROC event builder!\n" << std::endl;
+    std::cout << "Number of events: " << events->size() << std::endl;
 
 
     // convert from the aligned_events datatype to the Event datatype
