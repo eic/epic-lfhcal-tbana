@@ -68,30 +68,35 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     analysis->event.SetROtype(ReadOut::Type::Hgcroc);
 
     // Run the event builder
-    auto decoder = new hgc_decoder((char*)analysis->ASCIIinputName.Data(), 1, 4);
-    std::list<aligned_event*> *events = new std::list<aligned_event*>();
-    for (auto event : *decoder) {
-        events->push_back(event);
-    }
-
-    std::cout << "\ncompleted HGCROC event builder!\n" << std::endl;
-    std::cout << "Number of events: " << events->size() << std::endl;
-
-
-    // convert from the aligned_events datatype to the Event datatype
+    // std::list<aligned_event*> *events = new std::list<aligned_event*>();
+    // for (auto event : *decoder) {
+        // events->push_back(event);
+        // }
+        
+        // std::cout << "\ncompleted HGCROC event builder!\n" << std::endl;
+        // std::cout << "Number of events: " << events->size() << std::endl;
+        
+        
+        // convert from the aligned_events datatype to the Event datatype
     int event_number = 0;
-    for (auto it = events->begin(); it != events->end(); it++) {
+    auto decoder = new hgc_decoder((char*)analysis->ASCIIinputName.Data(), 1, 4);
+    for (auto ae : *decoder) {
         if (true || event_number % 100 == 0) {
-            std::cout << "\rFitting event " << event_number << std::flush;
+            // std::cout << "\rFitting event " << event_number << std::flush;
         }
-        aligned_event *ae = *it;
+        // aligned_event *ae = *it;
         analysis->event.SetEventID(event_number);
         event_number++;
+        // std::cout << "\nEvent: " << event_number << std::endl;
         // Loop over each tile
         for (int i = 0; i < ae->get_num_fpga(); i++) {
+            // std::cout << "\nFPGA: " << i << std::endl;
             auto single_kcu = ae->get_event(i);
+            // std::cout << "Number of samples: " << single_kcu->get_n_samples() << std::endl;
             for (int j = 0; j < ae->get_channels_per_fpga(); j++) {
+                // std::cout << "\nChannel: " << j << std::endl;
                 int channel_number = i * ae->get_channels_per_fpga() + j;
+                // std::cout << "Channel number: " << channel_number << std::endl;
                 int x, y, z;
                 if (decode_position(channel_number, x, y, z)) {
                     Hgcroc *tile = new Hgcroc();
@@ -106,6 +111,10 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
 
                     tile->SetNsample(single_kcu->get_n_samples());
                     for (int sample = 0; sample < single_kcu->get_n_samples(); sample++) {
+                        // std::cout << "Sample: " << sample;
+                        // std::cout << " ADC: " << single_kcu->get_sample_adc(j, sample);
+                        // std::cout << " TOA: " << single_kcu->get_sample_toa(j, sample);
+                        // std::cout << " TOT: " << single_kcu->get_sample_tot(j, sample) << std::endl;
                         tile->AppendWaveformADC(single_kcu->get_sample_adc(j, sample));
                         tile->AppendWaveformTOA(single_kcu->get_sample_toa(j, sample));
                         tile->AppendWaveformTOT(single_kcu->get_sample_tot(j, sample));
