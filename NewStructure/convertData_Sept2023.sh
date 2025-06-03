@@ -2,6 +2,8 @@
 baseDir=""
 if [ $1 = "fbock" ]; then 
   baseDir=/media/fbock/Samsung_T5/LFHCAL_TB/202309_SPSH4
+elif [ $1 = "fbockExt2" ]; then 
+  baseDir=/media/fbock/T7/202309_SPSH4/
 else
   echo "Please select a known user name, otherwise I don't know where the data is"
   exit

@@ -153,7 +153,9 @@ float ReturnPosZAbs(Int_t layer){
 void CreateMapping(   TString filenameUnitMapping,
                       TString filenameLayerMapping,
                       TString filenameMappingWrite,
+                      int readout = 0,                // 0 - CAEN readout, 1 - HGCROC readout
                       int debug = 0
+                      
                   ){
 
     // ********************************************************************************************************    
@@ -251,12 +253,12 @@ void CreateMapping(   TString filenameUnitMapping,
         if (debug > 0) std::cout << "layer " << tempLayer.layerNrAbs << "\t assembly name: " << tempLayer.layerLabel << "\t CAEN unit Nr.: "  << tempLayer.rUnit << "\t layer in unit: " << tempLayer.layerUnit << std::endl;
         layers.push_back(tempLayer);
     }
-  
+    
     std::vector<channelInfo> channels;
     fstream fileMappingClassic(filenameMappingWrite.Data(), ios::out);
     // fileMappingClassic.open(filenameMappingWrite, ios::out);
-    fileMappingClassic << "#CAEN board	CAEN Ch	layer	assembly	board channel	row	column modNr\n" ;
-    
+    if (readout ==0 )fileMappingClassic << "#CAEN board	CAEN Ch	layer	assembly	board channel	row	column modNr\n" ;
+    if (readout ==1 )fileMappingClassic << "#HGCROC board	HGCROC Ch	layer	assembly	board channel	row	column modNr\n" ;
     TFile* outputRootFile       = new TFile("mappingTree.root","RECREATE");
     TTree* mapping_tree           = new TTree("mapping_tree", "mapping_tree");
     mapping_tree->SetDirectory(outputRootFile);
