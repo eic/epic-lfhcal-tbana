@@ -79,10 +79,10 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
         
         // convert from the aligned_events datatype to the Event datatype
     int event_number = 0;
-    auto decoder = new hgc_decoder((char*)analysis->ASCIIinputName.Data(), 1, 4);
+    auto decoder = new hgc_decoder((char*)analysis->ASCIIinputName.Data(), 1, 4, 5);
     for (auto ae : *decoder) {
         if (true || event_number % 100 == 0) {
-            // std::cout << "\rFitting event " << event_number << std::flush;
+            std::cout << "\rFitting event " << event_number << std::flush;
         }
         // aligned_event *ae = *it;
         analysis->event.SetEventID(event_number);
@@ -98,7 +98,8 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                 int channel_number = i * ae->get_channels_per_fpga() + j;
                 // std::cout << "Channel number: " << channel_number << std::endl;
                 int x, y, z;
-                if (decode_position(channel_number, x, y, z)) {
+                int asic = i * 2 + (j / 72);
+                if (analysis->setup->GetCellID(asic, j % 72)) {
                     Hgcroc *tile = new Hgcroc();
                     auto cell_id = analysis->setup->GetCellID(y, x, z, 0);  // needs to be adapted once we have multiple modules
                     tile->SetCellID(cell_id);        // TODO: This is not the same cell ID as Fredi and Vincent set up
