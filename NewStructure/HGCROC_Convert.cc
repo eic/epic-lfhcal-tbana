@@ -97,12 +97,11 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                 // std::cout << "\nChannel: " << j << std::endl;
                 int channel_number = i * ae->get_channels_per_fpga() + j;
                 // std::cout << "Channel number: " << channel_number << std::endl;
-                int x, y, z;
                 int asic = i * 2 + (j / 72);
                 if (analysis->setup->GetCellID(asic, j % 72)) {
                     Hgcroc *tile = new Hgcroc();
-                    auto cell_id = analysis->setup->GetCellID(y, x, z, 0);  // needs to be adapted once we have multiple modules
-                    tile->SetCellID(cell_id);        // TODO: This is not the same cell ID as Fredi and Vincent set up
+                    auto cell_id = analysis->setup->GetCellID(asic, j % 72);
+                    tile->SetCellID(cell_id);        
                     tile->SetROtype(ReadOut::Type::Hgcroc);
                     tile->SetLocalTriggerBit(0);            // What are these supposed to be?
                     tile->SetLocalTriggerPrimitive(0);
