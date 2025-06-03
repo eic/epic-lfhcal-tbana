@@ -17,6 +17,8 @@ crystal_ball_fit::crystal_ball_fit() : waveform_fit_base{} {
     parameters[4] = 0;  // sigma
     parameters[5] = 0;  // offset
 
+    saturated = false;
+
     crystal_ball_function = new TF1("crystal_ball_function", this, &crystal_ball_fit::crystal_ball, 0, 10, 6);
     linear_function = new TF1("constant", "[0]", 0, 10);
     crystal_ball_graph = new TGraph();
@@ -52,6 +54,9 @@ void crystal_ball_fit::fit() {
     // Fill the graph
     for (int i = 0; i < waveform.size(); i++) {
         crystal_ball_graph->SetPoint(i, i, waveform[i]);
+        if (waveform[i] > 1000) {  // Check for saturation.  TODO: Make this a parameter
+            saturated = true;
+        }
     }
 
     // Try a linear fit

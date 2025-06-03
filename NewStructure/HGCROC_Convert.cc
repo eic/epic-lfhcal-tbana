@@ -118,12 +118,24 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                         tile->AppendWaveformADC(single_kcu->get_sample_adc(j, sample));
                         tile->AppendWaveformTOA(single_kcu->get_sample_toa(j, sample));
                         tile->AppendWaveformTOT(single_kcu->get_sample_tot(j, sample));
+                        if (single_kcu->get_sample_toa(j, sample) > 40) { // TODO this is a pedestal which needs to be tuned
+                            tile->SetTOA(single_kcu->get_sample_toa(j, sample));
+                        }
+                        if (single_kcu->get_sample_tot(j, sample) > 40) { // TODO this is a pedestal which needs to be tuned
+                            tile->SetTOT(single_kcu->get_sample_tot(j, sample));
+                        }
                     }
 
                     // process tile waveform
                     waveform_builder->set_waveform(tile->GetADCWaveform());
                     waveform_builder->fit();
-                    tile->SetE(waveform_builder->get_E());
+                    tile->SetIntegratedADC(waveform_builder->get_E());
+                    tile->SetIntegratedTOT(tile->GetIntegratedTOT());   // TODO: Placeholder
+                    if (waveform_builder->is_saturated()) {
+                        tile->SetIntegratedValue(tile->GetIntegratedTOT()); // TODO: Placeholder
+                    } else {
+                        tile->SetIntegratedValue(tile->GetIntegratedADC()); // TODO: Placeholder
+                    }
                     tile->SetPedestal(waveform_builder->get_pedestal());
 
                     analysis->event.AddTile(tile);
