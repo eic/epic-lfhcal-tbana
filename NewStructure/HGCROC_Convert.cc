@@ -6,7 +6,7 @@
 #include "HGCROC.h"
 #include "CommonHelperFunctions.h"
 #include "Setup.h"
-
+#include "TileSpectra.h"
 #include "include/h2g_decode/hgc_decoder.h"
 
 
@@ -39,6 +39,11 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
         // return 1;
     }
 
+    
+    std::map<int,TileSpectra> hSpectra;
+    std::map<int, TileSpectra>::iterator ithSpectra;
+
+    
     // Set up the static event parameters
     // Clean up file headers'
     // THIS WILL HAVE TO CHANGE
@@ -98,9 +103,14 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                 int channel_number = i * ae->get_channels_per_fpga() + j;
                 // std::cout << "Channel number: " << channel_number << std::endl;
                 int asic = i * 2 + (j / 72);
-                if (analysis->setup->GetCellID(asic, j % 72)) {
+                
+                auto cell_id = analysis->setup->GetCellID(asic, j % 72);
+                if (analysis->debug > 0 && event_number == 1) {
+                    std::cout << Form("KCU: %d, asic: %d , channel %d,  %s", i, int(j / 72),  j % 72, (analysis->setup->DecodeCellID(cell_id)).Data()) << std::endl;
+                }
+                
+                if (cell_id != -1) {
                     Hgcroc *tile = new Hgcroc();
-                    auto cell_id = analysis->setup->GetCellID(asic, j % 72);
                     tile->SetCellID(cell_id);        
                     tile->SetROtype(ReadOut::Type::Hgcroc);
                     tile->SetLocalTriggerBit(0);            // What are these supposed to be?
@@ -141,10 +151,11 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                     analysis->event.AddTile(tile);
                 }
             }
+            
         // Fill the event
+        }
         analysis->TdataOut->Fill();
         analysis->event.ClearTiles();
-        }
     }
     std::cout << "\nFinished converting events\n" << std::endl;
     analysis->RootOutput->cd();
