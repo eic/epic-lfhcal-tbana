@@ -19,7 +19,8 @@ void max_sample_fit::fit() {
         std::cerr << "Waveform has not been set" << std::endl;
         return;
     }
-    pedestal_value = waveform[0];
+    pedestal_value      = waveform[0];
+    max_sample_value    = waveform[0];
     for (size_t i = 0; i < waveform.size(); ++i) {
         if (waveform[i] > max_sample_value) {
             max_sample_value = waveform[i];
