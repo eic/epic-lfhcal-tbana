@@ -22,6 +22,28 @@ endif()
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
+# Check for h2g_decode library
+set(H2G_DECODE_FOUND FALSE)
+if(APPLE)
+  set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/libh2g_decode.dylib")
+elseif(UNIX)
+  set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/libh2g_decode.so")
+elseif(WIN32)
+  set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/h2g_decode.dll")
+endif()
+
+if(EXISTS ${H2G_DECODE_LIBRARY})
+  message(STATUS "Found h2g_decode library: ${H2G_DECODE_LIBRARY}")
+  set(H2G_DECODE_FOUND TRUE)
+  add_compile_definitions(DECODE_HGCROC)
+  # Create imported target for the library
+  add_library(h2g_decode SHARED IMPORTED)
+  set_target_properties(h2g_decode PROPERTIES IMPORTED_LOCATION ${H2G_DECODE_LIBRARY})
+  target_include_directories(h2g_decode INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+else()
+  message(STATUS "h2g_decode library not found, HGCROC decoding will be disabled")
+endif()
+
 # Generate ROOT dictionary
 set(LINKDEF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/LinkDef.h)
 set(ROOT_HEADERS
@@ -83,34 +105,48 @@ target_link_libraries(Analysis ${ROOT_LIBRARIES})
 # Convert executable
 add_executable(Convert Convert.cc)
 target_link_libraries(Convert LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES})
+if(H2G_DECODE_FOUND)
+  target_compile_definitions(Convert PRIVATE DECODE_HGCROC)
+  target_link_libraries(Convert h2g_decode)
+endif()
 
 # DataPrep executable
 add_executable(DataPrep DataPrep.cc)
 target_link_libraries(DataPrep LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES})
+if(H2G_DECODE_FOUND)
+  target_compile_definitions(DataPrep PRIVATE DECODE_HGCROC)
+  target_link_libraries(DataPrep h2g_decode)
+endif()
 
 # DataAna executable
 add_executable(DataAna DataAna.cc DataAnalysis.cc)
 target_link_libraries(DataAna LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES})
+if(H2G_DECODE_FOUND)
+  target_compile_definitions(DataAna PRIVATE DECODE_HGCROC)
+  target_link_libraries(DataAna h2g_decode)
+endif()
 
 # Display executable
 add_executable(Display Display.cc EventDisplay.cc)
 target_link_libraries(Display LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES})
+if(H2G_DECODE_FOUND)
+  target_compile_definitions(Display PRIVATE DECODE_HGCROC)
+  target_link_libraries(Display h2g_decode)
+endif()
 
 # Compare executable
 add_executable(Compare Compare.cc ComparisonCalib.cc)
 target_link_libraries(Compare LFHCAL ${ROOT_LIBRARIES})
 
 # HGCROC_Conversion target (modified Convert with additional flags)
-add_executable(HGCROC_Conversion Convert.cc)
-target_compile_definitions(HGCROC_Conversion PRIVATE DECODE_HGCROC)
-target_link_directories(HGCROC_Conversion PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
-target_link_libraries(HGCROC_Conversion LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES} h2g_decode)
+if(H2G_DECODE_FOUND)
+  add_executable(HGCROC_Conversion Convert.cc)
+  target_compile_definitions(HGCROC_Conversion PRIVATE DECODE_HGCROC)
+  target_link_libraries(HGCROC_Conversion LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES} h2g_decode)
+else()
+  message(WARNING "HGCROC_Conversion target will not be built - h2g_decode library not found")
+endif()
 
 # Set default build target
 set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT DataPrep)
 
-# Install targets
-install(TARGETS LFHCAL Convert DataPrep DataAna Display Compare HGCROC_Conversion
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-)
