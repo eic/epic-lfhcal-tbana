@@ -7,7 +7,7 @@
 #include "CommonHelperFunctions.h"
 #include "Setup.h"
 #include "TileSpectra.h"
-#include "include/h2g_decode/hgc_decoder.h"
+#include "hgc_decoder.h"
 
 
 int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builder) {

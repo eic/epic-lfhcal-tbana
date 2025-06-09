@@ -11,7 +11,7 @@ find_package(ROOT REQUIRED COMPONENTS Core RIO Hist Tree Gpad Graf)
 include(${ROOT_USE_FILE})
 
 # Add common compiler flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -ansi -Wno-overloaded-virtual -Wno-long-long -fno-common -pedantic -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -ansi -Wno-overloaded-virtual -Wno-long-long -fno-common")
 
 # Platform-specific settings
 if(UNIX AND NOT APPLE)
@@ -22,26 +22,38 @@ endif()
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-# Check for h2g_decode library
-set(H2G_DECODE_FOUND FALSE)
-if(APPLE)
-  set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/libh2g_decode.dylib")
-elseif(UNIX)
-  set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/libh2g_decode.so")
-elseif(WIN32)
-  set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/h2g_decode.dll")
-endif()
-
-if(EXISTS ${H2G_DECODE_LIBRARY})
-  message(STATUS "Found h2g_decode library: ${H2G_DECODE_LIBRARY}")
+# Build h2g_decode subproject
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/h2g_decode/CMakeLists.txt)
+  # Set USE_ROOT to OFF for h2g_decode subproject
+  set(USE_ROOT OFF CACHE BOOL "Disable ROOT for h2g_decode" FORCE)
+  add_subdirectory(h2g_decode)
   set(H2G_DECODE_FOUND TRUE)
   add_compile_definitions(DECODE_HGCROC)
-  # Create imported target for the library
-  add_library(h2g_decode SHARED IMPORTED)
-  set_target_properties(h2g_decode PROPERTIES IMPORTED_LOCATION ${H2G_DECODE_LIBRARY})
-  target_include_directories(h2g_decode INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+  # Add h2g_decode source directory to include paths
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/h2g_decode/src)
+  message(STATUS "Building h2g_decode from source")
 else()
-  message(STATUS "h2g_decode library not found, HGCROC decoding will be disabled")
+  # Fallback to prebuilt library
+  set(H2G_DECODE_FOUND FALSE)
+  if(APPLE)
+    set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/libh2g_decode.dylib")
+  elseif(UNIX)
+    set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/libh2g_decode.so")
+  elseif(WIN32)
+    set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/h2g_decode.dll")
+  endif()
+
+  if(EXISTS ${H2G_DECODE_LIBRARY})
+    message(STATUS "Found h2g_decode library: ${H2G_DECODE_LIBRARY}")
+    set(H2G_DECODE_FOUND TRUE)
+    add_compile_definitions(DECODE_HGCROC)
+    # Create imported target for the library
+    add_library(h2g_decode SHARED IMPORTED)
+    set_target_properties(h2g_decode PROPERTIES IMPORTED_LOCATION ${H2G_DECODE_LIBRARY})
+    target_include_directories(h2g_decode INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+  else()
+    message(STATUS "h2g_decode library not found, HGCROC decoding will be disabled")
+  endif()
 endif()
 
 # Generate ROOT dictionary
