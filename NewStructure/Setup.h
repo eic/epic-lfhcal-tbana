@@ -40,6 +40,7 @@ class Setup{
   int     GetNMaxColumn (void) const;
   int     GetNMaxModule (void) const;
   int     GetNMaxROUnit (void) const;
+  int     GetNMaxKCUs   (void) const;
   int     GetMaxCellID (void) const;
   TString DecodeCellID(int /**/) const;
   double  GetX         (int /**/) const;

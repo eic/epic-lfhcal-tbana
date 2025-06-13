@@ -6,8 +6,8 @@
 #include "HGCROC.h"
 #include "CommonHelperFunctions.h"
 #include "Setup.h"
-
-#include "include/h2g_decode/run_decoder.h"
+#include "TileSpectra.h"
+#include "include/h2g_decode/hgc_decoder.h"
 
 
 int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builder) {
@@ -39,6 +39,11 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
         // return 1;
     }
 
+    
+    std::map<int,TileSpectra> hSpectra;
+    std::map<int, TileSpectra>::iterator ithSpectra;
+
+    
     // Set up the static event parameters
     // Clean up file headers'
     // THIS WILL HAVE TO CHANGE
@@ -68,30 +73,35 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     analysis->event.SetROtype(ReadOut::Type::Hgcroc);
 
     // Run the event builder
-    std::list<aligned_event*> *events = run_event_builder((char*)analysis->ASCIIinputName.Data());
-
-    std::cout << "completed HGCROC event builder!\n" << std::endl;
-
-
-    // convert from the aligned_events datatype to the Event datatype
     int event_number = 0;
-    for (auto it = events->begin(); it != events->end(); it++) {
+    auto decoder = new hgc_decoder((char*)analysis->ASCIIinputName.Data(), 1, analysis->setup->GetNMaxKCUs(), 5);
+    for (auto ae : *decoder) {
         if (true || event_number % 100 == 0) {
             std::cout << "\rFitting event " << event_number << std::flush;
         }
-        aligned_event *ae = *it;
+        // aligned_event *ae = *it;
         analysis->event.SetEventID(event_number);
         event_number++;
+        // std::cout << "\nEvent: " << event_number << std::endl;
         // Loop over each tile
         for (int i = 0; i < ae->get_num_fpga(); i++) {
+            // std::cout << "\nFPGA: " << i << std::endl;
             auto single_kcu = ae->get_event(i);
+            // std::cout << "Number of samples: " << single_kcu->get_n_samples() << std::endl;
             for (int j = 0; j < ae->get_channels_per_fpga(); j++) {
+                // std::cout << "\nChannel: " << j << std::endl;
                 int channel_number = i * ae->get_channels_per_fpga() + j;
-                int x, y, z;
-                if (decode_position(channel_number, x, y, z)) {
+                // std::cout << "Channel number: " << channel_number << std::endl;
+                int asic = i * 2 + (j / 72);
+                
+                auto cell_id = analysis->setup->GetCellID(asic, j % 72);
+                if (analysis->debug > 0 && event_number == 1) {
+                    std::cout << Form("KCU: %d, asic: %d , channel %d,  %s", i, int(j / 72),  j % 72, (analysis->setup->DecodeCellID(cell_id)).Data()) << std::endl;
+                }
+                
+                if (cell_id != -1) {
                     Hgcroc *tile = new Hgcroc();
-                    auto cell_id = analysis->setup->GetCellID(y, x, z, 0);  // needs to be adapted once we have multiple modules
-                    tile->SetCellID(cell_id);        // TODO: This is not the same cell ID as Fredi and Vincent set up
+                    tile->SetCellID(cell_id);        
                     tile->SetROtype(ReadOut::Type::Hgcroc);
                     tile->SetLocalTriggerBit(0);            // What are these supposed to be?
                     tile->SetLocalTriggerPrimitive(0);
@@ -101,24 +111,41 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
 
                     tile->SetNsample(single_kcu->get_n_samples());
                     for (int sample = 0; sample < single_kcu->get_n_samples(); sample++) {
+                        // std::cout << "Sample: " << sample;
+                        // std::cout << " ADC: " << single_kcu->get_sample_adc(j, sample);
+                        // std::cout << " TOA: " << single_kcu->get_sample_toa(j, sample);
+                        // std::cout << " TOT: " << single_kcu->get_sample_tot(j, sample) << std::endl;
                         tile->AppendWaveformADC(single_kcu->get_sample_adc(j, sample));
                         tile->AppendWaveformTOA(single_kcu->get_sample_toa(j, sample));
                         tile->AppendWaveformTOT(single_kcu->get_sample_tot(j, sample));
+                        if (single_kcu->get_sample_toa(j, sample) > 40) { // TODO this is a pedestal which needs to be tuned
+                            tile->SetTOA(single_kcu->get_sample_toa(j, sample));
+                        }
+                        if (single_kcu->get_sample_tot(j, sample) > 40) { // TODO this is a pedestal which needs to be tuned
+                            tile->SetTOT(single_kcu->get_sample_tot(j, sample));
+                        }
                     }
 
                     // process tile waveform
                     waveform_builder->set_waveform(tile->GetADCWaveform());
                     waveform_builder->fit();
-                    tile->SetE(waveform_builder->get_E());
+                    tile->SetIntegratedADC(waveform_builder->get_E());
+                    tile->SetIntegratedTOT(tile->GetIntegratedTOT());   // TODO: Placeholder
+                    if (waveform_builder->is_saturated()) {
+                        tile->SetIntegratedValue(tile->GetIntegratedTOT()); // TODO: Placeholder
+                    } else {
+                        tile->SetIntegratedValue(tile->GetIntegratedADC()); // TODO: Placeholder
+                    }
                     tile->SetPedestal(waveform_builder->get_pedestal());
 
                     analysis->event.AddTile(tile);
                 }
             }
+            
         // Fill the event
+        }
         analysis->TdataOut->Fill();
         analysis->event.ClearTiles();
-        }
     }
     std::cout << "\nFinished converting events\n" << std::endl;
     analysis->RootOutput->cd();
@@ -158,6 +185,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     #endif
 }
 
+// deprecated position association
 bool decode_position(int channel, int &x, int &y, int &z) {
     int channel_map[72] = {64, 63, 66, 65, 69, 70, 67, 68,  // this goes from 0 to 63 in lhfcal space to 0 to 71 in asic space
                            55, 56, 57, 58, 62, 61, 60, 59,  // So channel 0 on the detector is channel 64 on the asic

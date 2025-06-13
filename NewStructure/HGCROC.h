@@ -33,6 +33,15 @@ class Hgcroc: public Tile {
   void SetTOT(double);
   void SetTOA(double);
   void SetPedestal(int);
+
+  double GetIntegratedADC() {return integrated_adc;};  // Value from just ADC
+  double GetIntegratedTOT() {return integrated_tot;};  // Value from just TOT
+  double GetIntegratedValue() {return integrated_value;};  // Combined ADC and TOT
+
+  void SetIntegratedADC(double val) { integrated_adc = val; }
+  void SetIntegratedTOT(double val) { integrated_tot = val; }
+  void SetIntegratedValue(double val) { integrated_value = val; }
+
   
  protected:
   int Nsample;
@@ -42,6 +51,11 @@ class Hgcroc: public Tile {
   int TOA;
   int TOT;
   int pedestal;
+
+  // "finalized" values
+  double integrated_adc;
+  double integrated_tot;
+  double integrated_value;
   
  private:
 

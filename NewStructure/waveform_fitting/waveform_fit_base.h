@@ -18,6 +18,7 @@ public:
     virtual void fit() = 0;                                         // pure virtual so it must be overwritten
     
     bool is_stale() { return stale; }
+    bool is_saturated() { return saturated; }
     double get_E();
     double get_fit_ndf();
     double get_fit_chi2();
@@ -27,6 +28,7 @@ protected:
     std::map<int, double> parameters;
     
     bool stale;
+    bool saturated;
     double E;
     double fit_ndf;
     double fit_chi2;

@@ -220,6 +220,10 @@ int Setup::GetNMaxROUnit() const{
   return nMaxROUnit;
 }
 
+int Setup::GetNMaxKCUs() const{
+  return (int)(nMaxROUnit/2+1);
+}
+
 int Setup::GetMaxCellID() const{
   return maxCellID;
 }

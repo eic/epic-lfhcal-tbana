@@ -4,3 +4,6 @@ NewStructure/*.o
 NewStructure/*.so
 NewStructure/Cint*
 NewStructure/lib
+NewStructure/build
+*.root
+*.h2g

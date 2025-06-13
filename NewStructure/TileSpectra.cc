@@ -30,14 +30,21 @@ bool TileSpectra::FillExt(double l, double h, double e, double lheq){
     if (h < 3500)
       hspectraLGHG.Fill(l,e);
     hspectraHGLG.Fill(l,lheq-h);
-  } else if (extend ==  2){
+  } else if (extend ==  2 && ROType == ReadOut::Type::Caen){
     hspectraLGHG.Fill(l,h);
     hcorr.Fill(l,h);
+  } else if (extend ==  2 && ROType == ReadOut::Type::Hgcroc){
+    hspectraLGHG.Fill(l,h);
   }
   return true;
 }
 
-
+bool TileSpectra::FillWaveform(std::vector<int> samples){
+ for (int k = 0; k < (int)samples.size(); k++ ){
+   hcorr.Fill(k,samples.at(k));
+ }
+ return true;
+}
 
 bool TileSpectra::FillTrigger(double t){
   if (!bTriggPrim) bTriggPrim =true;
@@ -156,44 +163,45 @@ bool TileSpectra::FitNoise(double* out, int year = -1, bool isNoiseTrigg = false
     S: Return full result in TFitResultPtr
     QNSWW
     */
-    BackgroundLG = TF1(Form("fped%sLGCellID%d", TileName.Data(), cellID), "gaus", 0, 400);
+    // hspectraHG.Rebin(2);
+    BackgroundHG = TF1(Form("fped%sHGCellID%d", TileName.Data(), cellID), "gaus", 0, 400);
     if (debug > 2) {
-      std::cout << "Histogram has " << hspectraLG.GetEntries() << " entries" << std::endl;
-      std::cout << "Mean is " << hspectraLG.GetMean() << std::endl;
-      std::cout << "Standard deviation is " << hspectraLG.GetStdDev() << std::endl;
+      std::cout << "Histogram has " << hspectraHG.GetEntries() << " entries" << std::endl;
+      std::cout << "Mean is " << hspectraHG.GetMean() << std::endl;
+      std::cout << "Standard deviation is " << hspectraHG.GetStdDev() << std::endl;
     }
 
     // First iteration
-    // BackgroundLG.SetParLimits(0, 0, hspectraLG.GetEntries());
-    // BackgroundLG.SetParameter(0, hspectraLG.GetEntries() / 5);
-    // BackgroundLG.SetParameter(1, hspectraLG.GetMean());
-    // BackgroundLG.SetParLimits(1, 0, hspectraLG.GetMean() + 100);
-    // BackgroundLG.SetParameter(2, hspectraLG.GetStdDev());
-    // BackgroundLG.SetParLimits(2, 0, 100);
+    // BackgroundHG.SetParLimits(0, 0, hspectraHG.GetEntries());
+    // BackgroundHG.SetParameter(0, hspectraHG.GetEntries() / 5);
+    // BackgroundHG.SetParameter(1, hspectraHG.GetMean());
+    // BackgroundHG.SetParLimits(1, 0, hspectraHG.GetMean() + 100);
+    // BackgroundHG.SetParameter(2, hspectraHG.GetStdDev());
+    // BackgroundHG.SetParLimits(2, 0, 100);
 
-    result = hspectraLG.Fit(&BackgroundLG, "QNSWW");
+    result = hspectraHG.Fit(&BackgroundHG, "QNSWW");
     if ((int)result != 0 || result->IsValid() != true) {
       if (debug > 1) std::cout << "FIT FAILED FOR CELL " << cellID << ", FIRST ITERATION" << std::endl;
       return false;
     }
 
     // Second iteration
-    double minLGFit = result->Parameter(1) - 2 * result->Parameter(2);
-    double maxLGFit = result->Parameter(1) + 1 * result->Parameter(2);
-    if (debug > 1) std::cout << "LG: " << minLGFit << "\t" << maxLGFit << "\t" << hspectraLG.GetEntries() << "\t" << hspectraLG.GetMean()<< std::endl;
-    result = hspectraLG.Fit(&BackgroundLG, "QNSWW", "", minLGFit, maxLGFit);  // limit to 2sigma
+    double minHGFit = result->Parameter(1) - 2 * result->Parameter(2);
+    double maxHGFit = result->Parameter(1) + 1 * result->Parameter(2);
+    if (debug > 1) std::cout << "HG: " << minHGFit << "\t" << maxHGFit << "\t" << hspectraHG.GetEntries() << "\t" << hspectraHG.GetMean()<< std::endl;
+    result = hspectraHG.Fit(&BackgroundHG, "QNSWW", "", minHGFit, maxHGFit);  // limit to 2sigma
     if ((int)result != 0 || result->IsValid() != true){
     if (debug > 1) std::cout << "FIT FAILED FOR CELL " << cellID << ", SECOND ITERATION" << std::endl;
       return false;
     }
 
-    bpedLG=true; // We're (I'm) being lazy and just calling the HGCROC ADC the low gain.  maybe we use HG for TOT info?
-    calib->PedestalMeanL=result->Parameter(1);
-    calib->PedestalSigL =result->Parameter(2);
-    out[0]=result->Parameter(1);
-    out[1]=result->Error(1);
-    out[2]=result->Parameter(2);
-    out[3]=result->Error(2);
+    bpedHG=true; // We're (I'm) being lazy and just calling the HGCROC ADC the high gain.  maybe we use LG for TOT info?
+    calib->PedestalMeanH=result->Parameter(1);
+    calib->PedestalSigH =result->Parameter(2);
+    out[4]=result->Parameter(1);
+    out[5]=result->Error(1);
+    out[6]=result->Parameter(2);
+    out[7]=result->Error(2);
     return true;
   }
   
@@ -596,6 +604,49 @@ bool TileSpectra::FitLGHGCorr(int verbosity, bool resetCalib){
   
   return true;
 }
+
+bool TileSpectra::FitPedConstWage(int verbosity){
+  if (verbosity > 2) std::cout << "FitCorr cell ID: " << cellID << std::endl;
+  TString funcName = Form("fcorr%sPedWaveCellID%d",TileName.Data(),cellID);
+  
+  Double_t fitRange[2]  = {0, hcorr.GetXaxis()->GetBinCenter(hcorr.GetNbinsX())};
+  int fitStatus   = 0; 
+  int limitStatus = 0;
+  
+  // bcorrHGLG = true;
+  HGLGcorr =  TF1(funcName.Data(),"pol0", fitRange[0], fitRange[1]);
+  HGLGcorr.SetParameter(0,80.);
+  HGLGcorr.SetParLimits(0,40.,120.);
+  
+  hcorr.RebinY(4);
+  fitStatus = hcorr.Fit(&HGLGcorr,"QRMNE0"); 
+  
+  if (!(HGLGcorr.IsValid())){
+    if (verbosity > 0) std::cout << "Skipped ped wave cell " << cellID << " fit failed" << std::endl;
+    bcorrHGLG = false;
+  } else {
+    if ( HGLGcorr.GetParameter(0) == 40. || HGLGcorr.GetParameter(0) == 120. ) 
+      limitStatus++;
+    if (!(fitStatus == 4000 || fitStatus == 0)){ // only accept fits which succeeded in general
+      if (verbosity > 0) std::cout << "Skipped ped wave cell " << cellID << " fit failed" << std::endl;
+      bcorrHGLG = false;
+    } else if (limitStatus > 0){                        // don't accept fits which reached the set limits
+      if (verbosity > 0) std::cout << "Skipped ped wave cell " << cellID << " too many limits reached" << std::endl;
+      bcorrHGLG = false;
+    } else {
+      bcorrHGLG= true;
+    }
+  }
+  
+  if (bcorrHGLG){
+    // std::cout << HGLGcorr.GetParameter(0) << std::endl;
+    calib->PedestalMeanL    = HGLGcorr.GetParameter(0);
+    calib->PedestalSigL     = HGLGcorr.GetParError(0);
+  }
+  
+  return bcorrHGLG;
+}
+
 
 bool TileSpectra::FitNoiseWithBG(double* out){
   return true;

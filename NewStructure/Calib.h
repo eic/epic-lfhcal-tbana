@@ -141,7 +141,7 @@ class Calib{
   TTimeStamp BeginRunTimeMip;
   double Vop;
   double Vov;
-  bool BCcalc;
+  bool BCcalc = false;
   ClassDef(Calib,5)
 };
 

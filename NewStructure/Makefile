@@ -96,20 +96,23 @@ waveform_fit_base.o: waveform_fitting/waveform_fit_base.cc waveform_fitting/wave
 crystal_ball_fit.o: waveform_fitting/crystal_ball_fit.cc waveform_fitting/crystal_ball_fit.h
 	$(CXX) $(FLAGS) -I. -c waveform_fitting/crystal_ball_fit.cc -o crystal_ball_fit.o
 
-Convert: Event.o Setup.o RootSetupWrapper.o Calib.o Tile.o HGCROC.o Caen.o  TileSpectra.o libLFHCAL.so Convert.o Analyses.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o 
-	$(CXX) Event.o Calib.o Setup.o RootSetupWrapper.o Tile.o HGCROC.o Caen.o TileSpectra.o Analyses.o Convert.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o $(FLAGS) -I. libLFHCAL.so -o Convert
+max_sample_fit.o: waveform_fitting/max_sample_fit.cc waveform_fitting/max_sample_fit.h
+	$(CXX) $(FLAGS) -I. -c waveform_fitting/max_sample_fit.cc -o max_sample_fit.o
 
-DataPrep: Event.o Setup.o RootSetupWrapper.o Calib.o Tile.o HGCROC.o Caen.o  TileSpectra.o libLFHCAL.so DataPrep.o Analyses.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o 
-	$(CXX) Event.o Calib.o Setup.o RootSetupWrapper.o Tile.o HGCROC.o Caen.o TileSpectra.o Analyses.o DataPrep.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o  $(FLAGS) -I. libLFHCAL.so -o DataPrep
+Convert: Event.o Setup.o RootSetupWrapper.o Calib.o Tile.o HGCROC.o Caen.o  TileSpectra.o libLFHCAL.so Convert.o Analyses.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o max_sample_fit.o 
+	$(CXX) Event.o Calib.o Setup.o RootSetupWrapper.o Tile.o HGCROC.o Caen.o TileSpectra.o Analyses.o Convert.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o max_sample_fit.o $(FLAGS) -I. libLFHCAL.so -o Convert
+
+DataPrep: Event.o Setup.o RootSetupWrapper.o Calib.o Tile.o HGCROC.o Caen.o  TileSpectra.o libLFHCAL.so DataPrep.o Analyses.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o max_sample_fit.o 
+	$(CXX) Event.o Calib.o Setup.o RootSetupWrapper.o Tile.o HGCROC.o Caen.o TileSpectra.o Analyses.o DataPrep.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o max_sample_fit.o  $(FLAGS) -I. libLFHCAL.so -o DataPrep
 
 HGCROC_Conversion: FLAGS += -DDECODE_HGCROC -Llib -lh2g_decode
 HGCROC_Conversion: Convert
 
-DataAna: Event.o Setup.o RootSetupWrapper.o Calib.o Tile.o HGCROC.o Caen.o  TileSpectra.o libLFHCAL.so DataAna.o DataAnalysis.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o 
-	$(CXX) Event.o Calib.o Setup.o RootSetupWrapper.o Tile.o HGCROC.o Caen.o TileSpectra.o DataAna.o DataAnalysis.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o  $(FLAGS) -I. libLFHCAL.so -o DataAna
+DataAna: Event.o Setup.o RootSetupWrapper.o Calib.o Tile.o HGCROC.o Caen.o  TileSpectra.o libLFHCAL.so DataAna.o DataAnalysis.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o max_sample_fit.o 
+	$(CXX) Event.o Calib.o Setup.o RootSetupWrapper.o Tile.o HGCROC.o Caen.o TileSpectra.o DataAna.o DataAnalysis.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o max_sample_fit.o  $(FLAGS) -I. libLFHCAL.so -o DataAna
 
-Display: Event.o Setup.o RootSetupWrapper.o Calib.o Tile.o HGCROC.o Caen.o  TileSpectra.o libLFHCAL.so Display.o EventDisplay.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o 
-	$(CXX) Event.o Calib.o Setup.o RootSetupWrapper.o Tile.o HGCROC.o Caen.o TileSpectra.o Display.o EventDisplay.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o  $(FLAGS) -I. libLFHCAL.so -o Display
+Display: Event.o Setup.o RootSetupWrapper.o Calib.o Tile.o HGCROC.o Caen.o  TileSpectra.o libLFHCAL.so Display.o EventDisplay.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o max_sample_fit.o 
+	$(CXX) Event.o Calib.o Setup.o RootSetupWrapper.o Tile.o HGCROC.o Caen.o TileSpectra.o Display.o EventDisplay.o HGCROC_Convert.o waveform_fit_base.o crystal_ball_fit.o max_sample_fit.o  $(FLAGS) -I. libLFHCAL.so -o Display
 
 Compare: Event.o Setup.o RootSetupWrapper.o Calib.o Tile.o HGCROC.o Caen.o  TileSpectra.o TileTrend.o CalibSummary.o libLFHCAL.so Compare.o ComparisonCalib.o
 	$(CXX) Event.o Calib.o Setup.o RootSetupWrapper.o Tile.o HGCROC.o Caen.o TileSpectra.o TileTrend.o CalibSummary.o ComparisonCalib.o Compare.o $(FLAGS) -I. libLFHCAL.so -o Compare

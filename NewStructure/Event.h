@@ -71,7 +71,6 @@ class Event{
   int                   TimeStamp;
   
  protected:
-  
 
 };
 

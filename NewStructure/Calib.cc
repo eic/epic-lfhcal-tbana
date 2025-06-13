@@ -210,12 +210,16 @@ short Calib::GetBadChannel(int row, int col, int lay, int mod=0)const{
 // CALIBRATION Average calculators
 //*****************************************************************************************
 double Calib::GetAveragePedestalMeanHigh()const{
-  double avSc = 0;
+  double avSc   = 0;
+  int notCalib  = 0;
   std::map<int, TileCalib>::const_iterator it;
   for(it=CaloCalib.begin(); it!=CaloCalib.end(); ++it){
-    avSc += it->second.PedestalMeanH;
+    if (it->second.PedestalMeanH == -1000)
+      notCalib++;
+    else 
+      avSc += it->second.PedestalMeanH;
   }
-  return avSc/CaloCalib.size();
+  return avSc/(CaloCalib.size()-notCalib);
 }
 
 double Calib::GetAveragePedestalSigHigh()const{
@@ -228,12 +232,16 @@ double Calib::GetAveragePedestalSigHigh()const{
 }
 
 double Calib::GetAveragePedestalMeanLow()const{
-  double avSc = 0;
+  double avSc   = 0;
+  int notCalib  = 0;
   std::map<int, TileCalib>::const_iterator it;
   for(it=CaloCalib.begin(); it!=CaloCalib.end(); ++it){
-    avSc += it->second.PedestalMeanL;
+    if (it->second.PedestalMeanL == -1000)
+      notCalib++;
+    else
+      avSc += it->second.PedestalMeanL;
   }
-  return avSc/CaloCalib.size();
+  return avSc/(CaloCalib.size()-notCalib);
 }
 
 double Calib::GetAveragePedestalSigLow()const{
