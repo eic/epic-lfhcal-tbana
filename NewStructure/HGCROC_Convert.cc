@@ -73,18 +73,8 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     analysis->event.SetROtype(ReadOut::Type::Hgcroc);
 
     // Run the event builder
-    // std::list<aligned_event*> *events = new std::list<aligned_event*>();
-    // for (auto event : *decoder) {
-        // events->push_back(event);
-        // }
-        
-        // std::cout << "\ncompleted HGCROC event builder!\n" << std::endl;
-        // std::cout << "Number of events: " << events->size() << std::endl;
-        
-        
-        // convert from the aligned_events datatype to the Event datatype
     int event_number = 0;
-    auto decoder = new hgc_decoder((char*)analysis->ASCIIinputName.Data(), 1, 4, 5);
+    auto decoder = new hgc_decoder((char*)analysis->ASCIIinputName.Data(), 1, analysis->setup->GetNMaxKCUs(), 5);
     for (auto ae : *decoder) {
         if (true || event_number % 100 == 0) {
             std::cout << "\rFitting event " << event_number << std::flush;
@@ -195,6 +185,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     #endif
 }
 
+// deprecated position association
 bool decode_position(int channel, int &x, int &y, int &z) {
     int channel_map[72] = {64, 63, 66, 65, 69, 70, 67, 68,  // this goes from 0 to 63 in lhfcal space to 0 to 71 in asic space
                            55, 56, 57, 58, 62, 61, 60, 59,  // So channel 0 on the detector is channel 64 on the asic

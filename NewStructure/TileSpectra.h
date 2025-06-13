@@ -38,7 +38,7 @@ class TileSpectra: public TObject{
       hTriggPrim    = TH1D(Form("hTriggerPrimitive%sCellID%d",name.Data(),id),Form("Trigger primitive CellID %d; HG ADC (arb. units); counts ",id),500,0,4000);
       hTriggPrim.SetDirectory(0);
       hspectraLGHG  = TProfile(Form("hCoorspectra%sLGHGCellID%d",name.Data(),id),Form("ADC Low  Gain/High Gain correlation CellID %d; LG ADC (arb. units); HG ADC (arb. units)",id),800,0,800);
-      hspectraLGHG.SetDirectory(0);
+      hspectraLGHG.SetDirectory(0); 
       hspectraHGLG  = TProfile(Form("hCoorspectra%sHGLGCellID%d",name.Data(),id),Form("ADC High  Gain/Low Gain correlation CellID %d; HG ADC (arb. units); LG ADC (arb. units)",id),4100,-100,4000);
       hspectraHGLG.SetDirectory(0);
     } else if (ROType == ReadOut::Type::Hgcroc){
@@ -86,6 +86,7 @@ class TileSpectra: public TObject{
         hspectraLGHG  = TProfile(Form("hCoorspectra%sLGHGCellID%d",name.Data(),id),Form("ADC Low  Gain/High Gain correlation CellID %d; Corr LG  (arb. units); HG E (arb. units)",id),400,0,400);
         hspectraLGHG.SetDirectory(0);
         hcorr         = TH2D(Form("hCoor2D%sLGHGCellID%d",name.Data(),id),Form("2D ADC Low  Gain/High Gain correlation CellID %d; Corr LG  (arb. units); HG E (arb. units)",id),400,0,400, 525, -200, 4000 );
+        hcorr.SetDirectory(0);
       } else if (type == ReadOut::Type::Hgcroc){
         hspectraHG    = TH1D(Form("hspectra%sADCCellID%d",name.Data(),id),Form("ADC spectrumCellID %d; ADC (arb. units); counts ",id),1024,0,1024);
         hspectraHG.SetDirectory(0);
@@ -93,7 +94,7 @@ class TileSpectra: public TObject{
         hspectraLG.SetDirectory(0);
         hspectraLGHG  = TProfile(Form("hCoorspectra%sTOTADCGCellID%d",name.Data(),id),Form("TOT-ADC correlation CellID %d; TOT  (arb. units); ADC (arb. units)",id),400,0,400);
         hspectraLGHG.SetDirectory(0);
-        hcorr         = TH2D(Form("wafeform%sCellID%d",name.Data(),id),Form("2D wafeform CellID %d; sample ; ADC (arb. units)",id),10,0,10, 1024, 0, 1024);
+        hcorr         = TH2D(Form("wafeform%sCellID%d",name.Data(),id),Form("2D wafeform CellID %d; sample ; ADC (arb. units)",id),20,0,20, 1024, 0, 1024);
         hcorr.SetDirectory(0);
       }
     }
@@ -114,6 +115,7 @@ class TileSpectra: public TObject{
   bool FitMipLG(double*, double*, int, int, bool, double );
   bool FitCorr(int);
   bool FitLGHGCorr(int , bool);
+  bool FitPedConstWage(int);
   bool FitNoiseWithBG(double*);
   short DetermineBadChannel();
 
@@ -123,6 +125,7 @@ class TileSpectra: public TObject{
   double GetMaxXInRangeLG(double, double);
   double GetMaxXInRangeHG(double, double);
 
+  ReadOut::Type GetROType() {return ROType;};  
   TH1D* GetHG();
   TH1D* GetLG();
   TH1D* GetComb();

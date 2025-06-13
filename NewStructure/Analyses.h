@@ -62,6 +62,7 @@ class Analyses{
   inline bool UseLocTriggFromFile(void)         const {return LocTriggFile;};
   inline bool IsToSaveCalibOnly(void)           const {return SaveCalibOnly;};
   inline bool IsCalibSaveToFile(void)           const {return SaveCalibToFile;};
+  inline bool IsToSkimHGCROC(void)              const {return SkimHGCROC;};
   inline short GetCalcBadChannel(void)          const {return CalcBadChannel;};
   inline short GetExtPlotting(void)             const {return ExtPlot;};
   inline bool GetOverWriteCalib(void)           const {return OverWriteCalib;};
@@ -83,6 +84,7 @@ class Analyses{
   inline void IsToSaveMipsOnly(bool b)           {SaveMipsOnly = b;};
   inline void IsToEvalLocalTrigg(bool b)         {EvalLocalTriggers = b;};
   inline void IsToSaveCalibOnly(bool b)          {SaveCalibOnly = b;};
+  inline void IsToSkimHGCROC(bool b)             {SkimHGCROC = b;};
   inline void UseLocTriggFromFile(bool b)        {LocTriggFile = b;};
   inline void SetCalcBadChannel(short b)         {CalcBadChannel = b;};
   inline void SetOverWriteCalib(bool b)          {OverWriteCalib = b;};
@@ -144,6 +146,7 @@ class Analyses{
   bool SaveMipsOnly           =false;     // Flag to reduce file to mips only
   bool SaveCalibOnly          =false;     // Flag to reduce file to mips only
   bool SaveCalibToFile        =false;     // Flag to save calib objects to text file
+  bool SkimHGCROC             =false;     // Flag to skim HGCROC data from pure noise events
   bool EvalLocalTriggers      =false;     // Flag to run local trigger eval
   bool LocTriggFile           =false;     // Flag to use already evaluated triggeres
   short CalcBadChannel        =0;         // Flag to create bad channel map
@@ -184,6 +187,7 @@ class Analyses{
   bool SaveNoiseTriggersOnly(void);
   bool SaveMuonTriggersOnly(void);
   bool SaveCalibToOutputOnly(void);
+  bool SkimHGCROCData(void);
   std::map<int,short> ReadExternalBadChannelMap(void);
  };
 
