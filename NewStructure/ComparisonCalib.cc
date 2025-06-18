@@ -247,7 +247,11 @@ bool ComparisonCalib::Process(void){
     
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // set global iterator for runs to first run number in list to obtain beam-line, dates...
-    if (ientry==0) it = ri.find(calib.GetRunNumber());
+    if (ientry==0){
+      it = ri.find(calib.GetRunNumber());
+      std::cout << "finding RunNumber: " <<  calib.GetRunNumber() << std::endl;
+      std::cout << it->second.facility << std::endl;
+    }
     
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // Set X-values according to option

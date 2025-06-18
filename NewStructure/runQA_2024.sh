@@ -11,9 +11,9 @@ function QARun()
 	echo "PlotDir: $4"
 	echo "=================================================================================="
 	if [ $1 == "SimpleQA" ]; then 
-		time ./DataAna -e 1 -d 1 -q -i $2/calibrated_Run_$3.root -O $2/SimpleQAHists_Run_$3.root -a -f -r $runNrFile -P $4/SimpleQAPlots/Run_$3	
+		time build/DataAna -e 1 -d 1 -q -i $2/calibrated_Run_$3.root -O $2/SimpleQAHists_Run_$3.root -a -f -r $runNrFile -P $4/SimpleQAPlots/Run_$3	
 		elif [ $1 == "QA" ]; then 
-		time ./DataAna -d 1 -Q -i $2/calibrated_Run_$3.root -O $2/QAHists_Run_$3.root -a -f -r $runNrFile -P $4/QAPlots/Run_$3
+		time build/DataAna -d 1 -Q -i $2/calibrated_Run_$3.root -O $2/QAHists_Run_$3.root -a -f -r $runNrFile -P $4/QAPlots/Run_$3
 	fi
 }
 

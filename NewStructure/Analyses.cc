@@ -399,7 +399,8 @@ bool Analyses::ConvertASCII2Root(void){
   std::map<int,std::vector<Caen> > tmpEvent;
   std::map<int,double> tmpTime;
   std::map<int,std::vector<Caen> >::iterator itevent;
-  long tempEvtCounter = 0;
+  long tempEvtCounter   = 0;
+  long writeEvtCounter  = 0;
   while(!ASCIIinput.eof()){                                                     // run till end of file is reached and read line by line
     aline.ReadLine(ASCIIinput);
     if(!ASCIIinput.good()) break;
@@ -527,6 +528,7 @@ bool Analyses::ConvertASCII2Root(void){
             event.AddTile(new Caen(*itv));
           }
           TdataOut->Fill();
+          writeEvtCounter++;
           tmpEvent.erase(itevent);
           tmpTime.erase(TriggerID);
         } 
@@ -576,6 +578,7 @@ bool Analyses::ConvertASCII2Root(void){
             event.AddTile(new Caen(*itv));
           }
           TdataOut->Fill();
+          writeEvtCounter++;
           tmpEvent.erase(itevent);
           tmpTime.erase(TriggerID);
         } 
@@ -660,6 +663,7 @@ bool Analyses::ConvertASCII2Root(void){
             event.AddTile(new Caen(*itv));
           }
           TdataOut->Fill();
+          writeEvtCounter++;
           tmpEvent.erase(itevent);
           tmpTime.erase(TriggerID);
         } else {
@@ -712,6 +716,7 @@ bool Analyses::ConvertASCII2Root(void){
             event.AddTile(new Caen(*itv));
           }
           TdataOut->Fill();
+          writeEvtCounter++;
           tmpEvent.erase(itevent);
           tmpTime.erase(TriggerID);
         }
@@ -738,6 +743,10 @@ bool Analyses::ConvertASCII2Root(void){
   TsetupOut->Write();
   TdataOut->Write();
 
+  std::cout << "Events written to file: " << writeEvtCounter << std::endl;
+  if (writeEvtCounter < 2){
+    std::cout << "ERROR: Only " << writeEvtCounter << " events were written, something didn't go right, please check your mapping file!" << std::endl; 
+  }
   RootOutput->Close();
   return true;
 }

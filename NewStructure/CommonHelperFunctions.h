@@ -71,7 +71,7 @@
   }
   
   struct RunInfo{
-    RunInfo(): runNr(0), species(""), pdg(0), energy(0), vop(0), vbr(0), lgSet(0), hgSet(0), posX(0), posY(0), assemblyNr(0), year(-1), month(-1), readout(""), facility(""), beamline(""), samples(0), trigDelay(0) {}
+    RunInfo(): runNr(0), species(""), pdg(0), energy(0), vop(0), vbr(0), lgSet(0), hgSet(0), posX(0), posY(0), shapetime(0), assemblyNr(0), year(-1), month(-1), readout(""), facility(""), beamline(""), samples(0), trigDelay(0) {}
     int runNr;
     TString species;
     int pdg;
@@ -82,6 +82,7 @@
     int hgSet;
     float posX;
     float posY;
+    float shapetime;
     int assemblyNr;
     int year;
     int month;
@@ -166,6 +167,9 @@
       if (readout.CompareTo("CAEN") == 0){
         tempRun.hgSet    = ((TString)((TObjString*)tempArr->At(6))->GetString()).Atoi();
         tempRun.lgSet    = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
+        if (tempArr->GetEntries() > 10){
+         tempRun.shapetime = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atof();
+        }
       } else {
         tempRun.trigDelay = ((TString)((TObjString*)tempArr->At(6))->GetString()).Atoi();
         tempRun.samples   = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
@@ -176,7 +180,7 @@
       tempRun.posY    = ((TString)((TObjString*)tempArr->At(9))->GetString()).Atoi();
       if (specialData == 1) tempRun.assemblyNr = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atoi();
                   
-      if (debug > 1) std::cout << "Run " << tempRun.runNr << "\t species: " << tempRun.species << "\t energy: "  << tempRun.energy << "\t Vop: " << tempRun.vop << "\t Vov: " << tempRun.vop-tempRun.vbr << "\t Xbeam: " << tempRun.posX<< "\t Ybeam: " << tempRun.posY<< std::endl;
+      if (debug > 1) std::cout << "Run " << tempRun.runNr << "\t species: " << tempRun.species << "\t energy: "  << tempRun.energy << "\t Vop: " << tempRun.vop << "\t Vov: " << tempRun.vop-tempRun.vbr << "\t Xbeam: " << tempRun.posX<< "\t Ybeam: " << tempRun.posY << "\t shaping time: " << tempRun.shapetime << std::endl;
       runs[tempRun.runNr]=tempRun;
     }
     std::cout << year << "-" << month << "\t:\t" << facility.Data() << "-" << beamline.Data() << "\t Readout: " << readout.Data() << std::endl;

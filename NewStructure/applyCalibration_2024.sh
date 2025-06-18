@@ -13,13 +13,13 @@ function Calib()
 	echo "Plots additional name: $7"
 	echo "===================================================================="
 	if [ $1 == "transfer" ]; then
-		time ./DataPrep -d 1 -e -a -f -P $2 -i $3/raw_$5.root  -o $3/rawWithCalib_$5.root -O $6/PlotsFullCalibTransferBC_2024/Run_$5 -r $runNrFile
+		time build/DataPrep -d 1 -e -a -f -P $2 -i $3/raw_$5.root  -o $3/rawWithCalib_$5.root -O $6/PlotsFullCalibTransferBC_2024/Run_$5 -r $runNrFile
 	elif [ $1 == "trigg" ]; then
-		time ./DataPrep -f -d 1 -T $2 -i $3/raw_$5.root -o $3/rawWithLocTrigg_$5.root 
+		time build/DataPrep -f -d 1 -T $2 -i $3/raw_$5.root -o $3/rawWithLocTrigg_$5.root 
 	elif [ $1 == "calibNoTrigg" ]; then
-		time ./DataPrep -t -e -f -d 1 -a -C $2 -i $3/rawWithLocTrigg_$5.root -o $4/calibrated_Run_$5.root -O $6/$7$5 -r $runNrFile
+		time build/DataPrep -t -e -f -d 1 -a -C $2 -i $3/rawWithLocTrigg_$5.root -o $4/calibrated_Run_$5.root -O $6/$7$5 -r $runNrFile
 	elif [ $1 == "full" ]; then
-		time ./DataPrep -e -f -d 1 -a -C $2 -i $3/raw_$5.root -o $4/calibrated_Run_$5.root -O $6/$7$5 -r $runNrFile
+		time build/DataPrep -e -f -d 1 -a -C $2 -i $3/raw_$5.root -o $4/calibrated_Run_$5.root -O $6/$7$5 -r $runNrFile
 	fi
 }
 
