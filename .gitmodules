@@ -1,0 +1,3 @@
+[submodule "NewStructure/h2g_decode"]
+	path = NewStructure/h2g_decode
+	url = https://github.com/tlprotzman/h2g_decode.git

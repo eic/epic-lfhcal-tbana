@@ -175,11 +175,8 @@ The DB of runs is saved in a txt file and is also hard coded.
 
 
 # HGCROC Conversion
-The first pass of converting the HGCROC data to a format usable in this analysis package is complete.  It requries linking against the [h2g_decode package](https://github.com/tlprotzman/h2g_decode) package, which can be compiled with `make libh2g_decode.so`.  Add the shared library to the `NewStructure/lib/` folder, and compile with HGCROC_Conversion.
-Currently, the mapping is hardcoded into the library, this will be worked on next.  Additionally, there is no waveform analysis yet, so E, TOT, and TOA are all set to 0.  However, the waveform for each channel is stored.  I have been testing with 
-    
-    ```
-    ./Convert -c Run302.h2g -w -o test.root -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
-    ```
-
-which clearly isn't complete, as it references the mapping and database fore the CAEN data.  That will also be changed soon.
+To build for processing HGCROC data, I recommend using CMake.  
+1) Make sure you have the latest version of the decoder `git pull --recurse-submodules`.  If it is your first time using the submodule you should run `git submodule update --init --recursive`
+2) Set up the build directory.  From the `NewStructure` folder, run `CMake -B build .`
+3) Compile the code.  Switch to the build directory with `cd build` and compile with `make`
+4) You now have all the executables for the analysis.  To convert HGCROC data, use `HGCROC_Convert -w ...`
