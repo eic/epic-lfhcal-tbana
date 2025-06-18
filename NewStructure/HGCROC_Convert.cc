@@ -90,15 +90,20 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
             std::cout << "\rFitting event " << event_number << std::flush;
         }
         // aligned_event *ae = *it;
+        // aligned_event *ae = *it;
         analysis->event.SetEventID(event_number);
         event_number++;
+        // std::cout << "\nEvent: " << event_number << std::endl;
         // std::cout << "\nEvent: " << event_number << std::endl;
         // Loop over each tile
         for (int i = 0; i < ae->get_num_fpga(); i++) {
             // std::cout << "\nFPGA: " << i << std::endl;
+            // std::cout << "\nFPGA: " << i << std::endl;
             auto single_kcu = ae->get_event(i);
             // std::cout << "Number of samples: " << single_kcu->get_n_samples() << std::endl;
+            // std::cout << "Number of samples: " << single_kcu->get_n_samples() << std::endl;
             for (int j = 0; j < ae->get_channels_per_fpga(); j++) {
+                // std::cout << "\nChannel: " << j << std::endl;
                 // std::cout << "\nChannel: " << j << std::endl;
                 int channel_number = i * ae->get_channels_per_fpga() + j;
                 // std::cout << "Channel number: " << channel_number << std::endl;
@@ -110,7 +115,17 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                 }
                 
                 if (cell_id != -1) {
+                // std::cout << "Channel number: " << channel_number << std::endl;
+                int asic = i * 2 + (j / 72);
+                
+                auto cell_id = analysis->setup->GetCellID(asic, j % 72);
+                if (analysis->debug > 0 && event_number == 1) {
+                    std::cout << Form("KCU: %d, asic: %d , channel %d,  %s", i, int(j / 72),  j % 72, (analysis->setup->DecodeCellID(cell_id)).Data()) << std::endl;
+                }
+                
+                if (cell_id != -1) {
                     Hgcroc *tile = new Hgcroc();
+                    tile->SetCellID(cell_id);        
                     tile->SetCellID(cell_id);        
                     tile->SetROtype(ReadOut::Type::Hgcroc);
                     tile->SetLocalTriggerBit(0);            // What are these supposed to be?
@@ -125,9 +140,19 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                         // std::cout << " ADC: " << single_kcu->get_sample_adc(j, sample);
                         // std::cout << " TOA: " << single_kcu->get_sample_toa(j, sample);
                         // std::cout << " TOT: " << single_kcu->get_sample_tot(j, sample) << std::endl;
+                        // std::cout << "Sample: " << sample;
+                        // std::cout << " ADC: " << single_kcu->get_sample_adc(j, sample);
+                        // std::cout << " TOA: " << single_kcu->get_sample_toa(j, sample);
+                        // std::cout << " TOT: " << single_kcu->get_sample_tot(j, sample) << std::endl;
                         tile->AppendWaveformADC(single_kcu->get_sample_adc(j, sample));
                         tile->AppendWaveformTOA(single_kcu->get_sample_toa(j, sample));
                         tile->AppendWaveformTOT(single_kcu->get_sample_tot(j, sample));
+                        if (single_kcu->get_sample_toa(j, sample) > 40) { // TODO this is a pedestal which needs to be tuned
+                            tile->SetTOA(single_kcu->get_sample_toa(j, sample));
+                        }
+                        if (single_kcu->get_sample_tot(j, sample) > 40) { // TODO this is a pedestal which needs to be tuned
+                            tile->SetTOT(single_kcu->get_sample_tot(j, sample));
+                        }
                         if (single_kcu->get_sample_toa(j, sample) > 40) { // TODO this is a pedestal which needs to be tuned
                             tile->SetTOA(single_kcu->get_sample_toa(j, sample));
                         }
@@ -146,13 +171,22 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                     } else {
                         tile->SetIntegratedValue(tile->GetIntegratedADC()); // TODO: Placeholder
                     }
+                    tile->SetIntegratedADC(waveform_builder->get_E());
+                    tile->SetIntegratedTOT(tile->GetIntegratedTOT());   // TODO: Placeholder
+                    if (waveform_builder->is_saturated()) {
+                        tile->SetIntegratedValue(tile->GetIntegratedTOT()); // TODO: Placeholder
+                    } else {
+                        tile->SetIntegratedValue(tile->GetIntegratedADC()); // TODO: Placeholder
+                    }
                     tile->SetPedestal(waveform_builder->get_pedestal());
 
                     analysis->event.AddTile(tile);
                 }
             }
             
+            
         // Fill the event
+        }
         }
         analysis->TdataOut->Fill();
         analysis->event.ClearTiles();
@@ -195,6 +229,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     #endif
 }
 
+// deprecated position association
 bool decode_position(int channel, int &x, int &y, int &z) {
     int channel_map[72] = {64, 63, 66, 65, 69, 70, 67, 68,  // this goes from 0 to 63 in lhfcal space to 0 to 71 in asic space
                            55, 56, 57, 58, 62, 61, 60, 59,  // So channel 0 on the detector is channel 64 on the asic
@@ -250,3 +285,4 @@ bool decode_position(int channel, int &x, int &y, int &z) {
 
     return true;
 }
+

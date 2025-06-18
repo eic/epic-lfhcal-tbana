@@ -324,6 +324,12 @@ bool Analyses::Process(void){
   if(SaveMipsOnly){
     status=SaveMuonTriggersOnly();
   }
+  
+  // skim HGCROC data to discard pure noise events
+  if(SkimHGCROC){
+    status=SkimHGCROCData();
+  }
+  
   // reduce file to only mip triggers
   if(EvalLocalTriggers){
     status=RunEvalLocalTriggers();
@@ -383,7 +389,7 @@ bool Analyses::ConvertASCII2Root(void){
   calib.SetRunNumber(RunString.Atoi());
   calib.SetVop(it->second.vop);
   calib.SetVov(it->second.vop-it->second.vbr);  
-  
+  calib.SetBCCalib(false);
   //============================================
   // Start decoding file
   //============================================
@@ -511,6 +517,8 @@ bool Analyses::ConvertASCII2Root(void){
           tokens->Clear();
           delete tokens;
         }
+        // std::cout << itevent->second.size() << "\t" << setup->GetTotalNbChannels() << std::endl;
+
         if((int)itevent->second.size()==setup->GetTotalNbChannels()/*8*64*/){
           //Fill the tree the event is complete and erase from the map
           event.SetTimeStamp(tmpTime[TriggerID]/setup->GetNMaxROUnit());
@@ -558,6 +566,7 @@ bool Analyses::ConvertASCII2Root(void){
         tmpTime[TriggerID]=Time;
         tmpEvent[TriggerID]=vCaen;
         
+        // std::cout << vCaen.size() << "\t" << setup->GetTotalNbChannels() << std::endl;
         if((int)vCaen.size()==setup->GetTotalNbChannels()/*8*64*/){
           itevent=tmpEvent.find(TriggerID);
           //Fill the tree the event is complete and erase from the map
@@ -780,7 +789,7 @@ bool Analyses::ConvertOldRootFile2Root(void){
   calib.SetRunNumber(RunString.Atoi());
   calib.SetVop(it->second.vop);
   calib.SetVov(it->second.vop-it->second.vbr);  
-  
+  calib.SetBCCalib(false);
     // load tree
   TChain *const tt_event = new TChain("tree");
   if (ASCIIinputName.EndsWith(".root")) {                     // are we loading a single root tree?
@@ -994,12 +1003,16 @@ bool Analyses::GetPedestal(void){
         ithSpectra=hSpectra.find(aTile->GetCellID());
         if(ithSpectra!=hSpectra.end()){
           // Get the tile spectra if it already exists
-          ithSpectra->second.Fill(aTile->GetPedestal(),aTile->GetPedestal());
+          ithSpectra->second.FillExt(aTile->GetPedestal(),aTile->GetPedestal(), 0., 0.);
+          ithSpectra->second.FillWaveform(aTile->GetADCWaveform());          
         } else {
           // Make a new tile spectra if it isn't found
           RootOutputHist->cd("IndividualCells");
-          hSpectra[aTile->GetCellID()]= TileSpectra("1stExtraction",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()), event.GetROtype(), debug);
-          hSpectra[aTile->GetCellID()].Fill(aTile->GetPedestal(),aTile->GetPedestal());
+          hSpectra[aTile->GetCellID()]= TileSpectra("1stExtraction", 2, aTile->GetCellID(), calib.GetTileCalib(aTile->GetCellID()), event.GetROtype(), debug);
+          
+          hSpectra[aTile->GetCellID()].FillExt(aTile->GetPedestal(),aTile->GetPedestal(), 0., 0.);
+          hSpectra[aTile->GetCellID()].FillWaveform(aTile->GetADCWaveform());
+
           RootOutput->cd();
         }
         // std::cout << "Cell ID: " << aTile->GetCellID() << ", Tile E: " << aTile->GetPedestal() << std::endl;
@@ -1013,18 +1026,37 @@ bool Analyses::GetPedestal(void){
   
   // fit pedestal
   double* parameters=new double[8];
-  bool isGood;
+  bool isGood  = true;
+  bool isGood2 = true;
 
   for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
     if ( debug > 2) std::cout << ((TString)setup->DecodeCellID(ithSpectra->second.GetCellID())).Data() << std::endl;
     // std::cerr << "Fitting noise for cell ID: " << ithSpectra->second.GetCellID() << std::endl;
     isGood=ithSpectra->second.FitNoise(parameters, yearData, false);
-    if (!isGood) {
+    if (!isGood && !(typeRO == ReadOut::Type::Hgcroc)) {
       std::cerr << "Noise fit failed for cell ID: " << ithSpectra->second.GetCellID() << std::endl;
-      ithSpectra->second.Print("all");
       continue;
     }
 
+    if (typeRO == ReadOut::Type::Hgcroc){
+      isGood2=ithSpectra->second.FitPedConstWage(debug);
+
+      if (!isGood && !isGood2) {
+        std::cerr << "both noise fits failed " << ithSpectra->second.GetCellID() << std::endl;
+        continue;
+      } else {
+        if (!isGood2) std::cerr << "Noise-wave form fit failed for cell ID: " << ithSpectra->second.GetCellID() << std::endl;
+        if (!isGood){
+          std::cerr << "1D Noise fit failed for cell ID: " << ithSpectra->second.GetCellID() << std::endl;
+          parameters[4] = -1;
+          parameters[5] = -1;
+          parameters[6] = -1;
+          parameters[7] = -1;
+        }
+      }
+    }
+    
+    
     int layer     = setup->GetLayer(ithSpectra->second.GetCellID());
     int chInLayer = setup->GetChannelInLayer(ithSpectra->second.GetCellID());
 
@@ -1043,6 +1075,11 @@ bool Analyses::GetPedestal(void){
       hspectraLGSigmaVsLayer->SetBinError(hspectraLGSigmaVsLayer->FindBin(layer,chInLayer), parameters[3]);
       
       hPedMeanHGvsLG->Fill(parameters[4],parameters[0]);
+    } else if (isGood2 && typeRO == ReadOut::Type::Hgcroc){
+      hMeanPedLGvsCellID->SetBinContent(hMeanPedLGvsCellID->FindBin(ithSpectra->second.GetCellID()), calib.GetPedestalMeanL(ithSpectra->second.GetCellID()));
+      hMeanPedLGvsCellID->SetBinError  (hMeanPedLGvsCellID->FindBin(ithSpectra->second.GetCellID()), calib.GetPedestalSigL(ithSpectra->second.GetCellID()));
+      hspectraLGMeanVsLayer->SetBinContent(hspectraLGMeanVsLayer->FindBin(layer,chInLayer), calib.GetPedestalMeanL(ithSpectra->second.GetCellID()));
+      hspectraLGMeanVsLayer->SetBinError(hspectraLGMeanVsLayer->FindBin(layer,chInLayer), calib.GetPedestalSigL(ithSpectra->second.GetCellID()));
     }
   }
   
@@ -1082,6 +1119,11 @@ bool Analyses::GetPedestal(void){
     hspectraLGMeanVsLayer->Write();
     hspectraLGSigmaVsLayer->Write();
     hPedMeanHGvsLG->Write();
+  } else {
+    hMeanPedLGvsCellID->GetYaxis()->SetTitle("#mu_{Ped ADC, wave} (arb. units)");
+    hMeanPedLGvsCellID->Write("hMeanPedWave_vsCellID");
+    hspectraLGMeanVsLayer->GetZaxis()->SetTitle("#mu_{Ped ADC, wave} (arb. units)");
+    hspectraLGMeanVsLayer->Write("hspectraPedWaveMeanVsLayer");
   }
   // fill calib tree & write it
   // close open root files
@@ -1120,7 +1162,7 @@ bool Analyses::GetPedestal(void){
   
   if (typeRO == ReadOut::Type::Caen){
     PlotSimple2D( canvas2DCorr, hspectraLGvsCellID, 300, setup->GetMaxCellID()+1, textSizeRel, Form("%s/LG_Noise.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 5, kFALSE, "colz", true);
-  }
+  } 
   
   canvas2DCorr->SetLogz(0);
   PlotSimple2D( canvas2DCorr, hspectraHGMeanVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_NoiseMean.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 5, kFALSE, "colz", true, Form("#LT#mu_{HG}#GT = %2.2f", averagePedMeanHG));
@@ -1131,6 +1173,8 @@ bool Analyses::GetPedestal(void){
     PlotSimple2D( canvas2DCorr, hspectraLGSigmaVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_NoiseSigma.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 5, kFALSE, "colz", true, Form("#LT#sigma_{LG}#GT = %2.2f", averagePedSigLG));
   
     PlotSimple2D( canvas2DCorr, hPedMeanHGvsLG, -10000, -10000, textSizeRel, Form("%s/PedMean_HG_LG.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 5, kFALSE, "colz", true, "");
+  } else {
+    PlotSimple2D( canvas2DCorr, hspectraLGMeanVsLayer, -10000, -10000, textSizeRel, Form("%s/PedWave_NoiseMean.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 5, kFALSE, "colz", true, Form("#LT#mu_{wave}#GT = %2.2f", averagePedMeanLG));
   }
   //***********************************************************************************************************
   //********************************* 8 Panel overview plot  **************************************************
@@ -1153,6 +1197,14 @@ bool Analyses::GetPedestal(void){
   Double_t relSize8P[8];
   CreateCanvasAndPadsFor8PannelTBPlot(canvas8Panel, pad8Panel,  topRCornerX, topRCornerY, relSize8P, textSizePixel);
 
+  TCanvas* canvas8PanelProf;
+  TPad* pad8PanelProf[8];
+  Double_t topRCornerXProf[8];
+  Double_t topRCornerYProf[8];
+  Double_t relSize8PProf[8];
+  CreateCanvasAndPadsFor8PannelTBPlot(canvas8PanelProf, pad8PanelProf,  topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 0.045, "Prof", false);
+ 
+  
   for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
     PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                 hSpectra, setup, true, 0, 275, 1.2, l, 0,
@@ -1161,6 +1213,10 @@ bool Analyses::GetPedestal(void){
       PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                 hSpectra, setup, false, 0, 275, 1.2, l, 0,
                                 Form("%s/Noise_LG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+    } else if (typeRO == ReadOut::Type::Hgcroc){
+      PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, hSpectra, 0, it->second.samples+1, 300, l, 0,
+                                  Form("%s/Waveform_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+ 
     }
   }
 
@@ -1402,17 +1458,26 @@ bool Analyses::TransferCalib(void){
     std::cout << "plotting single layers" << std::endl;
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
       if (l%10 == 0 && l > 0 && debug > 0)
-        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;      
-      PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
-                                  hSpectra, -20, 340, 4000, l, 0,
-                                  Form("%s/LGHG2D_Corr_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (typeRO == ReadOut::Type::Caen) {
+        PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
+                            textSizePixel, hSpectra, -20, 340, 4000, l, 0,
+                            Form("%s/LGHG2D_Corr_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+      } else {
+        PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
+                            textSizePixel, hSpectra, 0, it->second.samples+1, 1000, l, 0,
+                            Form("%s/Waveform_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+        
+      }
       if (ExtPlot > 1){
         PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                     hSpectra, setup, true, -100, maxHG, 1.2, l, 0,
                                     Form("%s/SpectraWithNoiseFit_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-        PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                    hSpectra, setup, false, -20, maxLG, 1.2, l, 0,
-                                    Form("%s/SpectraWithNoiseFit_LG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+        if (typeRO == ReadOut::Type::Caen){
+          PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                      hSpectra, setup, false, -20, maxLG, 1.2, l, 0,
+                                      Form("%s/SpectraWithNoiseFit_LG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+        }
       }
     }
     std::cout << "ending plotting single layers" << std::endl;
@@ -3312,6 +3377,108 @@ bool Analyses::SaveMuonTriggersOnly(void){
   return true;
 }
 
+
+//***********************************************************************************************
+//*********************** Skim HGCROC data ******************************************************
+//***********************************************************************************************
+bool Analyses::SkimHGCROCData(void){
+  std::cout<<"Skim HGCROC data from pure noise"<<std::endl;
+  TcalibIn->GetEntry(0);
+    // check whether calib should be overwritten based on external text file
+  if (OverWriteCalib){
+    calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
+  }
+
+  int evts=TdataIn->GetEntries();
+  if (maxEvents == -1){
+    maxEvents = evts;
+  } else {
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+    std::cout << "ATTENTION: YOU ARE RESETTING THE MAXIMUM NUMBER OF EVENTS TO BE PROCESSED TO: " << maxEvents << ". THIS SHOULD ONLY BE USED FOR TESTING!" << std::endl;
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+  }
+
+  long evtTrigg = 0;
+  
+  for(int i=0; i<evts && i < maxEvents; i++){
+    TdataIn->GetEntry(i);
+    if (i%5000 == 0 && i > 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
+    // std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
+    bool triggered = false;
+    for(int j=0; j<event.GetNTiles(); j++){
+      Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
+      // testing for any signal beyond noise
+      // std::cout << "Cell ID:" << aTile->GetCellID() << "\t" << calib.GetPedestalMeanH(aTile->GetCellID()) << "\t" << calib.GetPedestalMeanL(aTile->GetCellID()) << "\n \tADC-wave " ;
+      // for (int k = 0; k < (int)aTile->GetADCWaveform().size(); k++ ){
+      //   std::cout << aTile->GetADCWaveform().at(k) << "\t" ;
+      // }
+      // // std::cout << "\n \tTOT-Wave ";
+      // // for (int k = 0; k < (int)aTile->GetTOTWaveform().size(); k++ ){
+      // //   std::cout << aTile->GetTOTWaveform().at(k) << "\t" ;
+      // // }
+      // std::cout << "\n \tTOA-Wave ";
+      // for (int k = 0; k < (int)aTile->GetTOAWaveform().size(); k++ ){
+      //   std::cout << aTile->GetTOAWaveform().at(k) << "\t" ;
+      // }
+      // std::cout <<"\n\t\t\t";
+      // for (int k = 0; k < (int)aTile->GetTOAWaveform().size(); k++ )
+      //   std::cout <<"\t";  
+      // std::cout << " integ: "<< aTile->GetTOT() << "\t" << aTile->GetTOA() << std::endl;
+      
+      if (aTile->GetTOA() > 0) triggered= true;
+      // if(aTile->GetLocalTriggerBit()!= (char)1){
+        // event.RemoveTile(aTile);
+        // j--;
+      // }
+    }
+    
+    if (!triggered && debug == 3){
+      for(int j=0; j<event.GetNTiles(); j++){
+        Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
+        // testing for any signal beyond noise
+        std::cout << "Cell ID:" << aTile->GetCellID() << "\t" << calib.GetPedestalMeanH(aTile->GetCellID()) << "\t" << calib.GetPedestalMeanL(aTile->GetCellID()) << "\n \tADC-wave " ;
+        for (int k = 0; k < (int)aTile->GetADCWaveform().size(); k++ ){
+          std::cout << aTile->GetADCWaveform().at(k) << "\t" ;
+        }
+        std::cout << "\n \tTOT-Wave ";
+        for (int k = 0; k < (int)aTile->GetTOTWaveform().size(); k++ ){
+          std::cout << aTile->GetTOTWaveform().at(k) << "\t" ;
+        }
+        std::cout << "\n \tTOA-Wave ";
+        for (int k = 0; k < (int)aTile->GetTOAWaveform().size(); k++ ){
+          std::cout << aTile->GetTOAWaveform().at(k) << "\t" ;
+        }
+        std::cout <<"\n\t\t\t";
+        for (int k = 0; k < (int)aTile->GetTOAWaveform().size(); k++ )
+          std::cout <<"\t";  
+        std::cout << " integ: "<< aTile->GetTOT() << "\t" << aTile->GetTOA() << std::endl;
+      }
+    }
+    
+    RootOutput->cd();
+    if (triggered){
+      evtTrigg++;
+      TdataOut->Fill();
+    }
+  }
+  TdataOut->Write();
+  TsetupIn->CloneTree()->Write();
+  
+  std::cout << "Evts in: " << maxEvents << "\t skimmed: " << evtTrigg << std::endl;
+   
+  if (IsCalibSaveToFile()){
+    TString fileCalibPrint = RootOutputName;
+    fileCalibPrint         = fileCalibPrint.ReplaceAll(".root","_calib.txt");
+    calib.PrintCalibToFile(fileCalibPrint);
+  }
+
+  TcalibOut->Fill();
+  TcalibOut->Write();
+  RootOutput->Close();
+  RootInput->Close();      
+  
+  return true;
+}
 
 
 //***********************************************************************************************

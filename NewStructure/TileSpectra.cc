@@ -605,6 +605,49 @@ bool TileSpectra::FitLGHGCorr(int verbosity, bool resetCalib){
   return true;
 }
 
+bool TileSpectra::FitPedConstWage(int verbosity){
+  if (verbosity > 2) std::cout << "FitCorr cell ID: " << cellID << std::endl;
+  TString funcName = Form("fcorr%sPedWaveCellID%d",TileName.Data(),cellID);
+  
+  Double_t fitRange[2]  = {0, hcorr.GetXaxis()->GetBinCenter(hcorr.GetNbinsX())};
+  int fitStatus   = 0; 
+  int limitStatus = 0;
+  
+  // bcorrHGLG = true;
+  HGLGcorr =  TF1(funcName.Data(),"pol0", fitRange[0], fitRange[1]);
+  HGLGcorr.SetParameter(0,80.);
+  HGLGcorr.SetParLimits(0,40.,120.);
+  
+  hcorr.RebinY(4);
+  fitStatus = hcorr.Fit(&HGLGcorr,"QRMNE0"); 
+  
+  if (!(HGLGcorr.IsValid())){
+    if (verbosity > 0) std::cout << "Skipped ped wave cell " << cellID << " fit failed" << std::endl;
+    bcorrHGLG = false;
+  } else {
+    if ( HGLGcorr.GetParameter(0) == 40. || HGLGcorr.GetParameter(0) == 120. ) 
+      limitStatus++;
+    if (!(fitStatus == 4000 || fitStatus == 0)){ // only accept fits which succeeded in general
+      if (verbosity > 0) std::cout << "Skipped ped wave cell " << cellID << " fit failed" << std::endl;
+      bcorrHGLG = false;
+    } else if (limitStatus > 0){                        // don't accept fits which reached the set limits
+      if (verbosity > 0) std::cout << "Skipped ped wave cell " << cellID << " too many limits reached" << std::endl;
+      bcorrHGLG = false;
+    } else {
+      bcorrHGLG= true;
+    }
+  }
+  
+  if (bcorrHGLG){
+    // std::cout << HGLGcorr.GetParameter(0) << std::endl;
+    calib->PedestalMeanL    = HGLGcorr.GetParameter(0);
+    calib->PedestalSigL     = HGLGcorr.GetParError(0);
+  }
+  
+  return bcorrHGLG;
+}
+
+
 bool TileSpectra::FitNoiseWithBG(double* out){
   return true;
 }

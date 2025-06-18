@@ -69,7 +69,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"c:F:pT:sk:P:SnbB:L:NtMC:fo:O:aA:eEm:d:i:y:r:h"))!=-1){
+  while((c=getopt(argc,argv,"c:F:pT:sk:P:SnbB:L:NtMC:fo:O:aA:eEm:d:i:Xy:r:h"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"DataPrep: printing calib object to file"<<std::endl;
@@ -180,6 +180,10 @@ int main(int argc, char* argv[]){
       std::cout<<"DataPrep: run local trigger, with calib file:" << optarg<<std::endl;
       AnAnalysis.IsToEvalLocalTrigg(true);
       AnAnalysis.SetRootCalibInput(Form("%s",optarg));
+      break;
+    case 'X':
+      std::cout<<"DataPrep: Skim HGCROC data: "<<std::endl;
+      AnAnalysis.IsToSkimHGCROC(true);
       break;
     case 'y':
       std::cout<<"DataPrep: Setting year externally: "<<optarg<<std::endl;

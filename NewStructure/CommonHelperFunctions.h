@@ -71,7 +71,7 @@
   }
   
   struct RunInfo{
-    RunInfo(): runNr(0), species(""), pdg(0), energy(0), vop(0), vbr(0), lgSet(0), hgSet(0), posX(0), posY(0), assemblyNr(0), year(-1), month(-1), readout(""), facility(""), beamline("") {}
+    RunInfo(): runNr(0), species(""), pdg(0), energy(0), vop(0), vbr(0), lgSet(0), hgSet(0), posX(0), posY(0), assemblyNr(0), year(-1), month(-1), readout(""), facility(""), beamline(""), samples(0), trigDelay(0) {}
     int runNr;
     TString species;
     int pdg;
@@ -88,6 +88,10 @@
     TString readout;
     TString facility;
     TString beamline;
+    int samples;
+    int trigDelay;
+    int trigDead;
+    int phase;
   } ;
 
   TString GetStringFromRunInfo(RunInfo, Int_t);
@@ -147,21 +151,29 @@
 
       // Put them to the correct variables    
       RunInfo tempRun;
+      tempRun.facility= facility;
+      tempRun.beamline= beamline;
+      tempRun.readout = readout;
+      tempRun.year    = year; 
+      tempRun.month    = month; 
       tempRun.runNr    = ((TString)((TObjString*)tempArr->At(0))->GetString()).Atoi();
       tempRun.species  =  (TString)((TObjString*)tempArr->At(1))->GetString();
       tempRun.pdg      = ((TString)((TObjString*)tempArr->At(2))->GetString()).Atoi();
       tempRun.energy   = ((TString)((TObjString*)tempArr->At(3))->GetString()).Atof();
       tempRun.vop      = ((TString)((TObjString*)tempArr->At(4))->GetString()).Atof();
       tempRun.vbr      = ((TString)((TObjString*)tempArr->At(5))->GetString()).Atof();
-      tempRun.hgSet    = ((TString)((TObjString*)tempArr->At(6))->GetString()).Atoi();
-      tempRun.lgSet    = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
+      
+      if (readout.CompareTo("CAEN") == 0){
+        tempRun.hgSet    = ((TString)((TObjString*)tempArr->At(6))->GetString()).Atoi();
+        tempRun.lgSet    = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
+      } else {
+        tempRun.trigDelay = ((TString)((TObjString*)tempArr->At(6))->GetString()).Atoi();
+        tempRun.samples   = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
+        tempRun.trigDead  = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atoi();
+        tempRun.phase     = ((TString)((TObjString*)tempArr->At(11))->GetString()).Atoi();
+      }
       tempRun.posX    = ((TString)((TObjString*)tempArr->At(8))->GetString()).Atoi();
       tempRun.posY    = ((TString)((TObjString*)tempArr->At(9))->GetString()).Atoi();
-      tempRun.facility= facility;
-      tempRun.beamline= beamline;
-      tempRun.readout = readout;
-      tempRun.year    = year; 
-      tempRun.month    = month; 
       if (specialData == 1) tempRun.assemblyNr = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atoi();
                   
       if (debug > 1) std::cout << "Run " << tempRun.runNr << "\t species: " << tempRun.species << "\t energy: "  << tempRun.energy << "\t Vop: " << tempRun.vop << "\t Vov: " << tempRun.vop-tempRun.vbr << "\t Xbeam: " << tempRun.posX<< "\t Ybeam: " << tempRun.posY<< std::endl;

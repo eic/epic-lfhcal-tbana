@@ -209,7 +209,7 @@ bool EventDisplay::Plot(){
       }      
     }
     
-    if (nCells > 0) {
+    if (nCells > minTilesHit) {
       int nLayerSingleCell = 0;
       for(ithLayer=layers.begin(); ithLayer!=layers.end(); ++ithLayer){
         if (ithLayer->second.nCells == 1) 
