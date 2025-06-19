@@ -15,8 +15,8 @@ fi
 # done
 
 # local cosmics
-runs='006'
-# runs='007'
+# runs='006'
+runs='007'
 for runNr in $runs; do 
-  ./Convert -d 2 -f -w -c $dataDir/Run$runNr.h2g -o $dataRaw/rawNewHGCROC_$runNr.root -m ../configs/mapping_HGCROC_Cosmics_20250606.txt -r ../configs/DataTakingDB_ORNL_HGCROC.txt
+  ./Convert -d 2 -f -w -c $dataDir/Run$runNr.h2g -o $dataRaw/rawHGCROC_$runNr.root -m ../configs/mapping_HGCROC_Cosmics_20250606.txt -r ../configs/DataTakingDB_ORNL_HGCROC.txt
 done
