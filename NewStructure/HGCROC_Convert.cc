@@ -84,7 +84,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
         
         // convert from the aligned_events datatype to the Event datatype
     int event_number = 0;
-    auto decoder = new hgc_decoder((char*)analysis->ASCIIinputName.Data(), 1, 4, 5);
+    auto decoder = new hgc_decoder((char*)analysis->ASCIIinputName.Data(), 1, analysis->setup->GetNMaxKCUs(), 5);
     for (auto ae : *decoder) {
         if (true || event_number % 100 == 0) {
             std::cout << "\rFitting event " << event_number << std::flush;
