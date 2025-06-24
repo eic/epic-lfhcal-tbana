@@ -2674,7 +2674,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
     std::map<int, CalibSummary>::iterator itrun;
     Int_t nruns = 0;
     for(itrun=sumRuns.begin(); itrun!=sumRuns.end(); ++itrun){
-      TH1D* tempH; 
+      TH1D* tempH = nullptr; 
       if (option==0) tempH = itrun->second.GetHGped();
       else if (option==1) tempH = itrun->second.GetHGpedwidth();
       else if (option==2) tempH = itrun->second.GetLGped();
