@@ -4,9 +4,7 @@
 #include <map>
 #include <utility>
 #include <string>
-#ifdef __APPLE__
 #include <unistd.h>
-#endif
 #include "TString.h"
 #include "TFile.h"
 #include "TTree.h"

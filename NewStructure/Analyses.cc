@@ -1,9 +1,7 @@
 #include "Analyses.h"
 #include <vector>
 #include "TROOT.h"
-#ifdef __APPLE__
 #include <unistd.h>
-#endif
 #include "TF1.h"
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
