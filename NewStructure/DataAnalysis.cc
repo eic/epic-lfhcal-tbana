@@ -2,6 +2,7 @@
 #include <vector>
 #include "TROOT.h"
 #include <cmath>  
+#include <algorithm>
 //#include <unistd.h> // Add for use on Mac OS -> Same goes for Analyse.cc
 #include "TF1.h"
 #include "TFitResult.h"
