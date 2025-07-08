@@ -98,17 +98,3 @@ bool CalibSummary::Analyse(){
   std::cout << "***********************************************************************************************************************" << std::endl;
   return true;
 }
-bool CalibSummary::SetDeltaTimeHist(TH1D* Hist) {
-    if (Hist){
-      TH1D temp = *Hist;
-      temp.SetName(Form("%s_Run%i",Hist->GetName(),RunNr));
-      temp.SetDirectory(0);
-      temp.GetYaxis()->SetTitle("Counts");
-      hDeltaTime = temp;
-      return true;
-    }
-    else{
-        return false;
-    }
-    return false;
-}

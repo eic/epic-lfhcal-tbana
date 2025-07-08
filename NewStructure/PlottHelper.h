@@ -20,6 +20,7 @@
 #include "TileSpectra.h"  
 #include "TileTrend.h"  
 #include "CalibSummary.h"  
+#include "AnaSummary.h"
 #include "CommonHelperFunctions.h"
   //__________________________________________________________________________________________________________
   //__________________________________________________________________________________________________________
@@ -3019,7 +3020,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
   // Plot 1D distribution
   //__________________________________________________________________________________________________________  
   void PlotAnalysisComparison( TCanvas* canvas2D, Int_t option, 
-                            std::map<int, CalibSummary> sumRuns, 
+                            std::map<int, AnaSummary> sumRuns, 
                             Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
                             //int labelOpt = 1,
                             TString additionalLabel = "", int debug = 0
@@ -3032,7 +3033,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
     bool isSameVoltage    = true;
     double commanVoltage  = 0;
     
-    std::map<int, CalibSummary>::iterator itrun;
+    std::map<int, AnaSummary>::iterator itrun;
     Int_t nruns = 0;
     for(itrun=sumRuns.begin(); itrun!=sumRuns.end(); ++itrun){
       TH1D* tempH; 

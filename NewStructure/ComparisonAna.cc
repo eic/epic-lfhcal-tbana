@@ -12,6 +12,7 @@
 #include "TChain.h"
 #include "TileSpectra.h"
 #include "TileTrend.h"
+#include "AnaSummary.h"
 #include "CalibSummary.h"
 #include "CommonHelperFunctions.h"
 #include "PlottHelper.h"
@@ -222,8 +223,8 @@ bool ComparisonAna::ProcessAna(void){
         // global variable setup, common iterators and ranges
         // ******************************************************************************************
 
-        std::map<int, CalibSummary> sumCalibs;
-        std::map<int, CalibSummary>::iterator isumCalibs;
+        std::map<int, AnaSummary> sumCalibs;
+        std::map<int, AnaSummary>::iterator isumCalibs;
         
         double Xvalue;
         double Xmin= 9999.;
@@ -247,7 +248,7 @@ bool ComparisonAna::ProcessAna(void){
             // set global iterator for runs to first run number in list to obtain beam-line, dates...
             if (ientry==0) it = ri.find(calib.GetRunNumber());
                 Xvalue=calib.GetRunNumber();
-                CalibSummary aSum = CalibSummary(calib.GetRunNumber(),calib.GetVop());
+                AnaSummary aSum = AnaSummary(calib.GetRunNumber(),calib.GetVop());
 
                 TH1D* hTimeDiff = nullptr;
                 TFile* tempFile = nullptr;
