@@ -1,7 +1,9 @@
 #include "Analyses.h"
 #include <vector>
 #include "TROOT.h"
+#ifdef __APPLE__
 #include <unistd.h>
+#endif
 #include "TF1.h"
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
@@ -521,6 +523,9 @@ bool Analyses::ConvertASCII2Root(void){
         if((int)itevent->second.size()==setup->GetTotalNbChannels()/*8*64*/){
           //Fill the tree the event is complete and erase from the map
           event.SetTimeStamp(tmpTime[TriggerID]/setup->GetNMaxROUnit());
+          if(debug==1000){
+            std::cerr<<event.GetTimeStamp()<<std::endl;
+          }
           event.SetEventID(itevent->first);
           for(std::vector<Caen>::iterator itv=itevent->second.begin(); itv!=itevent->second.end(); ++itv){
             event.AddTile(new Caen(*itv));
@@ -571,6 +576,9 @@ bool Analyses::ConvertASCII2Root(void){
           itevent=tmpEvent.find(TriggerID);
           //Fill the tree the event is complete and erase from the map
           event.SetTimeStamp(tmpTime[TriggerID]/setup->GetNMaxROUnit());
+          if(debug==1000){
+            std::cerr<<event.GetTimeStamp()<<std::endl;
+          }
           event.SetEventID(itevent->first);
           for(std::vector<Caen>::iterator itv=vCaen.begin(); itv!=vCaen.end(); ++itv){
             event.AddTile(new Caen(*itv));
@@ -657,6 +665,9 @@ bool Analyses::ConvertASCII2Root(void){
           //Fill the tree the event is complete and erase from the map
           event.SetTimeStamp(tmpTime[TriggerID]/setup->GetNMaxROUnit());
           event.SetEventID(itevent->first);
+          if(debug==1000){
+            std::cerr<<event.GetTimeStamp()<<std::endl;
+          }
           for(std::vector<Caen>::iterator itv=itevent->second.begin(); itv!=itevent->second.end(); ++itv){
             event.AddTile(new Caen(*itv));
           }
@@ -709,6 +720,9 @@ bool Analyses::ConvertASCII2Root(void){
           itevent=tmpEvent.find(TriggerID);
           //Fill the tree the event is complete and erase from the map
           event.SetTimeStamp(tmpTime[TriggerID]/setup->GetNMaxROUnit());
+          if(debug==1000){
+            std::cerr<<event.GetTimeStamp()<<std::endl;
+          }
           event.SetEventID(itevent->first);
           for(std::vector<Caen>::iterator itv=vCaen.begin(); itv!=vCaen.end(); ++itv){
             event.AddTile(new Caen(*itv));
@@ -862,6 +876,9 @@ bool Analyses::ConvertOldRootFile2Root(void){
      if((int)vCaen.size()==setup->GetTotalNbChannels()){
       //Fill the tree the event is complete and erase from the map
       event.SetTimeStamp(Time);
+      if(debug==1000){
+            std::cerr<<event.GetTimeStamp()<<std::endl;
+      }
       event.SetEventID(TriggerID);
       for(std::vector<Caen>::iterator itv=vCaen.begin(); itv!=vCaen.end(); ++itv){
         event.AddTile(new Caen(*itv));
@@ -2890,6 +2907,9 @@ bool Analyses::RunEvalLocalTriggers(void){
   int runNr = -1;
   for(int i=0; i<evts && i < maxEvents; i++){
     TdataIn->GetEntry(i);
+    if(debug==1000){
+        std::cerr<<event.GetTimeStamp()<<std::endl;
+      }
     if (i == 0){
       runNr = event.GetRunNumber();
       std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
@@ -3028,6 +3048,9 @@ bool Analyses::Calibrate(void){
   if (evts < 10000)
     outCount  = 500;
   for(int i=0; i<evts && i < maxEvents; i++){
+    if(debug==1000){
+        std::cerr<<event.GetTimeStamp()<<std::endl;
+      }
     TdataIn->GetEntry(i);
     if (i%outCount == 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
     if (i == 0){

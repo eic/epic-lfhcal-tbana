@@ -8,7 +8,7 @@ int Event::GetEventID(void) const{
   return EventID;
 }
 
-int Event::GetTimeStamp(void) const{
+double Event::GetTimeStamp(void) const{
   return TimeStamp;
 }
 
@@ -24,7 +24,7 @@ void Event::SetEventID(int ev){
   EventID=ev;
 }
 
-void Event::SetTimeStamp(int t){
+void Event::SetTimeStamp(double t){
   TimeStamp=t;
 }
 

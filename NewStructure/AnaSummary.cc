@@ -1,10 +1,10 @@
-#include "CalibSummary.h"
+#include "AnaSummary.h"
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
 
-ClassImp(CalibSummary);
+ClassImp(AnaSummary);
 
-bool CalibSummary::Fill(const TileCalib& tc){
+bool AnaSummary::Fill(const TileCalib& tc){
   hLGped        .Fill(tc.PedestalMeanL);
   hLGpedwidth   .Fill(tc.PedestalSigL);
   hHGped        .Fill(tc.PedestalMeanH);
@@ -22,7 +22,7 @@ bool CalibSummary::Fill(const TileCalib& tc){
   return true;
 }
 
-bool CalibSummary::Write(TFile* f){
+bool AnaSummary::Write(TFile* f){
   f->cd();
   hLGped          .Write();
   hLGpedwidth     .Write();
@@ -40,7 +40,7 @@ bool CalibSummary::Write(TFile* f){
   return true;
 }
 
-bool CalibSummary::Analyse(){
+bool AnaSummary::Analyse(){
   std::cout << "***********************************************************************************************************************" << std::endl;
   std::cout << "Run Nr.: "<< RunNr << "\t total entries: "<< hLGped.GetEntries() << std::endl;
   std::cout << Form("\t --> LG pedestal:\t mean:\t%3.3f\t\tRMS:\t%3.3f\t\t%.0f\t out of bounds", 
@@ -98,7 +98,7 @@ bool CalibSummary::Analyse(){
   std::cout << "***********************************************************************************************************************" << std::endl;
   return true;
 }
-bool CalibSummary::SetDeltaTimeHist(TH1D* Hist) {
+bool AnaSummary::SetDeltaTimeHist(TH1D* Hist) {
     if (Hist){
       TH1D temp = *Hist;
       temp.SetName(Form("%s_Run%i",Hist->GetName(),RunNr));

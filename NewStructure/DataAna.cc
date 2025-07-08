@@ -37,6 +37,7 @@ void PrintHelp(char* exe){
   std::cout<<"-Q       Run basic QA routine"<<std::endl;
   std::cout<<"-r rrr   Name of run list file  2024 PS TB [../configs/DataTakingDB_202409_CAEN.csv] "<<std::endl;
   std::cout<<"-y yyyy  setting year externally to narrow parameters"<<std::endl;
+  std::cout<<"-t       Create Deltatime histos (Use -M and -m for Max and min)"<<std::endl;
   std::cout<<"Examples:"<<std::endl;
   std::cout<<exe<<" -Q (-f) -P plotDir/ -O OutputHist.root -i input.root (-f to overwrite existing output)"<<std::endl;
 }
@@ -49,7 +50,7 @@ int main(int argc, char* argv[]){
   }
   DataAnalysis AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"ad:e:fF:hi:n:o:O:P:qQr:y:"))!=-1){
+  while((c=getopt(argc,argv,"ad:e:fF:hi:n:o:O:P:qQr:y:tM:m:L:l:"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"printing calib object to file"<<std::endl;
@@ -110,6 +111,26 @@ int main(int argc, char* argv[]){
     case '?':
       std::cout<<"Option "<<optarg <<" not supported, will be ignored "<<std::endl;
       break;
+    case 't':
+      std::cout<<"Making DeltaTime Histos"<<std::endl;
+      AnAnalysis.SetDeltaTimePlotting(true);
+      break;
+    case 'M':
+      std::cout<<"Setting max for DeltaTime histos"<<std::endl;
+      AnAnalysis.SetTimeMax(atoi(optarg));
+      break;
+    case 'm':
+      std::cout<<"Setting min for DeltaTime histos"<<std::endl;
+      AnAnalysis.SetTimeMin(atoi(optarg));
+      break;
+    case 'L':
+      std::cout<<"Setting max percent for DeltaTime histos"<<std::endl;
+      AnAnalysis.SetPercentMax(atoi(optarg));
+      break;
+    case 'l':
+      std::cout<<"Setting min percent for DeltaTime histos"<<std::endl;
+      AnAnalysis.SetPercentMin(atoi(optarg));
+      break;    
     case 'h':
       PrintHelp(argv[0]);
       return 0;

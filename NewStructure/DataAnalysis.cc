@@ -1,6 +1,7 @@
 #include "DataAnalysis.h"
 #include <vector>
 #include "TROOT.h"
+#include <cmath>  
 //#include <unistd.h> // Add for use on Mac OS -> Same goes for Analyse.cc
 #include "TF1.h"
 #include "TFitResult.h"
@@ -137,7 +138,10 @@ bool DataAnalysis::Process(void){
 //***********************************************************************************************
 bool DataAnalysis::QAData(void){
   std::cout<<"QA data"<<std::endl;
-
+  if(debug==1000){
+    std::cerr<<"Time Min: "<<timemin<<std::endl;
+    std::cerr<<"Time Max: "<<timemax<<std::endl;
+  }
   std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
   TdataIn->GetEntry(0);
   Int_t runNr = event.GetRunNumber();
@@ -241,7 +245,10 @@ bool DataAnalysis::QAData(void){
   hNCellsVsLayerMuon->SetDirectory(0);
   hNCellsVsLayerMuon->Sumw2();
   
-  
+
+
+  //Create 1D Histos for Delta time
+  TH1D* hDeltaTime = new TH1D("hDeltaTime", "Time Difference between Events; Delta Time (#mus); Counts", 2000, 0, 100000);
   
   std::map<int,TileSpectra> hSpectra;
   std::map<int,TileSpectra> hSpectraTrigg;
@@ -267,6 +274,8 @@ bool DataAnalysis::QAData(void){
   }
 
   int evtsMuon= 0;
+  double last_time = 0;
+  double DeltaTime = 1000000000;
   for(int i=0; i<evts; i++){
     TdataIn->GetEntry(i);
     if (i%5000 == 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
@@ -277,6 +286,32 @@ bool DataAnalysis::QAData(void){
     std::map<int,Layer> layers;
     std::map<int, Layer>::iterator ithLayer;
     
+    // Find and fill delta time
+    double current_time = event.GetTimeStamp();
+    if(last_time != 0){
+      DeltaTime = current_time - last_time;
+      if (debug == 1000){
+        std::cerr<< "current timestamp: "<< current_time<<std::endl;
+      }
+    }
+    if (DeltaTime == 0){
+      if(debug == 1001){
+        std::cerr<< "Run Number: " << runNr <<"      Event Number: "<< i << std::endl;
+        std::cerr<< "Previous Timestamp (us): "<< last_time <<"      Current Timestamp: "<< current_time<<std::endl;
+      }
+    }
+        //cut based on DeltaTime range
+    if(DeltaTime < timemin || DeltaTime > timemax){
+      //std::cout<<"event rejected:"<< i <<std::endl;
+      last_time = current_time;
+      continue;
+    }
+    hDeltaTime->Fill(DeltaTime);
+    last_time = current_time;
+    
+
+    
+
     for(int j=0; j<event.GetNTiles(); j++){
       Caen* aTile=(Caen*)event.GetTile(j);
       double corrHG = aTile->GetADCHigh()-calib.GetPedestalMeanH(aTile->GetCellID());
@@ -406,6 +441,8 @@ bool DataAnalysis::QAData(void){
   RootInput->Close();      
   
   RootOutputHist->cd();
+
+  hDeltaTime->Write();
 
   hspectraHGvsCellID->Write();
   hspectraLGvsCellID->Write();
@@ -598,6 +635,16 @@ bool DataAnalysis::QAData(void){
   TCanvas* canvas2DCorrWOLine = new TCanvas("canvasCorrPlotsWoLine","",0,0,1450,1300);  // gives the page size
   DefaultCancasSettings( canvas2DCorrWOLine, 0.08, 0.13, 0.01, 0.07);
   canvas2DCorrWOLine->SetLogz(1);
+  
+ TCanvas* canvasDeltaTime = new TCanvas("canvasDeltaTime","",0,0,1450,1300);  // gives the page size
+  DefaultCancasSettings( canvasDeltaTime, 0.08, 0.07, 0.01, 0.07);
+  canvasDeltaTime->SetLogy(1);
+
+
+  if(DeltaTimePlot>0){
+    PlotSimple1D( canvasDeltaTime, hDeltaTime, -10000, timemax, textSizeRel, Form("%s/deltaTime.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+  } 
+
   PlotSimple2D( canvas2DCorr, hspectraHGvsCellID, -10000, -10000, textSizeRel, Form("%s/HG.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraLGvsCellID, -10000, -10000, textSizeRel, Form("%s/LG.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraHGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/HGCorr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
@@ -683,7 +730,7 @@ bool DataAnalysis::QAData(void){
   PlotLayerOverlay(canvas1DSimple, histNCellsLayer_All, evts*100, 8.5 ,GetAverageLayer(layersMeanAll), GetMaxLayer(layersMeanAll), textSizeRel, Form("%s/NCellsLayerOverlay_AllTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "All triggers");
   PlotLayerOverlay(canvas1DSimple, histNCellsLayer_Muon, evtsMuon*100, 8.5, GetAverageLayer(layersMeanMuon), GetMaxLayer(layersMeanMuon),textSizeRel, Form("%s/NCellsLayerOverlay_MuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Muon triggers");
   PlotLayerOverlay(canvas1DSimple, histNCellsLayer_WoMuon, (evts-evtsMuon)*100, 8.5, GetAverageLayer(layersMeanWOMuon), GetMaxLayer(layersMeanWOMuon),textSizeRel, Form("%s/NCellsLayerOverlay_NonMuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Non muon triggers");
-  
+
   if (ExtPlot > 0){
     gSystem->Exec("mkdir -p "+outputDirPlots+"/detailed");
     //***********************************************************************************************************
@@ -752,7 +799,7 @@ bool DataAnalysis::QAData(void){
 
 
 //***********************************************************************************************
-//*********************** Advanced QA routine ***************************************************
+//*********************** Simple QA routine ***************************************************
 //***********************************************************************************************
 bool DataAnalysis::SimpleQAData(void){
   std::cout<<"QA data"<<std::endl;
@@ -773,6 +820,7 @@ bool DataAnalysis::SimpleQAData(void){
   }
   
   // create HG and LG histo's per channel
+  TH1D* hDeltaTime = new TH1D("hDeltaTime", "Time Difference between Events; Delta Time (#mus); Counts", 2000, 0, 100000);
   TH2D* hspectraHGCorrvsCellID      = new TH2D( "hspectraHGCorr_vsCellID","ADC spectrum High Gain corrected vs CellID; cell ID; ADC_{HG} (arb. units)  ; counts ",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4000,-200,3800);
   hspectraHGCorrvsCellID->SetDirectory(0);
@@ -795,8 +843,64 @@ bool DataAnalysis::SimpleQAData(void){
   std::cout << "average HG mip: " << averageScale << "\t active ch: "<< actCh1st<< std::endl;
   
   int evts=TdataIn->GetEntries();
+  double last_time = 0;
+  double DeltaTime = 1000000000;
+  
+  
+  if(percentmax!=100 || percentmin!=0){
+    std::vector<double> deltat;
+    deltat.reserve(evts);
+    // Percentile calculations
+    for (int i=0; i<evts; i++){
+      TdataIn->GetEntry(i);
+      
+      double current_time = event.GetTimeStamp();
+      if(last_time != 0){
+        DeltaTime = current_time - last_time;
+      }
+      if (DeltaTime != 1000000000){
+        deltat.push_back(DeltaTime);
+      }
+      last_time = current_time;
+    }
+    std::sort(deltat.begin(), deltat.end());
+    int eventmax = static_cast<int>(std::round(percentmax*evts/100.0));
+    int eventmin = static_cast<int>(std::round(percentmin*evts/100.0));
+    std::cout << "eventmax: " << eventmax <<std::endl;
+    std::cout <<"eventmin: " << eventmin << std::endl;
+    if (percentmax != 100) timemax = deltat[eventmax-2];
+    if (percentmin != 0) timemin = deltat[eventmin-1];
+    std::cout << "timemax: " << timemax <<std::endl;
+    std::cout <<"timemin: " << timemin << std::endl;
+  }
+  
+  // Event loop
   for(int i=0; i<evts; i++){
     TdataIn->GetEntry(i);
+    
+    // Find and fill delta time
+    double current_time = event.GetTimeStamp();
+    if(last_time != 0){
+      DeltaTime = current_time - last_time;
+      if (debug == 1000){
+        std::cerr<< "current timestamp: "<< current_time<<std::endl;
+      }
+    }
+    if (DeltaTime == 0){
+      if(debug == 1001){
+        std::cerr<< "Run Number: " << runNr <<"      Event Number: "<< i << std::endl;
+        std::cerr<< "Previous Timestamp (us): "<< last_time <<"      Current Timestamp: "<< current_time<<std::endl;
+      }
+    }
+        //cut based on DeltaTime range
+    if(DeltaTime < timemin || DeltaTime > timemax){
+      std::cout<<"event rejected:"<< i <<std::endl;
+      last_time = current_time;
+      continue;
+    }
+    hDeltaTime->Fill(DeltaTime);
+    last_time = current_time;
+    
     if (i%5000 == 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
     for(int j=0; j<event.GetNTiles(); j++){
       Caen* aTile=(Caen*)event.GetTile(j);
@@ -836,6 +940,8 @@ bool DataAnalysis::SimpleQAData(void){
   hspectraLGCorrvsCellID->Write();
   hspectraEnergyvsCellID->Write();
 
+  hDeltaTime->Write();
+
   RootOutputHist->cd("IndividualCells");
   for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
     ithSpectra->second.Write(false);
@@ -854,6 +960,14 @@ bool DataAnalysis::SimpleQAData(void){
   StyleSettingsBasics("pdf");
   SetPlotStyle();
   
+  TCanvas* canvasDeltaTime = new TCanvas("canvasDeltaTime","",0,0,1450,1300);  // gives the page size
+  DefaultCancasSettings( canvasDeltaTime, 0.08, 0.07, 0.01, 0.07);
+  canvasDeltaTime->SetLogy(1);
+  
+  if(DeltaTimePlot>0){
+    PlotSimple1D( canvasDeltaTime, hDeltaTime, -10000, timemax, textSizeRel, Form("%s/deltaTime.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+  } 
+  
   TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
   DefaultCancasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
   canvas2DCorr->SetLogz(1);
@@ -863,7 +977,7 @@ bool DataAnalysis::SimpleQAData(void){
   PlotSimple2D( canvas2DCorr, hspectraHGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/HGCorr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraLGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/LGCorr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraEnergyvsCellID, -10000, -10000, textSizeRel, Form("%s/EnergyVsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-
+    
   if (ExtPlot > 0){
     gSystem->Exec("mkdir -p "+outputDirPlots+"/detailed");
     //***********************************************************************************************************

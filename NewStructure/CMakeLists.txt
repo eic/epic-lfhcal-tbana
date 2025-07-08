@@ -86,6 +86,7 @@ set(ROOT_HEADERS
   TileSpectra.h
   TileTrend.h
   CalibSummary.h
+  AnaSummary.h
 )
 
 # Generate ROOT dictionary
@@ -103,6 +104,7 @@ set(LIB_SOURCES
   TileSpectra.cc
   TileTrend.cc
   CalibSummary.cc
+  #AnaSummary.cc
 )
 
 # Create the LFHCAL shared library
@@ -163,9 +165,13 @@ if(H2G_DECODE_FOUND)
   target_link_libraries(Display h2g_decode)
 endif()
 
-# Compare executable
-add_executable(Compare Compare.cc ComparisonCalib.cc)
-target_link_libraries(Compare LFHCAL ${ROOT_LIBRARIES})
+# CompareCalib executable
+add_executable(CompareCalib CompareCalib.cc ComparisonCalib.cc)
+target_link_libraries(CompareCalib LFHCAL ${ROOT_LIBRARIES})
+
+# CompareAna executable
+add_executable(CompareAna CompareAna.cc ComparisonAna.cc)
+target_link_libraries(CompareAna LFHCAL ${ROOT_LIBRARIES})
 
 # HGCROC_Conversion target (modified Convert with additional flags)
 if(H2G_DECODE_FOUND)

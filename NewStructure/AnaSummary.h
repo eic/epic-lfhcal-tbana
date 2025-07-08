@@ -1,5 +1,5 @@
-#ifndef CALIBSUMMARY_H
-#define CALIBSUMMARY_H
+#ifndef ANASUMMARY_H
+#define ANASUMMARY_H
 
 #include "TObject.h"
 #include "TString.h"
@@ -14,11 +14,11 @@
 #include "TFile.h"
 #include "Calib.h"
 
-class CalibSummary: public TObject{
+class AnaSummary: public TObject{
 
  public:
- CalibSummary():TObject(){}
- CalibSummary(int id, double v, int ext = 0):TObject()
+ AnaSummary():TObject(){}
+ AnaSummary(int id, double v, int ext = 0):TObject()
  {
     RunNr             = id;
     Voltage           = v;
@@ -36,7 +36,7 @@ class CalibSummary: public TObject{
     hHGLGcorr         = TH1D(Form("hHGLGCorr_%i",id),"; a_{HG-LG} (arb. units) ; counts ", 400, 0., 1.);
     hHGLGOffcorr      = TH1D(Form("hHGLGOffCorr_%i",id),"; b_{HG-LG} (arb. units) ; counts ", 1000, -100., 100.);
   }
-  ~CalibSummary(){}
+  ~AnaSummary(){}
 
   bool Analyse();
   bool Fill(const TileCalib&);
@@ -77,7 +77,7 @@ class CalibSummary: public TObject{
   TH1D hLGHGOffcorr  ;
   TH1D hDeltaTime    ;
   
-  ClassDef(CalibSummary,2);
+  ClassDef(AnaSummary,2);
 };
 
 #endif

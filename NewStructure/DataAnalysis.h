@@ -38,12 +38,22 @@ class DataAnalysis{
   inline bool IsCalibSaveToFile(void)           const {return SaveCalibToFile;};
   inline short GetExtPlotting(void)             const {return ExtPlot;};
   inline bool IsToRunQA(void)                   const {return RunQA;};
+  inline bool GetDeltaTimePlotting(void)        const {return DeltaTimePlot;};
+  inline double GetTimeMin(void)                const {return timemin;};
+  inline double GetTimeMax(void)                const {return timemax;};
+  inline double GetPercentMin(void)             const {return percentmin;};
+  inline double GetPercentMax(void)             const {return percentmax;};
   
   //setter methods
   //Overload method for boolean...or is it too dangerous?
   inline void CanOverWrite(bool b)               {Overwrite=b;};
   inline void IsCalibSaveToFile(bool b)          {SaveCalibToFile=b;};
   inline void SetExtPlotting(short b)            {ExtPlot = b;};
+  inline void SetDeltaTimePlotting(bool b)      {DeltaTimePlot = b;};
+  inline void SetTimeMin(double b)               {timemin = b;};
+  inline void SetTimeMax(double b)               {timemax = b;};
+  inline void SetPercentMin(double b)            {percentmin = b;};
+  inline void SetPercentMax(double b)            {percentmax = b;};
   inline void EnableDebug(int i)                 {debug=i;};
   inline void IsToRunQA(bool b)                  {RunQA=b;};
   inline void IsToSimpleRunQA(bool b)            {RunSimpleQA=b;};
@@ -77,10 +87,15 @@ class DataAnalysis{
   bool RunSimpleQA            = false;    // Flag to run QA routine
   bool SaveCalibToFile        =false;     // Flag to save calib objects to text file
   short ExtPlot               =0;         // Enable extended plotting
+  bool DeltaTimePlot         =false;         // Enable deltatime plotting
   bool Overwrite              =false;     // Flag to overwrite outputs
   int debug                   =0;         // debug level 
   int yearData                =-1;        // data taking year externally set
   int eventNumber             =-1;        // maximum events externally set
+  double timemin              =0;         // set min cut for deltatime
+  double timemax              =35000;     // set max cut for deltatime
+  double percentmax           =100;       // set min percent cut for deltatime
+  double percentmin           =0;         // set max percent cut for deltatime
   RootSetupWrapper rsw;                   // Wrapper singleton class for setup
   RootSetupWrapper* rswptr;               // Pointer to wrapper for singleton class for setup
   Setup* setup;                           // geometry setup
