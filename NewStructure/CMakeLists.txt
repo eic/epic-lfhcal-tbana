@@ -104,7 +104,7 @@ set(LIB_SOURCES
   TileSpectra.cc
   TileTrend.cc
   CalibSummary.cc
-  #AnaSummary.cc
+  AnaSummary.cc
 )
 
 # Create the LFHCAL shared library
