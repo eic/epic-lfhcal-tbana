@@ -2968,6 +2968,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
         }
         
         TH1D* dummyhist;
+
         for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
           int tmpRunNr = ithTrend->second.GetRunNr(rc);
           profs[rc] = nullptr;
@@ -2983,7 +2984,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
               dummyhist->Draw("axis");
             }
 
-            SetLineDefaults(profs[rc], GetColorLayer(rc), 2, GetLineStyleLayer(rc));   
+            SetLineDefaults(profs[rc], GetColorLayer(rc), 2, GetLineStyleLayer(rc));  
             profs[rc]->SetMarkerStyle(24);
             profs[rc]->Draw("same,pe");
             if(p == 7) legend->AddEntry(profs[rc],Form("%d",tmpRunNr),"p");

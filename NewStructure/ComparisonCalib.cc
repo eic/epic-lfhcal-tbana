@@ -269,7 +269,7 @@ bool ComparisonCalib::ProcessCalib(void){
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       // Initialize calib summary
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      CalibSummary aSum = CalibSummary(calib.GetRunNumber(),calib.GetVop());
+      CalibSummary aSum = CalibSummary(nRun, calib.GetRunNumber(),calib.GetVop());
       
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       // Reading additional summary histos from 2nd file
@@ -447,7 +447,7 @@ bool ComparisonCalib::ProcessCalib(void){
       }
       
       // append CalibSummary object to map
-      sumCalibs[calib.GetRunNumber()]=aSum;
+      sumCalibs[nRun]=aSum;
       // close additional files opened
       if (expandedList){
       tempFile->Close(); 

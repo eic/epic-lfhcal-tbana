@@ -18,9 +18,9 @@ class CalibSummary: public TObject{
 
  public:
  CalibSummary():TObject(){}
- CalibSummary(int id, double v, int ext = 0):TObject()
+ CalibSummary(int id,int RunNum, double v, int ext = 0):TObject()
  {
-    RunNr             = id;
+    RunNr             = RunNum;
     Voltage           = v;
     hHGped            = TH1D(Form("hMeanPedHG_%i",id),"; #mu_{noise, HG} (arb. units); counts ", 500, -0.5, 500-0.5);
     hHGpedwidth       = TH1D(Form("hMeanPedHGwidth_%i",id),"; #sigma_{noise, HG} (arb. units); counts ", 400, -0.5*50/400, 50-(0.5*50/400));
@@ -58,8 +58,10 @@ class CalibSummary: public TObject{
   inline TH1D* GetHGLGcorr()      {return &hHGLGcorr;};
   inline TH1D* GetHGLGOffcorr()   {return &hHGLGOffcorr;};
   inline double GetVoltage()      {return Voltage;};
+  inline int GetRunNumber()       {return RunNr;};
   
  protected:
+  int id             ;
   int RunNr          ;
   double Voltage     ;
   TH1D hLGped        ;
