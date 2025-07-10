@@ -3081,7 +3081,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
           histos[currRun]->Draw("same,hist");
 	//  std::cout<<"plot next" <<std::endl;
         }
-        legend->AddEntry(histos[currRun],Form("%d",itrun->first),"l");
+        legend->AddEntry(histos[currRun],Form("%d",itrun->second.GetRunNumber()),"l");
         currRun++;  
       }  
       histos[0]->DrawCopy("axis,same");

@@ -417,7 +417,7 @@ bool ComparisonCalib::ProcessCalib(void){
             itrend->second.FillExtended(Xvalue,triggers, (int)calib.GetRunNumber(), histCellHG, histCellLG, profCellLGHG); 
             itrend->second.FillSB(Xvalue, sbSignal, sbNoise);
           } else if (expandedList == 3){
-            std::cout<<"test" << (int)calib.GetRunNumber()<<std::endl;
+            std::cerr<<"Run Num: " << (int)calib.GetRunNumber()<<std::endl;
             itrend->second.FillExtended(Xvalue,1, (int)calib.GetRunNumber(), nullptr, nullptr, profCellLGHG); 
             // itrend->second.FillCorrOffset(Xvalue, lghgOff, lghgOff_E, hglgOff, hglgOff_E);
           }

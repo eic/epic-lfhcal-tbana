@@ -246,14 +246,16 @@ bool ComparisonAna::ProcessAna(void){
             
             // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             // set global iterator for runs to first run number in list to obtain beam-line, dates...
+
             if (ientry==0) it = ri.find(calib.GetRunNumber());
                 Xvalue=calib.GetRunNumber();
-                AnaSummary aSum = AnaSummary(calib.GetRunNumber(),calib.GetVop());
+              // TODO: Change id from run number, look at constructor ()
+                AnaSummary aSum = AnaSummary(nRun, calib.GetRunNumber(),calib.GetVop());
 
                 TH1D* hTimeDiff = nullptr;
                 TFile* tempFile = nullptr;
             if (nRun < (int)RootInputNames.size()){
-                std::cout << RootInputNames[nRun].Data() << std::endl;
+                //std::cerr << "names: " << RootInputNames[nRun].Data() << std::endl;
                 tempFile      = new TFile(RootInputNames[nRun].Data(),"READ");   
                 TH1D* hTimeDiff = (TH1D*)tempFile->Get("hDeltaTime");
                 aSum.SetDeltaTimeHist(hTimeDiff);
@@ -261,7 +263,7 @@ bool ComparisonAna::ProcessAna(void){
             }
             // append AnaSummary object to map
             std::cout<<"filling for " << nRun <<std::endl; 
-            sumCalibs[calib.GetRunNumber()]=aSum;
+            sumCalibs[nRun]=aSum;
             nRun++;
         }
         Int_t textSizePixel   = 30;

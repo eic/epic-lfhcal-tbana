@@ -773,23 +773,23 @@ bool DataAnalysis::QAData(void){
       }
       PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                               hSpectra, hSpectraTrigg, setup, true, -100, 3800, 1.2, l, 0,
-                              Form("%s/detailed/LocTriggerMip_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                              Form("%s/detailed/LocTriggerMip_HG_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
       PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                               hSpectra, hSpectraTrigg, setup, true, -100, maxHG, 1.2, l, 0,
-                              Form("%s/detailed/LocTriggerMip_Zoomed_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                              Form("%s/detailed/LocTriggerMip_Zoomed_HG_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
       PlotTriggerPrimWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                         hSpectra, setup, averageScale, 0.8, 2.,
-                                        0, 6000, 1.2, l, 0, Form("%s/detailed/All_TriggPrimitive_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                                        0, 6000, 1.2, l, 0, Form("%s/detailed/All_TriggPrimitive_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
       if (ExtPlot > 1){
         PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
                                       hSpectra, 0, -20, 800, 1.2, l, 0,
-                                      Form("%s/detailed/LGHG_Corr_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                                      Form("%s/detailed/LGHG_Corr_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
         PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   hSpectra, hSpectraTrigg, setup, false, -20, maxLG, 1.2, l, 0,
-                                  Form("%s/detailed/LocTriggerMip_LG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                                  Form("%s/detailed/LocTriggerMip_LG_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
         PlotTriggerPrimWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                           hSpectraTrigg, setup, averageScale, 0.8, 2.,
-                                          0, maxHG*2, 1.2, l, 0, Form("%s/detailed/LocalMuon_TriggPrimitive_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                                          0, maxHG*2, 1.2, l, 0, Form("%s/detailed/LocalMuon_TriggPrimitive_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
       }
     }
     std::cout << "done plotting" << std::endl;
@@ -895,7 +895,7 @@ bool DataAnalysis::SimpleQAData(void){
     }
         //cut based on DeltaTime range
     if(DeltaTime < timemin || DeltaTime > timemax){
-      std::cout<<"event rejected:"<< i <<std::endl;
+      //std::cout<<"event rejected:"<< i <<std::endl;
       last_time = current_time;
       continue;
     }
@@ -966,7 +966,7 @@ bool DataAnalysis::SimpleQAData(void){
   canvasDeltaTime->SetLogy(1);
   
   if(DeltaTimePlot>0){
-    PlotSimple1D( canvasDeltaTime, hDeltaTime, -10000, timemax, textSizeRel, Form("%s/deltaTime.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+    PlotSimple1D( canvasDeltaTime, hDeltaTime, -10000, timemax, textSizeRel, Form("%s/deltaTime_%.0f_%.0f.%s", outputDirPlots.Data(),timemin, timemax, plotSuffix.Data()), it->second, 1);
   } 
   
   TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
@@ -975,9 +975,9 @@ bool DataAnalysis::SimpleQAData(void){
   TCanvas* canvas2DCorrWOLine = new TCanvas("canvasCorrPlotsWoLine","",0,0,1450,1300);  // gives the page size
   DefaultCancasSettings( canvas2DCorrWOLine, 0.08, 0.13, 0.01, 0.07);
   canvas2DCorrWOLine->SetLogz(1);
-  PlotSimple2D( canvas2DCorr, hspectraHGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/HGCorr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DCorr, hspectraLGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/LGCorr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DCorr, hspectraEnergyvsCellID, -10000, -10000, textSizeRel, Form("%s/EnergyVsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DCorr, hspectraHGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/HGCorr_%.0f_%.0f.%s", outputDirPlots.Data(),timemin, timemax, plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DCorr, hspectraLGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/LGCorr_%.0f_%.0f.%s", outputDirPlots.Data(),timemin, timemax, plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DCorr, hspectraEnergyvsCellID, -10000, -10000, textSizeRel, Form("%s/EnergyVsCellID_%.0f_%.0f.%s", outputDirPlots.Data(),timemin, timemax, plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
     
   if (ExtPlot > 0){
     gSystem->Exec("mkdir -p "+outputDirPlots+"/detailed");
@@ -1020,14 +1020,14 @@ bool DataAnalysis::SimpleQAData(void){
       }
       PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                 hSpectra, setup, true, 0, maxHG, 1.2, l, 0,
-                                Form("%s/detailed/Spectra_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                                Form("%s/detailed/Spectra_HG_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
       PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                 hSpectra, setup, false, 0, maxLG, 1.2, l, 0,
-                                Form("%s/detailed/Spectra_LG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                                Form("%s/detailed/Spectra_LG_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
       
       PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
                                     hSpectra, 0, -20, 340, 3800, l, 0,
-                                    Form("%s/detailed/LGHG_Corr_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                                    Form("%s/detailed/LGHG_Corr_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
     }
     std::cout << "done plotting" << std::endl;
   }
