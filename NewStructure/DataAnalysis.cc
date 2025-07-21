@@ -874,7 +874,10 @@ bool DataAnalysis::SimpleQAData(void){
     std::cout << "timemax: " << timemax <<std::endl;
     std::cout <<"timemin: " << timemin << std::endl;
   }
-  
+
+  int rejected = 0;
+  std::cerr<<"Run Number: " << runNr<< std::endl;
+  std::cerr<< "Number of total evts: " << evts <<std::endl;
   // Event loop
   for(int i=0; i<evts; i++){
     TdataIn->GetEntry(i);
@@ -895,7 +898,7 @@ bool DataAnalysis::SimpleQAData(void){
     }
         //cut based on DeltaTime range
     if(DeltaTime < timemin || DeltaTime > timemax){
-      //std::cout<<"event rejected:"<< i <<std::endl;
+      rejected++;
       last_time = current_time;
       continue;
     }
@@ -926,7 +929,10 @@ bool DataAnalysis::SimpleQAData(void){
       }
     }
   }
-  
+  if (debug == 1000){
+    std::cerr<< "Number rejected: " << rejected <<std::endl;
+    std::cerr<< "Number accepted: " << evts - rejected << std::endl;
+  }
   if (IsCalibSaveToFile()){
     TString fileCalibPrint = RootOutputName;
     fileCalibPrint         = fileCalibPrint.ReplaceAll(".root","_calib.txt");
