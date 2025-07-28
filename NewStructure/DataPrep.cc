@@ -36,6 +36,7 @@ void PrintHelp(char* exe){
   std::cout<<"-f       Force to write output if already exist"<<std::endl;
   std::cout<<"-F fff   set explicit plot extension explicitly, default is pdf "<<std::endl;
   std::cout<<"-i uuu   Input file in root format"<<std::endl;
+  std::cout<<"-I       Extract pedestal from input file with summed layers and store it in output file"<<std::endl;
   std::cout<<"-k kkk   enabling overwriting of calib file using external calib txt file"<<std::endl;
   std::cout<<"-L LLL   enable testing with only limited number of events"<<std::endl;
   std::cout<<"-m www   Name of mapping file  2024 PS TB [../configs/mappingFile_202409_CAEN.txt] "<<std::endl;
@@ -69,7 +70,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"c:F:pT:sk:P:SnbB:L:NtMC:fo:O:aA:eEm:d:i:Xy:r:h"))!=-1){
+  while((c=getopt(argc,argv,"c:F:pT:sk:P:SnbB:L:NtMC:fo:O:aA:eEm:d:i:I:Xy:r:h"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"DataPrep: printing calib object to file"<<std::endl;
@@ -117,6 +118,10 @@ int main(int argc, char* argv[]){
     case 'i':
       std::cout<<"DataPrep: Root input file is: "<<optarg<<std::endl;
       AnAnalysis.SetRootInput(Form("%s",optarg));
+      break;
+    case 'I':
+      std::cout<<"DataPrep: Extract pedestals from *integrated layers* input: "<<optarg<<std::endl;
+      AnAnalysis.IsToExtractIntegPedestal(Form("%s",optarg));
       break;
     case 'k':
       std::cout<<"DataPrep: enable overwrite from external text file: "<< optarg <<std::endl;

@@ -51,6 +51,7 @@ class Analyses{
   inline bool IsToApplyCalibration(void)        const {return ApplyCalibration;};
   inline bool IsToConvert(void)                 const {return Convert;};
   inline bool IsToExtractPedestal(void)         const {return ExtractPedestal;};
+  inline bool IsToExtractIntegPedestal(void)    const {return ExtractIntegPedestal;};
   inline bool IsToExtractScaling(void)          const {return ExtractScaling;};
   inline bool IsToExtractScalingImproved(void)  const {return ExtractScalingImproved;};
   inline bool IsHGCROC(void)                    const {return HGCROC;};
@@ -76,6 +77,7 @@ class Analyses{
   inline void IsToApplyCalibration(bool b)       {ApplyCalibration=b;};
   inline void IsToConvert(bool b)                {Convert=b;};
   inline void IsToExtractPedestal(bool b)        {ExtractPedestal=b;};
+  inline void IsToExtractIntegPedestal(bool b)   {ExtractIntegPedestal=b;};
   inline void IsToExtractScaling(bool b)         {ExtractScaling=b;};
   inline void IsToExtractScalingImproved(bool b) {ExtractScalingImproved=b;};
   inline void IsHGCROC(bool b)                   {HGCROC=b;};
@@ -140,6 +142,7 @@ class Analyses{
   bool Convert                =false;     // Flag for data conversion 
   bool HGCROC                 =false;     // Flag for HGCROC data conversion
   bool ExtractPedestal        =false;     // Flag for pedestal extraction
+  bool ExtractIntegPedestal   =false;     // Flag for intergated over layers pedestal extraction
   bool ExtractScaling         =false;     // Flag for mip scaling extraction
   bool ExtractScalingImproved =false;     // Flag for mip scaling extraction 2nd pass
   bool ReextractNoise         =false;     // Flag to enable noise trigger extraction and alternative pass for pedestals
