@@ -141,6 +141,9 @@ bool Analyses::CheckAndOpenIO(void){
     TdataOut->Branch("event",&event);
     TcalibOut = new TTree("Calib","Calib");
     TcalibOut->Branch("calib",&calib);
+    if(nLayersInteg!=1){
+      TdataOut->Branch("eventInt",&eventInt);
+    }
   }
   else if (!SaveCalibOnly){
     std::cout<<"Output option mandatory except when converting"<<std::endl;
@@ -282,7 +285,11 @@ bool Analyses::Process(void){
       }
     }
   }
-  
+  if (CreateSummedTree){
+    std::cout << "Im integrating " << std::endl;
+    status=IntegrateOvenNLayers();
+  }
+
   // extract pedestal from pure pedestal runs (internal triggers)
   if(ExtractPedestal){
     status=GetPedestal();
@@ -750,6 +757,124 @@ bool Analyses::ConvertASCII2Root(void){
 }
 
 
+// ****************************************************************************************
+// integrate the adc over nLayers from already processed root file from CAEN output to new root file
+// ****************************************************************************************
+bool Analyses::IntegrateOvenNLayers(void){
+
+//Init first
+  //============================================
+  // initialize setup
+  if (MapInputName.CompareTo("")== 0) {
+      std::cerr << "ERROR: No mapping file has been provided, please make sure you do so! Aborting!" << std::endl;
+      return false;
+  }
+  setup->Initialize(MapInputName.Data(),debug);
+  // initialize run number file
+  if (RunListInputName.CompareTo("")== 0) {
+      std::cerr << "ERROR: No run list file has been provided, please make sure you do so! Aborting!" << std::endl;
+      return false;
+  }
+  std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
+
+  RootOutput->cd();
+  // Event loop to fill histograms & output tree
+  std::cout << "N max layers: " << setup->GetNMaxLayer() << "\t columns: " <<  setup->GetNMaxColumn() << "\t row: " << setup->GetNMaxRow() << "\t module: " <<  setup->GetNMaxModule() << std::endl;
+  if(TcalibIn) TcalibIn->GetEntry(0);
+  // check whether calib should be overwritten based on external text file
+  if (OverWriteCalib){
+    calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
+  }
+  int evts=TdataIn->GetEntries();
+  std::cout << "evts  " << evts << std::endl;
+  int runNr = -1;
+  maxEvents = evts;
+  if (maxEvents == -1){
+    maxEvents = evts;
+  } else {
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+    std::cout << "ATTENTION: YOU ARE RESETTING THE MAXIMUM NUMBER OF EVENTS TO BE PROCESSED TO: " << maxEvents << ". THIS SHOULD ONLY BE USED FOR TESTING!" << std::endl;
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+  }
+  // Layers:
+  int maxNrLayers=setup->GetNMaxLayer()+1;
+  std::cout << "Nr of layers: " <<maxNrLayers <<std::endl;
+  int newNrLayers;
+  if(maxNrLayers%nLayersInteg == 0) newNrLayers = maxNrLayers/nLayersInteg;
+  else newNrLayers = maxNrLayers/nLayersInteg+1;
+  std::cout << "New nr of layers: " <<newNrLayers <<std::endl;
+  int layerMap[maxNrLayers][2]; int iIDcounter = 0; int icounter = 0;
+  for(int iL = 0; iL < maxNrLayers; iL++){
+    layerMap[iL][0] = iIDcounter;
+    layerMap[iL][1] = icounter;
+    if((iL+1)%nLayersInteg==0){iIDcounter=iIDcounter+nLayersInteg; icounter++;}
+    //std::cout<<iL << " layerMap ID:" <<  layerMap[iL][0] << " nr: " << layerMap[iL][1] << std::endl;
+  }
+  
+
+  for(int i=0; i<evts && i < 2;i++){//0.1*maxEvents; i++){
+    TdataIn->GetEntry(i);
+    if (i%5000 == 0&& i > 0 && debug > 0) std::cout << "Reading " <<  i << "/" << evts << " events"<< std::endl;
+    eventInt.SetRunNumber(event.GetRunNumber());
+    std::vector<std::vector<std::vector<Caen>>> integTiles;
+    integTiles.resize(newNrLayers);
+    for (int i = 0; i < newNrLayers; ++i) {
+        integTiles[i].resize(4);
+        for (int j = 0; j < 4; ++j) {
+            integTiles[i][j].resize(2);
+            for (int k = 0; k < 2; ++k) {
+                integTiles[i][j][k].SetADCHigh(0);
+                integTiles[i][j][k].SetADCLow(0);
+            }
+        }
+    }
+    for(int j=0; j<event.GetNTiles(); j++){
+      if (event.GetROtype() == ReadOut::Type::Caen) {
+        Caen* aTile=(Caen*)event.GetTile(j);
+        if (i == 0 && debug > 2){
+          std::cout << ((TString)setup->DecodeCellID(aTile->GetCellID())).Data() << std::endl;
+        }
+        //std::cout << "Layer: " << aTile->GetLayer() << "  Col: "<< aTile->GetCol() << " Row: " << aTile->GetRow() << std::endl;
+        //std::cout << "new layer ID : " << layerMap[aTile->GetLayer()][0] << " nr of layer: " <<layerMap[aTile->GetLayer()][1] <<  std::endl;
+
+        int highAdc = integTiles[layerMap[aTile->GetLayer()][1]][aTile->GetCol()][aTile->GetRow()].GetADCHigh();
+        integTiles[layerMap[aTile->GetLayer()][1]][aTile->GetCol()][aTile->GetRow()].SetADCHigh(highAdc+aTile->GetADCHigh());
+        std::cout <<"highAdc " << highAdc << std::endl;
+        int lowAdc = integTiles[layerMap[aTile->GetLayer()][1]][aTile->GetCol()][aTile->GetRow()].GetADCLow();
+        integTiles[layerMap[aTile->GetLayer()][1]][aTile->GetCol()][aTile->GetRow()].SetADCLow(lowAdc+aTile->GetADCLow());
+        std::cout << "Cell ID: " << setup->GetCellID(aTile->GetRow(),aTile->GetCol(),layerMap[aTile->GetLayer()][0],1) << std::endl;
+        integTiles[layerMap[aTile->GetLayer()][1]][aTile->GetCol()][aTile->GetRow()].SetCellID(setup->GetCellID(aTile->GetRow(),aTile->GetCol(),layerMap[aTile->GetLayer()][0],1)); //here set the channel
+        
+      }//end if 
+    }//end of tile loop
+
+    if (integTiles.size() != newNrLayers) {
+      std::cerr << "Bad layer size!\n";
+      continue; // or break
+    } 
+    // save tiles in the out-tree:
+    for (int ii = 0; ii < newNrLayers; ++ii) {
+        for (int jj = 0; jj < 4; ++jj) {
+            for (int kk = 0; kk < 2; ++kk) {
+                eventInt.AddTile(new Caen(integTiles[ii][jj][kk]));
+          }}}
+    RootOutput->cd();
+    integTiles.clear();
+    TdataOut->Fill();
+  }//end of event loop
+  //============================================
+  // Fill & write all trees to output file 
+  //============================================
+  RootOutput->cd();
+  TsetupOut->Write();
+  
+  TdataOut->Write();
+
+  RootOutput->Close();
+  
+  std::cout << "End of Maria's integation " <<std::endl;
+  return true;
+}
 
 // ****************************************************************************
 // convert already processed root file from CAEN output to new root format

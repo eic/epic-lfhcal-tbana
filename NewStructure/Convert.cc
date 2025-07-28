@@ -49,7 +49,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"ac:wd:fi:m:o:O:r:y:h"))!=-1){
+  while((c=getopt(argc,argv,"ac:wd:fi:m:o:O:r:y:l:h"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"Convert: printing calib object to file"<<std::endl;
@@ -102,6 +102,11 @@ int main(int argc, char* argv[]){
     case 'h':
       PrintHelp(argv[0]);
       return 0;
+    case 'l':
+      std::cout<<"Integrate over "<< atoi(optarg) <<" layers"<<std::endl;
+      AnAnalysis.IsCreateSummedTree(true);
+      AnAnalysis.SetIntegLayersN(atoi(optarg));//atoi(optarg));
+      break;
     }
   }
   if(!AnAnalysis.CheckAndOpenIO()){

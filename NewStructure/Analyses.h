@@ -85,6 +85,7 @@ class Analyses{
   inline void IsToEvalLocalTrigg(bool b)         {EvalLocalTriggers = b;};
   inline void IsToSaveCalibOnly(bool b)          {SaveCalibOnly = b;};
   inline void IsToSkimHGCROC(bool b)             {SkimHGCROC = b;};
+  inline void IsCreateSummedTree(bool b)         {CreateSummedTree=b;}; 
   inline void UseLocTriggFromFile(bool b)        {LocTriggFile = b;};
   inline void SetCalcBadChannel(short b)         {CalcBadChannel = b;};
   inline void SetOverWriteCalib(bool b)          {OverWriteCalib = b;};
@@ -106,6 +107,7 @@ class Analyses{
   inline void SetExternalBadChannelMap(TString name)     {ExternalBadChannelMap =name;};
   inline void SetExternalCalibFile(TString name)     {ExternalCalibFile =name;};
   inline void SetMaxEvents(int n)                 {maxEvents = n;};
+  inline void SetIntegLayersN(int n)              {nLayersInteg = n;};
   
   //General methods
   bool CreateOutputRootFile(void);
@@ -126,6 +128,7 @@ class Analyses{
   TString ExternalBadChannelMap;          // file name external bad channel map
   TString ExternalCalibFile;              // file name external calib file
   TString plotSuffix        = "pdf";      // plot extension
+  int nLayersInteg          = 1;           // number of intergated layers
   TFile* RootOutput         =nullptr;     // root file output tree
   TFile* RootOutputHist     =nullptr;     // root file output histos
   TFile* RootInput          =nullptr;     // root file input 
@@ -148,6 +151,7 @@ class Analyses{
   bool SaveCalibToFile        =false;     // Flag to save calib objects to text file
   bool SkimHGCROC             =false;     // Flag to skim HGCROC data from pure noise events
   bool EvalLocalTriggers      =false;     // Flag to run local trigger eval
+  bool CreateSummedTree       =false;     // Flag to run summing of layers
   bool LocTriggFile           =false;     // Flag to use already evaluated triggeres
   short CalcBadChannel        =0;         // Flag to create bad channel map
   bool OverWriteCalib         =false;     // Flag to overwrite calib from text file
@@ -163,6 +167,7 @@ class Analyses{
   Event event;
   Event* eventptr;
   int maxEvents               = -1;
+  Event eventInt;                 
   
   TTree* TsetupIn=nullptr;
   TTree* TsetupOut=nullptr;
@@ -177,6 +182,7 @@ class Analyses{
  private:
   bool ConvertASCII2Root(void);
   bool ConvertOldRootFile2Root(void);
+  bool IntegrateOvenNLayers(void);
   bool GetPedestal(void);
   bool TransferCalib(void);
   bool GetScaling(void);
