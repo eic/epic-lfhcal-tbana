@@ -8,11 +8,12 @@
 #include <fstream>
 
 struct layerInfo{
-    layerInfo(): layerNrAbs(0), layerLabel(""), rUnit(0), layerUnit(0){}
+    layerInfo(): layerNrAbs(0), layerLabel(""), rUnit(0), layerUnit(0), moduleNr(0){}
     int layerNrAbs;       // absolute layer number
     TString layerLabel;   // assembly name
     int rUnit;            // readout unit number
     int layerUnit;        // layer within readout unit
+    int moduleNr;
 } ;
 
 struct unitInfo{
@@ -44,7 +45,7 @@ void PrintChannelInfo(channelInfo tempC){
   cout  << "RU: " <<tempC.rUnit << "\t"
         << "RU channel: "<< tempC.chRU  << "\t"
         << "RU ID: "<< tempC.ruID  << "\t"
-        << "module Nr: "<< tempC.layer  << "\t"
+        << "module Nr: "<< tempC.modNr  << "\t"
         << "Row in assembly: "<< tempC.rowAssembly  << "\t"
         << "Col in assembly: "<< tempC.colAssembly  << "\t"
         << "Layer Nr: "<< tempC.layer  << "\t"
@@ -166,7 +167,7 @@ void CreateMapping(   TString filenameUnitMapping,
     ifstream inUnit;
     inUnit.open(filenameUnitMapping,ios_base::in);
     if (!inUnit) {
-        std::cout << "ERROR: file " << filenameUnitMapping.Data() << " not found!" << std::endl;
+        std::cout << "ERRlayerUniOR: file " << filenameUnitMapping.Data() << " not found!" << std::endl;
         return;
     }
 
@@ -249,7 +250,8 @@ void CreateMapping(   TString filenameUnitMapping,
         tempLayer.layerLabel  = (TString)((TObjString*)tempArr->At(1))->GetString();
         tempLayer.rUnit   = ((TString)((TObjString*)tempArr->At(2))->GetString()).Atoi();
         tempLayer.layerUnit      = ((TString)((TObjString*)tempArr->At(3))->GetString()).Atoi();
-            
+        tempLayer.moduleNr       = ((TString)((TObjString*)tempArr->At(4))->GetString()).Atoi();
+        std::cerr << "Module Number: " << tempLayer.moduleNr<< std::endl;
         if (debug > 0) std::cout << "layer " << tempLayer.layerNrAbs << "\t assembly name: " << tempLayer.layerLabel << "\t CAEN unit Nr.: "  << tempLayer.rUnit << "\t layer in unit: " << tempLayer.layerUnit << std::endl;
         layers.push_back(tempLayer);
     }
@@ -273,7 +275,7 @@ void CreateMapping(   TString filenameUnitMapping,
           tempChannel.chRU        = channel;
           tempChannel.rUnit       = layers.at(l).rUnit;
           tempChannel.ruID        = Int_t(tempChannel.rUnit<<8)+tempChannel.chRU;   // 8 bit read-out unit number, 8 bit channel readout unit
-          tempChannel.modNr       = 0;
+          tempChannel.modNr       = layers.at(l).moduleNr;
           tempChannel.layer       = layers.at(l).layerNrAbs;
           tempChannel.nrAssembly  = (int)(((TString)layers.at(l).layerLabel.ReplaceAll("C","")).Atoi());
           tempChannel.chAssembly  = chA;
