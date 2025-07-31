@@ -305,7 +305,7 @@ void CreateMapping(   TString filenameUnitMapping,
     std::vector<channelInfo> channels;
     fstream fileMappingClassic(filenameMappingWrite.Data(), ios::out);
     // fileMappingClassic.open(filenameMappingWrite, ios::out);
-    if (readout ==0 )fileMappingClassic << "#CAEN board	CAEN Ch	layer	assembly	board channel	row	column modNr\n" ;
+    if (readout ==0 )fileMappingClassic << "#CAEN board	CAEN Ch	layer	assembly	board channel	row	column modNr modX modY\n" ;
     if (readout ==1 )fileMappingClassic << "#HGCROC board	HGCROC Ch	layer	assembly	board channel	row	column modNr\n" ;
     TFile* outputRootFile       = new TFile("mappingTree.root","RECREATE");
     TTree* mapping_tree           = new TTree("mapping_tree", "mapping_tree");
@@ -336,7 +336,7 @@ void CreateMapping(   TString filenameUnitMapping,
           tempChannel.modposY     = positions[layers.at(l).moduleNr].second;
           channels.push_back(tempChannel);
 
-          fileMappingClassic << layers.at(l).rUnit << "\t" << channel << "\t" << layers.at(l).layerNrAbs << "\t" << layers.at(l).layerLabel << "\t" <<  chA << "\t" << ReturnRowBoard(chA) << "\t" << ReturnColumnBoard(chA) << "\t" << tempChannel.modNr <<"\n";
+          fileMappingClassic << layers.at(l).rUnit << "\t" << channel << "\t" << layers.at(l).layerNrAbs << "\t" << layers.at(l).layerLabel << "\t" <<  chA << "\t" << ReturnRowBoard(chA) << "\t" << ReturnColumnBoard(chA) << "\t" << tempChannel.modNr << "\t" << tempChannel.modposX << "\t" << tempChannel.modposY <<"\n";
           PrintChannelInfo(tempChannel);
           
           // printf("%b\t%b\t%b\t%b\t%b\n", tempChannel.modNr, tempChannel.rowAssembly, tempChannel.colAssembly, tempChannel.layer, tempChannel.chID);
