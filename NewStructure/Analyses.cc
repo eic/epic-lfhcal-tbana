@@ -1229,18 +1229,20 @@ bool Analyses::GetPedestal(void){
   CreateCanvasAndPadsFor8PannelTBPlot(canvas8PanelProf, pad8PanelProf,  topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 0.045, "Prof", false);
  
   
-  for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-    PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                hSpectra, setup, true, 0, 275, 1.2, l, 0,
-                                Form("%s/Noise_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-    if (typeRO == ReadOut::Type::Caen){
+  for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+    for (int m = 0; m < setup->GetNMaxModule()+1; m++){
       PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                hSpectra, setup, false, 0, 275, 1.2, l, 0,
-                                Form("%s/Noise_LG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-    } else if (typeRO == ReadOut::Type::Hgcroc){
-      PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, hSpectra, 0, it->second.samples+1, 300, l, 0,
-                                  Form("%s/Waveform_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
- 
+                                  hSpectra, setup, true, 0, 275, 1.2, l, m,
+                                  Form("%s/Noise_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+      if (typeRO == ReadOut::Type::Caen){
+        PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                  hSpectra, setup, false, 0, 275, 1.2, l, m,
+                                  Form("%s/Noise_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+      } else if (typeRO == ReadOut::Type::Hgcroc){
+        PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, hSpectra, 0, it->second.samples+1, 300, l, m,
+                                    Form("%s/Waveform_Mod_%02dLayer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+  
+      }
     }
   }
 
