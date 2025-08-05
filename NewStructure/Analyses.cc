@@ -1230,7 +1230,7 @@ bool Analyses::GetPedestal(void){
  
   
   for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
-    for (int m = 0; m < setup->GetNMaxModule()+1; m++){
+    for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
       PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   hSpectra, setup, true, 0, 275, 1.2, l, m,
                                   Form("%s/Noise_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
