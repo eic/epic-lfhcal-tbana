@@ -18,6 +18,9 @@ elif [ $1 = "vandrieu" ]; then
 elif [ $1 = "kmaret" ]; then
     dataDir=/mnt/d/202408_PST9
     dataRaw=/mnt/d/202408_PST9_converted
+elif [ $1 = "rjh78" ]; then
+    dataDir=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles 
+    dataRaw=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/rawfiles
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -48,13 +51,13 @@ elif [ $2 == "calib45V" ]; then
 elif [ $2 == "calibA" ]; then 
   runs='271 277 244 250 282 283' 
   for runNr in $runs; do 
-    ./Convert -c $dataDir/Run$runNr\_list.txt -o $dataRaw/MuonRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
+    ./Convert -c $dataRaw/Run$runNr\_list.txt -o $dataDir/MuonRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
   done;
   
 elif [ $2 == "electronsA" ]; then 
   runs='251 252 254 257 258 ' 
   for runNr in $runs; do 
-    ./Convert -c $dataDir/Run$runNr\_list.txt -o $dataRaw/ElectronRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
+    ./Convert -c $dataRaw/Run$runNr\_list.txt -o $dataDir/ElectronRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
   done;
 elif [ $2 == "electronsB" ]; then 
   runs='333 334 336 337 338 ' 
@@ -94,7 +97,7 @@ elif [ $2 == "electronsH" ]; then
 elif [ $2 == "hadronsA" ]; then 
   runs='261 264 265 269 270 272 274 275 ' 
   for runNr in $runs; do 
-    ./Convert -c $dataDir/Run$runNr\_list.txt -o $dataRaw/HadronRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
+    ./Convert -c $dataRaw/Run$runNr\_list.txt -o $dataDir/HadronRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
   done;
 elif [ $2 == "hadronsB" ]; then 
   runs='340 349 346 350 357 360 362 367 368' 
