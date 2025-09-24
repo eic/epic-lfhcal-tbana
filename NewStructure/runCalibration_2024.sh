@@ -96,11 +96,20 @@ elif [ $1 = "kmaret" ]; then
 	dataDirOutE=/mnt/d/202408_PST9_converted
 	dataDirOutH=/mnt/d/202408_PST9_converted
 	PlotBaseDir=/mnt/d/202408_PST9_converted/MuonRuns
+elif [ $1 = "rjh78" ]; then
+	dataDirRaw=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles/MuonRuns
+	dataDirRawE=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles/ElectronRuns
+	dataDirRawH=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles/HadronRuns
+	dataDirOut=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles/MuonRuns
+	dataDirOutE=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles/ElectronRuns
+	dataDirOutH=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles/HadronRuns
+	PlotBaseDir=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles/plots
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
 fi
 
+# *-- Enable lines for the runs of interest 
 # pedestal runs 
 # pedestalRuns='271 277 303 306 308 311 315 332 369 377 404 420 454 465 476 492 505 521 528 552 553 ' # all pedestal runs
 #pedestalRuns='303 306 308 311 315 420 553 332 369 377 404 465 476 492 505 521' # all pedestal runs
@@ -113,7 +122,7 @@ fi
 
 if [ $2 == "mergemuons" ]; then
  	hadd -f $dataDirRaw/raw_muonScanA1_45V.root $dataDirRaw/raw_244.root $dataDirRaw/raw_250.root
-# 	hadd -f $dataDirRaw/raw_muonScanA2_45V.root $dataDirRaw/raw_283.root $dataDirRaw/raw_282.root
+ 	hadd -f $dataDirRaw/raw_muonScanA2_45V.root $dataDirRaw/raw_283.root $dataDirRaw/raw_282.root
 	# hadd -f $dataDirRaw/raw_muonScanD1_45V.root $dataDirRaw/raw_412.root $dataDirRaw/raw_417.root
 # 	hadd -f $dataDirRaw/raw_muonScanD2_45V.root $dataDirRaw/raw_460.root $dataDirRaw/raw_456.root $dataDirRaw/raw_457.root
 # 	hadd -f $dataDirRaw/raw_muonScanH1_45V.root $dataDirRaw/raw_526.root $dataDirRaw/raw_527.root
