@@ -96,6 +96,7 @@ elif [ $1 = "kmaret" ]; then
 	dataDirOutE=/mnt/d/202408_PST9_converted
 	dataDirOutH=/mnt/d/202408_PST9_converted
 	PlotBaseDir=/mnt/d/202408_PST9_converted/MuonRuns
+
 elif [ $1 = "rjh78" ]; then
 	dataDirRaw=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles/MuonRuns
 	dataDirRawE=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles/ElectronRuns
@@ -104,6 +105,16 @@ elif [ $1 = "rjh78" ]; then
 	dataDirOutE=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles/ElectronRuns
 	dataDirOutH=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles/HadronRuns
 	PlotBaseDir=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles/plots
+
+elif [ $1 = "egpott" ]; then
+	dataDirRaw=/Users/egpott/rhig/lfhcal/data/outfiles/MuonRuns
+	dataDirRawE=/Users/egpott/rhig/lfhcal/data/outfiles/ElectronRuns
+	dataDirRawH=/Users/egpott/rhig/lfhcal/data/outfiles/HadronRuns
+	dataDirOut=/Users/egpott/rhig/lfhcal/data/outfiles/MuonRuns
+	dataDirOutE=/Users/egpott/rhig/lfhcal/data/outfiles/ElectronRuns
+	dataDirOutH=/Users/egpott/rhig/lfhcal/data/outfiles/ElectronRuns
+	PlotBaseDir=/Users/egpott/rhig/lfhcal/data/outfiles/plots
+
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -113,7 +124,8 @@ fi
 # pedestal runs 
 # pedestalRuns='271 277 303 306 308 311 315 332 369 377 404 420 454 465 476 492 505 521 528 552 553 ' # all pedestal runs
 #pedestalRuns='303 306 308 311 315 420 553 332 369 377 404 465 476 492 505 521' # all pedestal runs
- pedestalRuns='271 277 454 528 552' # pedestal runs 45V
+# pedestalRuns='271 277 454 528 552' # pedestal runs 45V
+pedestalRuns='377 404'
 if [ $2 = "pedestal" ]; then
 	for runNr in $pedestalRuns; do
 		./DataPrep -d 1 -p -i $dataDirRaw/raw_$runNr.root -f -o $dataDirOut/PedestalCalib_$runNr.root -O $PlotBaseDir/PlotsPedestal_2024/Run$runNr -r ../configs/DataTakingDB_202409_CAEN.csv
@@ -121,16 +133,21 @@ if [ $2 = "pedestal" ]; then
 fi
 
 if [ $2 == "mergemuons" ]; then
+
  	hadd -f $dataDirRaw/raw_muonScanA1_45V.root $dataDirRaw/raw_244.root $dataDirRaw/raw_250.root
  	hadd -f $dataDirRaw/raw_muonScanA2_45V.root $dataDirRaw/raw_283.root $dataDirRaw/raw_282.root
+
+# 	hadd -f $dataDirRaw/raw_muonScanA1_45V.root $dataDirRaw/raw_244.root $dataDirRaw/raw_250.root
+# 	hadd -f $dataDirRaw/raw_muonScanA2_45V.root $dataDirRaw/raw_283.root $dataDirRaw/raw_282.root
+
 	# hadd -f $dataDirRaw/raw_muonScanD1_45V.root $dataDirRaw/raw_412.root $dataDirRaw/raw_417.root
 # 	hadd -f $dataDirRaw/raw_muonScanD2_45V.root $dataDirRaw/raw_460.root $dataDirRaw/raw_456.root $dataDirRaw/raw_457.root
 # 	hadd -f $dataDirRaw/raw_muonScanH1_45V.root $dataDirRaw/raw_526.root $dataDirRaw/raw_527.root
 # 	hadd -f $dataDirRaw/raw_muonScanH2_45V.root $dataDirRaw/raw_554.root $dataDirRaw/raw_559.root
 #	hadd -f $dataDirRaw/raw_muonScanB1_42V.root $dataDirRaw/raw_331.root $dataDirRaw/raw_322.root
 #	hadd -f $dataDirRaw/raw_muonScanB2_42V.root $dataDirRaw/raw_370.root $dataDirRaw/raw_371.root $dataDirRaw/raw_374.root
-#	hadd -f $dataDirRaw/raw_muonScanC1_43_5V.root $dataDirRaw/raw_376.root $dataDirRaw/raw_375.root
-#	hadd -f $dataDirRaw/raw_muonScanC2_43_5V.root $dataDirRaw/raw_405.root $dataDirRaw/raw_410.root $dataDirRaw/raw_408.root
+	hadd -f $dataDirRaw/raw_muonScanC1_43_5V.root $dataDirRaw/raw_376.root $dataDirRaw/raw_375.root
+	hadd -f $dataDirRaw/raw_muonScanC2_43_5V.root $dataDirRaw/raw_405.root $dataDirRaw/raw_410.root $dataDirRaw/raw_408.root
 #	hadd -f $dataDirRaw/raw_muonScanE1_40V.root $dataDirRaw/raw_464.root $dataDirRaw/raw_463.root
 #	hadd -f $dataDirRaw/raw_muonScanE2_40V.root $dataDirRaw/raw_481.root $dataDirRaw/raw_478.root
 #	hadd -f $dataDirRaw/raw_muonScanF1_41V.root $dataDirRaw/raw_486.root $dataDirRaw/raw_489.root

@@ -18,9 +18,15 @@ elif [ $1 = "vandrieu" ]; then
 elif [ $1 = "kmaret" ]; then
     dataDir=/mnt/d/202408_PST9
     dataRaw=/mnt/d/202408_PST9_converted
+
 elif [ $1 = "rjh78" ]; then
     dataDir=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles 
     dataRaw=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/rawfiles
+
+elif [ $1 = "egpott" ]; then
+	dataDir=/Users/egpott/rhig/lfhcal/data/outfiles
+	dataRaw=/Users/egpott/rhig/lfhcal/data/rawfiles/aug2024_fullScanC
+
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -53,7 +59,13 @@ elif [ $2 == "calibA" ]; then
   for runNr in $runs; do 
     ./Convert -c $dataRaw/Run$runNr\_list.txt -o $dataDir/MuonRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
   done;
-  
+
+elif [ $2 == "calibC" ]; then
+  runs='376 375 377 404 405 410 408'
+  for runNr in $runs; do
+    ./Convert -c $dataRaw/Run$runNr\_list.txt -o $dataDir/MuonRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
+  done;
+
 elif [ $2 == "electronsA" ]; then 
   runs='251 252 254 257 258 ' 
   for runNr in $runs; do 
@@ -67,7 +79,7 @@ elif [ $2 == "electronsB" ]; then
 elif [ $2 == "electronsC" ]; then 
   runs='379 380 381 384 387 ' 
   for runNr in $runs; do 
-    ./Convert -c $dataDir/Run$runNr\_list.txt -o $dataRaw/electronRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
+    ./Convert -c $dataRaw/Run$runNr\_list.txt -o $dataDir/electronRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
   done;
 elif [ $2 == "electronsD" ]; then 
   runs='421 422 429 430 432 ' 
@@ -107,7 +119,7 @@ elif [ $2 == "hadronsB" ]; then
 elif [ $2 == "hadronsC" ]; then 
   runs='390 392 393 394 397 398 399 401' 
   for runNr in $runs; do 
-    ./Convert -c $dataDir/Run$runNr\_list.txt -o $dataRaw/HadronRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
+    ./Convert -c $dataRaw/Run$runNr\_list.txt -o $dataDir/HadronRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
   done;
 elif [ $2 == "hadronsD" ]; then 
 #   runs='434' 
