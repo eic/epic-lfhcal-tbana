@@ -306,7 +306,7 @@ void CreateMapping(   TString filenameUnitMapping,
     fstream fileMappingClassic(filenameMappingWrite.Data(), ios::out);
     // fileMappingClassic.open(filenameMappingWrite, ios::out);
     if (readout ==0 )fileMappingClassic << "#CAEN board	CAEN Ch	layer	assembly	board channel	row	column modNr modX modY\n" ;
-    if (readout ==1 )fileMappingClassic << "#HGCROC board	HGCROC Ch	layer	assembly	board channel	row	column modNr\n" ;
+    if (readout ==1 )fileMappingClassic << "#HGCROC board	HGCROC Ch	layer	assembly	board channel	row	column modNr modX modY\n" ;
     TFile* outputRootFile       = new TFile("mappingTree.root","RECREATE");
     TTree* mapping_tree           = new TTree("mapping_tree", "mapping_tree");
     mapping_tree->SetDirectory(outputRootFile);
