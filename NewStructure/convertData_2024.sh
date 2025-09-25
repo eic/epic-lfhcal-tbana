@@ -1,5 +1,5 @@
 #! /bin/bash
-configdir=/home/Aidan/WorkStuff/eic/epic-lfhcal-tbana/configs
+configdir=../configs
 pwd=$PWD
 dataDir=""
 if [ $1 = "fbock" ]; then 
@@ -20,7 +20,8 @@ elif [ $1 = "kmaret" ]; then
     dataDir=/mnt/d/202408_PST9
     dataRaw=/mnt/d/202408_PST9_converted
 elif [ $1 = "ahill" ]; then
-    dataDir=/home/Aidan/WorkStuff/eic/data
+	configdir=/home/Aidan/WorkStuff/eic/epic-lfhcal-tbana/configs
+	dataDir=/home/Aidan/WorkStuff/eic/data
     dataRaw=$PWD/data_converted
     mkdir -p $dataRaw
 else
