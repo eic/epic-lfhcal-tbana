@@ -3,27 +3,30 @@ configdir=../configs
 pwd=$PWD
 dataDir=""
 if [ $1 = "fbock" ]; then 
-	dataDir=/media/fbock/Samsung_T5/LFHCAL_TB/202408_PST09/CAENdata/MuonRuns
-	dataRaw=/home/fbock/EIC/Analysis/LFHCalTB2024/CAENdata/MuonRuns
+	dataRaw=/media/fbock/Samsung_T5/LFHCAL_TB/202408_PST09/CAENdata/MuonRuns
+	dataDir=/home/fbock/EIC/Analysis/LFHCalTB2024/CAENdata/MuonRuns
 elif [ $1 = "fbockExt" ]; then 
-	dataDir=/media/fbock/T7/CAEN_Sept24_TB_PS
-	dataRaw=/media/fbock/Samsung_T5/LFHCAL_TB/202408_PST09/CAENdata
+	dataRaw=/media/fbock/T7/CAEN_Sept24_TB_PS
+	dataDir=/media/fbock/Samsung_T5/LFHCAL_TB/202408_PST09/CAENdata
 elif [ $1 = "fbockTB" ]; then 
-	dataDir=/media/fbock/LFHCal2/CAEN_Sept24_TB_PS
-	dataRaw=/media/fbock/LFHCal2/202408_PST09/CAENData
+	dataRaw=/media/fbock/LFHCal2/CAEN_Sept24_TB_PS
+	dataDir=/media/fbock/LFHCal2/202408_PST09/CAENData
 elif [ $1 = "eglimos" ]; then 
-	dataDir=/home/ewa/EIC/test_beam2024/fullScanC
 	dataRaw=/home/ewa/EIC/test_beam2024/fullScanC
+	dataDir=/home/ewa/EIC/test_beam2024/fullScanC
 elif [ $1 = "vandrieu" ]; then
-    dataDir=/home/vandrieu/cernbox/ePIC_2024_PStestbeam/CAEN_RO
-elif [ $1 = "kmaret" ]; then
-    dataDir=/mnt/d/202408_PST9
-    dataRaw=/mnt/d/202408_PST9_converted
+  dataDir=/home/vandrieu/cernbox/ePIC_2024_PStestbeam/CAEN_RO
 elif [ $1 = "ahill" ]; then
 	configdir=/home/Aidan/WorkStuff/eic/epic-lfhcal-tbana/configs
-	dataDir=/home/Aidan/WorkStuff/eic/data
-    dataRaw=$PWD/data_converted
-    mkdir -p $dataRaw
+	dataRaw=/home/Aidan/WorkStuff/eic/data
+  dataDir=$PWD/data_converted
+  mkdir -p $dataRaw
+elif [ $1 = "rjh78" ]; then
+  dataDir=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles 
+  dataRaw=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/rawfiles
+elif [ $1 = "egpott" ]; then
+	dataDir=/Users/egpott/rhig/lfhcal/data/outfiles
+	dataRaw=/Users/egpott/rhig/lfhcal/data/rawfiles/aug2024_fullScanC
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -54,13 +57,19 @@ elif [ $2 == "calib45V" ]; then
 elif [ $2 == "calibA" ]; then 
   runs='271 277 244 250 282 283' 
   for runNr in $runs; do 
-    Convert -c $dataDir/Run$runNr\_list.txt -o $dataRaw/MuonRuns/raw_$runNr.root -d 1 -f -m $configdir/mappingFile_202409_CAEN.txt -r $configdir/DataTakingDB_202409_CAEN.csv
+    ./Convert -c $dataRaw/Run$runNr\_list.txt -o $dataDir/MuonRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
   done;
-  
+
+elif [ $2 == "calibC" ]; then
+  runs='376 375 377 404 405 410 408'
+  for runNr in $runs; do
+    ./Convert -c $dataRaw/Run$runNr\_list.txt -o $dataDir/MuonRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
+  done;
+
 elif [ $2 == "electronsA" ]; then 
   runs='251 252 254 257 258 ' 
   for runNr in $runs; do 
-    Convert -c $dataDir/Run$runNr\_list.txt -o $dataRaw/ElectronRuns/raw_$runNr.root -d 1 -f -m $configdir/mappingFile_202409_CAEN.txt -r $configdir/DataTakingDB_202409_CAEN.csv
+    ./Convert -c $dataRaw/Run$runNr\_list.txt -o $dataDir/ElectronRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
   done;
 elif [ $2 == "electronsB" ]; then 
   runs='333 334 336 337 338 ' 
@@ -70,7 +79,7 @@ elif [ $2 == "electronsB" ]; then
 elif [ $2 == "electronsC" ]; then 
   runs='379 380 381 384 387 ' 
   for runNr in $runs; do 
-    Convert -c $dataDir/Run$runNr\_list.txt -o $dataRaw/electronRuns/raw_$runNr.root -d 1 -f -m $configdir/mappingFile_202409_CAEN.txt -r $configdir/DataTakingDB_202409_CAEN.csv
+    ./Convert -c $dataRaw/Run$runNr\_list.txt -o $dataDir/electronRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
   done;
 elif [ $2 == "electronsD" ]; then 
   runs='421 422 429 430 432 ' 
@@ -100,7 +109,7 @@ elif [ $2 == "electronsH" ]; then
 elif [ $2 == "hadronsA" ]; then 
   runs='261 264 265 269 270 272 274 275 ' 
   for runNr in $runs; do 
-    Convert -c $dataDir/Run$runNr\_list.txt -o $dataRaw/HadronRuns/raw_$runNr.root -d 1 -f -m $configdir/mappingFile_202409_CAEN.txt -r $configdir/DataTakingDB_202409_CAEN.csv
+    ./Convert -c $dataRaw/Run$runNr\_list.txt -o $dataDir/HadronRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
   done;
 elif [ $2 == "hadronsB" ]; then 
   runs='340 349 346 350 357 360 362 367 368' 
@@ -110,7 +119,7 @@ elif [ $2 == "hadronsB" ]; then
 elif [ $2 == "hadronsC" ]; then 
   runs='390 392 393 394 397 398 399 401' 
   for runNr in $runs; do 
-    Convert -c $dataDir/Run$runNr\_list.txt -o $dataRaw/HadronRuns/raw_$runNr.root -d 1 -f -m $configdir/mappingFile_202409_CAEN.txt -r $configdir/DataTakingDB_202409_CAEN.csv
+    ./Convert -c $dataRaw/Run$runNr\_list.txt -o $dataDir/HadronRuns/raw_$runNr.root -d 1 -f -m ../configs/mappingFile_202409_CAEN.txt -r ../configs/DataTakingDB_202409_CAEN.csv
   done;
 elif [ $2 == "hadronsD" ]; then 
 #   runs='434' 
