@@ -1,7 +1,9 @@
 #include "Analyses.h"
 #include <vector>
 #include "TROOT.h"
+#ifdef __APPLE__
 #include <unistd.h>
+#endif
 #include "TF1.h"
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
@@ -521,6 +523,9 @@ bool Analyses::ConvertASCII2Root(void){
         if((int)itevent->second.size()==setup->GetTotalNbChannels()/*8*64*/){
           //Fill the tree the event is complete and erase from the map
           event.SetTimeStamp(tmpTime[TriggerID]/setup->GetNMaxROUnit());
+          if(debug==1000){
+            std::cerr<<event.GetTimeStamp()<<std::endl;
+          }
           event.SetEventID(itevent->first);
           for(std::vector<Caen>::iterator itv=itevent->second.begin(); itv!=itevent->second.end(); ++itv){
             event.AddTile(new Caen(*itv));
@@ -571,6 +576,9 @@ bool Analyses::ConvertASCII2Root(void){
           itevent=tmpEvent.find(TriggerID);
           //Fill the tree the event is complete and erase from the map
           event.SetTimeStamp(tmpTime[TriggerID]/setup->GetNMaxROUnit());
+          if(debug==1000){
+            std::cerr<<event.GetTimeStamp()<<std::endl;
+          }
           event.SetEventID(itevent->first);
           for(std::vector<Caen>::iterator itv=vCaen.begin(); itv!=vCaen.end(); ++itv){
             event.AddTile(new Caen(*itv));
@@ -657,6 +665,9 @@ bool Analyses::ConvertASCII2Root(void){
           //Fill the tree the event is complete and erase from the map
           event.SetTimeStamp(tmpTime[TriggerID]/setup->GetNMaxROUnit());
           event.SetEventID(itevent->first);
+          if(debug==1000){
+            std::cerr<<event.GetTimeStamp()<<std::endl;
+          }
           for(std::vector<Caen>::iterator itv=itevent->second.begin(); itv!=itevent->second.end(); ++itv){
             event.AddTile(new Caen(*itv));
           }
@@ -709,6 +720,9 @@ bool Analyses::ConvertASCII2Root(void){
           itevent=tmpEvent.find(TriggerID);
           //Fill the tree the event is complete and erase from the map
           event.SetTimeStamp(tmpTime[TriggerID]/setup->GetNMaxROUnit());
+          if(debug==1000){
+            std::cerr<<event.GetTimeStamp()<<std::endl;
+          }
           event.SetEventID(itevent->first);
           for(std::vector<Caen>::iterator itv=vCaen.begin(); itv!=vCaen.end(); ++itv){
             event.AddTile(new Caen(*itv));
@@ -862,6 +876,9 @@ bool Analyses::ConvertOldRootFile2Root(void){
      if((int)vCaen.size()==setup->GetTotalNbChannels()){
       //Fill the tree the event is complete and erase from the map
       event.SetTimeStamp(Time);
+      if(debug==1000){
+            std::cerr<<event.GetTimeStamp()<<std::endl;
+      }
       event.SetEventID(TriggerID);
       for(std::vector<Caen>::iterator itv=vCaen.begin(); itv!=vCaen.end(); ++itv){
         event.AddTile(new Caen(*itv));
@@ -1212,18 +1229,20 @@ bool Analyses::GetPedestal(void){
   CreateCanvasAndPadsFor8PannelTBPlot(canvas8PanelProf, pad8PanelProf,  topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 0.045, "Prof", false);
  
   
-  for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-    PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                hSpectra, setup, true, 0, 275, 1.2, l, 0,
-                                Form("%s/Noise_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-    if (typeRO == ReadOut::Type::Caen){
+  for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+    for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
       PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                hSpectra, setup, false, 0, 275, 1.2, l, 0,
-                                Form("%s/Noise_LG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-    } else if (typeRO == ReadOut::Type::Hgcroc){
-      PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, hSpectra, 0, it->second.samples+1, 300, l, 0,
-                                  Form("%s/Waveform_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
- 
+                                  hSpectra, setup, true, 0, 275, 1.2, l, m,
+                                  Form("%s/Noise_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+      if (typeRO == ReadOut::Type::Caen){
+        PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                  hSpectra, setup, false, 0, 275, 1.2, l, m,
+                                  Form("%s/Noise_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+      } else if (typeRO == ReadOut::Type::Hgcroc){
+        PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, hSpectra, 0, it->second.samples+1, 300, l, m,
+                                    Form("%s/Waveform_Mod_%02dLayer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+  
+      }
     }
   }
 
@@ -1464,26 +1483,28 @@ bool Analyses::TransferCalib(void){
     
     std::cout << "plotting single layers" << std::endl;
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      if (l%10 == 0 && l > 0 && debug > 0)
-        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
-      if (typeRO == ReadOut::Type::Caen) {
-        PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
-                            textSizePixel, hSpectra, -20, 340, 4000, l, 0,
-                            Form("%s/LGHG2D_Corr_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-      } else {
-        PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
-                            textSizePixel, hSpectra, 0, it->second.samples+1, 1000, l, 0,
-                            Form("%s/Waveform_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-        
-      }
-      if (ExtPlot > 1){
-        PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                    hSpectra, setup, true, -100, maxHG, 1.2, l, 0,
-                                    Form("%s/SpectraWithNoiseFit_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-        if (typeRO == ReadOut::Type::Caen){
+      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (l%10 == 0 && l > 0 && debug > 0)
+          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+        if (typeRO == ReadOut::Type::Caen) {
+          PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
+                              textSizePixel, hSpectra, -20, 340, 4000, l, m,
+                              Form("%s/LGHG2D_Corr_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+        } else {
+          PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
+                              textSizePixel, hSpectra, 0, it->second.samples+1, 1000, l, m,
+                              Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(),m,  l, plotSuffix.Data()), it->second);
+          
+        }
+        if (ExtPlot > 1){
           PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                      hSpectra, setup, false, -20, maxLG, 1.2, l, 0,
-                                      Form("%s/SpectraWithNoiseFit_LG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                                      hSpectra, setup, true, -100, maxHG, 1.2, l, m,
+                                      Form("%s/SpectraWithNoiseFit_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+          if (typeRO == ReadOut::Type::Caen){
+            PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                        hSpectra, setup, false, -20, maxLG, 1.2, l, m,
+                                        Form("%s/SpectraWithNoiseFit_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+          }
         }
       }
     }
@@ -2166,27 +2187,29 @@ bool Analyses::GetScaling(void){
     Double_t maxLG = ReturnMipPlotRangeDepVov(calib.GetVov(),false);
     std::cout << "plotting single layers" << std::endl;
 
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      if (l%10 == 0 && l > 0 && debug > 0)
-        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
-      if (ExtPlot > 0){
-        PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  hSpectra, hSpectraTrigg, setup, true, -100, maxHG, 1.2, l, 0,
-                                  Form("%s/MIP_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-        PlotTriggerPrimWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                          hSpectraTrigg, setup, averageScale, factorMinTrigg, factorMaxTrigg,
-                                          0, maxHG*2, 1.2, l, 0, Form("%s/TriggPrimitive_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-        PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
-                                  hSpectra, 0, -20, 800, 3900, l, 0,
-                                  Form("%s/LGHG_Corr_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-      }
-      if (ExtPlot > 1){
-        PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  hSpectra, hSpectraTrigg, setup, false, -30, maxLG, 1.2, l, 0,
-                                  Form("%s/MIP_LG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-        PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
-                                  hSpectra, 1, -100, 4000, 340, l, 0,
-                                  Form("%s/HGLG_Corr_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){    
+        if (l%10 == 0 && l > 0 && debug > 0)
+          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
+        if (ExtPlot > 0){
+          PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                    hSpectra, hSpectraTrigg, setup, true, -100, maxHG, 1.2, l, m,
+                                    Form("%s/MIP_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+          PlotTriggerPrimWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                            hSpectraTrigg, setup, averageScale, factorMinTrigg, factorMaxTrigg,
+                                            0, maxHG*2, 1.2, l, m, Form("%s/TriggPrimitive_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+          PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
+                                    hSpectra, 0, -20, 800, 3900, l, m,
+                                    Form("%s/LGHG_Corr_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+        }
+        if (ExtPlot > 1){
+          PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                    hSpectra, hSpectraTrigg, setup, false, -30, maxLG, 1.2, l, m,
+                                    Form("%s/MIP_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+          PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
+                                    hSpectra, 1, -100, 4000, 340, l, m,
+                                    Form("%s/HGLG_Corr_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+        }
       }
     }
     std::cout << "done plotting single layers" << std::endl;  
@@ -2551,18 +2574,20 @@ bool Analyses::GetImprovedScaling(void){
   Double_t maxHG = ReturnMipPlotRangeDepVov(calib.GetVov(),true);
   Double_t maxLG = ReturnMipPlotRangeDepVov(calib.GetVov(),false);
   std::cout << "plotting single layers" << std::endl;
-  for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-    if (l%10 == 0 && l > 0 && debug > 0)
-      std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
-    PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                              hSpectra, hSpectraTrigg, setup, true, -100, maxHG, 1.2, l, 0,
-                              Form("%s/MIP_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-    PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                              hSpectra, hSpectraTrigg, setup, false, -20, maxLG, 1.2, l, 0,
-                              Form("%s/MIP_LG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-    PlotTriggerPrimWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                      hSpectraTrigg, setup, averageScale, factorMinTrigg, factorMaxTrigg,
-                                      0, maxHG*2, 1.2, l, 0, Form("%s/TriggPrimitive_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+  for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){   
+    for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){ 
+      if (l%10 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
+      PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                hSpectra, hSpectraTrigg, setup, true, -100, maxHG, 1.2, l, m,
+                                Form("%s/MIP_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+      PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                hSpectra, hSpectraTrigg, setup, false, -20, maxLG, 1.2, l, m,
+                                Form("%s/MIP_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+      PlotTriggerPrimWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                        hSpectraTrigg, setup, averageScale, factorMinTrigg, factorMaxTrigg,
+                                        0, maxHG*2, 1.2, l, m, Form("%s/TriggPrimitive_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+    }
   }
   std::cout << "done plotting" << std::endl;
   
@@ -2828,10 +2853,12 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
   Double_t relSize8P[8];
   CreateCanvasAndPadsFor8PannelTBPlot(canvas8Panel, pad8Panel,  topRCornerX, topRCornerY, relSize8P, textSizePixel);
  
-  for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-    PlotNoiseAdvWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                    hSpectra, hSpectraTrigg, true, 0, 450, 1.2, l, 0,
-                                    Form("%s/NoiseTrigg_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+  for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+    for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){    
+      PlotNoiseAdvWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                      hSpectra, hSpectraTrigg, true, 0, 450, 1.2, l, m,
+                                      Form("%s/NoiseTrigg_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+    }
   }
 
   
@@ -2890,6 +2917,9 @@ bool Analyses::RunEvalLocalTriggers(void){
   int runNr = -1;
   for(int i=0; i<evts && i < maxEvents; i++){
     TdataIn->GetEntry(i);
+    if(debug==1000){
+        std::cerr<<event.GetTimeStamp()<<std::endl;
+      }
     if (i == 0){
       runNr = event.GetRunNumber();
       std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
@@ -3028,6 +3058,9 @@ bool Analyses::Calibrate(void){
   if (evts < 10000)
     outCount  = 500;
   for(int i=0; i<evts && i < maxEvents; i++){
+    if(debug==1000){
+        std::cerr<<event.GetTimeStamp()<<std::endl;
+      }
     TdataIn->GetEntry(i);
     if (i%outCount == 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
     if (i == 0){
@@ -3239,28 +3272,30 @@ bool Analyses::Calibrate(void){
     calib.PrintGlobalInfo();  
     std::cout << "plotting single layers" << std::endl;
 
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      if (l%10 == 0 && l > 0 && debug > 0)
-        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
-      if (ExtPlot > 0){
-        PlotNoiseAdvWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                    hSpectra, hSpectraNoise, true, -50, 100, 1.2, l, 0,
-                                    Form("%s/NoiseTrigg_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-        PlotNoiseAdvWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                    hSpectra, hSpectraNoise, false, -50, 100, 1.2, l, 0,
-                                    Form("%s/NoiseTrigg_LG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-        PlotSpectraFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  hSpectra, 0, -100, 4000, 1.2, l, 0,
-                                  Form("%s/Spectra_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-        PlotSpectraFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  hSpectra, 2, -2, 100, 1.2, l, 0,
-                                  Form("%s/Spectra_Comb_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-        PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
-                                  hSpectra, 0, -20, 800, 50., l, 0,
-                                  Form("%s/LGHG_Corr_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-        PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
-                                  hSpectra, 2, -100, 340, 300., l, 0,
-                                  Form("%s/LGLGhgeq_Corr_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){    
+        if (l%10 == 0 && l > 0 && debug > 0)
+          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
+        if (ExtPlot > 0){
+          PlotNoiseAdvWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                      hSpectra, hSpectraNoise, true, -50, 100, 1.2, l, m,
+                                      Form("%s/NoiseTrigg_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+          PlotNoiseAdvWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                      hSpectra, hSpectraNoise, false, -50, 100, 1.2, l, m,
+                                      Form("%s/NoiseTrigg_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+          PlotSpectraFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                    hSpectra, 0, -100, 4000, 1.2, l, m,
+                                    Form("%s/Spectra_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+          PlotSpectraFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                    hSpectra, 2, -2, 100, 1.2, l, m,
+                                    Form("%s/Spectra_Comb_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+          PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
+                                    hSpectra, 0, -20, 800, 50., l, m,
+                                    Form("%s/LGHG_Corr_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+          PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
+                                    hSpectra, 2, -100, 340, 300., l, m,
+                                    Form("%s/LGLGhgeq_Corr_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+        }
       }
     }
     std::cout << "done plotting single layers" << std::endl;  

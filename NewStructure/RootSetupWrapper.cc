@@ -11,6 +11,7 @@ RootSetupWrapper::RootSetupWrapper(Setup* s){
   ROchannel   =s->ROchannel;
   Board       =s->Board;
   CellIDfromRO=s->CellIDfromRO;
+  ModPos      =s->ModPos;
   
   nMaxLayer   = s->nMaxLayer;
   nMaxRow     = s->nMaxRow;

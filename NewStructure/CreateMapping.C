@@ -6,13 +6,15 @@
 #include <TTree.h>
 #include <iostream>
 #include <fstream>
+#include <utility>
 
 struct layerInfo{
-    layerInfo(): layerNrAbs(0), layerLabel(""), rUnit(0), layerUnit(0){}
+    layerInfo(): layerNrAbs(0), layerLabel(""), rUnit(0), layerUnit(0), moduleNr(0){}
     int layerNrAbs;       // absolute layer number
     TString layerLabel;   // assembly name
     int rUnit;            // readout unit number
     int layerUnit;        // layer within readout unit
+    int moduleNr;
 } ;
 
 struct unitInfo{
@@ -23,7 +25,7 @@ struct unitInfo{
 } ;
 
 struct channelInfo{
-    channelInfo(): chRU(0), rUnit(0), ruID(0), nrAssembly(0), chAssembly(0), modNr(0), layer(0), rowAssembly(0), colAssembly(0), chID(0), posX(0.), posY(0.), posZ(0.){}
+    channelInfo(): chRU(0), rUnit(0), ruID(0), nrAssembly(0), chAssembly(0), modNr(0), layer(0), rowAssembly(0), colAssembly(0), chID(0), posX(0.), posY(0.), posZ(0.), modposX(0.), modposY(0.) {}
     int chRU;
     int rUnit;
     int ruID;
@@ -37,6 +39,8 @@ struct channelInfo{
     float posX;
     float posY;
     float posZ;
+    float modposX;
+    float modposY;
 };
 
 
@@ -44,7 +48,7 @@ void PrintChannelInfo(channelInfo tempC){
   cout  << "RU: " <<tempC.rUnit << "\t"
         << "RU channel: "<< tempC.chRU  << "\t"
         << "RU ID: "<< tempC.ruID  << "\t"
-        << "module Nr: "<< tempC.layer  << "\t"
+        << "module Nr: "<< tempC.modNr  << "\t"
         << "Row in assembly: "<< tempC.rowAssembly  << "\t"
         << "Col in assembly: "<< tempC.colAssembly  << "\t"
         << "Layer Nr: "<< tempC.layer  << "\t"
@@ -54,6 +58,8 @@ void PrintChannelInfo(channelInfo tempC){
         << "X: " << tempC.posX  << "cm \t"
         << "Y: " << tempC.posY  << "cm \t"
         << "Z: " << tempC.posZ  << "cm \t"
+        << "Mod X: " << tempC.modposX << "cm \t"
+        << "Mod Y: " << tempC.modposY << "cm \t"
         << endl;
    return;                                
 }
@@ -147,11 +153,18 @@ float ReturnPosZAbs(Int_t layer){
  return (layer+1)*2.0;
 }
 
+float ReturnAbsX(float XInLayer, float ModX){
+  return XInLayer+ModX;
+}
 
+float ReturnAbsY(float YInLayer, float ModY){
+  return YInLayer+ModY;
+}
 
 
 void CreateMapping(   TString filenameUnitMapping,
                       TString filenameLayerMapping,
+                      TString filenameModulePositions,
                       TString filenameMappingWrite,
                       int readout = 0,                // 0 - CAEN readout, 1 - HGCROC readout
                       int debug = 0
@@ -163,10 +176,11 @@ void CreateMapping(   TString filenameUnitMapping,
     // ********************************************************************************************************
     std::vector<layerInfo> layers;
     std::vector<unitInfo> uChannels;
+    std::map<int, std::pair<float,float>> positions;
     ifstream inUnit;
     inUnit.open(filenameUnitMapping,ios_base::in);
     if (!inUnit) {
-        std::cout << "ERROR: file " << filenameUnitMapping.Data() << " not found!" << std::endl;
+        std::cout << "ERRlayerUniOR: file " << filenameUnitMapping.Data() << " not found!" << std::endl;
         return;
     }
 
@@ -177,6 +191,12 @@ void CreateMapping(   TString filenameUnitMapping,
         return;
     }
 
+    ifstream inModulePositions;
+    inModulePositions.open(filenameModulePositions,ios_base::in);
+    if (!inModulePositions) {
+        std::cout << "ERROR: file " << filenameModulePositions.Data() << " not found!" << std::endl;
+        return;
+    }
     
     
     for( TString tempLine; tempLine.ReadLine(inUnit, kTRUE); ) {
@@ -249,22 +269,50 @@ void CreateMapping(   TString filenameUnitMapping,
         tempLayer.layerLabel  = (TString)((TObjString*)tempArr->At(1))->GetString();
         tempLayer.rUnit   = ((TString)((TObjString*)tempArr->At(2))->GetString()).Atoi();
         tempLayer.layerUnit      = ((TString)((TObjString*)tempArr->At(3))->GetString()).Atoi();
-            
+        tempLayer.moduleNr       = ((TString)((TObjString*)tempArr->At(4))->GetString()).Atoi();
+        std::cerr << "Module Number: " << tempLayer.moduleNr<< std::endl;
         if (debug > 0) std::cout << "layer " << tempLayer.layerNrAbs << "\t assembly name: " << tempLayer.layerLabel << "\t CAEN unit Nr.: "  << tempLayer.rUnit << "\t layer in unit: " << tempLayer.layerUnit << std::endl;
         layers.push_back(tempLayer);
+    }
+
+    for( TString tempLine; tempLine.ReadLine(inModulePositions, kTRUE);) {
+      if (tempLine.BeginsWith("%") || tempLine.BeginsWith("#")){
+          continue;
+      }
+      TObjArray *tempArr  = tempLine.Tokenize("\t");
+      if(tempArr->GetEntries()<1){
+          if (debug > 1) std::cout << "nothing to be done" << std::endl;
+          delete tempArr;
+          continue;
+      } else if (tempArr->GetEntries() == 1 ){
+          // Separate the string according to space
+          tempArr       = tempLine.Tokenize(" ");
+          if(tempArr->GetEntries()<1){
+              if (debug > 1) std::cout << "nothing to be done" << std::endl;
+              delete tempArr;
+              continue;
+          } else if (tempArr->GetEntries() == 1  ) {
+              if (debug > 1) std::cout << ((TString)((TObjString*)tempArr->At(0))->GetString()).Data() << " has not been reset, no value given!" << std::endl;
+              delete tempArr;
+              continue;
+          }
+      }
+      
+      // Fill variables
+      positions[((TString)((TObjString*)tempArr->At(0))->GetString()).Atoi()] = std::make_pair(((TString)((TObjString*)tempArr->At(1))->GetString()).Atoi(),((TString)((TObjString*)tempArr->At(2))->GetString()).Atoi());
     }
     
     std::vector<channelInfo> channels;
     fstream fileMappingClassic(filenameMappingWrite.Data(), ios::out);
     // fileMappingClassic.open(filenameMappingWrite, ios::out);
-    if (readout ==0 )fileMappingClassic << "#CAEN board	CAEN Ch	layer	assembly	board channel	row	column modNr\n" ;
-    if (readout ==1 )fileMappingClassic << "#HGCROC board	HGCROC Ch	layer	assembly	board channel	row	column modNr\n" ;
+    if (readout ==0 )fileMappingClassic << "#CAEN board	CAEN Ch	layer	assembly	board channel	row	column modNr modX modY\n" ;
+    if (readout ==1 )fileMappingClassic << "#HGCROC board	HGCROC Ch	layer	assembly	board channel	row	column modNr modX modY\n" ;
     TFile* outputRootFile       = new TFile("mappingTree.root","RECREATE");
     TTree* mapping_tree           = new TTree("mapping_tree", "mapping_tree");
     mapping_tree->SetDirectory(outputRootFile);
     channelInfo tempChannel;
     
-    mapping_tree->Branch("channel", &tempChannel, "ch_ru/I:ru/I:ruID/I:nr_ass/I:ch_ass/I:modNr/I:layer/I:row_ass/I:col_ass/I:chID/I:posX/F:posY/F:posZ/F");
+    mapping_tree->Branch("channel", &tempChannel, "ch_ru/I:ru/I:ruID/I:nr_ass/I:ch_ass/I:modNr/I:layer/I:row_ass/I:col_ass/I:chID/I:posX/F:posY/F:posZ/F:modposX/F:modposY/F");
     
     for (int l = 0; l < (int)layers.size();l++){
       for (int chA = 1; chA < 9; chA++){
@@ -273,7 +321,7 @@ void CreateMapping(   TString filenameUnitMapping,
           tempChannel.chRU        = channel;
           tempChannel.rUnit       = layers.at(l).rUnit;
           tempChannel.ruID        = Int_t(tempChannel.rUnit<<8)+tempChannel.chRU;   // 8 bit read-out unit number, 8 bit channel readout unit
-          tempChannel.modNr       = 0;
+          tempChannel.modNr       = layers.at(l).moduleNr;
           tempChannel.layer       = layers.at(l).layerNrAbs;
           tempChannel.nrAssembly  = (int)(((TString)layers.at(l).layerLabel.ReplaceAll("C","")).Atoi());
           tempChannel.chAssembly  = chA;
@@ -284,9 +332,11 @@ void CreateMapping(   TString filenameUnitMapping,
           tempChannel.posX        = ReturnPosXInLayer(chA);
           tempChannel.posY        = ReturnPosYInLayer(chA);
           tempChannel.posZ        = ReturnPosZAbs(layers.at(l).layerNrAbs);
+          tempChannel.modposX     = positions[layers.at(l).moduleNr].first;
+          tempChannel.modposY     = positions[layers.at(l).moduleNr].second;
           channels.push_back(tempChannel);
 
-          fileMappingClassic << layers.at(l).rUnit << "\t" << channel << "\t" << layers.at(l).layerNrAbs << "\t" << layers.at(l).layerLabel << "\t" <<  chA << "\t" << ReturnRowBoard(chA) << "\t" << ReturnColumnBoard(chA) << "\t" << tempChannel.modNr <<"\n";
+          fileMappingClassic << layers.at(l).rUnit << "\t" << channel << "\t" << layers.at(l).layerNrAbs << "\t" << layers.at(l).layerLabel << "\t" <<  chA << "\t" << ReturnRowBoard(chA) << "\t" << ReturnColumnBoard(chA) << "\t" << tempChannel.modNr << "\t" << tempChannel.modposX << "\t" << tempChannel.modposY <<"\n";
           PrintChannelInfo(tempChannel);
           
           // printf("%b\t%b\t%b\t%b\t%b\n", tempChannel.modNr, tempChannel.rowAssembly, tempChannel.colAssembly, tempChannel.layer, tempChannel.chID);

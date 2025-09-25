@@ -28,7 +28,7 @@ class Event{
   int     GetRunNumber (void) const;
   Tile*   GetTile      (int);
   Tile*   GetTileFromID(int);
-  int     GetTimeStamp (void) const;
+  double     GetTimeStamp (void) const;
   double  GetVov       (void) const;
   double  GetVop       (void) const;
   double    GetBeamPosX(void);
@@ -47,7 +47,7 @@ class Event{
   void    SetVop(double);
   void    SetBeamPosX(double);
   void    SetBeamPosY(double);
-  void    SetTimeStamp (int);
+  void    SetTimeStamp (double);
 
   bool    InspectIfLocalMuonTrigg(int, double, double, double);
   bool    InspectIfNoiseTrigg(int, double, double);
@@ -68,7 +68,7 @@ class Event{
   double                BeamPosY;
   std::map<int, Tile* > Tiles;
   std::vector<int>      TileIDs;
-  int                   TimeStamp;
+  double                   TimeStamp;
   
  protected:
 

@@ -4,6 +4,7 @@
 #include <fstream>
 #include "TObjArray.h"
 #include "TObjString.h"
+#include "utility"
 
 Setup* Setup::instancePtr = nullptr;
 
@@ -55,7 +56,7 @@ bool Setup::Initialize(TString file, int debug){
             continue;
         }
     }
-    if (tempArr->GetEntries()<8){
+    if (tempArr->GetEntries()<10){
       if (debug > 1) std::cout << "line not conform with mapping format, skipping" << std::endl;
       delete tempArr;
       continue;
@@ -69,7 +70,14 @@ bool Setup::Initialize(TString file, int debug){
     Arow        = ((TString)((TObjString*)tempArr->At(5))->GetString()).Atoi();
     Acolumn     = ((TString)((TObjString*)tempArr->At(6))->GetString()).Atoi();
     Amod        = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
+    float AmodX       = ((TString)((TObjString*)tempArr->At(8))->GetString()).Atof();
+    float AmodY       = ((TString)((TObjString*)tempArr->At(9))->GetString()).Atof(); 
     
+
+    // Try to set map for mod pos
+    ModPos[Amod]=std::make_pair(AmodX,AmodY);
+    //std::cerr<< "modnr: "<< Amod <<std::endl;
+
     Akey=(Amod<<9)+(Arow<<8)+(Acolumn<<6)+(Alayer);
     assemblyID[Akey] = Anassembly;
     ROunit    [Akey] = AROunit;
@@ -104,6 +112,7 @@ bool Setup::Initialize(RootSetupWrapper& rsw){
   nMaxModule      =rsw.nMaxModule;
   nMaxROUnit      =rsw.nMaxROUnit;
   maxCellID       =rsw.maxCellID;
+  ModPos          =rsw.ModPos;
   return isInit;
 }
 
@@ -167,12 +176,27 @@ int Setup::GetRow(int cellID) const{
   return (cellID&(1<<8))>>8;
 }
 
-double Setup::GetModuleX(int mod=0)const {
-  return 0.;
+double Setup::GetModuleX(int mod)const {
+  auto it = ModPos.find(mod);
+  if (it != ModPos.end()) {
+//      std::cerr<< "My value: " << it->second.first << std::endl;
+      return static_cast<double>(it->second.first);
+  }
+  else {
+    std::cerr << "Warning: Module " << mod << " not found in ModPos\n";
+    return -999.0;
+  }
 }
 
-double Setup::GetModuleY(int mod=0)const {
-  return 0.;
+double Setup::GetModuleY(int mod)const {
+    auto it = ModPos.find(mod);
+  if (it != ModPos.end()) {
+      return static_cast<double>(it->second.second);
+  }
+  else {
+    std::cerr << "Warning: Module " << mod << " not found in ModPos\n";
+    return -999.0;
+  }
 }
 
 int Setup::GetTotalNbChannels(void) const {
@@ -181,12 +205,12 @@ int Setup::GetTotalNbChannels(void) const {
 
 double Setup::GetX(int cellID) const{
   int col=GetColumn(cellID);
-  return -7.5/*cm*/+col*cellW/*cm*/ /*+GetModuleX()*/;
+  return -7.5/*cm*/+col*cellW/*cm*/ + GetModuleX(GetModule(cellID));
 }
 
 double Setup::GetY(int cellID) const{
   int row=GetRow(cellID);
-  return -2.5/*cm*/+row*cellH/*cm*/ /* +GetModuleY()*/;
+  return -2.5/*cm*/+row*cellH/*cm*/ + GetModuleY(GetModule(cellID));
 }
 
 double Setup::GetZ(int cellID) const{

@@ -73,6 +73,8 @@ class Setup{
   std::map<int, int>     ROunit;
   std::map<int, int>     ROchannel;
   std::map<int, int>     Board;
+  //key is module number
+  std::map<int, std::pair<float,float>> ModPos;
   //Inverse mapping
   std::map< std::pair<int, int>, int> CellIDfromRO;
   int nMaxLayer;

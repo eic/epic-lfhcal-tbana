@@ -20,6 +20,7 @@
 #include "TileSpectra.h"  
 #include "TileTrend.h"  
 #include "CalibSummary.h"  
+#include "AnaSummary.h"
 #include "CommonHelperFunctions.h"
   //__________________________________________________________________________________________________________
   //__________________________________________________________________________________________________________
@@ -2054,7 +2055,6 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
     int nRow = setupT->GetNMaxRow()+1;
     int nCol = setupT->GetNMaxColumn()+1;
     int skipped = 0;
-    ReadOut::Type rotype = ReadOut::Type::Undef;
     
     for (int r = 0; r < nRow; r++){
       for (int c = 0; c < nCol; c++){
@@ -2076,14 +2076,12 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
             DrawLatex(topRCornerX[p]+0.045, topRCornerY[p]-4*0.85*relSize8P[p]-1.4*relSize8P[p], GetStringFromRunInfo(currRunInfo, 2), false, 0.85*relSize8P[p], 42);
             DrawLatex(topRCornerX[p]+0.045, topRCornerY[p]-4*0.85*relSize8P[p]-2.2*relSize8P[p], GetStringFromRunInfo(currRunInfo, 3), false, 0.85*relSize8P[p], 42);
           }
-          continue;
-        } else {
-          rotype = ithSpectra->second.GetROType();
-        }
+        continue;
+        } 
         TProfile* tempProfile = ithSpectra->second.GetLGHGcorr();
         TH2D* temp2D          = ithSpectra->second.GetCorr();
         if (!tempProfile) continue;
-        SetStyleHistoTH2ForGraphs( temp2D, temp2D->GetXaxis()->GetTitle(), temp2D->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
+        SetStyleHistoTH2ForGraphs( temp2D, tempProfile->GetXaxis()->GetTitle(), tempProfile->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
         SetMarkerDefaultsProfile(tempProfile, 24, 0.7, kRed+2, kRed+2);   
         
         temp2D->GetYaxis()->SetRangeUser(0,maxY);
@@ -2102,11 +2100,8 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
           temp2D->Draw("axis,same");
         }
 
-        TString xTit = temp2D->GetXaxis()->GetTitle();
-        if (xTit.Contains("ample") != 0){
-          tempProfile->Draw("pe, same");
-        }
-          
+        tempProfile->Draw("pe, same");
+                
         TString label           = Form("row %d col %d", r, c);
         if (p == 7){
           label = Form("row %d col %d layer %d", r, c, layer);
@@ -2115,24 +2110,15 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
         SetStyleTLatex( labelChannel, 0.85*textSizePixel,4,1,43,kTRUE,11);
 
         TF1* fit            = ithSpectra->second.GetCorrModel(0);
-        if (rotype == ReadOut::Type::Hgcroc)
-          fit            = ithSpectra->second.GetCorrModel(1);
         if (fit){
           Double_t rangeFit[2] = {0,0};
           fit->GetRange(rangeFit[0], rangeFit[1]);
           SetStyleFit(fit , rangeFit[0], rangeFit[1], 7, 3, kRed+3);
           fit->Draw("same");
-          TLegend* legend = nullptr;
-          if (rotype == ReadOut::Type::Caen){
-            legend = GetAndSetLegend2( topRCornerX[p]+0.045, topRCornerY[p]-4*0.85*relSize8P[p]-0.4*relSize8P[p], topRCornerX[p]+6*relSize8P[p], topRCornerY[p]-0.6*relSize8P[p],0.85*textSizePixel, 1, label, 43,0.1);
-            legend->AddEntry(fit, "linear fit, trigg.", "l");
-            legend->AddEntry((TObject*)0, Form("#scale[0.8]{b = %2.3f #pm %2.4f}",fit->GetParameter(0), fit->GetParError(0) ) , " ");
-            legend->AddEntry((TObject*)0, Form("#scale[0.8]{a = %2.3f #pm %2.4f}",fit->GetParameter(1), fit->GetParError(1) ) , " ");
-          } else {
-            legend = GetAndSetLegend2( topRCornerX[p]+0.045, topRCornerY[p]-3*0.85*relSize8P[p]-0.4*relSize8P[p], topRCornerX[p]+6*relSize8P[p], topRCornerY[p]-0.6*relSize8P[p],0.85*textSizePixel, 1, label, 43,0.1);
-            legend->AddEntry(fit, "const fit", "l");
-            legend->AddEntry((TObject*)0, Form("#scale[0.8]{a = %2.3f #pm %2.4f}",fit->GetParameter(0), fit->GetParError(0) ) , " ");   
-          }
+          TLegend* legend = GetAndSetLegend2( topRCornerX[p]+0.045, topRCornerY[p]-4*0.85*relSize8P[p]-0.4*relSize8P[p], topRCornerX[p]+6*relSize8P[p], topRCornerY[p]-0.6*relSize8P[p],0.85*textSizePixel, 1, label, 43,0.1);
+          legend->AddEntry(fit, "linear fit, trigg.", "l");
+          legend->AddEntry((TObject*)0, Form("#scale[0.8]{b = %2.3f #pm %2.4f}",fit->GetParameter(0), fit->GetParError(0) ) , " ");
+          legend->AddEntry((TObject*)0, Form("#scale[0.8]{a = %2.3f #pm %2.4f}",fit->GetParameter(1), fit->GetParError(1) ) , " ");
           legend->Draw();
         } else {
           labelChannel->Draw();  
@@ -2674,7 +2660,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
     std::map<int, CalibSummary>::iterator itrun;
     Int_t nruns = 0;
     for(itrun=sumRuns.begin(); itrun!=sumRuns.end(); ++itrun){
-      TH1D* tempH = nullptr; 
+      TH1D* tempH; 
       if (option==0) tempH = itrun->second.GetHGped();
       else if (option==1) tempH = itrun->second.GetHGpedwidth();
       else if (option==2) tempH = itrun->second.GetLGped();
@@ -2702,7 +2688,6 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
     
     TString label2          = Form("Common V_{op} = %2.1f V", commanVoltage);
     canvas2D->cd();
-        
       TH1D* histos[30];
       if (debug > 0){
         if (nruns > 30) std::cout << "more than 30 runs are included in this, only 30 will be plotted, currently " << nruns << "\t runs were requested" << std::endl;
@@ -2983,6 +2968,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
         }
         
         TH1D* dummyhist;
+
         for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
           int tmpRunNr = ithTrend->second.GetRunNr(rc);
           profs[rc] = nullptr;
@@ -2998,7 +2984,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
               dummyhist->Draw("axis");
             }
 
-            SetLineDefaults(profs[rc], GetColorLayer(rc), 2, GetLineStyleLayer(rc));   
+            SetLineDefaults(profs[rc], GetColorLayer(rc), 2, GetLineStyleLayer(rc));  
             profs[rc]->SetMarkerStyle(24);
             profs[rc]->Draw("same,pe");
             if(p == 7) legend->AddEntry(profs[rc],Form("%d",tmpRunNr),"p");
@@ -3030,8 +3016,84 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
       if (layer == setupT->GetNMaxLayer()) canvas8Panel->Print(Form("%s.pdf]",nameOutputSummary.Data()));
     }
   }
-  
 
-  
+  //__________________________________________________________________________________________________________
+  // Plot 1D distribution
+  //__________________________________________________________________________________________________________  
+  void PlotAnalysisComparison( TCanvas* canvas2D, Int_t option, 
+                            std::map<int, AnaSummary> sumRuns, 
+                            Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
+                            //int labelOpt = 1,
+                            TString additionalLabel = "", int debug = 0
+                            ){
+    //hardcode max X
+    Double_t minY         = 0.1;
+    Double_t maxY         = 0;
+    Double_t minX         = 9999;
+    Double_t maxX         = 0;
+    bool isSameVoltage    = true;
+    double commanVoltage  = 0;
+    
+    std::map<int, AnaSummary>::iterator itrun;
+    Int_t nruns = 0;
+    for(itrun=sumRuns.begin(); itrun!=sumRuns.end(); ++itrun){
+      TH1D* tempH; 
+      if (option==0) tempH = itrun->second.GetDeltaTime();
+      if (maxY < tempH->GetMaximum()) maxY = tempH->GetMaximum();
+      if ( maxX < FindLastBinXAboveMin(tempH)) maxX = FindLastBinXAboveMin(tempH);
+      if ( minX > FindFirstBinXAboveMin(tempH)) minX = FindFirstBinXAboveMin(tempH);
+      if (nruns==0){
+        commanVoltage = itrun->second.GetVoltage();
+      } else {
+        if (commanVoltage != itrun->second.GetVoltage())  isSameVoltage = false;
+      }
+      nruns++;
+    }
+    // std::cout << "min X\t"  << minX << "\t max X \t" << maxX << std::endl;
+    
+    TString label2          = Form("Common V_{op} = %2.1f V", commanVoltage);
+    canvas2D->cd();  
+      TH1D* histos[30];
+      if (debug > 0){
+        if (nruns > 30) std::cout << "more than 30 runs are included in this, only 30 will be plotted, currently " << nruns << "\t runs were requested" << std::endl;
+        else std::cout << nruns << " will be plotted" << std::endl;
+      }
+      double lineBottom  = 6;
+      if (nruns < 6) lineBottom = 1;
+      else if (nruns < 11) lineBottom = 2;
+      else if (nruns < 16) lineBottom = 3;
+      else if (nruns < 21) lineBottom = 4;
+      else if (nruns < 26) lineBottom = 5;
+      TLegend* legend = GetAndSetLegend2( 0.55, 0.88-lineBottom*textSizeRel, 0.95, 0.88,
+                                          0.85*textSizeRel, 5, "",42,0.35);;
+      int currRun = 0;
+      for(itrun=sumRuns.begin(); (itrun!=sumRuns.end()) && (currRun < 30); ++itrun){
+        histos[currRun] = nullptr;
+        if (option==0) histos[currRun] = itrun->second.GetDeltaTime();
+//	std::cout <<"currentRun" <<std::endl;
+        SetStyleHistoTH1ForGraphs( histos[currRun], histos[currRun]->GetXaxis()->GetTitle(), histos[currRun]->GetYaxis()->GetTitle(), 0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.95, 1.02);  
+        SetLineDefaults(histos[currRun], GetColorLayer(currRun), 4, GetLineStyleLayer(currRun));   
+        if(currRun == 0){
+          histos[currRun]->GetXaxis()->SetRangeUser(minX-5*histos[currRun]->GetBinWidth(1),maxX+5*histos[currRun]->GetBinWidth(1));
+          histos[currRun]->GetYaxis()->SetRangeUser(minY,maxY*1.1);
+          histos[currRun]->Draw("hist");
+	//  std::cout<<"plot initial"<<std::endl;
+        } else {
+          histos[currRun]->Draw("same,hist");
+	//  std::cout<<"plot next" <<std::endl;
+        }
+        legend->AddEntry(histos[currRun],Form("%d",itrun->second.GetRunNumber()),"l");
+        currRun++;  
+      }  
+      histos[0]->DrawCopy("axis,same");
+      legend->Draw();
+      
+      DrawLatex(0.95, 0.92, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(currRunInfo,7).Data()), true, 0.85*textSizeRel, 42);
+      DrawLatex(0.95, 0.885, GetStringFromRunInfo(currRunInfo,8), true, 0.85*textSizeRel, 42);
+      if (isSameVoltage)
+        DrawLatex(0.95, 0.88-0.5*0.85*textSizeRel-lineBottom*textSizeRel , label2, true, 0.85*textSizeRel, 42);
+      
+    canvas2D->SaveAs(nameOutput.Data());
+  }  
   
 #endif

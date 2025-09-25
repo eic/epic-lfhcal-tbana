@@ -1,5 +1,5 @@
-#ifndef COMPARISONCALIB_H
-#define COMPARISONCALIB_H
+#ifndef COMPARISONANA_H
+#define COMPARISONANA_H
 
 #include <iostream>
 #include <fstream>
@@ -16,16 +16,16 @@
 #include "HGCROC.h"
 #include "Caen.h"
     
-class ComparisonCalib{
+class ComparisonAna{
 
  public:
-  ComparisonCalib(){
+  ComparisonAna(){
     TsetupIn = new TChain("Setup");
     TcalibIn = new TChain("Calib");
     rswptr=&rsw;
     calibptr=&calib;
   }
-  ~ComparisonCalib(){
+  ~ComparisonAna(){
     if(RootOutput) RootOutput->Close();
   }
 
@@ -59,7 +59,7 @@ class ComparisonCalib{
   //General methods
   bool CreateOutputRootFile(void);
   bool CheckAndOpenIO(void);
-  bool ProcessCalib(void);
+  bool ProcessAna(void);
 
   //Variable members
   TString RootOutputName;                 // file name of root output with tree

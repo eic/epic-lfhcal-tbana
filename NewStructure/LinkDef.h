@@ -23,4 +23,5 @@
 #pragma link C++ class TileSpectra+;
 #pragma link C++ class TileTrend+;
 #pragma link C++ class CalibSummary+;
+#pragma link C++ class AnaSummary+;
 #endif
