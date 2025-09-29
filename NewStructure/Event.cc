@@ -155,7 +155,8 @@ bool Event::InspectIfLocalMuonTrigg( int currTileID,
                                      double maxThrSc = 3
                                     ){
   
-  double trPrim = ((Caen*)GetTileFromID(currTileID))->GetLocalTriggerPrimitive();
+  double trPrim = ((Tile*)GetTileFromID(currTileID))->GetLocalTriggerPrimitive();
+  // std::cout << "Trigg Primitive & decision: " << averageScale*minThrSc  << "\t" << maxThrSc*averageScale << "\t" << trPrim << std::endl;
   // evaluate stored trigger primitive
   if (trPrim >  averageScale*minThrSc && trPrim < maxThrSc*averageScale)
     return true;
@@ -168,7 +169,7 @@ bool Event::InspectIfNoiseTrigg( int currTileID,
                                 double averageScale,
                                 double minThrSc = 0.9
                               ){
-  double trPrim = ((Caen*)GetTileFromID(currTileID))->GetLocalTriggerPrimitive();
+  double trPrim = ((Tile*)GetTileFromID(currTileID))->GetLocalTriggerPrimitive();
   // evaluate stored trigger primitive
   if (trPrim < averageScale*minThrSc )
     return true;
@@ -285,8 +286,9 @@ double Event::CalculateLocalMuonTrigg(  Calib calib,
   // calculate average sum of surrounding tiles (nominally 2 in the front + 2 in the back)
   double avsurr = 0;
   Int_t activeTiles = nTiles;
+  Int_t tilesWTOA   = 0;
   for (Int_t t = 0; t < nTiles; t++){
-    if ((Caen*)GetTileFromID(ids[t]) == nullptr){
+    if ((Tile*)GetTileFromID(ids[t]) == nullptr){
       activeTiles--;
       continue;
     }
@@ -298,17 +300,38 @@ double Event::CalculateLocalMuonTrigg(  Calib calib,
     }
     double tmpGain  = 0;
     double scale    = (calib.GetLGHGCorr(ids[t]) == -64.) ? avLGHG : calib.GetLGHGCorr(ids[t]);     // only use LG-HG corr factor if fit succeeded, otherwise use average
-    // calculating combined gain
-    if (((Caen*)GetTileFromID(ids[t]))->GetADCHigh() < 3800)
-      tmpGain = ((Caen*)GetTileFromID(ids[t]))->GetADCHigh()-calib.GetPedestalMeanH(ids[t]); 
-    else 
-      tmpGain = (((Caen*)GetTileFromID(ids[t]))->GetADCLow()-calib.GetPedestalMeanL(ids[t]))*scale + rand->Rndm()*scale;
+    
+    if (GetROtype() == ReadOut::Type::Caen){
+      // calculating combined gain
+      if (((Caen*)GetTileFromID(ids[t]))->GetADCHigh() < 3800)
+        tmpGain = ((Caen*)GetTileFromID(ids[t]))->GetADCHigh()-calib.GetPedestalMeanH(ids[t]); 
+      else 
+        tmpGain = (((Caen*)GetTileFromID(ids[t]))->GetADCLow()-calib.GetPedestalMeanL(ids[t]))*scale + rand->Rndm()*scale;
+        
+      if (tmpGain > 3*calib.GetPedestalSigH(ids[t]))
+        avsurr +=tmpGain;
+    } else {
+      // TODO: THIS NEEDS TO BE REWORKED ONCE WE HAVE THE CROSS CALIB BETWEEN ADC & TOT
+      // if (((Hgcroc*)GetTileFromID(ids[t]))->GetTOT() >= 1) std::cout << "ADC: " << ((Hgcroc*)GetTileFromID(ids[t]))->GetIntegratedADC() << "\t TOT: "<<  ((Hgcroc*)GetTileFromID(ids[t]))->GetTOT() << std::endl;
+      if (((Hgcroc*)GetTileFromID(ids[t]))->GetTOT() >= 1)
+        tmpGain = 1000;
+      else 
+        tmpGain = ((Hgcroc*)GetTileFromID(ids[t]))->GetIntegratedADC();
       
-    if (tmpGain > 3*calib.GetPedestalSigH(ids[t]))
-      avsurr +=tmpGain;
+      if (((Hgcroc*)GetTileFromID(ids[t]))->GetTOA() > 0){
+        avsurr +=tmpGain;
+        tilesWTOA++;
+      }
+    }
   }
   if (activeTiles > 1)
     avsurr        = avsurr/activeTiles;
+  
+  if (GetROtype() == ReadOut::Type::Hgcroc){
+    if (tilesWTOA < 0.6*activeTiles){
+      avsurr = (-1.)*avsurr;
+    }
+  }
   return avsurr;
 }
 

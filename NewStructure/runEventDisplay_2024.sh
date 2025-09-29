@@ -51,9 +51,9 @@ fi
 runNrFile='../configs/DataTakingDB_202409_CAEN.csv'
 
 if [ $5 == "muonTrig" ]; then
-	./Display -i $dataDirOut/calibrated_Run_$runNr.root -r $runNrFile -P ../3DPlot/Run_$runNr/MuonTrig -e $3 -N $4 -M
+	./Display -i $dataDirOut/calibrated_Run_$runNr.root -r $runNrFile -P ../EventDisplay/Run_$runNr/MuonTrig -e $3 -N $4 -M
 else
-# 	./Display -i $dataDirOut/calibrated_Run_$runNr.root -r $runNrFile -P ../3DPlot/Run_$runNr -e $3 -N $4 -d 0 -F png
-	./Display -i $dataDirOut/calibrated_Run_$runNr.root -r $runNrFile -P ../3DPlot/Run_$runNr -e $3 -N $4 -d 0 -F pdf
+# 	./Display -i $dataDirOut/calibrated_Run_$runNr.root -r $runNrFile -P ../EventDisplay/Run_$runNr -e $3 -N $4 -d 0 -F png
+	./Display -i $dataDirOut/calibrated_Run_$runNr.root -r $runNrFile -P ../EventDisplay/Run_$runNr -e $3 -N $4 -d 0 -F pdf
 fi 
 

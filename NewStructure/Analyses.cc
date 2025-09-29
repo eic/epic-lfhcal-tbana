@@ -13,7 +13,7 @@
 #include "TChain.h"
 #include "CommonHelperFunctions.h"
 #include "TileSpectra.h"
-#include "PlottHelper.h"
+#include "PlotHelper.h"
 #include "TRandom3.h"
 #include "TMath.h"
 #include "Math/Minimizer.h"
@@ -995,7 +995,12 @@ bool Analyses::GetPedestal(void){
       typeRO  = event.GetROtype();
       std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
       if (typeRO == ReadOut::Type::Caen) std::cout << "Read-out type CAEN" << std::endl;
-      else  std::cout << "Read-out type HGCROC" << std::endl;
+      else{
+        std::cout << "Read-out type HGCROC" << std::endl;
+        hPedMeanHGvsLG->GetYaxis()->SetTitle("#mu_{noise, wave} (arb. units)");
+        hPedMeanHGvsLG->GetXaxis()->SetTitle("#mu_{noise, 0th sample} (arb. units)");
+        hPedMeanHGvsLG->SetTitle("Pedestal Eval 0th sample vs wave");
+      }
       calib.SetRunNumberPed(runNr);
       calib.SetBeginRunTimePed(event.GetBeginRunTimeAlt());
       std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
@@ -1063,7 +1068,7 @@ bool Analyses::GetPedestal(void){
     }
 
     if (typeRO == ReadOut::Type::Hgcroc){
-      isGood2=ithSpectra->second.FitPedConstWage(debug);
+      isGood2=ithSpectra->second.FitPedConstWave(debug);
 
       if (!isGood && !isGood2) {
         std::cerr << "both noise fits failed " << ithSpectra->second.GetCellID() << std::endl;
@@ -1079,7 +1084,6 @@ bool Analyses::GetPedestal(void){
         }
       }
     }
-    
     
     int layer     = setup->GetLayer(ithSpectra->second.GetCellID());
     int chInLayer = setup->GetChannelInLayer(ithSpectra->second.GetCellID());
@@ -1104,6 +1108,8 @@ bool Analyses::GetPedestal(void){
       hMeanPedLGvsCellID->SetBinError  (hMeanPedLGvsCellID->FindBin(ithSpectra->second.GetCellID()), calib.GetPedestalSigL(ithSpectra->second.GetCellID()));
       hspectraLGMeanVsLayer->SetBinContent(hspectraLGMeanVsLayer->FindBin(layer,chInLayer), calib.GetPedestalMeanL(ithSpectra->second.GetCellID()));
       hspectraLGMeanVsLayer->SetBinError(hspectraLGMeanVsLayer->FindBin(layer,chInLayer), calib.GetPedestalSigL(ithSpectra->second.GetCellID()));
+      
+      hPedMeanHGvsLG->Fill(parameters[4],calib.GetPedestalMeanL(ithSpectra->second.GetCellID()));
     }
   }
   
@@ -1136,13 +1142,13 @@ bool Analyses::GetPedestal(void){
   hMeanPedHGvsCellID->Write();
   hspectraHGMeanVsLayer->Write();
   hspectraHGSigmaVsLayer->Write();
-
+  hPedMeanHGvsLG->Write();
   if (typeRO == ReadOut::Type::Caen){
     hspectraLGvsCellID->Write();
     hMeanPedLGvsCellID->Write();
     hspectraLGMeanVsLayer->Write();
     hspectraLGSigmaVsLayer->Write();
-    hPedMeanHGvsLG->Write();
+    
   } else {
     hMeanPedLGvsCellID->GetYaxis()->SetTitle("#mu_{Ped ADC, wave} (arb. units)");
     hMeanPedLGvsCellID->Write("hMeanPedWave_vsCellID");
@@ -1155,8 +1161,7 @@ bool Analyses::GetPedestal(void){
   RootOutputHist->Close();
 
   RootInput->Close();
-  
-  
+
   // Get run info object
   std::map<int,RunInfo>::iterator it=ri.find(runNr);
   
@@ -1191,12 +1196,11 @@ bool Analyses::GetPedestal(void){
   canvas2DCorr->SetLogz(0);
   PlotSimple2D( canvas2DCorr, hspectraHGMeanVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_NoiseMean.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 5, kFALSE, "colz", true, Form("#LT#mu_{HG}#GT = %2.2f", averagePedMeanHG));
   PlotSimple2D( canvas2DCorr, hspectraHGSigmaVsLayer,-10000, -10000, textSizeRel, Form("%s/HG_NoiseSigma.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 5,  kFALSE, "colz", true, Form("#LT#sigma_{HG}#GT = %2.2f", averagePedSigHG));
+  PlotSimple2D( canvas2DCorr, hPedMeanHGvsLG, -10000, -10000, textSizeRel, Form("%s/PedMean_HG_LG.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 5, kFALSE, "colz", true, "");
 
   if (typeRO == ReadOut::Type::Caen){
     PlotSimple2D( canvas2DCorr, hspectraLGMeanVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_NoiseMean.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 5, kFALSE, "colz", true, Form("#LT#mu_{LG}#GT = %2.2f", averagePedMeanLG));
     PlotSimple2D( canvas2DCorr, hspectraLGSigmaVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_NoiseSigma.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 5, kFALSE, "colz", true, Form("#LT#sigma_{LG}#GT = %2.2f", averagePedSigLG));
-  
-    PlotSimple2D( canvas2DCorr, hPedMeanHGvsLG, -10000, -10000, textSizeRel, Form("%s/PedMean_HG_LG.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 5, kFALSE, "colz", true, "");
   } else {
     PlotSimple2D( canvas2DCorr, hspectraLGMeanVsLayer, -10000, -10000, textSizeRel, Form("%s/PedWave_NoiseMean.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 5, kFALSE, "colz", true, Form("#LT#mu_{wave}#GT = %2.2f", averagePedMeanLG));
   }
@@ -1231,15 +1235,15 @@ bool Analyses::GetPedestal(void){
   
   for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
     for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
-      PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+      PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   hSpectra, setup, true, 0, 275, 1.2, l, m,
                                   Form("%s/Noise_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
       if (typeRO == ReadOut::Type::Caen){
-        PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+        PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   hSpectra, setup, false, 0, 275, 1.2, l, m,
                                   Form("%s/Noise_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
       } else if (typeRO == ReadOut::Type::Hgcroc){
-        PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, hSpectra, 0, it->second.samples+1, 300, l, m,
+        PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, hSpectra, 0, it->second.samples+1, 300, l, m,
                                     Form("%s/Waveform_Mod_%02dLayer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
   
       }
@@ -1261,6 +1265,8 @@ bool Analyses::TransferCalib(void){
   
   std::map<int,TileSpectra> hSpectra;
   std::map<int, TileSpectra>::iterator ithSpectra;
+  std::map<int,TileSpectra> hSpectraTrigg;
+  std::map<int, TileSpectra>::iterator ithSpectraTrigg;
   TcalibIn->GetEntry(0);
   // check whether calib should be overwritten based on external text file
   if (OverWriteCalib){
@@ -1288,19 +1294,33 @@ bool Analyses::TransferCalib(void){
   TH2D* hspectraADCvsCellID      = new TH2D( "hspectraADCvsCellID","ADC spectrums CellID; cell ID; ADC (arb. units) ",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
   hspectraADCvsCellID->SetDirectory(0);
-  TH2D* hspectraTOTvsCellID      = new TH2D( "hspectraTOTvsCellID","TOT spectrums CellID; cell ID; ADC (arb. units) ",
+  TH2D* hspectraTOTvsCellID      = new TH2D( "hspectraTOTvsCellID","TOT spectrums CellID; cell ID; TOT (arb. units) ",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4096,0,4096);
   hspectraTOTvsCellID->SetDirectory(0);
+  TH2D* hspectraTOAvsCellID      = new TH2D( "hspectraTOAvsCellID","TOA spectrums CellID; cell ID; TOA (arb. units) ",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
+  hspectraTOAvsCellID->SetDirectory(0);
+  
+  TH2D* hNCellsWTOAVsTotADC          = new TH2D( "hNCellsWTOAVsTotADC","NCells above TOA vs tot ADC; NCells above TOA; #Sigma(ADC) (arb. units) ",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 5000,0,10000);
+  hNCellsWTOAVsTotADC->SetDirectory(0);
+  TH2D* hNCellsWmADCVsTotADC          = new TH2D( "hNCellsWmADCVsTotADC","NCells w. ADC > 10 vs tot ADC; NCells above min ADC; #Sigma(ADC) (arb. units) ",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 5000,0,10000);
+  hNCellsWmADCVsTotADC->SetDirectory(0);
   
   TH2D* hspectraADCPedvsCellID      = new TH2D( "hspectraADCPedvsCellID","Pedestal ADC spectrums CellID; cell ID; ADC (arb. units) ",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
   hspectraADCPedvsCellID->SetDirectory(0);
   
+  int maxChannelPerLayer = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+  TH2D* hHighestADCAbovePedVsLayer   = new TH2D( "hHighestEAbovePedVsLayer","Highest ADC above PED; layer; brd channel; #Sigma(ADC) (arb. units) ",
+                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
+  hHighestADCAbovePedVsLayer->SetDirectory(0);
+  hHighestADCAbovePedVsLayer->Sumw2();
+  
   RootOutputHist->mkdir("IndividualCells");
+  RootOutputHist->mkdir("IndividualCellsTrigg");
   RootOutputHist->cd("IndividualCells");
-  
-  
-  
   
   ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2", "Migrad");  
   if (maxEvents == -1){
@@ -1311,8 +1331,19 @@ bool Analyses::TransferCalib(void){
     std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
   }
   ReadOut::Type typeRO = ReadOut::Type::Caen;
+  
+  // setup waveform builder for HGCROC data
+  waveform_fit_base *waveform_builder = nullptr;
+  waveform_builder = new max_sample_fit();
+  double minNSigma = 5;
+  int nCellsAboveTOA  = 0;
+  int nCellsAboveMADC = 0;
+  double totADCs      = 0.;
   for(int i=0; i<evts && i < maxEvents ; i++){
     if (i%5000 == 0&& i > 0 && debug > 0) std::cout << "Reading " <<  i << "/" << evts << " events"<< std::endl;
+    if (debug > 2 && typeRO == ReadOut::Type::Hgcroc){
+      std::cout << "************************************* NEW EVENT " << i << "  *********************************" << std::endl;
+    }
     TdataIn->GetEntry(i);
     if (i == 0){
       runNr   = event.GetRunNumber();
@@ -1323,6 +1354,9 @@ bool Analyses::TransferCalib(void){
       std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
     }
    
+    nCellsAboveTOA  = 0;
+    nCellsAboveMADC = 0;
+    totADCs         = 0.;
     // if (CalcBadChannel > 0 || ExtPlot > 0){
       for(int j=0; j<event.GetNTiles(); j++){
         if (typeRO == ReadOut::Type::Caen) {
@@ -1342,12 +1376,59 @@ bool Analyses::TransferCalib(void){
         } else if (typeRO == ReadOut::Type::Hgcroc) {
           Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
           ithSpectra=hSpectra.find(aTile->GetCellID());
-          // double adc = aTile->GetPedestal()+aTile->GetIntegratedADC();
+          ithSpectraTrigg=hSpectraTrigg.find(aTile->GetCellID());
+          
+          double ped = calib.GetPedestalMeanL(aTile->GetCellID());
+          if (ped == -1000){
+            ped = calib.GetPedestalMeanH(aTile->GetCellID());
+            if (ped == -1000){
+              ped = aTile->GetPedestal();
+            }
+          }
+          waveform_builder->set_waveform(aTile->GetADCWaveform());
+          waveform_builder->fit_with_average_ped(ped);
+          aTile->SetIntegratedADC(waveform_builder->get_E());
+          aTile->SetPedestal(waveform_builder->get_pedestal());
+          
           double adc = aTile->GetIntegratedADC();
-          double tot = aTile->GetIntegratedTOT();
+          double tot = aTile->GetTOT();
+          double toa = aTile->GetTOA();
+          totADCs         = totADCs+adc;
+          if (adc > 10)
+            nCellsAboveMADC++; 
+          if (toa > 0)
+            nCellsAboveTOA++;
+          
           hspectraADCvsCellID->Fill(aTile->GetCellID(),adc);
           hspectraADCPedvsCellID->Fill(aTile->GetCellID(),aTile->GetPedestal());
-          hspectraTOTvsCellID->Fill(aTile->GetCellID(),adc);
+          hspectraTOTvsCellID->Fill(aTile->GetCellID(),tot);
+          hspectraTOAvsCellID->Fill(aTile->GetCellID(),toa);
+          
+          int layer     = setup->GetLayer(aTile->GetCellID());
+          int chInLayer = setup->GetChannelInLayer(aTile->GetCellID());          
+          if (debug > 2){
+            // if (debug > 3 || adc > minNSigma*calib.GetPedestalSigL(aTile->GetCellID()) || aTile->GetTOA() > 0 ){
+            if (debug > 3 || adc > 10 || aTile->GetTOA() > 0 ){
+              std::cout << "Cell ID:" << aTile->GetCellID()<< "\t" << layer <<"\t" << chInLayer << "\t RO channel:\t" << setup->GetROchannel(aTile->GetCellID()) << "\t" << calib.GetPedestalMeanH(aTile->GetCellID()) << "\t" << calib.GetPedestalMeanL(aTile->GetCellID()) << "\t" << calib.GetPedestalSigL(aTile->GetCellID());
+              // if (debug > 3 || adc > minNSigma*calib.GetPedestalSigL(aTile->GetCellID()) || aTile->GetTOA() > 0 ){
+                std::cout << "\n \tADC-wave " ;
+                for (int k = 0; k < (int)aTile->GetADCWaveform().size(); k++ ){
+                  std::cout << aTile->GetADCWaveform().at(k) << "\t" ;
+                }
+                // std::cout << "\n \tTOT-Wave ";
+                // for (int k = 0; k < (int)aTile->GetTOTWaveform().size(); k++ ){
+                //   std::cout << aTile->GetTOTWaveform().at(k) << "\t" ;
+                // }
+                std::cout << "\n \tTOA-Wave ";
+                for (int k = 0; k < (int)aTile->GetTOAWaveform().size(); k++ ){
+                  std::cout << aTile->GetTOAWaveform().at(k) << "\t" ;
+                }
+              std::cout <<"\n\t\t\t";
+              for (int k = 0; k < (int)aTile->GetTOAWaveform().size(); k++ )
+                std::cout <<"\t";  
+              std::cout << " integ: "<<adc <<"\t"<< aTile->GetTOT() << "\t" << aTile->GetTOA() << std::endl;
+            }
+          }
           if(ithSpectra!=hSpectra.end()){
             ithSpectra->second.FillExt(tot,adc, 0., 0.);
             ithSpectra->second.FillWaveform(aTile->GetADCWaveform());
@@ -1358,7 +1439,28 @@ bool Analyses::TransferCalib(void){
             hSpectra[aTile->GetCellID()].FillWaveform(aTile->GetADCWaveform());
             RootOutput->cd();
           }
+                
+          if (toa > 0){      
+          // if (adc > 10 & toa > 0){
+              // if (adc > minNSigma*calib.GetPedestalSigL(aTile->GetCellID()))
+              hHighestADCAbovePedVsLayer->Fill(layer,chInLayer, adc);
+            
+            if(ithSpectraTrigg!=hSpectraTrigg.end()){
+              ithSpectraTrigg->second.FillExt(tot,adc, 0., 0.);
+              ithSpectraTrigg->second.FillWaveform(aTile->GetADCWaveform());
+            } else {
+              RootOutputHist->cd("IndividualCellsTrigg");
+              hSpectraTrigg[aTile->GetCellID()]=TileSpectra("signal",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+              hSpectraTrigg[aTile->GetCellID()].FillExt(tot,adc, 0., 0.);
+              hSpectraTrigg[aTile->GetCellID()].FillWaveform(aTile->GetADCWaveform());
+              RootOutput->cd();
+            }
+          }
         }
+      }
+      if (typeRO == ReadOut::Type::Hgcroc) {
+        hNCellsWmADCVsTotADC->Fill(nCellsAboveMADC, totADCs);
+        hNCellsWTOAVsTotADC->Fill(nCellsAboveTOA, totADCs);
       }
     // }
     RootOutput->cd();
@@ -1427,6 +1529,10 @@ bool Analyses::TransferCalib(void){
       hBCvsCellID->SetBinContent(hBCvsCellID->FindBin(cellID), calib.GetBadChannel(cellID));
       int bin2D     = hBCVsLayer->FindBin(layer,chInLayer);
       hBCVsLayer->SetBinContent(bin2D, calib.GetBadChannel(cellID));
+      
+      if (bc < 2 && typeRO == ReadOut::Type::Hgcroc){
+        hHighestADCAbovePedVsLayer->SetBinContent(bin2D, 0);
+      }
     }
     hBCvsCellID->Write();
     hBCVsLayer->Write();
@@ -1447,6 +1553,14 @@ bool Analyses::TransferCalib(void){
   }
     
   if (ExtPlot > 0){
+    
+    if (typeRO == ReadOut::Type::Hgcroc){
+      TCanvas* canvas2DSigQA = new TCanvas("canvas2DSigQA","",0,0,1450,1300);  // gives the page size
+      DefaultCancasSettings( canvas2DSigQA, 0.08, 0.13, 0.045, 0.07);
+
+      canvas2DSigQA->SetLogz(1);
+      PlotSimple2DZRange( canvas2DSigQA, hHighestADCAbovePedVsLayer, -10000, -10000, 0.1, 20000, textSizeRel, Form("%s/MaxADCAboveNoise_vsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, "colz", true);    
+    }
     //***********************************************************************************************************
     //********************************* 8 Panel overview plot  **************************************************
     //***********************************************************************************************************
@@ -1487,21 +1601,24 @@ bool Analyses::TransferCalib(void){
         if (l%10 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         if (typeRO == ReadOut::Type::Caen) {
-          PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
+          PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
                               textSizePixel, hSpectra, -20, 340, 4000, l, m,
                               Form("%s/LGHG2D_Corr_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
         } else {
-          PlotCorr2DFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
+          PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
                               textSizePixel, hSpectra, 0, it->second.samples+1, 1000, l, m,
                               Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(),m,  l, plotSuffix.Data()), it->second);
+          PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
+                            textSizePixel, hSpectraTrigg, 0, it->second.samples+1, 1000, l, 0,
+                            Form("%s/WaveformSignal_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
           
         }
         if (ExtPlot > 1){
-          PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+          PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                       hSpectra, setup, true, -100, maxHG, 1.2, l, m,
                                       Form("%s/SpectraWithNoiseFit_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
           if (typeRO == ReadOut::Type::Caen){
-            PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+            PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                         hSpectra, setup, false, -20, maxLG, 1.2, l, m,
                                         Form("%s/SpectraWithNoiseFit_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
           }
@@ -1529,12 +1646,21 @@ bool Analyses::TransferCalib(void){
      hspectraADCvsCellID->Write();
      hspectraADCPedvsCellID->Write();
      hspectraTOTvsCellID->Write();
+     hspectraTOAvsCellID->Write();
+     hHighestADCAbovePedVsLayer->Write();
+     hNCellsWmADCVsTotADC->Write();
+     hNCellsWTOAVsTotADC->Write();
   }
   RootOutputHist->cd("IndividualCells");
   for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
     ithSpectra->second.WriteExt(true);
   }
-
+  RootOutputHist->cd("IndividualCellsTrigg");
+  if (typeRO == ReadOut::Type::Hgcroc){
+    for(ithSpectraTrigg=hSpectraTrigg.begin(); ithSpectraTrigg!=hSpectraTrigg.end(); ++ithSpectraTrigg){
+      ithSpectraTrigg->second.WriteExt(true);
+    }
+  }
 
   
   RootInput->Close();
@@ -1596,7 +1722,7 @@ bool Analyses::GetScaling(void){
       runNr = event.GetRunNumber();
       typeRO = event.GetROtype();
       if (typeRO != ReadOut::Type::Caen)
-        evtDeb = 100;
+        evtDeb = 400;
       std::cout<< "Total number of events: " << evts << std::endl;
       std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
       calib.SetRunNumberMip(runNr);
@@ -1770,20 +1896,22 @@ bool Analyses::GetScaling(void){
       hMaxHG1st->Fill(parameters[4]);
     }
     
-    isGood=ithSpectra->second.FitCorr(debug);
-    if (ithSpectra->second.GetCorrModel(0)){
-      hLGHGCorrVsLayer->SetBinContent(bin2D,ithSpectra->second.GetCorrModel(0)->GetParameter(1));
-      hLGHGCorrVsLayer->SetBinError(bin2D,ithSpectra->second.GetCorrModel(0)->GetParError(1));
-      hLGHGCorrOffsetVsLayer->SetBinContent(bin2D,ithSpectra->second.GetCorrModel(0)->GetParameter(0));
-      hLGHGCorrOffsetVsLayer->SetBinError(bin2D,ithSpectra->second.GetCorrModel(0)->GetParError(0));
-      hLGHGCorr->Fill(ithSpectra->second.GetCorrModel(0)->GetParameter(1));
-    } 
-    if (ithSpectra->second.GetCorrModel(1)){
-      hHGLGCorrVsLayer->SetBinContent(bin2D,ithSpectra->second.GetCorrModel(1)->GetParameter(1));
-      hHGLGCorrVsLayer->SetBinError(bin2D,ithSpectra->second.GetCorrModel(1)->GetParError(1));    
-      hHGLGCorrOffsetVsLayer->SetBinContent(bin2D,ithSpectra->second.GetCorrModel(1)->GetParameter(0));
-      hHGLGCorrOffsetVsLayer->SetBinError(bin2D,ithSpectra->second.GetCorrModel(1)->GetParError(0));    
-      hHGLGCorr->Fill(ithSpectra->second.GetCorrModel(1)->GetParameter(1));
+    if (typeRO == ReadOut::Type::Caen) {
+      isGood=ithSpectra->second.FitCorr(debug);
+      if (ithSpectra->second.GetCorrModel(0)){
+        hLGHGCorrVsLayer->SetBinContent(bin2D,ithSpectra->second.GetCorrModel(0)->GetParameter(1));
+        hLGHGCorrVsLayer->SetBinError(bin2D,ithSpectra->second.GetCorrModel(0)->GetParError(1));
+        hLGHGCorrOffsetVsLayer->SetBinContent(bin2D,ithSpectra->second.GetCorrModel(0)->GetParameter(0));
+        hLGHGCorrOffsetVsLayer->SetBinError(bin2D,ithSpectra->second.GetCorrModel(0)->GetParError(0));
+        hLGHGCorr->Fill(ithSpectra->second.GetCorrModel(0)->GetParameter(1));
+      } 
+      if (ithSpectra->second.GetCorrModel(1)){
+        hHGLGCorrVsLayer->SetBinContent(bin2D,ithSpectra->second.GetCorrModel(1)->GetParameter(1));
+        hHGLGCorrVsLayer->SetBinError(bin2D,ithSpectra->second.GetCorrModel(1)->GetParError(1));    
+        hHGLGCorrOffsetVsLayer->SetBinContent(bin2D,ithSpectra->second.GetCorrModel(1)->GetParameter(0));
+        hHGLGCorrOffsetVsLayer->SetBinError(bin2D,ithSpectra->second.GetCorrModel(1)->GetParError(0));    
+        hHGLGCorr->Fill(ithSpectra->second.GetCorrModel(1)->GetParameter(1));
+      }
     }
   }
   if ( debug > 0)
@@ -1805,6 +1933,10 @@ bool Analyses::GetScaling(void){
     localTriggerTiles = 6;
     factorMaxTrigg    = 3.;
   }
+  if (typeRO == ReadOut::Type::Hgcroc){
+    localTriggerTiles = 6;
+  }
+  
   RootOutputHist->mkdir("IndividualCellsTrigg");
   RootOutputHist->cd("IndividualCellsTrigg");  
   //***********************************************************************************************
@@ -1866,7 +1998,7 @@ bool Analyses::GetScaling(void){
             
         aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, currCellID, localTriggerTiles, 0));
         // estimate local muon trigger
-        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, 0, factorMinTrigg, factorMaxTrigg);
+        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScale, factorMinTrigg, factorMaxTrigg);
         int chInLayer = setup->GetChannelInLayer(currCellID);    
         hHGTileSum[chInLayer]->Fill(aTile->GetLocalTriggerPrimitive());
         
@@ -2003,21 +2135,24 @@ bool Analyses::GetScaling(void){
       hspectraHGGSigmaVsLayer2nd->SetBinError(bin2D, parErrAndRes[3]);
       hMaxHG2nd->Fill(parameters[4]);
     }
-    for (int p = 0; p < 6; p++){
-      parameters[p]   = 0;
-      parErrAndRes[p] = 0;
-    }
-    isGood=ithSpectraTrigg->second.FitMipLG(parameters, parErrAndRes, debug, yearData, false, 1);
-    if (isGood){
-      hspectraLGMaxVsLayer2nd->SetBinContent(bin2D, parameters[4]);
-      hspectraLGFWHMVsLayer2nd->SetBinContent(bin2D, parameters[5]);
-      hspectraLGLMPVVsLayer2nd->SetBinContent(bin2D, parameters[1]);
-      hspectraLGLMPVVsLayer2nd->SetBinError(bin2D, parErrAndRes[1]);
-      hspectraLGLSigmaVsLayer2nd->SetBinContent(bin2D, parameters[0]);
-      hspectraLGLSigmaVsLayer2nd->SetBinError(bin2D, parErrAndRes[0]);
-      hspectraLGGSigmaVsLayer2nd->SetBinContent(bin2D, parameters[3]);
-      hspectraLGGSigmaVsLayer2nd->SetBinError(bin2D, parErrAndRes[3]);
-      hMaxLG2nd->Fill(parameters[4]);
+    
+    if (typeRO == ReadOut::Type::Caen) {
+      for (int p = 0; p < 6; p++){
+        parameters[p]   = 0;
+        parErrAndRes[p] = 0;
+      }
+      isGood=ithSpectraTrigg->second.FitMipLG(parameters, parErrAndRes, debug, yearData, false, 1);
+      if (isGood){
+        hspectraLGMaxVsLayer2nd->SetBinContent(bin2D, parameters[4]);
+        hspectraLGFWHMVsLayer2nd->SetBinContent(bin2D, parameters[5]);
+        hspectraLGLMPVVsLayer2nd->SetBinContent(bin2D, parameters[1]);
+        hspectraLGLMPVVsLayer2nd->SetBinError(bin2D, parErrAndRes[1]);
+        hspectraLGLSigmaVsLayer2nd->SetBinContent(bin2D, parameters[0]);
+        hspectraLGLSigmaVsLayer2nd->SetBinError(bin2D, parErrAndRes[0]);
+        hspectraLGGSigmaVsLayer2nd->SetBinContent(bin2D, parameters[3]);
+        hspectraLGGSigmaVsLayer2nd->SetBinError(bin2D, parErrAndRes[3]);
+        hMaxLG2nd->Fill(parameters[4]);
+      }
     }
   }
   if ( debug > 0)
@@ -2025,8 +2160,12 @@ bool Analyses::GetScaling(void){
   int actCh2nd = 0;
   double averageScaleUpdated    = calib.GetAverageScaleHigh(actCh2nd);
   double meanFWHMHGUpdated      = calib.GetAverageScaleWidthHigh();
-  double averageScaleLowUpdated = calib.GetAverageScaleLow();
-  double meanFWHMLGUpdated      = calib.GetAverageScaleWidthLow();
+  double averageScaleLowUpdated = 0.;
+  double meanFWHMLGUpdated      = 0.;
+  if (typeRO == ReadOut::Type::Caen){
+    averageScaleLowUpdated = calib.GetAverageScaleLow();
+    meanFWHMLGUpdated      = calib.GetAverageScaleWidthLow();
+  }
   std::cout << "average 1st iteration HG mip: " << averageScale << "\t act. channels: " <<   actCh1st << std::endl;
   std::cout << "average 2nd iteration  HG mip: " << averageScaleUpdated << "\t LG mip: " << averageScaleLowUpdated << "\t act. channels: " <<   actCh2nd << std::endl;
   
@@ -2054,13 +2193,9 @@ bool Analyses::GetScaling(void){
   RootOutputHist->cd();
     hMeanPedHGvsCellID->Write();
     hMeanPedHG->Write();
-    hMeanPedLGvsCellID->Write();
-    hMeanPedLG->Write();
     
     hspectraHGMeanVsLayer->Write();
-    hspectraLGMeanVsLayer->Write();
     hspectraHGSigmaVsLayer->Write();
-    hspectraLGSigmaVsLayer->Write();
     hspectraHGMaxVsLayer1st->Write();
     hspectraHGFWHMVsLayer1st->Write();
     hspectraHGLMPVVsLayer1st->Write();
@@ -2068,12 +2203,6 @@ bool Analyses::GetScaling(void){
     hspectraHGGSigmaVsLayer1st->Write();
     hMaxHG1st->Write();
     
-    hLGHGCorrVsLayer->Write();
-    hLGHGCorrOffsetVsLayer->Write();
-    hHGLGCorrVsLayer->Write();
-    hHGLGCorrOffsetVsLayer->Write();
-    hLGHGCorr->Write();
-    hHGLGCorr->Write();
     
     hspectraHGMaxVsLayer2nd->Write();
     hspectraHGFWHMVsLayer2nd->Write();
@@ -2082,13 +2211,24 @@ bool Analyses::GetScaling(void){
     hspectraHGGSigmaVsLayer2nd->Write();
     hMaxHG2nd->Write();
     
-    hspectraLGMaxVsLayer2nd->Write();
-    hspectraLGFWHMVsLayer2nd->Write();
-    hspectraLGLMPVVsLayer2nd->Write();
-    hspectraLGLSigmaVsLayer2nd->Write();
-    hspectraLGGSigmaVsLayer2nd->Write();
-    hMaxLG2nd->Write();
-    
+    if (typeRO == ReadOut::Type::Caen) {
+      hMeanPedLGvsCellID->Write();
+      hMeanPedLG->Write();
+      hspectraLGMeanVsLayer->Write();
+      hspectraLGSigmaVsLayer->Write();
+      hLGHGCorrVsLayer->Write();
+      hLGHGCorrOffsetVsLayer->Write();
+      hHGLGCorrVsLayer->Write();
+      hHGLGCorrOffsetVsLayer->Write();
+      hLGHGCorr->Write();
+      hHGLGCorr->Write();
+      hspectraLGMaxVsLayer2nd->Write();
+      hspectraLGFWHMVsLayer2nd->Write();
+      hspectraLGLMPVVsLayer2nd->Write();
+      hspectraLGLSigmaVsLayer2nd->Write();
+      hspectraLGGSigmaVsLayer2nd->Write();
+      hMaxLG2nd->Write();
+    }
     for (int c = 0; c< maxChannelPerLayer; c++)
       hHGTileSum[c]->Write();
     hmipTriggers->Write();
@@ -2140,19 +2280,21 @@ bool Analyses::GetScaling(void){
   PlotSimple2D( canvas2DCorr, hSuppresionSignal, -10000, -10000, textSizeRel, Form("%s/SuppressionSignal.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, drawOpt, true);
   
   canvas2DCorr->SetLogz(0);
-  PlotSimple2D( canvas2DCorr, hspectraLGMeanVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_NoiseMean.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DCorr, hspectraLGSigmaVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_NoiseSigma.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DCorr, hspectraLGMaxVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/LG_MaxMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form( "#LT Max_{LG} #GT = %.1f", averageScaleLowUpdated));
-  PlotSimple2D( canvas2DCorr, hspectraLGFWHMVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/LG_FWHMMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form( "#LT FWHM_{LG} #GT = %.1f", meanFWHMLGUpdated));
-  PlotSimple2D( canvas2DCorr, hspectraLGLMPVVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/LG_LandMPVMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DCorr, hspectraLGLSigmaVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/LG_LandSigMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DCorr, hspectraLGGSigmaVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/LG_GaussSigMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-
-  PlotSimple2D( canvas2DCorr, hLGHGCorrVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_HG_Corr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kTRUE, "colz", true, Form( "#LT a_{LGHG} #GT = %.1f", avLGHGCorr));
-  PlotSimple2D( canvas2DCorr, hLGHGCorrOffsetVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_HG_CorrOffset.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kTRUE, "colz", true, Form( "#LT b_{LGHG} #GT = %.1f", avLGHGOffCorr));
-  PlotSimple2D( canvas2DCorr, hHGLGCorrVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_LG_Corr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kTRUE, "colz", true, Form( "#LT a_{HGLG} #GT = %.1f", avHGLGCorr));
-  PlotSimple2D( canvas2DCorr, hHGLGCorrOffsetVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_LG_CorrOffset.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kTRUE, "colz", true, Form( "#LT b_{HGLG} #GT = %.1f", avHGLGOffCorr));
   
+  if (typeRO == ReadOut::Type::Caen) {
+    PlotSimple2D( canvas2DCorr, hspectraLGMeanVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_NoiseMean.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+    PlotSimple2D( canvas2DCorr, hspectraLGSigmaVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_NoiseSigma.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+    PlotSimple2D( canvas2DCorr, hspectraLGMaxVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/LG_MaxMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form( "#LT Max_{LG} #GT = %.1f", averageScaleLowUpdated));
+    PlotSimple2D( canvas2DCorr, hspectraLGFWHMVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/LG_FWHMMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form( "#LT FWHM_{LG} #GT = %.1f", meanFWHMLGUpdated));
+    PlotSimple2D( canvas2DCorr, hspectraLGLMPVVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/LG_LandMPVMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+    PlotSimple2D( canvas2DCorr, hspectraLGLSigmaVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/LG_LandSigMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+    PlotSimple2D( canvas2DCorr, hspectraLGGSigmaVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/LG_GaussSigMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+
+    PlotSimple2D( canvas2DCorr, hLGHGCorrVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_HG_Corr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kTRUE, "colz", true, Form( "#LT a_{LGHG} #GT = %.1f", avLGHGCorr));
+    PlotSimple2D( canvas2DCorr, hLGHGCorrOffsetVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_HG_CorrOffset.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kTRUE, "colz", true, Form( "#LT b_{LGHG} #GT = %.1f", avLGHGOffCorr));
+    PlotSimple2D( canvas2DCorr, hHGLGCorrVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_LG_Corr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kTRUE, "colz", true, Form( "#LT a_{HGLG} #GT = %.1f", avHGLGCorr));
+    PlotSimple2D( canvas2DCorr, hHGLGCorrOffsetVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_LG_CorrOffset.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kTRUE, "colz", true, Form( "#LT b_{HGLG} #GT = %.1f", avHGLGOffCorr));
+  }
   if (ExtPlot > 0){
     //***********************************************************************************************************
     //********************************* 8 Panel overview plot  **************************************************
@@ -2183,8 +2325,8 @@ bool Analyses::GetScaling(void){
     CreateCanvasAndPadsFor8PannelTBPlot(canvas8PanelProf, pad8PanelProf,  topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 0.045, "Prof", false);
 
     calib.PrintGlobalInfo();  
-    Double_t maxHG = ReturnMipPlotRangeDepVov(calib.GetVov(),true);
-    Double_t maxLG = ReturnMipPlotRangeDepVov(calib.GetVov(),false);
+    Double_t maxHG = ReturnMipPlotRangeDepVov(calib.GetVov(),true, typeRO);
+    Double_t maxLG = ReturnMipPlotRangeDepVov(calib.GetVov(),false, typeRO);
     std::cout << "plotting single layers" << std::endl;
 
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
@@ -2192,21 +2334,27 @@ bool Analyses::GetScaling(void){
         if (l%10 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
         if (ExtPlot > 0){
-          PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+          PlotMipWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                     hSpectra, hSpectraTrigg, setup, true, -100, maxHG, 1.2, l, m,
                                     Form("%s/MIP_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-          PlotTriggerPrimWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+          Double_t maxTriggPPlot = maxHG*2;
+          if (typeRO != ReadOut::Type::Caen)
+            maxTriggPPlot = 500;
+
+          PlotTriggerPrimWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                             hSpectraTrigg, setup, averageScale, factorMinTrigg, factorMaxTrigg,
-                                            0, maxHG*2, 1.2, l, m, Form("%s/TriggPrimitive_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-          PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
+                                            0, maxTriggPPlot, 1.2, l, m, Form("%s/TriggPrimitive_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+          if (typeRO == ReadOut::Type::Caen) {
+            PlotCorrWithFits8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
                                     hSpectra, 0, -20, 800, 3900, l, m,
                                     Form("%s/LGHG_Corr_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+          }
         }
-        if (ExtPlot > 1){
-          PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+        if (ExtPlot > 1 && typeRO == ReadOut::Type::Caen) {
+          PlotMipWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                     hSpectra, hSpectraTrigg, setup, false, -30, maxLG, 1.2, l, m,
                                     Form("%s/MIP_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-          PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
+          PlotCorrWithFits8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
                                     hSpectra, 1, -100, 4000, 340, l, m,
                                     Form("%s/HGLG_Corr_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
         }
@@ -2263,59 +2411,124 @@ bool Analyses::GetImprovedScaling(void){
   int evts=TdataIn->GetEntries();
   int runNr = -1;
   int actChI  = 0;
+  ReadOut::Type typeRO = ReadOut::Type::Caen;
+  int evtDeb = 5000;
+  
+  if (maxEvents == -1){
+    maxEvents = evts;
+  } else {
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+    std::cout << "ATTENTION: YOU ARE RESETTING THE MAXIMUM NUMBER OF EVENTS TO BE PROCESSED TO: " << maxEvents << ". THIS SHOULD ONLY BE USED FOR TESTING!" << std::endl;
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+  }
+  
   double averageScale     = calib.GetAverageScaleHigh(actChI);
   double averageScaleLow  = calib.GetAverageScaleLow();
   std::cout << "average HG mip: " << averageScale << " LG mip: "<< averageScaleLow << "\t act. ch: "<< actChI << std::endl;
-  for(int i=0; i<evts; i++){
+  
+  for(int i=0; i<maxEvents; i++){
+    TdataIn->GetEntry(i);    
+    if (i == 0){
+      runNr = event.GetRunNumber();
+      typeRO = event.GetROtype();
+      if (typeRO != ReadOut::Type::Caen)
+        evtDeb = 400;
+      std::cout<< "Total number of events: " << evts << std::endl;
+      std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+    }
+
     TdataIn->GetEntry(i);
-    if (i == 0)runNr = event.GetRunNumber();
-    TdataIn->GetEntry(i);
-    if (i%5000 == 0 && i > 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
+    if (i%evtDeb == 0 && i > 0 && debug > 0) std::cout << "Reading " <<  i << " / " << maxEvents << " events" << std::endl;
     for(int j=0; j<event.GetNTiles(); j++){
-      Caen* aTile=(Caen*)event.GetTile(j);
-      if (i == 0 && debug > 2) std::cout << ((TString)setup->DecodeCellID(aTile->GetCellID())).Data() << std::endl;
-      long currCellID = aTile->GetCellID();
-      
-      // read current tile
-      ithSpectraTrigg=hSpectraTrigg.find(aTile->GetCellID());
-      double hgCorr = aTile->GetADCHigh()-calib.GetPedestalMeanH(aTile->GetCellID());
-      double lgCorr = aTile->GetADCLow()-calib.GetPedestalMeanL(aTile->GetCellID());
+      // CAEN treatment
+      if (typeRO == ReadOut::Type::Caen) {
+        Caen* aTile=(Caen*)event.GetTile(j);
+        if (i == 0 && debug > 2) std::cout << ((TString)setup->DecodeCellID(aTile->GetCellID())).Data() << std::endl;
+        long currCellID = aTile->GetCellID();
+        
+        // read current tile
+        ithSpectraTrigg=hSpectraTrigg.find(currCellID);
+        double hgCorr = aTile->GetADCHigh()-calib.GetPedestalMeanH(currCellID);
+        double lgCorr = aTile->GetADCLow()-calib.GetPedestalMeanL(currCellID);
 
-      // estimate local muon trigger
-      bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScale, factorMinTrigg, factorMaxTrigg);
-      
-      if(ithSpectraTrigg!=hSpectraTrigg.end()){
-        ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
-      } else {
-        RootOutputHist->cd("IndividualCellsTrigg");
-        hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
-        hSpectraTrigg[currCellID].FillTrigger(aTile->GetLocalTriggerPrimitive());;
-        RootOutput->cd();
-      }
-      
-      ithSpectra=hSpectra.find(aTile->GetCellID());
-      if (ithSpectra!=hSpectra.end()){
-        ithSpectra->second.FillSpectra(lgCorr,hgCorr);
-        if (hgCorr > 3*calib.GetPedestalSigH(currCellID) && lgCorr > 3*calib.GetPedestalSigL(currCellID) && hgCorr < 3900 )
-          ithSpectra->second.FillCorr(lgCorr,hgCorr);
-      } else {
-        RootOutputHist->cd("IndividualCells");
-        hSpectra[currCellID]=TileSpectra("mip1st",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
-        hSpectra[aTile->GetCellID()].FillSpectra(lgCorr,hgCorr);;
-        if (hgCorr > 3*calib.GetPedestalSigH(aTile->GetCellID()) && lgCorr > 3*calib.GetPedestalSigL(aTile->GetCellID() && hgCorr < 3900) )
-          hSpectra[aTile->GetCellID()].FillCorr(lgCorr,hgCorr);;
+        // estimate local muon trigger
+        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScale, factorMinTrigg, factorMaxTrigg);
+        
+        if(ithSpectraTrigg!=hSpectraTrigg.end()){
+          ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
+        } else {
+          RootOutputHist->cd("IndividualCellsTrigg");
+          hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+          hSpectraTrigg[currCellID].FillTrigger(aTile->GetLocalTriggerPrimitive());;
+          RootOutput->cd();
+        }
+        
+        ithSpectra=hSpectra.find(currCellID);
+        if (ithSpectra!=hSpectra.end()){
+          ithSpectra->second.FillSpectra(lgCorr,hgCorr);
+          if (hgCorr > 3*calib.GetPedestalSigH(currCellID) && lgCorr > 3*calib.GetPedestalSigL(currCellID) && hgCorr < 3900 )
+            ithSpectra->second.FillCorr(lgCorr,hgCorr);
+        } else {
+          RootOutputHist->cd("IndividualCells");
+          hSpectra[currCellID]=TileSpectra("mip1st",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+          hSpectra[currCellID].FillSpectra(lgCorr,hgCorr);;
+          if (hgCorr > 3*calib.GetPedestalSigH(currCellID) && lgCorr > 3*calib.GetPedestalSigL(currCellID && hgCorr < 3900) )
+            hSpectra[currCellID].FillCorr(lgCorr,hgCorr);;
 
-        RootOutput->cd();
-      }
+          RootOutput->cd();
+        }
+        
       
-     
-      // only fill tile spectra if 4 surrounding tiles on average are compatible with muon response
-      if (localMuonTrigg){
-        aTile->SetLocalTriggerBit(1);
-        ithSpectraTrigg=hSpectraTrigg.find(aTile->GetCellID());
-        ithSpectraTrigg->second.FillSpectra(lgCorr,hgCorr);
-        if (hgCorr > 3*calib.GetPedestalSigH(currCellID) && lgCorr > 3*calib.GetPedestalSigL(currCellID) && hgCorr < 3900 )
-          ithSpectraTrigg->second.FillCorr(lgCorr,hgCorr);
+        // only fill tile spectra if 4 surrounding tiles on average are compatible with muon response
+        if (localMuonTrigg){
+          aTile->SetLocalTriggerBit(1);
+          ithSpectraTrigg=hSpectraTrigg.find(aTile->GetCellID());
+          ithSpectraTrigg->second.FillSpectra(lgCorr,hgCorr);
+          if (hgCorr > 3*calib.GetPedestalSigH(currCellID) && lgCorr > 3*calib.GetPedestalSigL(currCellID) && hgCorr < 3900 )
+            ithSpectraTrigg->second.FillCorr(lgCorr,hgCorr);
+        }
+      // HGCROC treatment
+      } else if (typeRO == ReadOut::Type::Hgcroc) {
+        Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
+        if (i == 0 && debug > 2) std::cout << ((TString)setup->DecodeCellID(aTile->GetCellID())).Data() << std::endl;
+        long currCellID = aTile->GetCellID();
+
+        ithSpectraTrigg=hSpectraTrigg.find(currCellID);
+        // double adc = aTile->GetPedestal()+aTile->GetIntegratedADC();
+        double adc = aTile->GetIntegratedADC();
+        double tot = aTile->GetIntegratedTOT();
+
+        // estimate local muon trigger
+        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScale, factorMinTrigg, factorMaxTrigg);
+        
+        if(ithSpectraTrigg!=hSpectraTrigg.end()){
+          ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
+        } else {
+          RootOutputHist->cd("IndividualCellsTrigg");
+          hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+          hSpectraTrigg[currCellID].FillTrigger(aTile->GetLocalTriggerPrimitive());;
+          RootOutput->cd();
+        }
+
+        ithSpectra=hSpectra.find(currCellID);
+        if (ithSpectra!=hSpectra.end()){
+          ithSpectra->second.FillSpectra(tot,adc);
+          ithSpectra->second.FillCorr(tot,adc);
+        } else {
+          RootOutputHist->cd("IndividualCells");
+          hSpectra[currCellID]=TileSpectra("mip1st",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+          hSpectra[currCellID].FillSpectra(tot,adc);;
+          hSpectra[currCellID].FillCorr(tot,adc);;
+          RootOutput->cd();
+        }
+        
+        // only fill tile spectra if 4 surrounding tiles on average are compatible with muon response
+        if (localMuonTrigg){
+          aTile->SetLocalTriggerBit(1);
+          ithSpectraTrigg=hSpectraTrigg.find(currCellID);
+          ithSpectraTrigg->second.FillSpectra(tot,adc);
+          ithSpectraTrigg->second.FillCorr(tot,adc);
+        }
       }
     }
     RootOutput->cd();
@@ -2404,9 +2617,19 @@ bool Analyses::GetImprovedScaling(void){
     int chInLayer   = setup->GetChannelInLayer(cellID);    
     int bin2D       = hspectraHGMaxVsLayer->FindBin(layer,chInLayer);
 
-    Int_t binNLow   = ithSpectraTrigg->second.GetHG()->FindBin(-1*calib.GetPedestalSigH(cellID));
-    Int_t binNHigh  = ithSpectraTrigg->second.GetHG()->FindBin(3*calib.GetPedestalSigH(cellID));
-    Int_t binSHigh  = ithSpectraTrigg->second.GetHG()->FindBin(3800);
+    double pedSigHG = 0;
+    double maxBin   = 0;
+    if (typeRO == ReadOut::Type::Caen){
+      pedSigHG = calib.GetPedestalSigH(cellID);
+      maxBin   = 3800;
+    } else {
+      pedSigHG = 20;
+      maxBin   = 1024;
+    }
+
+    Int_t binNLow   = ithSpectraTrigg->second.GetHG()->FindBin(-1*pedSigHG);
+    Int_t binNHigh  = ithSpectraTrigg->second.GetHG()->FindBin(3*pedSigHG);
+    Int_t binSHigh  = ithSpectraTrigg->second.GetHG()->FindBin(maxBin);
     
     double S_NoiseR = ithSpectraTrigg->second.GetHG()->Integral(binNLow, binNHigh);
     double S_SigR   = ithSpectraTrigg->second.GetHG()->Integral(binNHigh, binSHigh);
@@ -2435,21 +2658,24 @@ bool Analyses::GetImprovedScaling(void){
       hspectraHGGSigmaVsLayer->SetBinError(bin2D, parErrAndRes[3]);
       hMaxHG->Fill(parameters[4]);
     }
-    for (int p = 0; p < 6; p++){
-      parameters[p]   = 0;
-      parErrAndRes[p] = 0;
-    }
-    isGood=ithSpectraTrigg->second.FitMipLG(parameters, parErrAndRes, debug, yearData, true, averageScaleLow);
-    if (isGood){
-      hspectraLGMaxVsLayer->SetBinContent(bin2D, parameters[4]);
-      hspectraLGFWHMVsLayer->SetBinContent(bin2D, parameters[5]);
-      hspectraLGLMPVVsLayer->SetBinContent(bin2D, parameters[1]);
-      hspectraLGLMPVVsLayer->SetBinError(bin2D, parErrAndRes[1]);
-      hspectraLGLSigmaVsLayer->SetBinContent(bin2D, parameters[0]);
-      hspectraLGLSigmaVsLayer->SetBinError(bin2D, parErrAndRes[0]);
-      hspectraLGGSigmaVsLayer->SetBinContent(bin2D, parameters[3]);
-      hspectraLGGSigmaVsLayer->SetBinError(bin2D, parErrAndRes[3]);
-      hMaxLG->Fill(parameters[4]);
+    
+    if (typeRO == ReadOut::Type::Caen) {
+      for (int p = 0; p < 6; p++){
+        parameters[p]   = 0;
+        parErrAndRes[p] = 0;
+      }
+      isGood=ithSpectraTrigg->second.FitMipLG(parameters, parErrAndRes, debug, yearData, true, averageScaleLow);
+      if (isGood){
+        hspectraLGMaxVsLayer->SetBinContent(bin2D, parameters[4]);
+        hspectraLGFWHMVsLayer->SetBinContent(bin2D, parameters[5]);
+        hspectraLGLMPVVsLayer->SetBinContent(bin2D, parameters[1]);
+        hspectraLGLMPVVsLayer->SetBinError(bin2D, parErrAndRes[1]);
+        hspectraLGLSigmaVsLayer->SetBinContent(bin2D, parameters[0]);
+        hspectraLGLSigmaVsLayer->SetBinError(bin2D, parErrAndRes[0]);
+        hspectraLGGSigmaVsLayer->SetBinContent(bin2D, parameters[3]);
+        hspectraLGGSigmaVsLayer->SetBinError(bin2D, parErrAndRes[3]);
+        hMaxLG->Fill(parameters[4]);
+      }
     }
   }
   if ( debug > 0)
@@ -2471,10 +2697,15 @@ bool Analyses::GetImprovedScaling(void){
   TcalibOut->Write();
   int actChA                     = 0;
   double averageScaleUpdated     = calib.GetAverageScaleHigh(actChA);
-  double averageScaleUpdatedLow  = calib.GetAverageScaleLow();
+  double averageScaleUpdatedLow  = 0.;
   double meanFWHMHG              = calib.GetAverageScaleWidthHigh();
-  double meanFWHMLG              = calib.GetAverageScaleWidthLow();
+  double meanFWHMLG              = 0.;
 
+  if (typeRO == ReadOut::Type::Caen) {
+    averageScaleUpdatedLow  = calib.GetAverageScaleLow();
+    meanFWHMLG              = calib.GetAverageScaleWidthLow();
+  }
+  
   std::cout << "average input HG mip: " << averageScale << " LG mip: "<< averageScaleLow << "\t act. ch: "<< actChI<< std::endl;
   std::cout << "average updated HG mip: " << averageScaleUpdated << " LG mip: "<< averageScaleUpdatedLow << "\t act. ch: "<< actChA<< std::endl;
 
@@ -2494,13 +2725,14 @@ bool Analyses::GetImprovedScaling(void){
     hspectraHGGSigmaVsLayer->Write();
     hMaxHG->Write();
     
-    hspectraLGMaxVsLayer->Write();
-    hspectraLGFWHMVsLayer->Write();
-    hspectraLGLMPVVsLayer->Write();
-    hspectraLGLSigmaVsLayer->Write();
-    hspectraLGGSigmaVsLayer->Write();
-    hMaxLG->Write();
-    
+    if (typeRO == ReadOut::Type::Caen){
+      hspectraLGMaxVsLayer->Write();
+      hspectraLGFWHMVsLayer->Write();
+      hspectraLGLMPVVsLayer->Write();
+      hspectraLGLSigmaVsLayer->Write();
+      hspectraLGGSigmaVsLayer->Write();
+      hMaxLG->Write();
+    }
     hmipTriggers->Write();
     hSuppresionNoise->Write();
     hSuppresionSignal->Write();
@@ -2542,13 +2774,14 @@ bool Analyses::GetImprovedScaling(void){
   PlotSimple2D( canvas2DCorr, hSuppresionNoise, -10000, -10000, textSizeRel, Form("%s/SuppressionNoise.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, drawOpt, true, Form( "#LT S/B noise #GT = %.3f", meanSB_NoiseR));
   PlotSimple2D( canvas2DCorr, hSuppresionSignal, -10000, -10000, textSizeRel, Form("%s/SuppressionSignal.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, drawOpt, true, Form( "#LT S/B signal #GT = %.3f", meanSB_SigR));
   
-  canvas2DCorr->SetLogz(0);
-  PlotSimple2D( canvas2DCorr, hspectraLGMaxVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_MaxMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form( "#LT Max_{LG} #GT = %.1f", averageScaleUpdatedLow));
-  PlotSimple2D( canvas2DCorr, hspectraLGFWHMVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_FWHMMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form( "#LT FWHM_{LG} #GT = %.1f", meanFWHMLG));
-  PlotSimple2D( canvas2DCorr, hspectraLGLMPVVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_LandMPVMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DCorr, hspectraLGLSigmaVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_LandSigMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DCorr, hspectraLGGSigmaVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_GaussSigMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-
+  if (typeRO == ReadOut::Type::Caen){
+    canvas2DCorr->SetLogz(0);
+    PlotSimple2D( canvas2DCorr, hspectraLGMaxVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_MaxMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form( "#LT Max_{LG} #GT = %.1f", averageScaleUpdatedLow));
+    PlotSimple2D( canvas2DCorr, hspectraLGFWHMVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_FWHMMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form( "#LT FWHM_{LG} #GT = %.1f", meanFWHMLG));
+    PlotSimple2D( canvas2DCorr, hspectraLGLMPVVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_LandMPVMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+    PlotSimple2D( canvas2DCorr, hspectraLGLSigmaVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_LandSigMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+    PlotSimple2D( canvas2DCorr, hspectraLGGSigmaVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_GaussSigMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  }
   //***********************************************************************************************************
   //********************************* 8 Panel overview plot  **************************************************
   //***********************************************************************************************************
@@ -2571,27 +2804,52 @@ bool Analyses::GetImprovedScaling(void){
   CreateCanvasAndPadsFor8PannelTBPlot(canvas8Panel, pad8Panel,  topRCornerX, topRCornerY, relSize8P, textSizePixel);
  
   calib.PrintGlobalInfo();  
-  Double_t maxHG = ReturnMipPlotRangeDepVov(calib.GetVov(),true);
-  Double_t maxLG = ReturnMipPlotRangeDepVov(calib.GetVov(),false);
+  Double_t maxHG = ReturnMipPlotRangeDepVov(calib.GetVov(),true, typeRO);
+  Double_t maxLG = ReturnMipPlotRangeDepVov(calib.GetVov(),false, typeRO);
   std::cout << "plotting single layers" << std::endl;
   for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){   
     for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){ 
       if (l%10 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
-      PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+      PlotMipWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                 hSpectra, hSpectraTrigg, setup, true, -100, maxHG, 1.2, l, m,
                                 Form("%s/MIP_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-      PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                hSpectra, hSpectraTrigg, setup, false, -20, maxLG, 1.2, l, m,
-                                Form("%s/MIP_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-      PlotTriggerPrimWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+      Double_t maxTriggPPlot = maxHG*2;
+      if (typeRO != ReadOut::Type::Caen)
+        maxTriggPPlot = 500;
+      PlotTriggerPrimWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                         hSpectraTrigg, setup, averageScale, factorMinTrigg, factorMaxTrigg,
-                                        0, maxHG*2, 1.2, l, m, Form("%s/TriggPrimitive_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+                                        0, maxTriggPPlot, 1.2, l, m, Form("%s/TriggPrimitive_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+      if (typeRO == ReadOut::Type::Caen){
+        PlotMipWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                  hSpectra, hSpectraTrigg, setup, false, -20, maxLG, 1.2, l, m,
+                                  Form("%s/MIP_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
+      }
     }
   }
   std::cout << "done plotting" << std::endl;
   
-  
+  if (ExtPlot > 0){
+    TString outputDirPlotsSingle = Form("%s/SingleTiles",outputDirPlots.Data());
+    gSystem->Exec("mkdir -p "+outputDirPlotsSingle);
+
+    
+    TCanvas* canvasSTile = new TCanvas("canvasSignleTile","",0,0,1600,1300);  // gives the page size
+    DefaultCancasSettings( canvasSTile, 0.08, 0.01, 0.01, 0.082);
+
+    int counter = 0;
+    for(ithSpectraTrigg=hSpectraTrigg.begin(); ithSpectraTrigg!=hSpectraTrigg.end(); ++ithSpectraTrigg){
+      counter++;
+      long cellID     = ithSpectraTrigg->second.GetCellID();
+      int row = setup->GetRow(cellID);
+      int col = setup->GetColumn(cellID);
+      int lay = setup->GetLayer(cellID);
+      int mod = setup->GetModule(cellID);
+
+      PlotMipWithFitsSingleTile (canvasSTile, 0.95,  0.95, Double_t(textSizePixel)*2/1600., textSizePixel*2, 
+                                hSpectra, hSpectraTrigg, true,  -100, maxHG, 1.2, cellID,  Form("%s/MIP_HG_Tile_M%02d_L%02d_R%02d_C%02d.%s" ,outputDirPlotsSingle.Data(), mod, lay, row, col, plotSuffix.Data()), it->second);
+    }
+  }
   return true;
 }
 
@@ -2855,7 +3113,7 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
  
   for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
     for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){    
-      PlotNoiseAdvWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+      PlotNoiseAdvWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                       hSpectra, hSpectraTrigg, true, 0, 450, 1.2, l, m,
                                       Form("%s/NoiseTrigg_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
     }
@@ -3277,22 +3535,22 @@ bool Analyses::Calibrate(void){
         if (l%10 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
         if (ExtPlot > 0){
-          PlotNoiseAdvWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+          PlotNoiseAdvWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                       hSpectra, hSpectraNoise, true, -50, 100, 1.2, l, m,
                                       Form("%s/NoiseTrigg_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-          PlotNoiseAdvWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+          PlotNoiseAdvWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                       hSpectra, hSpectraNoise, false, -50, 100, 1.2, l, m,
                                       Form("%s/NoiseTrigg_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-          PlotSpectraFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+          PlotSpectra8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                     hSpectra, 0, -100, 4000, 1.2, l, m,
                                     Form("%s/Spectra_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-          PlotSpectraFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+          PlotSpectra8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                     hSpectra, 2, -2, 100, 1.2, l, m,
                                     Form("%s/Spectra_Comb_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-          PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
+          PlotCorrWithFits8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
                                     hSpectra, 0, -20, 800, 50., l, m,
                                     Form("%s/LGHG_Corr_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-          PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
+          PlotCorrWithFits8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
                                     hSpectra, 2, -100, 340, 300., l, m,
                                     Form("%s/LGLGhgeq_Corr_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
         }

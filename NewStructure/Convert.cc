@@ -27,20 +27,20 @@ void PrintHelp(char* exe){
   std::cout<<"Options:"<<std::endl;
   std::cout<<"-a       printing calib object to file (using name of output root or calib root file ending in txt)"<<std::endl;
   std::cout<<"-c xxx   Convert ASCII input file xxx into root format output"<<std::endl;
-  std::cout<<"-w       Run HGCROC data convserion.  Omit to process CAEN data"<<std::endl;
   std::cout<<"-d [0-n] switch on debug info with debug level 0 to n"<<std::endl;
   std::cout<<"-f       Force to write output if already exist"<<std::endl;
   std::cout<<"-i uuu   Input file in root format"<<std::endl;
+  std::cout<<"-L LLL   enable testing with only limited number of events (currently only works for HGCROC)"<<std::endl;
   std::cout<<"-m www   Name of mapping file  2024 PS TB [../configs/mappingFile_202409_CAEN.txt] "<<std::endl;
   std::cout<<"-o vvv   Output file name (mandatory)"<<std::endl;
   std::cout<<"-O kkk   Output directory name for plots (mandatory)"<<std::endl;
   std::cout<<"-r rrr   Name of run list file  2024 PS TB [../configs/DataTakingDB_202409_CAEN.csv] "<<std::endl;
   std::cout<<"-y yyyy  setting year externally to narrow parameters"<<std::endl;
+  std::cout<<"-w       Run HGCROC data conversion."<<std::endl;
   std::cout<<"-h       this help"<<std::endl<<std::endl;
   std::cout<<"Examples:"<<std::endl;
   std::cout<<exe<<" -c (-f) input.txt -o output.root (Convert ASCII to root) (-f to overwrite existing output)"<<std::endl;
 }
-  
 
 int main(int argc, char* argv[]){
   if(argc<4) {
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"ac:wd:fi:m:o:O:r:y:h"))!=-1){
+  while((c=getopt(argc,argv,"ac:d:fi:L:m:o:O:r:y:wh"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"Convert: printing calib object to file"<<std::endl;
@@ -59,10 +59,6 @@ int main(int argc, char* argv[]){
       std::cout<<"Convert: Convert ASCII input '"<<optarg<<"' to root format"<<std::endl;
       AnAnalysis.SetASCIIinput(Form("%s",optarg));
       AnAnalysis.IsToConvert(true);
-      break;
-    case 'w':
-      std::cout<<"Convert HGCROC data"<<std::endl;
-      AnAnalysis.IsHGCROC(true);
       break;
     case 'd':
       std::cout<<"Convert: enable debug " << optarg <<std::endl;
@@ -75,6 +71,10 @@ int main(int argc, char* argv[]){
     case 'i':
       std::cout<<"Convert: Root input file is: "<<optarg<<std::endl;
       AnAnalysis.SetRootInput(Form("%s",optarg));
+      break;
+    case 'L':
+      std::cout<<"Convert: SetMaxEvents processed:"<<optarg<<std::endl;
+      AnAnalysis.SetMaxEvents(atoi(optarg));
       break;
     case 'm':
       std::cout<<"Convert: Mapping file from: "<<optarg<<std::endl;
@@ -95,6 +95,10 @@ int main(int argc, char* argv[]){
     case 'y':
       std::cout<<"Convert: Setting year externally: "<<optarg<<std::endl;
       AnAnalysis.SetYear(atoi(optarg));
+      break;
+    case 'w':
+      std::cout<<"Convert HGCROC data"<<std::endl;
+      AnAnalysis.IsHGCROC(true);
       break;
     case '?':
       std::cout<<"Convert: Option "<<optarg <<" not supported, will be ignored "<<std::endl;

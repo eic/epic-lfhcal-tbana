@@ -13,7 +13,7 @@
 #include "TChain.h"
 #include "CommonHelperFunctions.h"
 #include "TileSpectra.h"
-#include "PlottHelper.h"
+#include "PlotHelper.h"
 #include "TRandom3.h"
 #include "TMath.h"
 #include "Math/Minimizer.h"

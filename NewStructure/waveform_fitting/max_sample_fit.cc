@@ -35,6 +35,28 @@ void max_sample_fit::fit() {
     stale = false;
 }
 
+void max_sample_fit::fit_with_average_ped(double ped) {
+    if (waveform.empty()) {
+        std::cerr << "Waveform has not been set" << std::endl;
+        return;
+    }
+    pedestal_value      = ped;
+    max_sample_value    = ped;
+    for (size_t i = 0; i < waveform.size(); ++i) {
+        if (waveform[i] > max_sample_value) {
+            max_sample_value = waveform[i];
+        }
+        if (waveform[i] > 1000) {  // Check for saturation. TODO: Make this a parameter
+            saturated = true;
+        }
+    }
+    E = max_sample_value - pedestal_value;  // The energy is the maximum sample value minus the average pedestal
+    fit_ndf = -1;
+    fit_chi2 = -1;  // Not applicable for max sample fit
+    stale = false;
+}
+
+
 int max_sample_fit::get_pedestal() {
     if (stale) {
         return -1;
