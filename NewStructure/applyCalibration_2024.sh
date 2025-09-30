@@ -13,7 +13,7 @@ function Calib()
 	echo "Plots additional name: $7"
 	echo "===================================================================="
 	if [ $1 == "transfer" ]; then
-		time ./DataPrep -d 1 -e -a -f -P $2 -i $3/raw_$5.root  -o $3/rawWithCalib_$5.root -O $6/PlotsFullCalibTransferBC_2024/Run_$5 -r $runNrFile
+		time ./DataPrep -d 1 -e -a -f -P $2 -i $3/raw_$5.root  -o $3/rawWithCalib_$5.root -O $6/CAEN_PlotsFullCalibTransferBC_2024/Run_$5 -r $runNrFile
 	elif [ $1 == "trigg" ]; then
 		time ./DataPrep -f -d 1 -T $2 -i $3/raw_$5.root -o $3/rawWithLocTrigg_$5.root 
 	elif [ $1 == "calibNoTrigg" ]; then
@@ -86,19 +86,19 @@ if [ $2 == "ScanA" ]; then
 	#muon runs
 	muonScanA_45V='244 250 282 283'
 	pedScanA_45V='271 277'
-	Calib $3 $calibFile1 $dataDirIn $dataDirOut muonScanA1_45V $PlotBaseDir PlotsMuonCalibrated_2024/Run_
-	Calib $3 $calibFile2 $dataDirIn $dataDirOut muonScanA2_45V $PlotBaseDir PlotsMuonCalibrated_2024/Run_
+	Calib $3 $calibFile1 $dataDirIn $dataDirOut muonScanA1_45V $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
+	Calib $3 $calibFile2 $dataDirIn $dataDirOut muonScanA2_45V $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
 	
 	# electron runs
 	runs='251 252 254 257 258 ' 
 	for runNr in $runs; do 
-		Calib $3 $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir PlotsElectronCalibrated_2024/Run_
+		Calib $3 $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated_2024/Run_
 	done;
 	
 	#hadron runs
 	runs='261 264 265 269 270 272 274 275 ' 
 	for runNr in $runs; do 
-		Calib $3 $calibFile1 $dataDirInH $dataDirOutH $runNr $PlotBaseDir PlotsHadronCalibrated_2024/Run_
+		Calib $3 $calibFile1 $dataDirInH $dataDirOutH $runNr $PlotBaseDir CAEN_PlotsHadronCalibrated_2024/Run_
 	done;
 elif [ $2 == "ScanB" ]; then
 	echo "running calibrate for 42V runs, campaign B"
@@ -108,19 +108,19 @@ elif [ $2 == "ScanB" ]; then
 	#muon runs
 	muonScanB_42V='331 322 370 371 374'
 	pedScanB_42V='332 369'
-	Calib $3 $calibFile1 $dataDirIn $dataDirOut muonScanB1_42V $PlotBaseDir PlotsMuonCalibrated_2024/Run_
-	Calib $3 $calibFile2 $dataDirIn $dataDirOut muonScanB2_42V $PlotBaseDir PlotsMuonCalibrated_2024/Run_
+	Calib $3 $calibFile1 $dataDirIn $dataDirOut muonScanB1_42V $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
+	Calib $3 $calibFile2 $dataDirIn $dataDirOut muonScanB2_42V $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
 	
 	#electron runs
 	runs='333 334 336 337 338 ' 
 	for runNr in $runs; do 
-		Calib $3 $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir PlotsElectronCalibrated_2024/Run_
+		Calib $3 $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated_2024/Run_
 	done;
 	
 	#hadron runs
 	runs='340 349 346 350 357 360 362 367 368' 
 	for runNr in $runs; do 
-		Calib $3 $calibFile1 $dataDirInH $dataDirOutH $runNr $PlotBaseDir PlotsHadronCalibrated_2024/Run_
+		Calib $3 $calibFile1 $dataDirInH $dataDirOutH $runNr $PlotBaseDir CAEN_PlotsHadronCalibrated_2024/Run_
 	done;
 elif [ $2 == "ScanC" ]; then
 	echo "running calibrate for 43.5V runs, campaign C"
@@ -134,20 +134,20 @@ elif [ $2 == "ScanC" ]; then
 	#muon runs
 # 	muonScanC_43V='376 375 405 410 408'
 # 	pedScanC_43V='377 404'
-# 	Calib $3 $calibFile1 $dataDirIn $dataDirOut muonScanC1_43_5V $PlotBaseDir PlotsMuonCalibrated_2024/Run_
-# 	Calib $3 $calibFile2 $dataDirIn $dataDirOut muonScanC2_43_5V $PlotBaseDir PlotsMuonCalibrated_2024/Run_
+# 	Calib $3 $calibFile1 $dataDirIn $dataDirOut muonScanC1_43_5V $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
+# 	Calib $3 $calibFile2 $dataDirIn $dataDirOut muonScanC2_43_5V $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
 # 	
 # # 	#electron runs
 	runs='379 380 381 384 387' 
 # # 	runs='380' 
 	for runNr in $runs; do 
-		Calib $3 $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir PlotsElectronCalibrated_2024/Run_
+		Calib $3 $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated_2024/Run_
 	done;
 # 	
 # 	# hadron runs
 # 	runs='390 392 393 394 397 398 399 401' 
 # 	for runNr in $runs; do 
-# 		Calib $3 $calibFile1 $dataDirInH $dataDirOutH $runNr $PlotBaseDir PlotsHadronCalibrated_2024/Run_
+# 		Calib $3 $calibFile1 $dataDirInH $dataDirOutH $runNr $PlotBaseDir CAEN_PlotsHadronCalibrated_2024/Run_
 # 	done;
 elif [ $2 == "ScanD" ]; then
 	calibFile2=$dataDirCal/calib_muonScanD2.root
@@ -157,18 +157,18 @@ elif [ $2 == "ScanD" ]; then
 	# 29.3K events
 	muonScanD2_45V='460 456 457'
 	pedScanD2_45V='454'
-	Calib $3 $calibFile2 $dataDirIn $dataDirOut muonScanD2_45V $PlotBaseDir PlotsMuonCalibrated_2024/Run_
+	Calib $3 $calibFile2 $dataDirIn $dataDirOut muonScanD2_45V $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
 	
 	# electron runs
 	runs='421 422 429 430 432 ' 
 	for runNr in $runs; do 
-		Calib $3 $calibFile2 $dataDirInE $dataDirOutE $runNr $PlotBaseDir PlotsElectronCalibrated_2024/Run_
+		Calib $3 $calibFile2 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated_2024/Run_
 	done;
 	
 	#hadron runs
 	runs='434 437 439 441 444 445 449 452 ' 
 	for runNr in $runs; do 
-		Calib $3 $calibFile2 $dataDirInH $dataDirOutH $runNr $PlotBaseDir PlotsHadronCalibrated_2024/Run_
+		Calib $3 $calibFile2 $dataDirInH $dataDirOutH $runNr $PlotBaseDir CAEN_PlotsHadronCalibrated_2024/Run_
 	done;
 elif [ $2 == "ScanE" ]; then
 	calibFile1=$dataDirCal/calib_muonScanE1_40V.root
@@ -178,13 +178,13 @@ elif [ $2 == "ScanE" ]; then
 	muonScanE_40V='463 464 481 478'
 	pedScanE_40V='465 476'
 
-	Calib $3 $calibFile1 $dataDirIn $dataDirOut muonScanE1_40V $PlotBaseDir PlotsMuonCalibrated_2024/Run_
-	Calib $3 $calibFile2 $dataDirIn $dataDirOut muonScanE2_40V $PlotBaseDir PlotsMuonCalibrated_2024/Run_
+	Calib $3 $calibFile1 $dataDirIn $dataDirOut muonScanE1_40V $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
+	Calib $3 $calibFile2 $dataDirIn $dataDirOut muonScanE2_40V $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
 
 	# electron runs
 	runs='466 467 468 471 472 ' 
 	for runNr in $runs; do 
-		Calib $3 $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir PlotsElectronCalibrated_2024/Run_
+		Calib $3 $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated_2024/Run_
 	done;
 elif [ $2 == "ScanF" ]; then
 	calibFile1=$dataDirCal/calib_muonScanF1_41V.root
@@ -194,13 +194,13 @@ elif [ $2 == "ScanF" ]; then
 	muonScanE_41V='486 489 507 506'
 	pedScanE_41V='492 505'
 
-	Calib $3 $calibFile1 $dataDirIn $dataDirOut muonScanF1_41V $PlotBaseDir PlotsMuonCalibrated_2024/Run_
-	Calib $3 $calibFile2 $dataDirIn $dataDirOut muonScanF2_41V $PlotBaseDir PlotsMuonCalibrated_2024/Run_
+	Calib $3 $calibFile1 $dataDirIn $dataDirOut muonScanF1_41V $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
+	Calib $3 $calibFile2 $dataDirIn $dataDirOut muonScanF2_41V $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
 
 	# electron runs
 	runs='494 495 497 502 504' 
 	for runNr in $runs; do 
-		Calib $3 $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir PlotsElectronCalibrated_2024/Run_
+		Calib $3 $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated_2024/Run_
 	done;
 elif [ $2 == "ScanH" ]; then
 	calibFile1=$dataDirCal/calib_muonScanH1.root
@@ -210,19 +210,19 @@ elif [ $2 == "ScanH" ]; then
 	#muon runs
 	muonScanH_45V='526 527 554 559'
 	pedScanH_45V='528 552'
-	Calib $3 $calibFile1 $dataDirIn $dataDirOut muonScanH1_45V $PlotBaseDir PlotsMuonCalibrated_2024/Run_
-	Calib $3 $calibFile2 $dataDirIn $dataDirOut muonScanH2_45V $PlotBaseDir PlotsMuonCalibrated_2024/Run_
+	Calib $3 $calibFile1 $dataDirIn $dataDirOut muonScanH1_45V $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
+	Calib $3 $calibFile2 $dataDirIn $dataDirOut muonScanH2_45V $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
 	
 	# electron runs
 	runs='529 530 533 535 538 541' 
 	for runNr in $runs; do 
-		Calib $3 $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir PlotsElectronCalibrated_2024/Run_
+		Calib $3 $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated_2024/Run_
 	done;
 	
 	#hadron runs
 	runs='542 543 544 545 548 549 550 551' 
 	for runNr in $runs; do 
-		Calib $3 $calibFile1 $dataDirInH $dataDirOutH $runNr $PlotBaseDir PlotsHadronCalibrated_2024/Run_
+		Calib $3 $calibFile1 $dataDirInH $dataDirOutH $runNr $PlotBaseDir CAEN_PlotsHadronCalibrated_2024/Run_
 	done;
 elif [ $2 == "ScanG" ]; then
 	calibFile1=$dataDirCal/calib_muonScanG_46V.root
@@ -231,18 +231,18 @@ elif [ $2 == "ScanG" ]; then
 	#muon runs
 	muonScanG_46V='508 510 511 525'
 	pedScanG_46V='521'
-	Calib $3 $calibFile1 $dataDirIn $dataDirOut muonScanG_46V $PlotBaseDir PlotsMuonCalibrated_2024/Run_
+	Calib $3 $calibFile1 $dataDirIn $dataDirOut muonScanG_46V $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
 	
 	# electron runs
 	runs='513 514 516 517 520' 
 	for runNr in $runs; do 
-		Calib $3 $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir PlotsElectronCalibrated_2024/Run_
+		Calib $3 $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated_2024/Run_
 	done;
 elif [ $2 == "MuonHVScan" ]; then
-	Calib $3 $dataDirCal/calib_305_44V.root $dataDirIn $dataDirOut 305 $PlotBaseDir PlotsMuonCalibrated_2024/Run_
-	Calib $3 $dataDirCal/calib_307_43V.root $dataDirIn $dataDirOut 307 $PlotBaseDir PlotsMuonCalibrated_2024/Run_
-	Calib $3 $dataDirCal/calib_309_42V.root $dataDirIn $dataDirOut 309 $PlotBaseDir PlotsMuonCalibrated_2024/Run_
-	Calib $3 $dataDirCal/calib_312_41V.root $dataDirIn $dataDirOut 312 $PlotBaseDir PlotsMuonCalibrated_2024/Run_
-	Calib $3 $dataDirCal/calib_316_40V.root $dataDirIn $dataDirOut 316 $PlotBaseDir PlotsMuonCalibrated_2024/Run_
+	Calib $3 $dataDirCal/calib_305_44V.root $dataDirIn $dataDirOut 305 $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
+	Calib $3 $dataDirCal/calib_307_43V.root $dataDirIn $dataDirOut 307 $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
+	Calib $3 $dataDirCal/calib_309_42V.root $dataDirIn $dataDirOut 309 $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
+	Calib $3 $dataDirCal/calib_312_41V.root $dataDirIn $dataDirOut 312 $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
+	Calib $3 $dataDirCal/calib_316_40V.root $dataDirIn $dataDirOut 316 $PlotBaseDir CAEN_PlotsMuonCalibrated_2024/Run_
 fi
 

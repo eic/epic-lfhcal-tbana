@@ -70,6 +70,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     analysis->calib.SetRunNumber(RunString.Atoi());
     analysis->calib.SetVop(it->second.vop);
     analysis->calib.SetVov(it->second.vop-it->second.vbr);  
+    analysis->calib.SetBCCalib(false);
     analysis->event.SetROtype(ReadOut::Type::Hgcroc);
 
     // Run the event builder
@@ -84,10 +85,17 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
         
         // convert from the aligned_events datatype to the Event datatype
     int event_number = 0;
-    auto decoder = new hgc_decoder((char*)analysis->ASCIIinputName.Data(), 1, analysis->setup->GetNMaxKCUs(), 5);
+    if (analysis->maxEvents != -1){
+        std::cout << "Event conversion will be stopped at " << analysis->maxEvents << std::endl;
+    }
+    
+    auto decoder = new hgc_decoder((char*)analysis->ASCIIinputName.Data(), 1, analysis->setup->GetNMaxKCUs(), 5, true);
     for (auto ae : *decoder) {
         if (true || event_number % 100 == 0) {
             std::cout << "\rFitting event " << event_number << std::flush;
+        }
+        if (analysis->maxEvents != -1 && event_number > analysis->maxEvents ){
+          break;  
         }
         // aligned_event *ae = *it;
         // aligned_event *ae = *it;
@@ -165,14 +173,20 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                     waveform_builder->set_waveform(tile->GetADCWaveform());
                     waveform_builder->fit();
                     tile->SetIntegratedADC(waveform_builder->get_E());
-                    tile->SetIntegratedTOT(tile->GetIntegratedTOT());   // TODO: Placeholder
+                    if (tile->GetTOT() != 1)
+                        tile->SetIntegratedTOT(tile->GetTOT());   // TODO: Placeholder
+                    else 
+                        tile->SetIntegratedTOT(0.);
                     if (waveform_builder->is_saturated()) {
                         tile->SetIntegratedValue(tile->GetIntegratedTOT()); // TODO: Placeholder
                     } else {
                         tile->SetIntegratedValue(tile->GetIntegratedADC()); // TODO: Placeholder
                     }
                     tile->SetIntegratedADC(waveform_builder->get_E());
-                    tile->SetIntegratedTOT(tile->GetIntegratedTOT());   // TODO: Placeholder
+                    if (tile->GetTOT() != 1)
+                        tile->SetIntegratedTOT(tile->GetTOT());   // TODO: Placeholder
+                    else 
+                        tile->SetIntegratedTOT(0.);
                     if (waveform_builder->is_saturated()) {
                         tile->SetIntegratedValue(tile->GetIntegratedTOT()); // TODO: Placeholder
                     } else {

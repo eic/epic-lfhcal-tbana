@@ -15,7 +15,7 @@
 #include "AnaSummary.h"
 #include "CalibSummary.h"
 #include "CommonHelperFunctions.h"
-#include "PlottHelper.h"
+#include "PlotHelper.h"
 #include "ComparisonAna.h"
 
 

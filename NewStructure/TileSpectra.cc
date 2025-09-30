@@ -278,13 +278,17 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
   }
   
   double fitrange[2]      = {50, 2000};
+  if (ROType == ReadOut::Type::Hgcroc){
+    hspectraHG.Rebin(8);
+    fitrange[0] = 16;
+    fitrange[1] = 500;    
+  }
   if (impE){
     fitrange[0] = 0.6*avmip;
     fitrange[1] = 3*avmip;
   }
   if (year == 2023 && fitrange[0] < 100)
     fitrange[0] = 100;
-  
   
   double intArea    = hspectraHG.Integral(hspectraHG.FindBin(fitrange[0]),hspectraHG.FindBin(fitrange[1]));
   double intNoise   = hspectraHG.Integral(hspectraHG.FindBin(-2*calib->PedestalSigH),hspectraHG.FindBin(+2*calib->PedestalSigH));
@@ -303,6 +307,15 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
     parlimitslo[1]  = 100;
     parlimitshi[0]  = 1000;
     parlimitshi[1]  = 1500;
+  } else if (ROType == ReadOut::Type::Hgcroc){
+    startvalues[0]  = 50;
+    startvalues[1]  = 100;    
+    startvalues[3]  = 6;    
+    parlimitslo[1]  = 20;
+    parlimitshi[0]  = 300;
+    parlimitshi[1]  = 500;
+    parlimitslo[3]  = 2;
+    parlimitshi[3]  = 5*50;
   }
   
   if (impE && (avmip =! -1000)){
@@ -605,7 +618,7 @@ bool TileSpectra::FitLGHGCorr(int verbosity, bool resetCalib){
   return true;
 }
 
-bool TileSpectra::FitPedConstWage(int verbosity){
+bool TileSpectra::FitPedConstWave(int verbosity){
   if (verbosity > 2) std::cout << "FitCorr cell ID: " << cellID << std::endl;
   TString funcName = Form("fcorr%sPedWaveCellID%d",TileName.Data(),cellID);
   

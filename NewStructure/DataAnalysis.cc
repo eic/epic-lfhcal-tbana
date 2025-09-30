@@ -13,7 +13,7 @@
 #include "TChain.h"
 #include "CommonHelperFunctions.h"
 #include "TileSpectra.h"
-#include "PlottHelper.h"
+#include "PlotHelper.h"
 #include "TRandom3.h"
 #include "TMath.h"
 #include "Math/Minimizer.h"
@@ -764,32 +764,32 @@ bool DataAnalysis::QAData(void){
 
     
     calib.PrintGlobalInfo();  
-    Double_t maxHG = ReturnMipPlotRangeDepVov(calib.GetVov(),true);
+    Double_t maxHG = ReturnMipPlotRangeDepVov(calib.GetVov(),true, ReadOut::Type::Caen);
     Double_t maxLG = 3800;
     std::cout << "plotting single layers" << std::endl;
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
       if (l%10 == 0 && l > 0 && debug > 0){
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
       }
-      PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+      PlotMipWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                               hSpectra, hSpectraTrigg, setup, true, -100, 3800, 1.2, l, 0,
                               Form("%s/detailed/LocTriggerMip_HG_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
-      PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+      PlotMipWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                               hSpectra, hSpectraTrigg, setup, true, -100, maxHG, 1.2, l, 0,
                               Form("%s/detailed/LocTriggerMip_Zoomed_HG_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
-      PlotTriggerPrimWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+      PlotTriggerPrimWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                         hSpectra, setup, averageScale, 0.8, 2.,
                                         0, 6000, 1.2, l, 0, Form("%s/detailed/All_TriggPrimitive_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
       if (ExtPlot > 1){
-        PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
-                                      hSpectra, 0, -20, 800, 1.2, l, 0,
-                                      Form("%s/detailed/LGHG_Corr_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
-        PlotMipWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  hSpectra, hSpectraTrigg, setup, false, -20, maxLG, 1.2, l, 0,
-                                  Form("%s/detailed/LocTriggerMip_LG_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
-        PlotTriggerPrimWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                          hSpectraTrigg, setup, averageScale, 0.8, 2.,
-                                          0, maxHG*2, 1.2, l, 0, Form("%s/detailed/LocalMuon_TriggPrimitive_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
+        PlotCorrWithFits8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
+                                hSpectra, 0, -20, 800, 1.2, l, 0,
+                                Form("%s/detailed/LGHG_Corr_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
+        PlotMipWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                hSpectra, hSpectraTrigg, setup, false, -20, maxLG, 1.2, l, 0,
+                                Form("%s/detailed/LocTriggerMip_LG_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
+        PlotTriggerPrimWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                        hSpectraTrigg, setup, averageScale, 0.8, 2.,
+                                        0, maxHG*2, 1.2, l, 0, Form("%s/detailed/LocalMuon_TriggPrimitive_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
       }
     }
     std::cout << "done plotting" << std::endl;
@@ -1017,21 +1017,21 @@ bool DataAnalysis::SimpleQAData(void){
 
     
     calib.PrintGlobalInfo();  
-    Double_t maxHG = ReturnMipPlotRangeDepVov(calib.GetVov(),true);
+    Double_t maxHG = ReturnMipPlotRangeDepVov(calib.GetVov(),true, ReadOut::Type::Caen);
     Double_t maxLG = 3800;
     std::cout << "plotting single layers" << std::endl;
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
       if (l%10 == 0 && l > 0 && debug > 0){
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
       }
-      PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+      PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                 hSpectra, setup, true, 0, maxHG, 1.2, l, 0,
                                 Form("%s/detailed/Spectra_HG_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
-      PlotNoiseWithFitsFullLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+      PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                 hSpectra, setup, false, 0, maxLG, 1.2, l, 0,
                                 Form("%s/detailed/Spectra_LG_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
       
-      PlotCorrWithFitsFullLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
+      PlotCorrWithFits8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
                                     hSpectra, 0, -20, 340, 3800, l, 0,
                                     Form("%s/detailed/LGHG_Corr_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
     }

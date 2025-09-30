@@ -207,29 +207,33 @@
       return -1;
   }
   
-  inline Double_t ReturnMipPlotRangeDepVov(double Vov, bool isHG){
-    if (isHG){
-      if (Vov < 2)
-        return 550.;
-      else if (Vov < 3)
-        return 750.;
-      else if (Vov < 4)
-        return 950.;
-      else if (Vov < 5)
-        return 1150.;
-      else
-        return 1350.;
+  inline Double_t ReturnMipPlotRangeDepVov(double Vov, bool isHG, ReadOut::Type type){
+    if (type == ReadOut::Type::Caen){
+      if (isHG){
+        if (Vov < 2)
+          return 550.;
+        else if (Vov < 3)
+          return 750.;
+        else if (Vov < 4)
+          return 950.;
+        else if (Vov < 5)
+          return 1150.;
+        else
+          return 1350.;
+      } else {
+        if (Vov < 2)
+          return 85.;
+        else if (Vov < 3)
+          return 105.;
+        else if (Vov < 4)
+          return 125.;
+        else if (Vov < 5)
+          return 145.;
+        else
+          return 165.;      
+      }
     } else {
-      if (Vov < 2)
-        return 85.;
-      else if (Vov < 3)
-        return 105.;
-      else if (Vov < 4)
-        return 125.;
-      else if (Vov < 5)
-        return 145.;
-      else
-        return 165.;      
+      return 410.;
     }
   }
   

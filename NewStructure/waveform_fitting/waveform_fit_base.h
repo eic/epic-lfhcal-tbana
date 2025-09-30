@@ -16,6 +16,7 @@ public:
     virtual double get_parameter(int parameter);
     virtual int get_pedestal() = 0;
     virtual void fit() = 0;                                         // pure virtual so it must be overwritten
+    virtual void fit_with_average_ped(double ped) = 0;                        // pure virtual so it must be overwritten
     
     bool is_stale() { return stale; }
     bool is_saturated() { return saturated; }

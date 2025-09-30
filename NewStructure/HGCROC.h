@@ -53,9 +53,9 @@ class Hgcroc: public Tile {
   int pedestal;
 
   // "finalized" values
-  double integrated_adc;
-  double integrated_tot;
-  double integrated_value;
+  double integrated_adc = 0.;
+  double integrated_tot = 0.;
+  double integrated_value = 0.;
   
  private:
 

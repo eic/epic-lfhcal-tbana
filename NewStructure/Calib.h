@@ -7,19 +7,19 @@
 #include "Setup.h"
 
 struct TileCalib{
-  double PedestalMeanH  = -1000.;
-  double PedestalMeanL  = -1000.;
-  double PedestalSigH   = -1000.;
-  double PedestalSigL   = -1000.;
-  double ScaleH         = -1000.;
-  double ScaleWidthH    = -1000.;
-  double ScaleL         = -1000.;
-  double ScaleWidthL    = -1000.;
-  double LGHGCorr       = -64;
-  double LGHGCorrOff    = -1000.;
-  double HGLGCorr       = -64;
-  double HGLGCorrOff    = -1000.;
-  short BadChannel      = -64;
+  double PedestalMeanH  = -1000.;     // pedestal mean HG ADC (CAEN) or first sample ADC (HGCROC)
+  double PedestalMeanL  = -1000.;     // pedestal mean LG ADC (CAEN) or average pedestal ADC (HGCROC)
+  double PedestalSigH   = -1000.;     // width of pedest HG ADC (CAEN) or width of first sample ADC distribution (HGCROC)
+  double PedestalSigL   = -1000.;     // width of pedest LG ADC (CAEN) or width of average pedestal ADC distribution (HGCROC)
+  double ScaleH         = -1000.;     // Max Mip in HG ADC (CAEN) or ADC (HGCROC) 
+  double ScaleWidthH    = -1000.;     // FWHM of Mip in HG ADC (CAEN) or ADC (HGCROC) 
+  double ScaleL         = -1000.;     // Max Mip in LG ADC (CAEN) 
+  double ScaleWidthL    = -1000.;     // FWHM Mip in LG ADC (CAEN) 
+  double LGHGCorr       = -64;        // slope of correlation between LG (x axis) & HG (y axis) for CAEN data 
+  double LGHGCorrOff    = -1000.;     // intercept of correlation between LG (x axis) & HG (y axis) for CAEN data 
+  double HGLGCorr       = -64;        // slope of correlation between HG (x axis) & LG (y axis) for CAEN data
+  double HGLGCorrOff    = -1000.;     // intercept of correlation between HG (x axis) & LG (y axis) for CAEN data
+  short BadChannel      = -64;        // bad channel flag: 0 - off, 1 - bad, 2 - funky, 3 - good
 } ;
 
 class Calib{
