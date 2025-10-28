@@ -27,7 +27,8 @@ fi
 
 if [ $2 = "new" ]; then
     mkdir -p NewStructure
-    ln -sf $LFHCALTBDIR/NewStructure/Compare NewStructure/
+    ln -sf $LFHCALTBDIR/NewStructure/CompareCalib NewStructure/
+    ln -sf $LFHCALTBDIR/NewStructure/CompareAna NewStructure/
     ln -sf $LFHCALTBDIR/NewStructure/Convert NewStructure/
     ln -sf $LFHCALTBDIR/NewStructure/DataAna NewStructure/
     ln -sf $LFHCALTBDIR/NewStructure/DataPrep NewStructure/

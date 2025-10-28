@@ -89,7 +89,11 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
         std::cout << "Event conversion will be stopped at " << analysis->maxEvents << std::endl;
     }
     
-    auto decoder = new hgc_decoder((char*)analysis->ASCIIinputName.Data(), 1, analysis->setup->GetNMaxKCUs(), 5, true);
+    auto decoder = new hgc_decoder( (char*)analysis->ASCIIinputName.Data(),   // filename for ascii file
+                                    1,                                        // detector ID (1: LFHCal)
+                                    analysis->setup->GetNMaxKCUs(),           // number of kcu's to be aligned & read out
+                                    5,                                        // debug level
+                                    analysis->GetHGCROCTrunctation());         // switch to enable artificial truncation to 8 bit, disregarding 2 least significant bits
     for (auto ae : *decoder) {
         if (true || event_number % 100 == 0) {
             std::cout << "\rFitting event " << event_number << std::flush;

@@ -1,0 +1,9 @@
+#layer  #assembly #HGCROC board   #layer in HGCROC unit # Module Number
+0  C016    1 0  0
+1  C015    1 1  0
+2  C014    1 2  0
+3  C013    1 3  0
+4  C012    1 4  0
+5  C011    1 5  0
+6  C010    1 6  0
+7  C004    1 7  0

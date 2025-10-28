@@ -35,6 +35,7 @@ class ComparisonCalib{
   inline TString GetRootOutputName()        const {return RootOutputName;};
   inline TString GetPlotOutputDir()         const {return OutputNameDirPlots;};
   inline short GetExtPlotting(void)         const {return ExtPlot;};
+  inline bool GetIsHGCROC(void)             const {return isHGCROC;};
   inline int GetExpandedList()              const {return expandedList;}
   inline bool CanOverWrite(void)            const {return Overwrite;};
   
@@ -55,6 +56,7 @@ class ComparisonCalib{
   inline void SetTrendingAxis(int i)             {Xaxis=i;};
   inline void SetRunListInput(TString name)      {RunListInputName=name;};
   inline void SetMaxPlotLayer(int i)             {maxLayerPlot=i;};
+  inline void SetIsHGCROC(bool b)                {isHGCROC=b;};
   
   //General methods
   bool CreateOutputRootFile(void);
@@ -77,6 +79,7 @@ class ComparisonCalib{
   int yearData                =-1;        // data taking year externally set
   int Xaxis                   =0;         // Trending dependence 0: run nr, 1: Voltage
   int maxLayerPlot            =100;       // option restrict individual layer plotting
+  bool isHGCROC               =false;     // option to switch to HGCROC comparison
   RootSetupWrapper rsw;                   // Wrapper singleton class for setup
   RootSetupWrapper* rswptr;               // Pointer to wrapper for singleton class for setup
   Setup* setup;                           // geometry setup

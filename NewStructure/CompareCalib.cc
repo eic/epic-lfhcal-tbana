@@ -33,6 +33,7 @@ void PrintHelp(char* exe){
   std::cout<<"-E [1-X] histo reading options for expanded file list"<<std::endl;
   std::cout<<"-f       Force to write output if already exist"<<std::endl;
   std::cout<<"-F fff   set explicit plot extension explicitly, default is pdf "<<std::endl;
+  std::cout<<"-H       switch to HGCROC output" << std::endl;
   std::cout<<"-i uuu   Input file list"<<std::endl;
   std::cout<<"-I uuu   expanded input file list"<<std::endl;
   std::cout<<"-L [1-63]restrict max layer plotting"<<std::endl;
@@ -61,7 +62,7 @@ int main(int argc, char* argv[]){
   }
   ComparisonCalib CompAnalysis;
   int c;
-  while((c=getopt(argc,argv,"d:e:E:fF:i:I:L:o:O:r:RVth"))!=-1){
+  while((c=getopt(argc,argv,"d:e:E:fF:Hi:I:L:o:O:r:RVth"))!=-1){
     switch(c){
     case 'd':
       std::cout<<"Compare: enable debug " << optarg <<std::endl;
@@ -118,6 +119,12 @@ int main(int argc, char* argv[]){
       it=std::find(RootRegexp.begin(),RootRegexp.end(),"-I");
       RootRegexp.erase(it);
       it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
+      RootRegexp.erase(it);
+      break;
+    case 'H':
+      std::cout<<"Compare: HGCROC output "<<std::endl;
+      CompAnalysis.SetIsHGCROC(true);
+      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-H");
       RootRegexp.erase(it);
       break;
     case 'L':

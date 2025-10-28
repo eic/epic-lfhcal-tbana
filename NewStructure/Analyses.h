@@ -49,6 +49,7 @@ class Analyses{
   inline bool CanOverWrite(void)                const {return Overwrite;};
   inline bool IsToTransferCalib(void)           const {return ApplyTransferCalib;};
   inline bool IsToApplyCalibration(void)        const {return ApplyCalibration;};
+  inline bool IsToAnalysisWaveForm(void)        const {return IsAnalyseWaveForm;};
   inline bool IsToConvert(void)                 const {return Convert;};
   inline bool IsToExtractPedestal(void)         const {return ExtractPedestal;};
   inline bool IsToExtractScaling(void)          const {return ExtractScaling;};
@@ -67,12 +68,14 @@ class Analyses{
   inline short GetExtPlotting(void)             const {return ExtPlot;};
   inline bool GetOverWriteCalib(void)           const {return OverWriteCalib;};
   inline int GetMaxEvents(void)                 const {return maxEvents;};
-
+  inline bool GetHGCROCTrunctation(void)        const {return truncateHGCROC;};
+  
   //setter methods
   //Overload method for boolean...or is it too dangerous?
   inline void CanOverWrite(bool b)               {Overwrite=b;};
   inline void IsCalibSaveToFile(bool b)          {SaveCalibToFile=b;};
   inline void IsToTransferCalib(bool b)          {ApplyTransferCalib=b;};
+  inline void IsToAnalysisWaveForm(bool b)       {IsAnalyseWaveForm=b;};
   inline void IsToApplyCalibration(bool b)       {ApplyCalibration=b;};
   inline void IsToConvert(bool b)                {Convert=b;};
   inline void IsToExtractPedestal(bool b)        {ExtractPedestal=b;};
@@ -90,6 +93,8 @@ class Analyses{
   inline void SetOverWriteCalib(bool b)          {OverWriteCalib = b;};
   inline void SetExtPlotting(short b)            {ExtPlot = b;};
   inline void EnableDebug(int i)                 {debug=i;};
+  inline void SetHGCROCTruncation(bool b)        {truncateHGCROC = b;};
+  
   
   inline void SetYear(int year)                  {yearData=year;};
   inline void SetASCIIinput(TString name)        {ASCIIinputName=name;};
@@ -141,6 +146,7 @@ class Analyses{
   bool ExtractScalingImproved =false;     // Flag for mip scaling extraction 2nd pass
   bool ReextractNoise         =false;     // Flag to enable noise trigger extraction and alternative pass for pedestals
   bool ApplyTransferCalib     =false;     // Flag for application of pedestals
+  bool IsAnalyseWaveForm      =false;     // Flag for routine with waveform analysis
   bool ApplyCalibration       =false;     // Flag for aplication of calibration
   bool SaveNoiseOnly          =false;     // Flag to reduce file to noise/pedestal only
   bool SaveMipsOnly           =false;     // Flag to reduce file to mips only
@@ -155,6 +161,7 @@ class Analyses{
   bool Overwrite              =false;     // Flag to overwrite outputs
   int debug                   =0;         // debug level 
   int yearData                =-1;        // data taking year externally set
+  bool truncateHGCROC         =false;     // flag to enable the truncation of the HGCROC data to 8 bit (masking the 2 least significant bits)
   RootSetupWrapper rsw;                   // Wrapper singleton class for setup
   RootSetupWrapper* rswptr;               // Pointer to wrapper for singleton class for setup
   Setup* setup;                           // geometry setup
@@ -179,6 +186,7 @@ class Analyses{
   bool ConvertOldRootFile2Root(void);
   bool GetPedestal(void);
   bool TransferCalib(void);
+  bool AnalyseWaveForm(void);
   bool GetScaling(void);
   bool GetImprovedScaling(void);
   bool GetNoiseSampleAndRefitPedestal(void);

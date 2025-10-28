@@ -49,7 +49,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"ac:d:fi:L:m:o:O:r:y:wh"))!=-1){
+  while((c=getopt(argc,argv,"ac:d:fi:L:m:o:O:r:ty:wh"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"Convert: printing calib object to file"<<std::endl;
@@ -91,6 +91,10 @@ int main(int argc, char* argv[]){
     case 'r':
       std::cout<<"Convert: run list file from: "<<optarg<<std::endl;
       AnAnalysis.SetRunListInput(Form("%s",optarg));
+      break;
+    case 't':
+      std::cout<<"Convert: enable trunction of last 2 bits HGCROC readout."<<std::endl;
+      AnAnalysis.SetHGCROCTruncation(true);
       break;
     case 'y':
       std::cout<<"Convert: Setting year externally: "<<optarg<<std::endl;

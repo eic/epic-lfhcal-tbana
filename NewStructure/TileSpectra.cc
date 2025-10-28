@@ -39,12 +39,39 @@ bool TileSpectra::FillExt(double l, double h, double e, double lheq){
   return true;
 }
 
-bool TileSpectra::FillWaveform(std::vector<int> samples){
+bool TileSpectra::FillExtPed(std::vector<int> samples, double h){
+  if (!resetAxisLabels){
+    hspectraLG.SetXTitle("ADC (arb. units) all samples") ;
+    hspectraHG.SetXTitle("ADC (arb. units) 1st sample") ;
+    resetAxisLabels= true;
+  }
+ for (int k = 0; k < (int)samples.size(); k++ ){
+   hspectraLG.Fill(samples.at(k));
+ }
+ hspectraHG.Fill(h);
  for (int k = 0; k < (int)samples.size(); k++ ){
    hcorr.Fill(k,samples.at(k));
  }
  return true;
 }
+
+bool TileSpectra::FillWaveform(std::vector<int> samples, double ped = 0){
+ for (int k = 0; k < (int)samples.size(); k++ ){
+   hcorr.Fill(k,samples.at(k)-ped);
+   if (extend == 3) hspectraLGHG.Fill(k,samples.at(k)-ped);
+ }
+ return true;
+}
+
+bool TileSpectra::FillWaveformVsTime(std::vector<int> samples, double toa = 0, double ped = 0){
+  // more infos
+  for (int k = 0; k < (int)samples.size(); k++ ){
+    hcorr.Fill(k*25000-toa*25,samples.at(k)-ped);
+    if (extend == 3) hspectraLGHG.Fill(k*25000-toa*25,samples.at(k)-ped);
+  }
+  return true;
+}
+
 
 bool TileSpectra::FillTrigger(double t){
   if (!bTriggPrim) bTriggPrim =true;
@@ -279,7 +306,7 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
   
   double fitrange[2]      = {50, 2000};
   if (ROType == ReadOut::Type::Hgcroc){
-    hspectraHG.Rebin(8);
+    // hspectraHG.Rebin(8);
     fitrange[0] = 16;
     fitrange[1] = 500;    
   }
@@ -308,14 +335,18 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
     parlimitshi[0]  = 1000;
     parlimitshi[1]  = 1500;
   } else if (ROType == ReadOut::Type::Hgcroc){
-    startvalues[0]  = 50;
-    startvalues[1]  = 100;    
-    startvalues[3]  = 6;    
-    parlimitslo[1]  = 20;
-    parlimitshi[0]  = 300;
-    parlimitshi[1]  = 500;
-    parlimitslo[3]  = 2;
-    parlimitshi[3]  = 5*50;
+    parlimitslo[1]  = 20;    
+    fitrange[0]     = 15;
+
+    // startvalues[0]  = 20;
+    // startvalues[1]  = 50;    
+    // startvalues[3]  = 6; 
+    // parlimitslo[0]  = 10;
+    // parlimitshi[0]  = 100;
+    // parlimitslo[1]  = 10;
+    // parlimitshi[1]  = 500;
+    // parlimitslo[3]  = 2;
+    // parlimitshi[3]  = 5*50;
   }
   
   if (impE && (avmip =! -1000)){
@@ -323,15 +354,25 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
     parlimitslo[1]  = 0.5*avmip;    
     parlimitshi[1]  = 1.7*avmip;
   }
-  if (vov != -1000){
-    if (verbosity > 1) std::cout << "adjusting according to V_ov: " << vov<< std::endl;
-    if (vov < 2.5){
-      parlimitslo[1]  = 20;    
-      fitrange[0]     = 15;
-    } else if (vov > 5){
-      fitrange[0]     = 150;      
+  if (ROType == ReadOut::Type::Caen){
+    if (vov != -1000){
+      if (verbosity > 1) std::cout << "adjusting according to V_ov: " << vov<< std::endl;
+      if (vov < 2.5){
+        parlimitslo[1]  = 20;    
+        fitrange[0]     = 15;
+      } else if (vov > 5 ){
+        fitrange[0]     = 150;      
+      }
+    }  
+  }
+  
+  if (verbosity > 1) {
+    std::cout << "Fit range: " << fitrange[0] << "\t" << fitrange[1] << std::endl;
+    for (int i=0; i<4; i++) {
+      std::cout << "parameter " << i << ": " << startvalues[i] << "\t" << fitrange[0] << "\t" << fitrange[1] << std::endl;
     }
-  }  
+  }
+  
   SignalHG = TF1(funcName.Data(),langaufun,fitrange[0],fitrange[1],4);
   SignalHG.SetNpx(1000);
   SignalHG.SetParameters(startvalues);
@@ -749,7 +790,7 @@ void TileSpectra::WriteExt( bool wFits = true){
   if (extend == 1){
     hcombined.Write(hcombined.GetName(), kOverwrite);
     hspectraHGLG.Write(hspectraHGLG.GetName(), kOverwrite);  
-  } else if (extend == 2){
+  } else if (extend == 2 || extend == 3 ){
     hcorr.Write(hcorr.GetName(), kOverwrite);  
   }
   if ( wFits ){

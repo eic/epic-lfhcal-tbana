@@ -1,0 +1,2 @@
+#HGCROC board	HGCROC Ch	layer	assembly	board channel	row	column modNr modX modY
+1	58	0	015	5	0	0	0	0	0

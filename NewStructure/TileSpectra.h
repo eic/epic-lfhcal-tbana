@@ -90,12 +90,23 @@ class TileSpectra: public TObject{
       } else if (type == ReadOut::Type::Hgcroc){
         hspectraHG    = TH1D(Form("hspectra%sADCCellID%d",name.Data(),id),Form("ADC spectrumCellID %d; ADC (arb. units); counts ",id),1128,-100,1028);
         hspectraHG.SetDirectory(0);
-        hspectraLG    = TH1D(Form("hspectra%sTOTCellID%d",name.Data(),id),Form("TOT spectrumCellID %d; TOT ADC (arb. units); counts",id),4096,0,4096);
+        hspectraLG    = TH1D(Form("hspectra%sTOTCellID%d",name.Data(),id),Form("TOT spectrumCellID %d; TOT (arb. units); counts",id),4096,0,4096);
         hspectraLG.SetDirectory(0);
         hspectraLGHG  = TProfile(Form("hCoorspectra%sTOTADCGCellID%d",name.Data(),id),Form("TOT-ADC correlation CellID %d; TOT  (arb. units); ADC (arb. units)",id),400,0,400);
         hspectraLGHG.SetDirectory(0);
-        hcorr         = TH2D(Form("wafeform%sCellID%d",name.Data(),id),Form("2D wafeform CellID %d; sample ; ADC (arb. units)",id),20,0,20, 1024, 0, 1024);
+        hcorr         = TH2D(Form("wafeform%sCellID%d",name.Data(),id),Form("2D wafeform CellID %d; sample ; ADC (arb. units)",id),20,0,20, 1034, -10, 1024);
         hcorr.SetDirectory(0);
+      }
+    } else if (extend == 3){
+      if (type == ReadOut::Type::Hgcroc){
+        hspectraHG    = TH1D(Form("hspectra%sADCCellID%d",name.Data(),id),Form("ADC spectrumCellID %d; ADC (arb. units); counts ",id),1128,-100,1028);
+        hspectraHG.SetDirectory(0);
+        hspectraLG    = TH1D(Form("hspectra%sTOTCellID%d",name.Data(),id),Form("TOT spectrumCellID %d; TOT (arb. units); counts",id),4096,0,4096);
+        hspectraLG.SetDirectory(0);
+        hspectraLGHG  = TProfile(Form("wafeform1D%sCellID%d",name.Data(),id),Form("1D wafeform CellID %d;  t (ps) ; ADC (arb. units)",id),500,0,500000);
+        hspectraLGHG.SetDirectory(0);
+        hcorr         = TH2D(Form("wafeform%sCellID%d",name.Data(),id),Form("2D wafeform CellID %d; t (ps) ; ADC (arb. units)",id),500,0,500000, 1034, -10, 1024);
+        hcorr.SetDirectory(0);        
       }
     }
   }
@@ -104,9 +115,11 @@ class TileSpectra: public TObject{
   bool Fill(double, double);
   bool FillSpectra(double, double);
   bool FillExt(double, double, double, double);
+  bool FillExtPed(std::vector<int>, double);
   bool FillCorr(double, double);
   bool FillTrigger(double);
-  bool FillWaveform(std::vector<int>);
+  bool FillWaveform(std::vector<int>,double);
+  bool FillWaveformVsTime(std::vector<int> , double, double );
   
   bool FitNoise(double*, int, bool);
   void FitFixedNoise();
@@ -149,6 +162,7 @@ class TileSpectra: public TObject{
   TileCalib* calib;
   int debug;
   int extend = 0;
+  bool resetAxisLabels = false;
   bool bpedHG;
   bool bpedLG;
   bool bmipHG;

@@ -67,7 +67,7 @@ bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt){
 //===============================================================================
 bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH1D* histLG, TProfile* profLGHG ){
   
-  if (extended == 1 || extended == 2){
+  if (extended == 1 || extended == 2 ){
     gTrendTrigger.AddPoint     (x,triggers     );
     gTrendTrigger.SetPointError(gTrendTrigger.GetN()-1,0.,0.);
     if(triggers<MinTrigg) MinTrigg  = triggers;
@@ -102,6 +102,22 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
     // temp3.Scale(1./triggers);
     LGHGTriggRuns[runNr] = temp3;
   }
+  
+  if (extended == 4){
+    if (histHG){
+      TH1D temp = *histHG;
+      temp.SetName(Form("%s_Run%i",histHG->GetName(),runNr));
+      temp.SetDirectory(0);
+      double scaler = 1./temp.GetEntries();
+      temp.Scale(scaler);
+      temp.GetYaxis()->SetTitle("Counts/ trigger");
+      temp.Rebin(2);
+      if (MinHGSpec > scaler) MinHGSpec = (double)scaler;
+      if (MaxHGSpec < temp.GetMaximum()) MaxHGSpec = temp.GetMaximum();
+      HGTriggRuns[runNr] = temp;
+    }    
+  }
+  
   return true;
 }
 

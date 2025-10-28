@@ -787,7 +787,7 @@
         TProfile* tempProfile = ithSpectra->second.GetLGHGcorr();
         TH2D* temp2D          = ithSpectra->second.GetCorr();
         if (!tempProfile) continue;
-        SetStyleHistoTH2ForGraphs( temp2D, tempProfile->GetXaxis()->GetTitle(), tempProfile->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
+        SetStyleHistoTH2ForGraphs( temp2D, temp2D->GetXaxis()->GetTitle(), temp2D->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
         SetMarkerDefaultsProfile(tempProfile, 24, 0.7, kRed+2, kRed+2);   
         
         temp2D->GetYaxis()->SetRangeUser(0,maxY);
@@ -809,9 +809,7 @@
         TString xTit = temp2D->GetXaxis()->GetTitle();
         if (xTit.Contains("ample") != 0){
           tempProfile->Draw("pe, same");
-        } else {
-          tempProfile->Draw("pe, same");
-        }
+        } 
           
         TString label           = Form("row %d col %d", r, c);
         if (p == 7){

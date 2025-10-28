@@ -24,7 +24,8 @@
 #include "CommonHelperFunctions.h"
 #include "PlotHelper_general.h"
 #include "PlotHelper_8MLayer.h"
-
+#include "PlotHelper_2MLayer.h"
+#include "PlotHelper_1MLayer.h"
   //__________________________________________________________________________________________________________
   // Plot 2D fit variables overview
   //__________________________________________________________________________________________________________  

@@ -941,11 +941,11 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
   //******** CreateCanvasAndPadsFor8PannelTBPlot ***********************************************************************************
   //********************************************************************************************************************************
   void CreateCanvasAndPadsFor8PannelTBPlot(TCanvas* &canvas, TPad* pads[8],  Double_t* topRCornerX, Double_t* topRCornerY,  Double_t* relSize8P, Int_t textSizePixel = 30, Double_t marginLeft = 0.03, TString add = "", bool rightCorner = true, int debug = 0){
-    Double_t arrayBoundsXIndMeasRatio[5];
-    Double_t arrayBoundsYIndMeasRatio[3];
-    Double_t relativeMarginsIndMeasRatioX[3];
-    Double_t relativeMarginsIndMeasRatioY[3];
-    ReturnCorrectValuesForCanvasScaling(2200,1200, 4, 2,marginLeft, 0.005, 0.005,0.05,arrayBoundsXIndMeasRatio,arrayBoundsYIndMeasRatio,relativeMarginsIndMeasRatioX,relativeMarginsIndMeasRatioY, debug);
+    Double_t arrayBoundX[5];
+    Double_t arrayBoundY[3];
+    Double_t relativeMarginsX[3];
+    Double_t relativeMarginsY[3];
+    ReturnCorrectValuesForCanvasScaling(2200,1200, 4, 2,marginLeft, 0.005, 0.005,0.05,arrayBoundX,arrayBoundY,relativeMarginsX,relativeMarginsY, debug);
 
     canvas = new TCanvas(Form("canvas8Panel%s", add.Data()),"",0,0,2200,1200);  // gives the page size
     canvas->cd();
@@ -961,50 +961,50 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
     // rebuild pad geom in similar way (numbering -1)
     //*****************************************************************
     
-    pads[0] = new TPad(Form("pad8Pane%sl_0", add.Data()), "", arrayBoundsXIndMeasRatio[0], arrayBoundsYIndMeasRatio[2], arrayBoundsXIndMeasRatio[1], arrayBoundsYIndMeasRatio[1],-1, -1, -2);
-    pads[1] = new TPad(Form("pad8Pane%sl_1", add.Data()), "", arrayBoundsXIndMeasRatio[1], arrayBoundsYIndMeasRatio[2], arrayBoundsXIndMeasRatio[2], arrayBoundsYIndMeasRatio[1],-1, -1, -2);
-    pads[2] = new TPad(Form("pad8Pane%sl_2", add.Data()), "", arrayBoundsXIndMeasRatio[2], arrayBoundsYIndMeasRatio[2], arrayBoundsXIndMeasRatio[3], arrayBoundsYIndMeasRatio[1],-1, -1, -2);
-    pads[3] = new TPad(Form("pad8Pane%sl_3", add.Data()), "", arrayBoundsXIndMeasRatio[3], arrayBoundsYIndMeasRatio[2], arrayBoundsXIndMeasRatio[4], arrayBoundsYIndMeasRatio[1],-1, -1, -2);
-    pads[4] = new TPad(Form("pad8Pane%sl_4", add.Data()), "", arrayBoundsXIndMeasRatio[0], arrayBoundsYIndMeasRatio[1],arrayBoundsXIndMeasRatio[1], arrayBoundsYIndMeasRatio[0],-1, -1, -2);
-    pads[5] = new TPad(Form("pad8Pane%sl_4", add.Data()), "", arrayBoundsXIndMeasRatio[1], arrayBoundsYIndMeasRatio[1],arrayBoundsXIndMeasRatio[2], arrayBoundsYIndMeasRatio[0],-1, -1, -2);
-    pads[6] = new TPad(Form("pad8Pane%sl_4", add.Data()), "", arrayBoundsXIndMeasRatio[2], arrayBoundsYIndMeasRatio[1],arrayBoundsXIndMeasRatio[3], arrayBoundsYIndMeasRatio[0],-1, -1, -2);
-    pads[7] = new TPad(Form("pad8Pane%sl_4", add.Data()), "", arrayBoundsXIndMeasRatio[3], arrayBoundsYIndMeasRatio[1],arrayBoundsXIndMeasRatio[4], arrayBoundsYIndMeasRatio[0],-1, -1, -2);
+    pads[0] = new TPad(Form("pad8Pane%sl_0", add.Data()), "", arrayBoundX[0], arrayBoundY[2], arrayBoundX[1], arrayBoundY[1],-1, -1, -2);
+    pads[1] = new TPad(Form("pad8Pane%sl_1", add.Data()), "", arrayBoundX[1], arrayBoundY[2], arrayBoundX[2], arrayBoundY[1],-1, -1, -2);
+    pads[2] = new TPad(Form("pad8Pane%sl_2", add.Data()), "", arrayBoundX[2], arrayBoundY[2], arrayBoundX[3], arrayBoundY[1],-1, -1, -2);
+    pads[3] = new TPad(Form("pad8Pane%sl_3", add.Data()), "", arrayBoundX[3], arrayBoundY[2], arrayBoundX[4], arrayBoundY[1],-1, -1, -2);
+    pads[4] = new TPad(Form("pad8Pane%sl_4", add.Data()), "", arrayBoundX[0], arrayBoundY[1],arrayBoundX[1], arrayBoundY[0],-1, -1, -2);
+    pads[5] = new TPad(Form("pad8Pane%sl_4", add.Data()), "", arrayBoundX[1], arrayBoundY[1],arrayBoundX[2], arrayBoundY[0],-1, -1, -2);
+    pads[6] = new TPad(Form("pad8Pane%sl_4", add.Data()), "", arrayBoundX[2], arrayBoundY[1],arrayBoundX[3], arrayBoundY[0],-1, -1, -2);
+    pads[7] = new TPad(Form("pad8Pane%sl_4", add.Data()), "", arrayBoundX[3], arrayBoundY[1],arrayBoundX[4], arrayBoundY[0],-1, -1, -2);
     
-    DefaultPadSettings( pads[4], relativeMarginsIndMeasRatioX[0], relativeMarginsIndMeasRatioX[1], relativeMarginsIndMeasRatioY[0], relativeMarginsIndMeasRatioY[1]);
-    DefaultPadSettings( pads[5], relativeMarginsIndMeasRatioX[1], relativeMarginsIndMeasRatioX[1], relativeMarginsIndMeasRatioY[0], relativeMarginsIndMeasRatioY[1]);
-    DefaultPadSettings( pads[6], relativeMarginsIndMeasRatioX[1], relativeMarginsIndMeasRatioX[1], relativeMarginsIndMeasRatioY[0], relativeMarginsIndMeasRatioY[1]);
-    DefaultPadSettings( pads[7], relativeMarginsIndMeasRatioX[1], relativeMarginsIndMeasRatioX[2], relativeMarginsIndMeasRatioY[0], relativeMarginsIndMeasRatioY[1]);
-    DefaultPadSettings( pads[0], relativeMarginsIndMeasRatioX[0], relativeMarginsIndMeasRatioX[1], relativeMarginsIndMeasRatioY[1], relativeMarginsIndMeasRatioY[2]);
-    DefaultPadSettings( pads[1], relativeMarginsIndMeasRatioX[1], relativeMarginsIndMeasRatioX[1], relativeMarginsIndMeasRatioY[1], relativeMarginsIndMeasRatioY[2]);
-    DefaultPadSettings( pads[2], relativeMarginsIndMeasRatioX[1], relativeMarginsIndMeasRatioX[1], relativeMarginsIndMeasRatioY[1], relativeMarginsIndMeasRatioY[2]);
-    DefaultPadSettings( pads[3], relativeMarginsIndMeasRatioX[1], relativeMarginsIndMeasRatioX[2], relativeMarginsIndMeasRatioY[1], relativeMarginsIndMeasRatioY[2]);
+    DefaultPadSettings( pads[4], relativeMarginsX[0], relativeMarginsX[1], relativeMarginsY[0], relativeMarginsY[1]);
+    DefaultPadSettings( pads[5], relativeMarginsX[1], relativeMarginsX[1], relativeMarginsY[0], relativeMarginsY[1]);
+    DefaultPadSettings( pads[6], relativeMarginsX[1], relativeMarginsX[1], relativeMarginsY[0], relativeMarginsY[1]);
+    DefaultPadSettings( pads[7], relativeMarginsX[1], relativeMarginsX[2], relativeMarginsY[0], relativeMarginsY[1]);
+    DefaultPadSettings( pads[0], relativeMarginsX[0], relativeMarginsX[1], relativeMarginsY[1], relativeMarginsY[2]);
+    DefaultPadSettings( pads[1], relativeMarginsX[1], relativeMarginsX[1], relativeMarginsY[1], relativeMarginsY[2]);
+    DefaultPadSettings( pads[2], relativeMarginsX[1], relativeMarginsX[1], relativeMarginsY[1], relativeMarginsY[2]);
+    DefaultPadSettings( pads[3], relativeMarginsX[1], relativeMarginsX[2], relativeMarginsY[1], relativeMarginsY[2]);
 
-    topRCornerY[0]  = 1-relativeMarginsIndMeasRatioY[1];
-    topRCornerY[1]  = 1-relativeMarginsIndMeasRatioY[1];
-    topRCornerY[2]  = 1-relativeMarginsIndMeasRatioY[1];
-    topRCornerY[3]  = 1-relativeMarginsIndMeasRatioY[1];
-    topRCornerY[4]  = 1-relativeMarginsIndMeasRatioY[0];
-    topRCornerY[5]  = 1-relativeMarginsIndMeasRatioY[0];
-    topRCornerY[6]  = 1-relativeMarginsIndMeasRatioY[0];
-    topRCornerY[7]  = 1-relativeMarginsIndMeasRatioY[0];      
+    topRCornerY[0]  = 1-relativeMarginsY[1];
+    topRCornerY[1]  = 1-relativeMarginsY[1];
+    topRCornerY[2]  = 1-relativeMarginsY[1];
+    topRCornerY[3]  = 1-relativeMarginsY[1];
+    topRCornerY[4]  = 1-relativeMarginsY[0];
+    topRCornerY[5]  = 1-relativeMarginsY[0];
+    topRCornerY[6]  = 1-relativeMarginsY[0];
+    topRCornerY[7]  = 1-relativeMarginsY[0];      
     if (rightCorner){
-      topRCornerX[0]  = 1-relativeMarginsIndMeasRatioX[1];
-      topRCornerX[1]  = 1-relativeMarginsIndMeasRatioX[1];
-      topRCornerX[2]  = 1-relativeMarginsIndMeasRatioX[1];
-      topRCornerX[3]  = 1-relativeMarginsIndMeasRatioX[2];
-      topRCornerX[4]  = 1-relativeMarginsIndMeasRatioX[1];
-      topRCornerX[5]  = 1-relativeMarginsIndMeasRatioX[1];
-      topRCornerX[6]  = 1-relativeMarginsIndMeasRatioX[1];
-      topRCornerX[7]  = 1-relativeMarginsIndMeasRatioX[2];
+      topRCornerX[0]  = 1-relativeMarginsX[1];
+      topRCornerX[1]  = 1-relativeMarginsX[1];
+      topRCornerX[2]  = 1-relativeMarginsX[1];
+      topRCornerX[3]  = 1-relativeMarginsX[2];
+      topRCornerX[4]  = 1-relativeMarginsX[1];
+      topRCornerX[5]  = 1-relativeMarginsX[1];
+      topRCornerX[6]  = 1-relativeMarginsX[1];
+      topRCornerX[7]  = 1-relativeMarginsX[2];
     } else {
-      topRCornerX[0]  = relativeMarginsIndMeasRatioX[0];
-      topRCornerX[1]  = relativeMarginsIndMeasRatioX[1];
-      topRCornerX[2]  = relativeMarginsIndMeasRatioX[1];
-      topRCornerX[3]  = relativeMarginsIndMeasRatioX[1];
-      topRCornerX[4]  = relativeMarginsIndMeasRatioX[0];
-      topRCornerX[5]  = relativeMarginsIndMeasRatioX[1];
-      topRCornerX[6]  = relativeMarginsIndMeasRatioX[1];
-      topRCornerX[7]  = relativeMarginsIndMeasRatioX[1];
+      topRCornerX[0]  = relativeMarginsX[0];
+      topRCornerX[1]  = relativeMarginsX[1];
+      topRCornerX[2]  = relativeMarginsX[1];
+      topRCornerX[3]  = relativeMarginsX[1];
+      topRCornerX[4]  = relativeMarginsX[0];
+      topRCornerX[5]  = relativeMarginsX[1];
+      topRCornerX[6]  = relativeMarginsX[1];
+      topRCornerX[7]  = relativeMarginsX[1];
     }
     
     for (Int_t p = 0; p < 8; p++){
@@ -1014,6 +1014,61 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
         relSize8P[p]  = (Double_t)textSizePixel/pads[p]->YtoPixel(pads[p]->GetY1());
       }
       if(debug > 1)std::cout << p << "\t" << topRCornerX[p]<< "\t" << topRCornerY[p] << "\t" << relSize8P[p] << std::endl;
+    }
+    return;
+  }  
+
+  //********************************************************************************************************************************
+  //******** CreateCanvasAndPadsFor2PannelTBPlot ***********************************************************************************
+  //********************************************************************************************************************************
+  void CreateCanvasAndPadsFor2PannelTBPlot(TCanvas* &canvas, TPad* pads[2],  Double_t* topRCornerX, Double_t* topRCornerY,  Double_t* relSizeP, Int_t textSizePixel = 30, Double_t marginLeft = 0.03, TString add = "", bool rightCorner = true, int debug = 0){
+    Double_t arrayBoundX[3];
+    Double_t arrayBoundY[2];
+    Double_t relativeMarginsX[3];
+    Double_t relativeMarginsY[3];
+    ReturnCorrectValuesForCanvasScaling(1200,600, 2, 1,marginLeft, 0.005, 0.015,0.1,arrayBoundX,arrayBoundY,relativeMarginsX,relativeMarginsY, 2);
+
+    canvas = new TCanvas(Form("canvas2Panel%s", add.Data()),"",0,0,1200,600);  // gives the page size
+    canvas->cd();
+
+    //*****************************************************************
+    // Test beam geometry (beam coming from viewer)
+    //===========================================================
+    //===========================================================
+    //||    1 (0)    ||    2 (1)   ||  row 0
+    //===========================================================
+    //    col 0     col 1 
+    // rebuild pad geom in similar way (numbering -1)
+    //*****************************************************************
+    
+    std::cout << "0: " <<  arrayBoundX[0] << "\t" << arrayBoundY[0] << "\t" << arrayBoundX[1] << "\t" << arrayBoundY[1] << std::endl;
+    std::cout << "1: " <<  arrayBoundX[1] << "\t" << arrayBoundY[0] << "\t" << arrayBoundX[2] << "\t" << arrayBoundY[1] << std::endl;
+    
+    pads[0] = new TPad(Form("pad2Pane%sl_0", add.Data()), "", arrayBoundX[0], arrayBoundY[1], arrayBoundX[1], arrayBoundY[0],-1, -1, -2);
+    pads[1] = new TPad(Form("pad2Pane%sl_1", add.Data()), "", arrayBoundX[1], arrayBoundY[1], arrayBoundX[2], arrayBoundY[0],-1, -1, -2);
+    
+    
+    DefaultPadSettings( pads[0], relativeMarginsX[0], relativeMarginsX[1], relativeMarginsY[0], relativeMarginsY[2]);
+    DefaultPadSettings( pads[1], relativeMarginsX[1], relativeMarginsX[2], relativeMarginsY[0], relativeMarginsY[2]);
+
+    topRCornerY[0]  = 1-relativeMarginsY[2];
+    topRCornerY[1]  = 1-relativeMarginsY[2];
+    if (rightCorner){
+      topRCornerX[0]  = 1-relativeMarginsX[1];
+      topRCornerX[1]  = 1-relativeMarginsX[2];
+    } else {
+      topRCornerX[0]  = relativeMarginsX[0];
+      topRCornerX[1]  = relativeMarginsX[1];
+    }
+    
+    for (Int_t p = 0; p < 2; p++){
+      if (pads[p]->XtoPixel(pads[p]->GetX2()) < pads[p]->YtoPixel(pads[p]->GetY1())){
+        relSizeP[p]  = (Double_t)textSizePixel/pads[p]->XtoPixel(pads[p]->GetX2()) ;
+      } else {
+        relSizeP[p]  = (Double_t)textSizePixel/pads[p]->YtoPixel(pads[p]->GetY1());
+      }
+      // if(debug > 1)
+        std::cout << p << "\t" << topRCornerX[p]<< "\t" << topRCornerY[p] << "\t" << relSizeP[p] << std::endl;
     }
     return;
   }  

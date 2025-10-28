@@ -83,6 +83,10 @@ if [ $2 = "pedestalM" ]; then
 # 	done
 fi
 
+if [ $2 = "pedestalMtrunc" ]; then
+  ./DataPrep -d 1 -p -i $dataDirRaw/muons/rawHGCROCtruncated_muonAll.root -f -o $dataDirOut/muons/rawHGCROCtruncated_wPed_muonAll.root -O $PlotBaseDir/HGCROC_PlotsPedestalTruncated_2024/RunMuon -r ../configs/DataTakingDB_202409_HGCROC.csv -F png
+fi
+
 if [ $2 = "pedestalE" ]; then
   runs='103 104 105 106 107'
   for runNr in $runs; do 
@@ -110,22 +114,3 @@ if [ $2 == "calibElectron" ]; then
 	MuonCalibHGCROC $3 muonAll 103 electrons/$dataDirRaw muon/$dataDirOut 103 $badChannelMap
 fi
 
-
-
-
-# 
-# 
-# 
-# 
-# if [ $2 == "reducemuons" ]; then
-# 	runs='261 264 265 269 270 272 274 275 ' 
-# 	for runNr in $runs; do 
-# 		time ./DataPrep -f -d 1 -M -i $dataDirOutH/calibrated_Run_$runNr.root -o $dataDirOutH/calibrated_localmuononly_Run_$runNr.root 
-# 	done
-# 	runs='251 252 254 257 258 ' 
-# 	for runNr in $runs; do 
-# 		time ./DataPrep -f -d 1 -M -i $dataDirOutE/calibrated_Run_$runNr.root -o $dataDirOutE/calibrated_localmuononly_Run_$runNr.root 
-# 	done	
-# 	time ./DataPrep -f -d 1 -M -i $dataDirOut/calibratedMuon_muonScanA1_45V.root -o $dataDirOut/calibratedMuon_localmuononly_muonScanA1_45V.root 
-# 	time ./DataPrep -f -d 1 -M -i $dataDirOut/calibratedMuon_muonScanA2_45V.root -o $dataDirOut/calibratedMuon_localmuononly_muonScanA2_45V.root 
-# fi

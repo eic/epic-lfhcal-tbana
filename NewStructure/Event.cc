@@ -327,11 +327,12 @@ double Event::CalculateLocalMuonTrigg(  Calib calib,
   if (activeTiles > 1)
     avsurr        = avsurr/activeTiles;
   
-  if (GetROtype() == ReadOut::Type::Hgcroc){
-    if (tilesWTOA < 0.6*activeTiles){
-      avsurr = (-1.)*avsurr;
-    }
-  }
+  // if (GetROtype() == ReadOut::Type::Hgcroc){
+  //   if (tilesWTOA < 0.6*activeTiles){
+  //     avsurr = (-1.)*avsurr;
+  //   }
+  // }
+  // std::cout << " trigger prim: " << avsurr << std::endl;
   return avsurr;
 }
 

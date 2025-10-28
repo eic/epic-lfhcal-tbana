@@ -1,0 +1,13 @@
+year 2025
+month 10
+readout HGCROC
+facility ORNL
+beam-line cosmics
+Run #,beam species,pdg,Beam energy (GeV),Voltage,Vbr,trig delay,machine gun,xpos,ypos,delay,phase,EEMC in
+4,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,broken
+5,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,broken
+8,cosmics,-13,5,46,38.3,0,19,0,0,0,-1,0
+13,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,shifted_to_early
+14,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,fixed_offset
+17,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0
+18,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,new_stack
