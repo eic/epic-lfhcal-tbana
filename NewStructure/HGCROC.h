@@ -12,6 +12,9 @@ class Hgcroc: public Tile {
   std::vector<int> GetADCWaveform(void) const;
   std::vector<int> GetTOAWaveform(void) const;
   std::vector<int> GetTOTWaveform(void) const;
+  int GetFirstTOASample (void);
+  int GetFirstSampleAboveTh(void);
+  int GetMaxSampleADC (void);
   int GetNsample(void) const ;
   double GetTOT(void) const;
   double GetTOA(void) const;
@@ -29,6 +32,7 @@ class Hgcroc: public Tile {
   void AppendWaveformTOT(int);
   void ResetTOTWaveformPoint(int, int);
 
+  
   void SetNsample(int);
   void SetTOT(double);
   void SetTOA(double);
@@ -42,7 +46,7 @@ class Hgcroc: public Tile {
   void SetIntegratedTOT(double val) { integrated_tot = val; }
   void SetIntegratedValue(double val) { integrated_value = val; }
 
-  
+  void PrintWaveFormDebugInfo( double, double, double);
  protected:
   int Nsample;
   std::vector<int> adc_waveform;

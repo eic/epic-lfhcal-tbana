@@ -29,7 +29,7 @@ function MuonCalibHGCROC()
       echo "overwriting original calib file with manually modified $4/rawHGCROC_wPed_$3_calib_mod.txt"
       ./DataPrep -d 1 -E -f -w $4/rawHGCROC_wPed_$3.root -i $4/rawHGCROC_wPed_$3.root -o $4/rawHGCROC_wave_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$6 -r $runNrFile -k $4/rawHGCROC_wPed_$3_calib_mod.txt     
     else 
-      ./DataPrep -d 4 -E -f -w $4/rawHGCROC_wPed_$3.root -i $4/rawHGCROC_wPed_$3.root -o $4/rawHGCROC_wave_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$6 -r $runNrFile 
+      ./DataPrep -d 1 -E -f -w $4/rawHGCROC_wPed_$3.root -i $4/rawHGCROC_wPed_$3.root -o $4/rawHGCROC_wave_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$6 -r $runNrFile 
     fi
 	elif [ $1 == "default" ]; then 
 		time ./DataPrep -f -d 1 -e  -s -i $4/rawHGCROC_wPed_wBC_$3.root -o $4/rawHGCROC_wPedwMuon_wBC_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuon/$6 -r $runNrFile
@@ -83,7 +83,18 @@ fi
 
 if [ $2 = "pedestalOct" ]; then
 #   runs="008 004 005 013 014 017 018"
-  runs="018"
+#   runs="018"
+#   for runNr in $runs; do 
+#     ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestalUnSkimmed/Run$runNr -r ../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt		
+#   done
+  
+#   runs='018' # F-Stack,  ORNL-01
+# 	runs='020 021 022' # F-Stack,  UCR-01 asic 1
+# 	runs="028 029" # F-Stack,  UCR-01 asic 0
+# 	runs='030 031 032 033 034'  #UCR-01 30-32, UCR-02 33-41, starting 38 T0A lower DAC calib
+#   runs='018 020 021 022 028 029 030 031 032 033 034'  #UCR-01 30-32, UCR-02 33-41, starting 38 T0A lower DAC calib
+#   runs='036 037 038 039 040 041'  #UCR-01 30-32, UCR-02 33-41, starting 38 T0A lower DAC calib
+  runs='051 052 053 054'  #UCR-02 51-52, UCR-01 53-54, low ToA
   for runNr in $runs; do 
     ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestalUnSkimmed/Run$runNr -r ../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt		
   done
@@ -91,7 +102,12 @@ fi
 
 
 if [ $2 == "calibMuonOct" ]; then
-	runs='018' 
+# 	runs='018' 
+# 	runs='018 020 021 022 028 029 030 031 032 033 034'  #UCR-01 30-32, UCR-02 33-41, starting 38 T0A lower DAC calib
+# 	runs='036 037 038 039 040 041'  #UCR-01 30-32, UCR-02 33-41, starting 38 T0A lower DAC calib
+	
+# 	runs='018 021 022 029 032 034 036 038 041'
+	runs='041'
 	badChannelMap=../configs/badChannelMap_TBSetup_HGCROC_cosmics_202510_Fstack.txt
 	runNrFile=../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt
 	for runNr in $runs; do 
@@ -108,8 +124,8 @@ if [ $2 = "pedestalSumming" ]; then
 fi
 
 if [ $2 == "calibSum" ]; then
-  runs="100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115"
-#   runs="107"
+#   runs="100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115"
+  runs="107"
 # 	runs="102"
 	badChannelMap=../configs/badChannelMap_TBSetup_HGCROC_cosmics_202510_Fstack.txt
 	runNrFile=../configs/DataTakingDB_ORNL_Summing_HGCROC_202508.txt

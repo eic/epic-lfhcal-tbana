@@ -128,10 +128,36 @@ elif [ $2 = "skimCosmics" ]; then
 elif [ $2 = "cosmicsOct" ]; then 
 	# local cosmics first stack
 # 	runs='004 005 008 013 014' 
-runs='017' 
+#   runs='017' 
+# 	for runNr in $runs; do 
+# 		./Convert -d 1 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m ../configs/mapping_HGCROC_ORNL_Cosmics_20251009.txt -r ../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt		
+# 	done
+	
+# 	runs='018' # F-Stack,  ORNL-01
+# 	for runNr in $runs; do 
+# 		./Convert -d 1 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m ../configs/mapping_HGCROC_ORNL_Cosmics_20251014.txt -r ../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt		
+# 	done
+# 
+# 	runs='020 021 022' # F-Stack,  UCR-01 asic 1
+# 	for runNr in $runs; do 
+# 		./Convert -d 1 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m ../configs/mapping_HGCROC_ORNL_Cosmics_20251014.txt -r ../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt		
+# 	done
+# 
+# 	runs="028 029" # F-Stack,  UCR-01 asic 0
+# 	for runNr in $runs; do 
+# 		./Convert -d 1 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m ../configs/mapping_HGCROC_ORNL_Cosmics_20251017_FStack.txt -r ../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt		
+# 	done
+#   
+	# both stacks 
+# 	runs='030 031 032 033 034'  #UCR-01 30-32, UCR-02 33-41, starting 38 T0A lower DAC calib
+# 	runs='030 031 032 033 034 036 037 038 039 040 041'  #UCR-01 30-32, UCR-02 33-41, starting 38 T0A lower DAC calib
+# 	runs='036 037 038 039 040 041'  #UCR-01 30-32, UCR-02 33-41, starting 38 T0A lower DAC calib
+	runs='051 052 053 054'  #UCR-02 51-52, UCR-01 53-54, low ToA
 	for runNr in $runs; do 
-		./Convert -d 1 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m ../configs/mapping_HGCROC_ORNL_Cosmics_20251009.txt -r ../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt		
+		./Convert -d 1 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m ../configs/mapping_HGCROC_ORNL_Cosmics_20251017.txt -r ../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt		
 	done
+	
+	
 elif [ $2 = "summing" ]; then 
 	# local cosmics first stack
 # 	runs='004 005 008 013 014' 

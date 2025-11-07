@@ -107,11 +107,12 @@
   // Plot Noise with Fits for Full layer
   //__________________________________________________________________________________________________________
   void PlotNoiseWithFits8MLayer (TCanvas* canvas8Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
-                                  std::map<int,TileSpectra> spectra, Setup* setupT, bool isHG, 
+                                  std::map<int,TileSpectra> spectra, int option, 
                                   Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
                                   
     Double_t maxY = 0;
     std::map<int, TileSpectra>::iterator ithSpectra;
+    Setup* setupT = Setup::GetInstance();
     
     int nRow = setupT->GetNMaxRow()+1;
     int nCol = setupT->GetNMaxColumn()+1;
@@ -126,10 +127,14 @@
           continue;
         } 
         TH1D* tempHist = nullptr;
-        if (isHG){
-          tempHist = ithSpectra->second.GetHG();
-        } else {
-          tempHist = ithSpectra->second.GetLG();
+        if (option == 0){
+            tempHist = ithSpectra->second.GetHG();
+        } else if (option ==1){
+            tempHist = ithSpectra->second.GetLG();
+        } else if (option ==2){
+            tempHist = ithSpectra->second.GetTOA();
+        } else if (option ==3){
+            tempHist = ithSpectra->second.GetTOT();
         }
         if (maxY < FindLargestBin1DHist(tempHist, xPMin , xPMax)) maxY = FindLargestBin1DHist(tempHist, xPMin , xPMax);
       }  
@@ -155,10 +160,14 @@
           continue;
         } 
         TH1D* tempHist = nullptr;
-        if (isHG){
+        if (option == 0){
             tempHist = ithSpectra->second.GetHG();
-        } else {
+        } else if (option ==1){
             tempHist = ithSpectra->second.GetLG();
+        } else if (option ==2){
+            tempHist = ithSpectra->second.GetTOA();
+        } else if (option ==3){
+            tempHist = ithSpectra->second.GetTOT();
         }
         SetStyleHistoTH1ForGraphs( tempHist, tempHist->GetXaxis()->GetTitle(), tempHist->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.1, 510, 510, 43, 63);  
         SetMarkerDefaults(tempHist, 20, 1, kBlue+1, kBlue+1, kFALSE);   
@@ -189,9 +198,9 @@
 
         
         TF1* fit = nullptr;
-        if (isHG){
+        if (option == 0){
           fit = ithSpectra->second.GetBackModel(1);
-        } else {
+        } else  if (option ==1){
           fit = ithSpectra->second.GetBackModel(0);  
         }
         if (fit){
@@ -524,7 +533,7 @@
   // Plot Spectra with Fits for Full layer
   //__________________________________________________________________________________________________________
   void PlotSpectra8MLayer (TCanvas* canvas8Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
-                                  std::map<int,TileSpectra> spectra, int isHG, 
+                                  std::map<int,TileSpectra> spectra, int option, 
                                   Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
                                   
     Double_t maxY = 0;
@@ -543,12 +552,16 @@
           continue;
         } 
         TH1D* tempHist = nullptr;
-        if (isHG == 0){
+        if (option == 0){
           tempHist = ithSpectra->second.GetHG();
-        } else if (isHG == 1){
+        } else if (option == 1){
           tempHist = ithSpectra->second.GetLG();
-        } else {
+        } else if (option == 2){
           tempHist = ithSpectra->second.GetComb();
+        } else if (option == 3){
+          tempHist = ithSpectra->second.GetTOA();
+        } else if (option == 4){
+          tempHist = ithSpectra->second.GetTOT();
         }
         if (maxY < FindLargestBin1DHist(tempHist, xPMin , xPMax)) maxY = FindLargestBin1DHist(tempHist, xPMin , xPMax);
       }  
@@ -576,14 +589,18 @@
         } 
         TH1D* tempHist = nullptr;
         double noiseWidth = 0;
-        if (isHG == 0){
+        if (option == 0){
             tempHist = ithSpectra->second.GetHG();
             noiseWidth = ithSpectra->second.GetCalib()->PedestalSigH;
-        } else if (isHG == 1){
+        } else if (option == 1){
             tempHist = ithSpectra->second.GetLG();
             noiseWidth = ithSpectra->second.GetCalib()->PedestalSigL;
-        } else {
+        } else if (option == 2){
             tempHist = ithSpectra->second.GetComb();
+        } else if (option == 3){
+          tempHist = ithSpectra->second.GetTOA();
+        } else if (option == 4){
+          tempHist = ithSpectra->second.GetTOT();
         }
         SetStyleHistoTH1ForGraphs( tempHist, tempHist->GetXaxis()->GetTitle(), tempHist->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.1, 510, 510, 43, 63);  
         SetMarkerDefaults(tempHist, 20, 1, kBlue+1, kBlue+1, kFALSE);   
@@ -612,10 +629,10 @@
         SetStyleTLatex( labelChannel, 0.85*textSizePixel,4,1,43,kTRUE,31);
         labelChannel->Draw();  
       
-        if (isHG < 2){
+        if (option < 2){
           DrawLines(noiseWidth*3, noiseWidth*3,0.7, scaleYMax*maxY, 2, kGray+1, 10);  
           DrawLines(noiseWidth*5, noiseWidth*5,0.7, scaleYMax*maxY, 2, kGray+1, 6);  
-        } else {
+        } else if (option == 3){
           DrawLines(0.3, 0.3, 0.7, scaleYMax*maxY, 2, kGray+1, 10);  
         }
         if (p ==7 ){
@@ -748,9 +765,10 @@
   //__________________________________________________________________________________________________________
   // Plot Corr with Fits for Full layer 2D
   //__________________________________________________________________________________________________________
-  void PlotCorr2D8MLayer (TCanvas* canvas8Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
-                                  std::map<int,TileSpectra> spectra, 
-                                  Double_t xPMin, Double_t xPMax, Double_t maxY, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
+  void PlotCorr2D8MLayer (TCanvas* canvas8Panel, TPad* pads[8], 
+                          Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
+                          std::map<int,TileSpectra> spectra, int option,
+                          Double_t xPMin, Double_t xPMax, Double_t maxY, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
                                   
     Setup* setupT = Setup::GetInstance();
     
@@ -777,39 +795,45 @@
           pads[p]->Clear();
           pads[p]->Draw();
           if (p ==7 ){
-            DrawLatex(topRCornerX[p]+0.045, topRCornerY[p]-4*0.85*relSize8P[p]-1.4*relSize8P[p], GetStringFromRunInfo(currRunInfo, 2), false, 0.85*relSize8P[p], 42);
-            DrawLatex(topRCornerX[p]+0.045, topRCornerY[p]-4*0.85*relSize8P[p]-2.2*relSize8P[p], GetStringFromRunInfo(currRunInfo, 3), false, 0.85*relSize8P[p], 42);
+            DrawLatex(topRCornerX[p]+0.045, topRCornerY[p]-1*0.85*relSize8P[p]-1.4*relSize8P[p], GetStringFromRunInfo(currRunInfo, 2), false, 0.85*relSize8P[p], 42);
+            DrawLatex(topRCornerX[p]+0.045, topRCornerY[p]-1*0.85*relSize8P[p]-2.2*relSize8P[p], GetStringFromRunInfo(currRunInfo, 3), false, 0.85*relSize8P[p], 42);
           }
           continue;
         } else {
           rotype = ithSpectra->second.GetROType();
         }
-        TProfile* tempProfile = ithSpectra->second.GetLGHGcorr();
-        TH2D* temp2D          = ithSpectra->second.GetCorr();
-        if (!tempProfile) continue;
-        SetStyleHistoTH2ForGraphs( temp2D, temp2D->GetXaxis()->GetTitle(), temp2D->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
-        SetMarkerDefaultsProfile(tempProfile, 24, 0.7, kRed+2, kRed+2);   
         
-        temp2D->GetYaxis()->SetRangeUser(0,maxY);
-        temp2D->GetXaxis()->SetRangeUser(0,xPMax);
-        temp2D->Draw("colz");
-
-        short bctemp = ithSpectra->second.GetCalib()->BadChannel;
-        if (bctemp != -64 && bctemp < 3){
-          Color_t boxCol = kGray;
-          if (bctemp == 1)
-            boxCol = kGray+1;
-          else if (bctemp == 0)
-            boxCol = kGray+2;
-          TBox* badChannelArea =  CreateBox(boxCol, 0, 0, xPMax,maxY, 1001 );
-          badChannelArea->Draw();
-          temp2D->Draw("axis,same");
+        TProfile* tempProfile = nullptr;
+        TH2D* temp2D          = nullptr;        
+        // LG-HG correlation CAEN
+        if (option == 0){
+          tempProfile     = ithSpectra->second.GetLGHGcorr();
+          temp2D          = ithSpectra->second.GetCorr();
+        // HGCROC waveform
+        } else if (option == 1){
+          // tempProfile     = ithSpectra->second.GetWave1D();
+          temp2D          = ithSpectra->second.GetCorr();          
+        // HGCROC TOA-ADC correlation
+        } else if (option == 2){
+          // tempProfile     = ithSpectra->second.GetTOAADC();
+          temp2D          = ithSpectra->second.GetCorrTOAADC();                    
+        } else if (option == 3){
+          temp2D          = ithSpectra->second.GetCorrTOASample();
         }
+        
+        if (!temp2D) continue;
+        SetStyleHistoTH2ForGraphs( temp2D, temp2D->GetXaxis()->GetTitle(), temp2D->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
+        temp2D->GetYaxis()->SetRangeUser(0,maxY);
+        temp2D->GetXaxis()->SetRangeUser(xPMin,xPMax);
+        temp2D->Draw("col");
 
-        TString xTit = temp2D->GetXaxis()->GetTitle();
-        if (xTit.Contains("ample") != 0){
+        DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
+        temp2D->Draw("axis,same");
+        
+        if (tempProfile ){
+          SetMarkerDefaultsProfile(tempProfile, 24, 0.7, kRed+2, kRed+2);           
           tempProfile->Draw("pe, same");
-        } 
+        }
           
         TString label           = Form("row %d col %d", r, c);
         if (p == 7){
@@ -820,7 +844,8 @@
 
         TF1* fit            = ithSpectra->second.GetCorrModel(0);
         if (rotype == ReadOut::Type::Hgcroc)
-          fit            = ithSpectra->second.GetCorrModel(1);
+          fit            = ithSpectra->second.GetCorrModel(2);
+        int nlinesTot = 1;
         if (fit){
           Double_t rangeFit[2] = {0,0};
           fit->GetRange(rangeFit[0], rangeFit[1]);
@@ -832,10 +857,12 @@
             legend->AddEntry(fit, "linear fit, trigg.", "l");
             legend->AddEntry((TObject*)0, Form("#scale[0.8]{b = %2.3f #pm %2.4f}",fit->GetParameter(0), fit->GetParError(0) ) , " ");
             legend->AddEntry((TObject*)0, Form("#scale[0.8]{a = %2.3f #pm %2.4f}",fit->GetParameter(1), fit->GetParError(1) ) , " ");
+            nlinesTot = 4;
           } else {
             legend = GetAndSetLegend2( topRCornerX[p]+0.045, topRCornerY[p]-3*0.85*relSize8P[p]-0.4*relSize8P[p], topRCornerX[p]+6*relSize8P[p], topRCornerY[p]-0.6*relSize8P[p],0.85*textSizePixel, 1, label, 43,0.1);
             legend->AddEntry(fit, "const fit", "l");
-            legend->AddEntry((TObject*)0, Form("#scale[0.8]{a = %2.3f #pm %2.4f}",fit->GetParameter(0), fit->GetParError(0) ) , " ");   
+            legend->AddEntry((TObject*)0, Form("#scale[0.8]{a = %2.3f #pm %2.4f}",fit->GetParameter(0), fit->GetParError(0) ) , " "); 
+            nlinesTot = 3;
           }
           legend->Draw();
         } else {
@@ -843,8 +870,8 @@
         }
       
         if (p ==7 ){
-          DrawLatex(topRCornerX[p]+0.045, topRCornerY[p]-4*0.85*relSize8P[p]-1.4*relSize8P[p], GetStringFromRunInfo(currRunInfo, 2), false, 0.85*relSize8P[p], 42);
-          DrawLatex(topRCornerX[p]+0.045, topRCornerY[p]-4*0.85*relSize8P[p]-2.2*relSize8P[p], GetStringFromRunInfo(currRunInfo, 3), false, 0.85*relSize8P[p], 42);
+          DrawLatex(topRCornerX[p]+0.045, topRCornerY[p]-nlinesTot*0.85*relSize8P[p]-1.4*relSize8P[p], GetStringFromRunInfo(currRunInfo, 2), false, 0.85*relSize8P[p], 42);
+          DrawLatex(topRCornerX[p]+0.045, topRCornerY[p]-nlinesTot*0.85*relSize8P[p]-2.2*relSize8P[p], GetStringFromRunInfo(currRunInfo, 3), false, 0.85*relSize8P[p], 42);
         }
       }
     }

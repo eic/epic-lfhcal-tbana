@@ -107,11 +107,12 @@
   // Plot Noise with Fits for Full layer
   //__________________________________________________________________________________________________________
   void PlotNoiseWithFits2MLayer (TCanvas* canvas2Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSizeP, Int_t textSizePixel, 
-                                  std::map<int,TileSpectra> spectra, Setup* setupT, bool isHG, 
+                                  std::map<int,TileSpectra> spectra, bool option, 
                                   Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
                                   
     Double_t maxY = 0;
     std::map<int, TileSpectra>::iterator ithSpectra;
+    Setup* setupT = Setup::GetInstance();
     
     int nCol = setupT->GetNMaxColumn()+1;
     int skipped = 0;
@@ -124,10 +125,14 @@
         continue;
       } 
       TH1D* tempHist = nullptr;
-      if (isHG){
-        tempHist = ithSpectra->second.GetHG();
-      } else {
-        tempHist = ithSpectra->second.GetLG();
+      if (option == 0){
+          tempHist = ithSpectra->second.GetHG();
+      } else if (option ==1){
+          tempHist = ithSpectra->second.GetLG();
+      } else if (option ==2){
+          tempHist = ithSpectra->second.GetTOA();
+      } else if (option ==3){
+          tempHist = ithSpectra->second.GetTOT();
       }
       if (maxY < FindLargestBin1DHist(tempHist, xPMin , xPMax)) maxY = FindLargestBin1DHist(tempHist, xPMin , xPMax);
     }  
@@ -150,10 +155,14 @@
         continue;
       } 
       TH1D* tempHist = nullptr;
-      if (isHG){
+      if (option == 0){
           tempHist = ithSpectra->second.GetHG();
-      } else {
+      } else if (option ==1){
           tempHist = ithSpectra->second.GetLG();
+      } else if (option ==2){
+          tempHist = ithSpectra->second.GetTOA();
+      } else if (option ==3){
+          tempHist = ithSpectra->second.GetTOT();
       }
       SetStyleHistoTH1ForGraphs( tempHist, tempHist->GetXaxis()->GetTitle(), tempHist->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.1, 510, 510, 43, 63);  
       SetMarkerDefaults(tempHist, 20, 1, kBlue+1, kBlue+1, kFALSE);   
@@ -184,9 +193,9 @@
 
       
       TF1* fit = nullptr;
-      if (isHG){
+      if (option == 0){
         fit = ithSpectra->second.GetBackModel(1);
-      } else {
+      } else if (option == 1){
         fit = ithSpectra->second.GetBackModel(0);  
       }
       if (fit){
@@ -514,114 +523,116 @@
 //       canvas2Panel->SaveAs(nameOutput.Data());
 //   }
 // 
-//   //__________________________________________________________________________________________________________
-//   // Plot Spectra with Fits for Full layer
-//   //__________________________________________________________________________________________________________
-//   void PlotSpectra8MLayer (TCanvas* canvas2Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSizeP, Int_t textSizePixel, 
-//                                   std::map<int,TileSpectra> spectra, int isHG, 
-//                                   Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
-//                                   
-//     Double_t maxY = 0;
-//     std::map<int, TileSpectra>::iterator ithSpectra;
-//     Setup* setupT = Setup::GetInstance();
-//     
-//     int nRow = setupT->GetNMaxRow()+1;
-//     int nCol = setupT->GetNMaxColumn()+1;
-//     int skipped = 0;
-//     for (int r = 0; r < nRow; r++){
-//       for (int c = 0; c < nCol; c++){
-//         int tempCellID = setupT->GetCellID(r,c, layer, mod);
-//         ithSpectra=spectra.find(tempCellID);
-//         if(ithSpectra==spectra.end()){
-//           std::cout << "WARNING: skipping cell ID: " << tempCellID << "\t row " << r << "\t column " << c << "\t layer " << layer << "\t module " << mod << std::endl;
-//           continue;
-//         } 
-//         TH1D* tempHist = nullptr;
-//         if (isHG == 0){
-//           tempHist = ithSpectra->second.GetHG();
-//         } else if (isHG == 1){
-//           tempHist = ithSpectra->second.GetLG();
-//         } else {
-//           tempHist = ithSpectra->second.GetComb();
-//         }
-//         if (maxY < FindLargestBin1DHist(tempHist, xPMin , xPMax)) maxY = FindLargestBin1DHist(tempHist, xPMin , xPMax);
-//       }  
-//     }
-//     
-//     for (int r = 0; r < nRow; r++){
-//       for (int c = 0; c < nCol; c++){
-//         canvas2Panel->cd();
-//         int tempCellID = setupT->GetCellID(r,c, layer, mod);
-//         int p = setupT->GetChannelInLayer(tempCellID);
-//         pads[p]->Draw();
-//         pads[p]->cd();
-//         pads[p]->SetLogy();
-//         ithSpectra=spectra.find(tempCellID);
-//         if(ithSpectra==spectra.end()){
-//           skipped++;
-//           std::cout << "WARNING: skipping cell ID: " << tempCellID << "\t row " << r << "\t column " << c << "\t layer " << layer << "\t module " << mod << std::endl;
-//           pads[p]->Clear();
-//           pads[p]->Draw();
-//           if (p ==7 ){
-//             DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-4*0.85*relSizeP[p]-1.4*relSizeP[p], GetStringFromRunInfo(currRunInfo, 2), true, 0.85*relSizeP[p], 42);
-//             DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-4*0.85*relSizeP[p]-2.2*relSizeP[p], GetStringFromRunInfo(currRunInfo, 3), true, 0.85*relSizeP[p], 42);
-//           }          
-//           continue;
-//         } 
-//         TH1D* tempHist = nullptr;
-//         double noiseWidth = 0;
-//         if (isHG == 0){
-//             tempHist = ithSpectra->second.GetHG();
-//             noiseWidth = ithSpectra->second.GetCalib()->PedestalSigH;
-//         } else if (isHG == 1){
-//             tempHist = ithSpectra->second.GetLG();
-//             noiseWidth = ithSpectra->second.GetCalib()->PedestalSigL;
-//         } else {
-//             tempHist = ithSpectra->second.GetComb();
-//         }
-//         SetStyleHistoTH1ForGraphs( tempHist, tempHist->GetXaxis()->GetTitle(), tempHist->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.1, 510, 510, 43, 63);  
-//         SetMarkerDefaults(tempHist, 20, 1, kBlue+1, kBlue+1, kFALSE);   
-//         tempHist->GetXaxis()->SetRangeUser(xPMin,xPMax);
-//         tempHist->GetYaxis()->SetRangeUser(0.7,scaleYMax*maxY);
-//         
-//         tempHist->Draw("pe");
-//         short bctemp = ithSpectra->second.GetCalib()->BadChannel;
-//         if (bctemp != -64 && bctemp < 3){
-//           Color_t boxCol = kGray;
-//           if (bctemp == 1)
-//             boxCol = kGray+1;
-//           else if (bctemp == 0)
-//             boxCol = kGray+2;
-//           TBox* badChannelArea =  CreateBox(boxCol, xPMin, 0.7, xPMax,scaleYMax*maxY, 1001 );
-//           badChannelArea->Draw();
-//           tempHist->Draw("same,axis");
-//           tempHist->Draw("same,pe");
-//         }
-//                 
-//         TString label           = Form("row %d col %d", r, c);
-//         if (p == 7){
-//           label = Form("row %d col %d layer %d", r, c, layer);
-//         }
-//         TLatex *labelChannel    = new TLatex(topRCornerX[p]-0.045,topRCornerY[p]-1.2*relSizeP[p],label);
-//         SetStyleTLatex( labelChannel, 0.85*textSizePixel,4,1,43,kTRUE,31);
-//         labelChannel->Draw();  
-//       
-//         if (isHG < 2){
-//           DrawLines(noiseWidth*3, noiseWidth*3,0.7, scaleYMax*maxY, 2, kGray+1, 10);  
-//           DrawLines(noiseWidth*5, noiseWidth*5,0.7, scaleYMax*maxY, 2, kGray+1, 6);  
-//         } else {
-//           DrawLines(0.3, 0.3, 0.7, scaleYMax*maxY, 2, kGray+1, 10);  
-//         }
-//         if (p ==7 ){
-//           DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-4*0.85*relSizeP[p]-1.4*relSizeP[p], GetStringFromRunInfo(currRunInfo, 2), true, 0.85*relSizeP[p], 42);
-//           DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-4*0.85*relSizeP[p]-2.2*relSizeP[p], GetStringFromRunInfo(currRunInfo, 3), true, 0.85*relSizeP[p], 42);
-//         }
-//       }
-//     }
-//     if (skipped < 6)
-//       canvas2Panel->SaveAs(nameOutput.Data());
-//   }
-//   
+  //__________________________________________________________________________________________________________
+  // Plot Spectra with Fits for Full layer
+  //__________________________________________________________________________________________________________
+  void PlotSpectra2MLayer (TCanvas* canvas2Panel, TPad* pads[2], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSizeP, Int_t textSizePixel, 
+                                  std::map<int,TileSpectra> spectra, int option, 
+                                  Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
+                                  
+    Double_t maxY = 0;
+    std::map<int, TileSpectra>::iterator ithSpectra;
+    Setup* setupT = Setup::GetInstance();
+    
+    int nCol = setupT->GetNMaxColumn()+1;
+    int skipped = 0;
+    for (int c = 0; c < nCol; c++){
+      int tempCellID = setupT->GetCellID(0,c, layer, mod);
+      ithSpectra=spectra.find(tempCellID);
+      if(ithSpectra==spectra.end()){
+        std::cout << "WARNING: skipping cell ID: " << tempCellID << "\t column " << c << "\t layer " << layer << "\t module " << mod << std::endl;
+        continue;
+      } 
+      TH1D* tempHist = nullptr;
+      if (option == 0){
+        tempHist = ithSpectra->second.GetHG();
+      } else if (option == 1){
+        tempHist = ithSpectra->second.GetLG();
+      } else if (option == 2){
+        tempHist = ithSpectra->second.GetComb();
+      } else if (option == 3){
+        tempHist = ithSpectra->second.GetTOA();
+      } else if (option == 4){
+        tempHist = ithSpectra->second.GetTOT();
+      }
+      if (maxY < FindLargestBin1DHist(tempHist, xPMin , xPMax)) maxY = FindLargestBin1DHist(tempHist, xPMin , xPMax);
+    }  
+    
+    for (int c = 0; c < nCol; c++){
+      canvas2Panel->cd();
+      int tempCellID = setupT->GetCellID(0,c, layer, mod);
+      pads[c]->Draw();
+      pads[c]->cd();
+      pads[c]->SetLogy();
+      ithSpectra=spectra.find(tempCellID);
+      if(ithSpectra==spectra.end()){
+        skipped++;
+        std::cout << "WARNING: skipping cell ID: " << tempCellID << "\t column " << c << "\t layer " << layer << "\t module " << mod << std::endl;
+        pads[c]->Clear();
+        pads[c]->Draw();
+        if (c ==1 ){
+          DrawLatex(topRCornerX[c]-0.045, topRCornerY[c]-4*0.85*relSizeP[c]-1.4*relSizeP[c], GetStringFromRunInfo(currRunInfo, 2), true, 0.85*relSizeP[c], 42);
+          DrawLatex(topRCornerX[c]-0.045, topRCornerY[c]-4*0.85*relSizeP[c]-2.2*relSizeP[c], GetStringFromRunInfo(currRunInfo, 3), true, 0.85*relSizeP[c], 42);
+        }          
+        continue;
+      } 
+      TH1D* tempHist = nullptr;
+      double noiseWidth = 0;
+      if (option == 0){
+          tempHist = ithSpectra->second.GetHG();
+          noiseWidth = ithSpectra->second.GetCalib()->PedestalSigH;
+      } else if (option == 1){
+          tempHist = ithSpectra->second.GetLG();
+          noiseWidth = ithSpectra->second.GetCalib()->PedestalSigL;
+      } else if (option == 2){
+          tempHist = ithSpectra->second.GetComb();
+      } else if (option == 3){
+        tempHist = ithSpectra->second.GetTOA();
+      } else if (option == 4){
+        tempHist = ithSpectra->second.GetTOT();
+      }
+      SetStyleHistoTH1ForGraphs( tempHist, tempHist->GetXaxis()->GetTitle(), tempHist->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.1, 510, 510, 43, 63);  
+      SetMarkerDefaults(tempHist, 20, 1, kBlue+1, kBlue+1, kFALSE);   
+      tempHist->GetXaxis()->SetRangeUser(xPMin,xPMax);
+      tempHist->GetYaxis()->SetRangeUser(0.7,scaleYMax*maxY);
+      
+      tempHist->Draw("pe");
+      short bctemp = ithSpectra->second.GetCalib()->BadChannel;
+      if (bctemp != -64 && bctemp < 3){
+        Color_t boxCol = kGray;
+        if (bctemp == 1)
+          boxCol = kGray+1;
+        else if (bctemp == 0)
+          boxCol = kGray+2;
+        TBox* badChannelArea =  CreateBox(boxCol, xPMin, 0.7, xPMax,scaleYMax*maxY, 1001 );
+        badChannelArea->Draw();
+        tempHist->Draw("same,axis");
+        tempHist->Draw("same,pe");
+      }
+              
+      TString label           = Form("col %d", c);
+      if (c == 1){
+        label = Form("col %d layer %d", c, layer);
+      }
+      TLatex *labelChannel    = new TLatex(topRCornerX[c]-0.045,topRCornerY[c]-1.2*relSizeP[c],label);
+      SetStyleTLatex( labelChannel, 0.85*textSizePixel,4,1,43,kTRUE,31);
+      labelChannel->Draw();  
+    
+      if (option < 2){
+        DrawLines(noiseWidth*3, noiseWidth*3,0.7, scaleYMax*maxY, 2, kGray+1, 10);  
+        DrawLines(noiseWidth*5, noiseWidth*5,0.7, scaleYMax*maxY, 2, kGray+1, 6);  
+      } else if (option == 3){
+        DrawLines(0.3, 0.3, 0.7, scaleYMax*maxY, 2, kGray+1, 10);  
+      }
+      if (c == 1 ){
+        DrawLatex(topRCornerX[c]-0.045, topRCornerY[c]-4*0.85*relSizeP[c]-1.4*relSizeP[c], GetStringFromRunInfo(currRunInfo, 2), true, 0.85*relSizeP[c], 42);
+        DrawLatex(topRCornerX[c]-0.045, topRCornerY[c]-4*0.85*relSizeP[c]-2.2*relSizeP[c], GetStringFromRunInfo(currRunInfo, 3), true, 0.85*relSizeP[c], 42);
+      }
+    }
+    if (skipped < 2)
+      canvas2Panel->SaveAs(nameOutput.Data());
+  }
+  
 //   //__________________________________________________________________________________________________________
 //   // Plot Corr with Fits for Full layer
 //   //__________________________________________________________________________________________________________
@@ -813,7 +824,7 @@
 
       TF1* fit            = ithSpectra->second.GetCorrModel(0);
       if (rotype == ReadOut::Type::Hgcroc)
-        fit            = ithSpectra->second.GetCorrModel(1);
+        fit            = ithSpectra->second.GetCorrModel(2);
       if (fit){
         offset=4;
         Double_t rangeFit[2] = {0,0};

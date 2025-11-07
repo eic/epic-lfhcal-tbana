@@ -210,7 +210,7 @@
       // if (hist->GetYaxis()->GetTitle().CompareTo("") != 0)
         
       if (maxy > -10000)hist->GetYaxis()->SetRangeUser(-0.5,maxy+0.1);
-      if (maxx > -10000)hist->GetXaxis()->SetRangeUser(0.5,maxx+0.1);
+      if (maxx > -10000)hist->GetXaxis()->SetRangeUser(-0.5,maxx+0.1);
     
       hist->Draw("p,e");
       

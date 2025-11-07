@@ -8,7 +8,7 @@ int TileSpectra::GetCellID(){
   return cellID;
 }
 
-bool TileSpectra::Fill(double l, double h){
+bool TileSpectra::FillCAEN(double l, double h){
   hspectraLG.Fill(l);
   hspectraHG.Fill(h);
   hspectraLGHG.Fill(l,h);
@@ -16,13 +16,36 @@ bool TileSpectra::Fill(double l, double h){
   return true;
 }
 
-bool TileSpectra::FillSpectra(double l, double h){
+bool TileSpectra::FillHGCROC(double adc, double toa, double tot){
+  hspectraHG.Fill(adc);
+  hspectraTOT.Fill(toa);
+  hspectraTOA.Fill(tot);
+  hADCTOT.Fill(adc, tot);
+  hTOAADC.Fill(toa, adc);
+  return true;
+}
+
+bool TileSpectra::FillSpectraCAEN(double l, double h){
   hspectraLG.Fill(l);
   hspectraHG.Fill(h);
   return true;
 }
 
-bool TileSpectra::FillExt(double l, double h, double e, double lheq){
+bool TileSpectra::FillSpectraHGCROC(double adc, double toa, double tot){
+  hspectraHG.Fill(adc);
+  hspectraTOT.Fill(toa);
+  hspectraTOA.Fill(tot);
+  return true;
+}
+
+bool TileSpectra::FillExtCAEN(double l, double h, double e, double lheq){
+  
+  if (ROType != ReadOut::Type::Caen){
+    std::cout << "\n\n ******************************************************** \n\n" << std::endl;
+    std::cout << "ERROR:: You are using a CAEN filling function to fill HGCROC hists! Aborting!" << std::endl;
+    std::cout << "\n\n ******************************************************** \n\n" << std::endl;
+    return false; 
+  }
   hspectraLG.Fill(l);
   hspectraHG.Fill(h);
   if (extend ==  1){
@@ -30,44 +53,63 @@ bool TileSpectra::FillExt(double l, double h, double e, double lheq){
     if (h < 3500)
       hspectraLGHG.Fill(l,e);
     hspectraHGLG.Fill(l,lheq-h);
-  } else if (extend ==  2 && ROType == ReadOut::Type::Caen){
+  } else if (extend ==  2){
     hspectraLGHG.Fill(l,h);
     hcorr.Fill(l,h);
-  } else if (extend ==  2 && ROType == ReadOut::Type::Hgcroc){
-    hspectraLGHG.Fill(l,h);
   }
   return true;
 }
 
-bool TileSpectra::FillExtPed(std::vector<int> samples, double h){
-  if (!resetAxisLabels){
-    hspectraLG.SetXTitle("ADC (arb. units) all samples") ;
-    hspectraHG.SetXTitle("ADC (arb. units) 1st sample") ;
-    resetAxisLabels= true;
+bool TileSpectra::FillExtHGCROC(double adc = 0., double toa= 0., double tot= 0., int sample = 0){
+  if (ROType != ReadOut::Type::Hgcroc){
+    std::cout << "\n\n ******************************************************** \n\n" << std::endl;
+    std::cout << "ERROR:: You are using a HGCROC filling function to fill CAEN hists! Aborting!" << std::endl;
+    std::cout << "\n\n ******************************************************** \n\n" << std::endl;
+    return false; 
   }
- for (int k = 0; k < (int)samples.size(); k++ ){
+
+  hspectraHG.Fill(adc);
+  hspectraTOA.Fill(toa);  
+  hspectraTOT.Fill(tot);  
+  if (extend ==  2 ){
+    hADCTOT.Fill(adc,tot);
+  }
+  if (extend == 3){
+    hcorrTOAADC.Fill(toa,adc);
+    hTOAADC.Fill(toa,adc);
+    hcorrTOASample.Fill(toa,sample);
+  }
+  return true;
+}
+
+
+bool TileSpectra::FillExtHGCROCPed(std::vector<int> samples, double h){
+  // fill pedestal only (1st sample of waveform)
+  hspectraHG.Fill(h);
+  // fill all samples of waveform
+  for (int k = 0; k < (int)samples.size(); k++ ){
    hspectraLG.Fill(samples.at(k));
- }
- hspectraHG.Fill(h);
- for (int k = 0; k < (int)samples.size(); k++ ){
-   hcorr.Fill(k,samples.at(k));
- }
- return true;
+  }
+  // fill correlation sample vs ADC
+  for (int k = 0; k < (int)samples.size(); k++ ){
+    hcorr.Fill(k,samples.at(k));
+  }
+  return true;
 }
 
 bool TileSpectra::FillWaveform(std::vector<int> samples, double ped = 0){
  for (int k = 0; k < (int)samples.size(); k++ ){
    hcorr.Fill(k,samples.at(k)-ped);
-   if (extend == 3) hspectraLGHG.Fill(k,samples.at(k)-ped);
+   if (extend == 3) hWaveForm.Fill(k,samples.at(k)-ped);
  }
  return true;
 }
 
-bool TileSpectra::FillWaveformVsTime(std::vector<int> samples, double toa = 0, double ped = 0){
+bool TileSpectra::FillWaveformVsTime(std::vector<int> samples, double toa = 0, double ped = 0, int offset = 0){
   // more infos
   for (int k = 0; k < (int)samples.size(); k++ ){
-    hcorr.Fill(k*25000-toa*25,samples.at(k)-ped);
-    if (extend == 3) hspectraLGHG.Fill(k*25000-toa*25,samples.at(k)-ped);
+    hcorr.Fill((k-offset+1)*25000-toa*25,samples.at(k)-ped);
+    if (extend == 3) hWaveForm.Fill((k-offset+1)*25000-toa*25,samples.at(k)-ped);
   }
   return true;
 }
@@ -80,9 +122,15 @@ bool TileSpectra::FillTrigger(double t){
 }
 
 
-bool TileSpectra::FillCorr(double l, double h){
+bool TileSpectra::FillCorrCAEN(double l, double h){
   hspectraLGHG.Fill(l,h);
   hspectraHGLG.Fill(h,l);
+  return true;
+}
+
+bool TileSpectra::FillCorrHGCROC(double adc, double toa, double tot){
+  hADCTOT.Fill(adc, tot);
+  hTOAADC.Fill(toa, adc);
   return true;
 }
 
@@ -337,16 +385,6 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
   } else if (ROType == ReadOut::Type::Hgcroc){
     parlimitslo[1]  = 20;    
     fitrange[0]     = 15;
-
-    // startvalues[0]  = 20;
-    // startvalues[1]  = 50;    
-    // startvalues[3]  = 6; 
-    // parlimitslo[0]  = 10;
-    // parlimitshi[0]  = 100;
-    // parlimitslo[1]  = 10;
-    // parlimitshi[1]  = 500;
-    // parlimitslo[3]  = 2;
-    // parlimitshi[3]  = 5*50;
   }
   
   if (impE && (avmip =! -1000)){
@@ -549,7 +587,7 @@ bool TileSpectra::FitMipLG(double* out, double* outErr, int verbosity, int year,
 }
 
 
-bool TileSpectra::FitCorr(int verbosity){
+bool TileSpectra::FitCorrCAEN(int verbosity){
   if (verbosity > 2) std::cout << "FitCorr cell ID: " << cellID << std::endl;
   TString funcName = Form("fcorr%sLGHGCellID%d",TileName.Data(),cellID);
   
@@ -667,38 +705,36 @@ bool TileSpectra::FitPedConstWave(int verbosity){
   int fitStatus   = 0; 
   int limitStatus = 0;
   
-  // bcorrHGLG = true;
-  HGLGcorr =  TF1(funcName.Data(),"pol0", fitRange[0], fitRange[1]);
-  HGLGcorr.SetParameter(0,80.);
-  HGLGcorr.SetParLimits(0,40.,120.);
+  pedWave =  TF1(funcName.Data(),"pol0", fitRange[0], fitRange[1]);
+  pedWave.SetParameter(0,80.);
+  pedWave.SetParLimits(0,40.,120.);
   
   hcorr.RebinY(4);
-  fitStatus = hcorr.Fit(&HGLGcorr,"QRMNE0"); 
+  fitStatus = hcorr.Fit(&pedWave,"QRMNE0"); 
   
-  if (!(HGLGcorr.IsValid())){
+  if (!(pedWave.IsValid())){
     if (verbosity > 0) std::cout << "Skipped ped wave cell " << cellID << " fit failed" << std::endl;
-    bcorrHGLG = false;
+    bpedWave = false;
   } else {
-    if ( HGLGcorr.GetParameter(0) == 40. || HGLGcorr.GetParameter(0) == 120. ) 
+    if ( pedWave.GetParameter(0) == 40. || pedWave.GetParameter(0) == 120. ) 
       limitStatus++;
     if (!(fitStatus == 4000 || fitStatus == 0)){ // only accept fits which succeeded in general
       if (verbosity > 0) std::cout << "Skipped ped wave cell " << cellID << " fit failed" << std::endl;
-      bcorrHGLG = false;
+      bpedWave = false;
     } else if (limitStatus > 0){                        // don't accept fits which reached the set limits
       if (verbosity > 0) std::cout << "Skipped ped wave cell " << cellID << " too many limits reached" << std::endl;
-      bcorrHGLG = false;
+      bpedWave = false;
     } else {
-      bcorrHGLG= true;
+      bpedWave= true;
     }
   }
   
-  if (bcorrHGLG){
-    // std::cout << HGLGcorr.GetParameter(0) << std::endl;
-    calib->PedestalMeanL    = HGLGcorr.GetParameter(0);
-    calib->PedestalSigL     = HGLGcorr.GetParError(0);
+  if (bpedWave){
+    calib->PedestalMeanL    = pedWave.GetParameter(0);
+    calib->PedestalSigL     = pedWave.GetParError(0);
   }
   
-  return bcorrHGLG;
+  return bpedWave;
 }
 
 
@@ -718,6 +754,14 @@ TH1D* TileSpectra::GetTriggPrim(){
   return &hTriggPrim;
 }
 
+TH1D* TileSpectra::GetTOT(){
+  return &hspectraTOT;
+}
+
+TH1D* TileSpectra::GetTOA(){
+  return &hspectraTOA;
+}
+
 TH1D* TileSpectra::GetComb(){
   return &hcombined;
 }
@@ -729,8 +773,28 @@ TProfile* TileSpectra::GetHGLGcorr(){
   return &hspectraHGLG;
 }
 
+TProfile* TileSpectra::GetWave1D(){
+  return &hWaveForm;
+}
+
+
+TProfile* TileSpectra::GetTOAADC(){
+  return &hTOAADC;
+}
+TProfile* TileSpectra::GetADCTOT(){
+  return &hADCTOT;
+}
+
 TH2D* TileSpectra::GetCorr(){
   return &hcorr;
+}
+
+TH2D* TileSpectra::GetCorrTOAADC(){
+  return &hcorrTOAADC;
+}
+
+TH2D* TileSpectra::GetCorrTOASample(){
+  return &hcorrTOASample;
 }
 
 TF1* TileSpectra::GetBackModel(int lh){
@@ -742,6 +806,8 @@ TF1* TileSpectra::GetBackModel(int lh){
   }
   else return nullptr;
 }
+
+
 
 TF1* TileSpectra::GetSignalModel(int lh){
   if(lh==0 && bmipLG){
@@ -757,48 +823,94 @@ TileCalib* TileSpectra::GetCalib(){
   return calib;
 }
 
-TF1* TileSpectra::GetCorrModel( int lh ){
-  if(lh==0 && bcorrLGHG){
+TF1* TileSpectra::GetCorrModel( int opt ){
+  if(opt==0 && bcorrLGHG){
     return &LGHGcorr;
   }
-  else if (lh==1 && bcorrHGLG){
+  else if (opt==1 && bcorrHGLG){
     return &HGLGcorr;
+  }
+  else if (opt==2 && bpedWave){
+    return &pedWave;
   }
   else return nullptr;
 }
 
 void TileSpectra::Write( bool wFits = true){
-  hspectraHG.Write(hspectraHG.GetName(), kOverwrite);
-  hspectraLG.Write(hspectraLG.GetName(), kOverwrite);
-  hspectraLGHG.Write(hspectraLGHG.GetName(), kOverwrite);
-  hspectraHGLG.Write(hspectraHGLG.GetName(), kOverwrite);
-  if (bTriggPrim) hTriggPrim.Write(hTriggPrim.GetName(), kOverwrite);
-  if ( wFits ){
-    if(bpedHG)BackgroundHG.Write(BackgroundHG.GetName(), kOverwrite);
-    if(bmipHG)SignalHG.Write(SignalHG.GetName(), kOverwrite);
-    if(bpedLG)BackgroundLG.Write(BackgroundLG.GetName(), kOverwrite);
-    if(bmipLG)SignalLG.Write(SignalLG.GetName(), kOverwrite);
-    if(bcorrLGHG)LGHGcorr.Write(LGHGcorr.GetName(), kOverwrite);
-    if(bcorrHGLG)HGLGcorr.Write(HGLGcorr.GetName(), kOverwrite);
+  // write correct histos for CAEN output
+  if (ROType != ReadOut::Type::Caen){
+    hspectraHG.Write(hspectraHG.GetName(), kOverwrite);
+    hspectraLG.Write(hspectraLG.GetName(), kOverwrite);
+    hspectraLGHG.Write(hspectraLGHG.GetName(), kOverwrite);
+    hspectraHGLG.Write(hspectraHGLG.GetName(), kOverwrite);
+    if (bTriggPrim) hTriggPrim.Write(hTriggPrim.GetName(), kOverwrite);
+    if ( wFits ){
+      if(bpedHG)BackgroundHG.Write(BackgroundHG.GetName(), kOverwrite);
+      if(bmipHG)SignalHG.Write(SignalHG.GetName(), kOverwrite);
+      if(bpedLG)BackgroundLG.Write(BackgroundLG.GetName(), kOverwrite);
+      if(bmipLG)SignalLG.Write(SignalLG.GetName(), kOverwrite);
+      if(bcorrLGHG)LGHGcorr.Write(LGHGcorr.GetName(), kOverwrite);
+      if(bcorrHGLG)HGLGcorr.Write(HGLGcorr.GetName(), kOverwrite);
+    }  
+  // write correct histos for HGCROC output
+  } else if (ROType != ReadOut::Type::Hgcroc) {
+    hspectraHG.Write(hspectraHG.GetName(), kOverwrite);
+    hspectraTOT.Write(hspectraTOT.GetName(), kOverwrite);
+    hspectraTOA.Write(hspectraTOA.GetName(), kOverwrite);
+    if (bTriggPrim) hTriggPrim.Write(hTriggPrim.GetName(), kOverwrite);
+    hADCTOT.Write(hspectraTOT.GetName(), kOverwrite);
+    hTOAADC.Write(hspectraTOA.GetName(), kOverwrite);
+    if ( wFits ){
+      if(bpedHG)BackgroundHG.Write(BackgroundHG.GetName(), kOverwrite);
+      if(bmipHG)SignalHG.Write(SignalHG.GetName(), kOverwrite);
+      if(bpedWave)pedWave.Write(pedWave.GetName(), kOverwrite);
+      if(bwave)wave.Write(wave.GetName(), kOverwrite);
+    }   
   }
 }
 
 void TileSpectra::WriteExt( bool wFits = true){
-  hspectraHG.Write(hspectraHG.GetName(), kOverwrite);
-  hspectraLG.Write(hspectraLG.GetName(), kOverwrite);
-  hspectraLGHG.Write(hspectraLGHG.GetName(), kOverwrite);  
-  if (extend == 1){
-    hcombined.Write(hcombined.GetName(), kOverwrite);
-    hspectraHGLG.Write(hspectraHGLG.GetName(), kOverwrite);  
-  } else if (extend == 2 || extend == 3 ){
-    hcorr.Write(hcorr.GetName(), kOverwrite);  
-  }
-  if ( wFits ){
-    if(bpedHG)BackgroundHG.Write(BackgroundHG.GetName(), kOverwrite);
-    if(bmipHG)SignalHG.Write(SignalHG.GetName(), kOverwrite);
-    if(bpedLG)BackgroundLG.Write(BackgroundLG.GetName(), kOverwrite);
-    if(bmipLG)SignalLG.Write(SignalLG.GetName(), kOverwrite);
-    if(bcorrLGHG)LGHGcorr.Write(LGHGcorr.GetName(), kOverwrite);
+  // write correct histos for CAEN output
+  if (ROType != ReadOut::Type::Caen){
+    hspectraHG.Write(hspectraHG.GetName(), kOverwrite);
+    hspectraLG.Write(hspectraLG.GetName(), kOverwrite);
+    hspectraLGHG.Write(hspectraLGHG.GetName(), kOverwrite);  
+    if (extend == 1){
+      hcombined.Write(hcombined.GetName(), kOverwrite);
+      hspectraHGLG.Write(hspectraHGLG.GetName(), kOverwrite);  
+    } else if (extend == 2 || extend == 3 ){
+      hcorr.Write(hcorr.GetName(), kOverwrite);  
+    }
+    if ( wFits ){
+      if(bpedHG)BackgroundHG.Write(BackgroundHG.GetName(), kOverwrite);
+      if(bmipHG)SignalHG.Write(SignalHG.GetName(), kOverwrite);
+      if(bpedLG)BackgroundLG.Write(BackgroundLG.GetName(), kOverwrite);
+      if(bmipLG)SignalLG.Write(SignalLG.GetName(), kOverwrite);
+      if(bcorrLGHG)LGHGcorr.Write(LGHGcorr.GetName(), kOverwrite);
+    }
+  // write correct histos for HGCROC output
+  } else if (ROType != ReadOut::Type::Hgcroc) {
+    hspectraHG.Write(hspectraHG.GetName(), kOverwrite);
+    if (extend > 1 ) hcorr.Write(hcorr.GetName(), kOverwrite);  
+    
+    if (extend < 4){
+      hspectraTOT.Write(hspectraTOT.GetName(), kOverwrite);
+      hspectraTOA.Write(hspectraTOA.GetName(), kOverwrite);
+    }
+    if (extend == 2){
+      hADCTOT.Write(hADCTOT.GetName(), kOverwrite);  
+    } else if (extend == 3){
+      hWaveForm.Write(hWaveForm.GetName(), kOverwrite);  
+    } else if (extend == 4){
+      hspectraLG.Write(hspectraLG.GetName(), kOverwrite);  
+    }
+    
+    if ( wFits ){
+      if(bpedHG)BackgroundHG.Write(BackgroundHG.GetName(), kOverwrite);
+      if(bmipHG)SignalHG.Write(SignalHG.GetName(), kOverwrite);
+      if(bpedWave)pedWave.Write(pedWave.GetName(), kOverwrite);
+      if(bwave)wave.Write(wave.GetName(), kOverwrite);
+    }
   }
 }
 

@@ -343,27 +343,27 @@ bool DataAnalysis::QAData(void){
       if (aTile->GetLocalTriggerBit() == 1){
         if(ithSpectraTrigg!=hSpectraTrigg.end()){
           ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
-          ithSpectraTrigg->second.FillSpectra(corrLG,corrHG);
+          ithSpectraTrigg->second.FillSpectraCAEN(corrLG,corrHG);
         } else {
           RootOutputHist->cd("IndividualCellsTrigg");
           hSpectraTrigg[aTile->GetCellID()]=TileSpectra("muonTriggers",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
           hSpectraTrigg[aTile->GetCellID()].FillTrigger(aTile->GetLocalTriggerPrimitive());
-          hSpectraTrigg[aTile->GetCellID()].FillSpectra(corrLG,corrHG);
+          hSpectraTrigg[aTile->GetCellID()].FillSpectraCAEN(corrLG,corrHG);
         }
         locMuon++;        
       }      
       
       ithSpectra=hSpectra.find(aTile->GetCellID());
       if (ithSpectra!=hSpectra.end()){
-        ithSpectra->second.FillSpectra(corrLG,corrHG);
+        ithSpectra->second.FillSpectraCAEN(corrLG,corrHG);
         ithSpectra->second.FillTrigger(aTile->GetLocalTriggerPrimitive());;
-        ithSpectra->second.FillCorr(corrLG,corrHG);
+        ithSpectra->second.FillCorrCAEN(corrLG,corrHG);
       } else {
         RootOutputHist->cd("IndividualCells");
         hSpectra[aTile->GetCellID()]=TileSpectra("AllTriggers",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
-        hSpectra[aTile->GetCellID()].FillSpectra(corrLG,corrHG);;
+        hSpectra[aTile->GetCellID()].FillSpectraCAEN(corrLG,corrHG);;
         hSpectra[aTile->GetCellID()].FillTrigger(aTile->GetLocalTriggerPrimitive());;
-        hSpectra[aTile->GetCellID()].FillCorr(corrLG,corrHG);
+        hSpectra[aTile->GetCellID()].FillCorrCAEN(corrLG,corrHG);
       }
     }
     if (nCells > 0) {
@@ -917,15 +917,15 @@ bool DataAnalysis::SimpleQAData(void){
       }      
       ithSpectra=hSpectra.find(aTile->GetCellID());
       if (ithSpectra!=hSpectra.end()){
-        ithSpectra->second.FillSpectra(corrLG,corrHG);
+        ithSpectra->second.FillSpectraCAEN(corrLG,corrHG);
         ithSpectra->second.FillTrigger(aTile->GetLocalTriggerPrimitive());;
-        ithSpectra->second.FillCorr(corrLG,corrHG);
+        ithSpectra->second.FillCorrCAEN(corrLG,corrHG);
       } else {
         RootOutputHist->cd("IndividualCells");
         hSpectra[aTile->GetCellID()]=TileSpectra("AllTriggers",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
-        hSpectra[aTile->GetCellID()].FillSpectra(corrLG,corrHG);;
+        hSpectra[aTile->GetCellID()].FillSpectraCAEN(corrLG,corrHG);;
         hSpectra[aTile->GetCellID()].FillTrigger(aTile->GetLocalTriggerPrimitive());;
-        hSpectra[aTile->GetCellID()].FillCorr(corrLG,corrHG);
+        hSpectra[aTile->GetCellID()].FillCorrCAEN(corrLG,corrHG);
       }
     }
   }
@@ -1025,10 +1025,10 @@ bool DataAnalysis::SimpleQAData(void){
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
       }
       PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                hSpectra, setup, true, 0, maxHG, 1.2, l, 0,
+                                hSpectra, 0, 0, maxHG, 1.2, l, 0,
                                 Form("%s/detailed/Spectra_HG_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
       PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                hSpectra, setup, false, 0, maxLG, 1.2, l, 0,
+                                hSpectra, 1, 0, maxLG, 1.2, l, 0,
                                 Form("%s/detailed/Spectra_LG_Layer%02d_%.0f_%.0f.%s" ,outputDirPlots.Data(), l, timemin, timemax, plotSuffix.Data()), it->second);
       
       PlotCorrWithFits8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
