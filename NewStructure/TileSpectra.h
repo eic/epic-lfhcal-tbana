@@ -120,6 +120,7 @@ class TileSpectra: public TObject{
   bool FillTrigger(double);
   bool FillWaveform(std::vector<int>,double);
   bool FillWaveformVsTime(std::vector<int> , double, double );
+  bool FillWaveformVsTimeParser(std::vector<int>,double);
   
   bool FitNoise(double*, int, bool);
   void FitFixedNoise();

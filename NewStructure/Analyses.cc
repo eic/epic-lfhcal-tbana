@@ -1242,22 +1242,28 @@ bool Analyses::GetPedestal(void){
   Double_t topRCornerYProf[8];
   Double_t relSize8PProf[8];
   CreateCanvasAndPadsFor8PannelTBPlot(canvas8PanelProf, pad8PanelProf,  topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 0.045, "Prof", false);
+
+  double minADCRange = 0; 
+  double maxADCRange = 275;
+  if( typeRO == ReadOut::Type::Hgcroc ){
+    minADCRange = 50; 
+    maxADCRange = 150;
+  }
  
-  
   for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
     for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
       PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  hSpectra, setup, true, 0, 275, 1.2, l, m,
+                                  hSpectra, setup, true, minADCRange, maxADCRange, 1.2, l, m,
                                   Form("%s/Noise_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
       if (typeRO == ReadOut::Type::Caen){
         PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  hSpectra, setup, false, 0, 275, 1.2, l, m,
+                                  hSpectra, setup, false, minADCRange, maxADCRange, 1.2, l, m,
                                   Form("%s/Noise_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
       } else if (typeRO == ReadOut::Type::Hgcroc){
         PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, hSpectra, 0, it->second.samples+1, 300, l, m,
                                     Form("%s/Waveform_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
         PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  hSpectra, setup, false, 0, 275, 1.2, l, m,
+                                  hSpectra, setup, false, minADCRange, maxADCRange, 1.2, l, m,
                                   Form("%s/AllSampleADC_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
       }
     }

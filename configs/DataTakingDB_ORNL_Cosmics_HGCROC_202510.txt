@@ -4,10 +4,47 @@ readout HGCROC
 facility ORNL
 beam-line cosmics
 Run #,beam species,pdg,Beam energy (GeV),Voltage,Vbr,trig delay,machine gun,xpos,ypos,delay,phase,EEMC in
-4,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,broken
-5,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,broken
-8,cosmics,-13,5,46,38.3,0,19,0,0,0,-1,0
-13,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,shifted_to_early
-14,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,fixed_offset
-17,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0
-18,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,new_stack
+4,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 1 ORNL-01 C-Stack broken
+5,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 1 ORNL-01 C-Stack broken 
+8,cosmics,-13,5,46,38.3,0,19,0,0,0,-1,0, asic 1 ORNL-01 C-Stack
+13,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 1 ORNL-01 C-Stack shifted_to_early 
+14,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 1 ORNL-01 C-Stack fixed_offset 
+17,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0 asic 1 ORNL-01 C-Stack 
+18,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 1 ORNL-01 F-Stack
+20,pedestal,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 1 UCR-01 F-Stack 
+21,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 1 UCR-01 F-Stack only 1 sample up front L1 offset 8 
+22,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 1 UCR-01 F-Stack L1 offset 9 asic 1
+23,pedestal,-13,5,0,38.3,0,10,0,0,0,-1,0,asic 0 UCR-01 F-Stack L1 offset 9 asic 0
+24,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 0 UCR-01 F-Stack L1 offset 9 asic 0 no HV 
+25,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 0 UCR-01 F-Stack L1 offset 9 asic 0 no HV
+26,pedestal,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 0 UCR-01 F-Stack L1 offset 9 asic 0 wrong config
+27,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 0 UCR-01 F-Stack L1 offset 9 asic 0 wrong config
+28,pedestal,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 0 UCR-01 F-Stack L1 offset 9 asic 0
+29,cosmics,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 0 UCR-01 F-Stack L1 offset 9 asic 0
+30,pedestal,-13,5,46,38.3,0,10,0,0,0,-1,0,UCR-01 both stacks lower asic 0 F-stack upper asic 1 C stack
+31,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-01 both stacks lower asic 0 F-stack upper asic 1 C stack
+32,cosmics,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-01 both stacks lower asic 0 F-stack upper asic 1 C stack
+33,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack
+34,cosmics,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack
+36,cosmics,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack
+37,pedestal,-13,5,0,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with new TOA calib 12 DAC
+38,cosmics,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with new TOA calib
+39,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with new TOA calib
+40,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with new TOA calib
+41,cosmics,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with new TOA calib
+51,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with reset TOA calib
+52,cosmics,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with reset  TOA calib
+53,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-01 both stacks lower asic 0 F-stack upper asic 1 C stack with reset TOA calib
+54,cosmics,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-01 both stacks lower asic 0 F-stack upper asic 1 C stack with reset  TOA calib
+1020,pedestal,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 1 UCR-01 F-Stack 
+1023,pedestal,-13,5,0,38.3,0,10,0,0,0,-1,0,asic 0 UCR-01 F-Stack L1 offset 9 asic 0
+1026,pedestal,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 0 UCR-01 F-Stack L1 offset 9 asic 0 wrong config
+1028,pedestal,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 0 UCR-01 F-Stack L1 offset 9 asic 0
+1030,pedestal,-13,5,46,38.3,0,10,0,0,0,-1,0,UCR-01 both stacks lower asic 0 F-stack upper asic 1 C stack
+1031,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-01 both stacks lower asic 0 F-stack upper asic 1 C stack
+1033,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack
+1037,pedestal,-13,5,0,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with new TOA calib 12 DAC
+1039,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with new TOA calib
+1040,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with new TOA calib
+1051,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with reset TOA calib
+1053,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-01 both stacks lower asic 0 F-stack upper asic 1 C stack with reset TOA calib

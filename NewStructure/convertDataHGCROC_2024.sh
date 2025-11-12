@@ -14,6 +14,9 @@ elif [ $1 = "fbockCosmOct" ]; then
 elif [ $1 = "fbockSum" ]; then 
   dataRaw=/media/fbock/LFHCal2/SummingTest/rawHGCROC                   # source directory for output files from DAQ system
 	dataDir=/media/fbock/LFHCal2/SummingTest/convertedHGCROC             # base directory for root trees
+elif [ $1 = "eglimos_CosmOct" ]; then
+	dataRaw=/home/ewa/EIC/DATA/HGCROCData/Cosmics_Oct25/raw
+	dataDir=/home/ewa/EIC/DATA/HGCROCData/Cosmics_Oct25/converted
 fi
 
 mapA=../configs/mapping_HGCROC_PSTB2024_Run5-67_alternate.txt
@@ -128,9 +131,10 @@ elif [ $2 = "skimCosmics" ]; then
 elif [ $2 = "cosmicsOct" ]; then 
 	# local cosmics first stack
 # 	runs='004 005 008 013 014' 
-runs='017' 
+	# runs='017' 
+	runs='051 052' 
 	for runNr in $runs; do 
-		./Convert -d 1 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m ../configs/mapping_HGCROC_ORNL_Cosmics_20251009.txt -r ../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt		
+		./Convert -d 1 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m ../configs/mapping_HGCROC_ORNL_Cosmics_20251017.txt -r ../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt		
 	done
 elif [ $2 = "summing" ]; then 
 	# local cosmics first stack

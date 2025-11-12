@@ -750,7 +750,7 @@
   //__________________________________________________________________________________________________________
   void PlotCorr2D8MLayer (TCanvas* canvas8Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                   std::map<int,TileSpectra> spectra, 
-                                  Double_t xPMin, Double_t xPMax, Double_t maxY, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
+                                  Double_t xPMin, Double_t xPMax, Double_t maxY, int layer, int mod,  TString nameOutput, RunInfo currRunInfo, bool noCalib = 0){
                                   
     Setup* setupT = Setup::GetInstance();
     
@@ -794,16 +794,18 @@
         temp2D->GetXaxis()->SetRangeUser(0,xPMax);
         temp2D->Draw("colz");
 
-        short bctemp = ithSpectra->second.GetCalib()->BadChannel;
-        if (bctemp != -64 && bctemp < 3){
-          Color_t boxCol = kGray;
-          if (bctemp == 1)
-            boxCol = kGray+1;
-          else if (bctemp == 0)
-            boxCol = kGray+2;
-          TBox* badChannelArea =  CreateBox(boxCol, 0, 0, xPMax,maxY, 1001 );
-          badChannelArea->Draw();
-          temp2D->Draw("axis,same");
+        if( !noCalib ){
+          short bctemp = ithSpectra->second.GetCalib()->BadChannel;
+          if (bctemp != -64 && bctemp < 3){
+            Color_t boxCol = kGray;
+            if (bctemp == 1)
+              boxCol = kGray+1;
+            else if (bctemp == 0)
+              boxCol = kGray+2;
+            TBox* badChannelArea =  CreateBox(boxCol, 0, 0, xPMax,maxY, 1001 );
+            badChannelArea->Draw();
+            temp2D->Draw("axis,same");
+          }
         }
 
         TString xTit = temp2D->GetXaxis()->GetTitle();
