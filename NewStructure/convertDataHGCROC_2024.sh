@@ -14,6 +14,9 @@ elif [ $1 = "fbockCosmOct" ]; then
 elif [ $1 = "fbockSum" ]; then 
   dataRaw=/media/fbock/LFHCal2/SummingTest/rawHGCROC                   # source directory for output files from DAQ system
 	dataDir=/media/fbock/LFHCal2/SummingTest/convertedHGCROC             # base directory for root trees
+elif [ $1 = "eglimos_CosmOct" ]; then
+	dataRaw=/home/ewa/EIC/DATA/HGCROCData/Cosmics_Oct25/raw
+	dataDir=/home/ewa/EIC/DATA/HGCROCData/Cosmics_Oct25/converted
 fi
 
 mapA=../configs/TB2024/mapping_HGCROC_PSTB2024_Run5-67_alternate.txt

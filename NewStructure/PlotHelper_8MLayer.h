@@ -768,7 +768,7 @@
   void PlotCorr2D8MLayer (TCanvas* canvas8Panel, TPad* pads[8], 
                           Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                           std::map<int,TileSpectra> spectra, int option,
-                          Double_t xPMin, Double_t xPMax, Double_t maxY, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
+                          Double_t xPMin, Double_t xPMax, Double_t maxY, int layer, int mod,  TString nameOutput, RunInfo currRunInfo, bool noCalib = 0){
                                   
     Setup* setupT = Setup::GetInstance();
     
@@ -819,7 +819,6 @@
           temp2D          = ithSpectra->second.GetCorrTOAADC();                    
         } else if (option == 3){
           temp2D          = ithSpectra->second.GetCorrTOASample();
-        }
         
         if (!temp2D) continue;
         SetStyleHistoTH2ForGraphs( temp2D, temp2D->GetXaxis()->GetTitle(), temp2D->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
@@ -827,8 +826,10 @@
         temp2D->GetXaxis()->SetRangeUser(xPMin,xPMax);
         temp2D->Draw("col");
 
-        DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
-        temp2D->Draw("axis,same");
+        if( !noCalib ){
+          DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
+          temp2D->Draw("axis,same");
+        }
         
         if (tempProfile ){
           SetMarkerDefaultsProfile(tempProfile, 24, 0.7, kRed+2, kRed+2);           
