@@ -323,7 +323,7 @@ void CreateMapping(   TString filenameUnitMapping,
           tempChannel.ruID        = Int_t(tempChannel.rUnit<<8)+tempChannel.chRU;   // 8 bit read-out unit number, 8 bit channel readout unit
           tempChannel.modNr       = layers.at(l).moduleNr;
           tempChannel.layer       = layers.at(l).layerNrAbs;
-          tempChannel.nrAssembly  = (int)(((TString)layers.at(l).layerLabel.ReplaceAll("C","")).Atoi());
+					tempChannel.nrAssembly  = (int)(((TString)layers.at(l).layerLabel).Atoi());	 
           tempChannel.chAssembly  = chA;
           tempChannel.rowAssembly = ReturnRowBoard(chA);
           tempChannel.colAssembly = ReturnColumnBoard(chA);
