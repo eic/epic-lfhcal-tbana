@@ -92,6 +92,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     auto decoder = new hgc_decoder( (char*)analysis->ASCIIinputName.Data(),   // filename for ascii file
                                     1,                                        // detector ID (1: LFHCal)
                                     analysis->setup->GetNMaxKCUs(),           // number of kcu's to be aligned & read out
+                                    analysis->setup->GetNMaxASICs(),          // number of asic's per KCU
                                     5,                                        // debug level
                                     analysis->GetHGCROCTrunctation());         // switch to enable artificial truncation to 8 bit, disregarding 2 least significant bits
     for (auto ae : *decoder) {
@@ -102,24 +103,19 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
           break;  
         }
         // aligned_event *ae = *it;
-        // aligned_event *ae = *it;
         analysis->event.SetEventID(event_number);
         event_number++;
-        // std::cout << "\nEvent: " << event_number << std::endl;
-        // std::cout << "\nEvent: " << event_number << std::endl;
+        std::cout << "\nEvent: " << event_number << std::endl;
         // Loop over each tile
         for (int i = 0; i < ae->get_num_fpga(); i++) {
             // std::cout << "\nFPGA: " << i << std::endl;
-            // std::cout << "\nFPGA: " << i << std::endl;
             auto single_kcu = ae->get_event(i);
-            // std::cout << "Number of samples: " << single_kcu->get_n_samples() << std::endl;
             // std::cout << "Number of samples: " << single_kcu->get_n_samples() << std::endl;
             for (int j = 0; j < ae->get_channels_per_fpga(); j++) {
                 // std::cout << "\nChannel: " << j << std::endl;
-                // std::cout << "\nChannel: " << j << std::endl;
                 int channel_number = i * ae->get_channels_per_fpga() + j;
                 // std::cout << "Channel number: " << channel_number << std::endl;
-                int asic = i * 2 + (j / 72);
+                int asic = i * analysis->setup->GetNMaxASICs() + (j / 72);
                 
                 auto cell_id = analysis->setup->GetCellID(asic, j % 72);
                 if (analysis->debug > 0 && event_number == 1) {
@@ -128,7 +124,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                 
                 if (cell_id != -1) {
                 // std::cout << "Channel number: " << channel_number << std::endl;
-                int asic = i * 2 + (j / 72);
+                int asic = i * analysis->setup->GetNMaxASICs() + (j / 72);
                 
                 auto cell_id = analysis->setup->GetCellID(asic, j % 72);
                 if (analysis->debug > 0 && event_number == 1) {
