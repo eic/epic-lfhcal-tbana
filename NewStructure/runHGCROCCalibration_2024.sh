@@ -4,7 +4,7 @@ PlotBaseDir=..
 
 function MuonCalibHGCROC()
 {
-	runNrFile='../configs/DataTakingDB_202409_HGCROC.csv'
+	runNrFile='../configs/TB2024/DataTakingDB_202409_HGCROC.csv'
 	echo "=================================================================================="
 	echo "option $1"
 	echo "run Nr Pedestal: $2"
@@ -64,37 +64,37 @@ fi
 
 # pedestal runs 
 if [ $2 = "pedestalM" ]; then
-  ./DataPrep -d 1 -p -i $dataDirRaw/muons/rawHGCROC_muonAll.root -f -o $dataDirOut/muons/rawHGCROC_wPed_muonAll.root -O $PlotBaseDir/HGCROC_PlotsPedestal_2024/RunMuon -r ../configs/DataTakingDB_202409_HGCROC.csv
+  ./DataPrep -d 1 -p -i $dataDirRaw/muons/rawHGCROC_muonAll.root -f -o $dataDirOut/muons/rawHGCROC_wPed_muonAll.root -O $PlotBaseDir/HGCROC_PlotsPedestal_2024/RunMuon -r ../configs/TB2024/DataTakingDB_202409_HGCROC.csv
 # 	runs='184 185'
 # 	for runNr in $runs; do 
-#     ./DataPrep -d 1 -p -i $dataDirRaw/muons/rawHGCROC_$runNr.root -f -o $dataDirOut/muons/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/HGCROC_PlotsPedestal_2024/Run_$runNr -r ../configs/DataTakingDB_202409_HGCROC.csv
+#     ./DataPrep -d 1 -p -i $dataDirRaw/muons/rawHGCROC_$runNr.root -f -o $dataDirOut/muons/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/HGCROC_PlotsPedestal_2024/Run_$runNr -r ../configs/TB2024/DataTakingDB_202409_HGCROC.csv
 # 	done
 # 	runs='275 276 277 278 279 280 281 282 283 ' #299 300
 # 	for runNr in $runs; do 
-#     ./DataPrep -d 1 -p -i $dataDirRaw/muons/rawHGCROC_$runNr.root -f -o $dataDirOut/muons/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/HGCROC_PlotsPedestal_2024/Run_$runNr -r ../configs/DataTakingDB_202409_HGCROC.csv
+#     ./DataPrep -d 1 -p -i $dataDirRaw/muons/rawHGCROC_$runNr.root -f -o $dataDirOut/muons/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/HGCROC_PlotsPedestal_2024/Run_$runNr -r ../configs/TB2024/DataTakingDB_202409_HGCROC.csv
 # 	done
 # 	runs='302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321'
 # 	for runNr in $runs; do 
-#     ./DataPrep -d 1 -p -i $dataDirRaw/muons/rawHGCROC_$runNr.root -f -o $dataDirOut/muons/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/HGCROC_PlotsPedestal_2024/Run_$runNr -r ../configs/DataTakingDB_202409_HGCROC.csv
+#     ./DataPrep -d 1 -p -i $dataDirRaw/muons/rawHGCROC_$runNr.root -f -o $dataDirOut/muons/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/HGCROC_PlotsPedestal_2024/Run_$runNr -r ../configs/TB2024/DataTakingDB_202409_HGCROC.csv
 # 	done
 # 	runs='muonsPos muonsNeg'
 # 	for runNr in $runs; do 
-#     ./DataPrep -d 1 -p -i $dataDirRaw/muons/rawHGCROC_$runNr.root -f -o $dataDirOut/muons/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/HGCROC_PlotsPedestal_2024/Run_$runNr -r ../configs/DataTakingDB_202409_HGCROC.csv
+#     ./DataPrep -d 1 -p -i $dataDirRaw/muons/rawHGCROC_$runNr.root -f -o $dataDirOut/muons/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/HGCROC_PlotsPedestal_2024/Run_$runNr -r ../configs/TB2024/DataTakingDB_202409_HGCROC.csv
 # 	done
 fi
 
 if [ $2 = "pedestalMtrunc" ]; then
-  ./DataPrep -d 1 -p -i $dataDirRaw/muons/rawHGCROCtruncated_muonAll.root -f -o $dataDirOut/muons/rawHGCROCtruncated_wPed_muonAll.root -O $PlotBaseDir/HGCROC_PlotsPedestalTruncated_2024/RunMuon -r ../configs/DataTakingDB_202409_HGCROC.csv -F png
+  ./DataPrep -d 1 -p -i $dataDirRaw/muons/rawHGCROCtruncated_muonAll.root -f -o $dataDirOut/muons/rawHGCROCtruncated_wPed_muonAll.root -O $PlotBaseDir/HGCROC_PlotsPedestalTruncated_2024/RunMuon -r ../configs/TB2024/DataTakingDB_202409_HGCROC.csv -F png
 fi
 
 if [ $2 = "pedestalE" ]; then
   runs='103 104 105 106 107'
   for runNr in $runs; do 
-    ./DataPrep -d 1 -p -i $dataDirRaw/electrons/rawHGCROC_$runNr.root -f -o $dataDirOut/electrons/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/HGCROC_PlotsPedestal_2024/Run_$runNr -r ../configs/DataTakingDB_202409_HGCROC.csv
+    ./DataPrep -d 1 -p -i $dataDirRaw/electrons/rawHGCROC_$runNr.root -f -o $dataDirOut/electrons/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/HGCROC_PlotsPedestal_2024/Run_$runNr -r ../configs/TB2024/DataTakingDB_202409_HGCROC.csv
   done
 fi
 
-badChannelMap=../configs/badChannelMap_TBSetup_HGCROC_202408_118-337.txt
+badChannelMap=../configs/TB2024/badChannelMap_TBSetup_HGCROC_202408_118-337.txt
 if [ $2 == "calibMuon" ]; then
 	echo "running muon calib for 43V runs"
 	MuonCalibHGCROC $3 muonAll muonAll $dataDirRaw/muons/ $dataDirOut/muons/ Muons $badChannelMap

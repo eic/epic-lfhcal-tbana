@@ -4,7 +4,7 @@ PlotBaseDir=..
 
 function MuonCalib()
 {
-	runNrFile='../configs/DataTakingDB_202409_CAEN.csv'
+	runNrFile='../configs/TB2024/DataTakingDB_202409_CAEN.csv'
 	echo "=================================================================================="
 	echo "option $1"
 	echo "run Nr Pedestal: $2"
@@ -131,7 +131,7 @@ fi
 pedestalRuns='377 404'
 if [ $2 = "pedestal" ]; then
 	for runNr in $pedestalRuns; do
-		./DataPrep -d 1 -p -i $dataDirRaw/raw_$runNr.root -f -o $dataDirOut/PedestalCalib_$runNr.root -O $PlotBaseDir/CAEN_PlotsPedestal_2024/Run$runNr -r ../configs/DataTakingDB_202409_CAEN.csv
+		./DataPrep -d 1 -p -i $dataDirRaw/raw_$runNr.root -f -o $dataDirOut/PedestalCalib_$runNr.root -O $PlotBaseDir/CAEN_PlotsPedestal_2024/Run$runNr -r ../configs/TB2024/DataTakingDB_202409_CAEN.csv
 	done;
 fi
 
@@ -159,7 +159,7 @@ if [ $2 == "mergemuons" ]; then
 fi
 
 
-badChannelMap='../configs/badChannelMap_TBSetup_CAEN_202408.txt'
+badChannelMap='../configs/TB2024/badChannelMap_TBSetup_CAEN_202408.txt'
 # # muon runs different scans in groups with separate pedestal
 #50.3 events
 muonHVScan_44V='305'

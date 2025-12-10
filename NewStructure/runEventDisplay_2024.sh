@@ -48,7 +48,7 @@ else
 	exit
 fi
 
-runNrFile='../configs/DataTakingDB_202409_CAEN.csv'
+runNrFile='../configs/TB2024/DataTakingDB_202409_CAEN.csv'
 
 if [ $5 == "muonTrig" ]; then
 	./Display -i $dataDirOut/calibrated_Run_$runNr.root -r $runNrFile -P ../EventDisplay/Run_$runNr/MuonTrig -e $3 -N $4 -M

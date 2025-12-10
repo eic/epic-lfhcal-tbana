@@ -1912,8 +1912,9 @@ bool Analyses::AnalyseWaveForm(void){
           hSpectra[aTile->GetCellID()].FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(aTile->GetCellID()),offset);
           RootOutput->cd();
         }
-        if (toa > 0 && nADCFirst == 4 && nDiffFirstM ==1 && nDiffMaxT == 0){      // needed for summing tests
-          aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(aTile->GetCellID()), calib.GetPedestalMeanL(aTile->GetCellID()), calib.GetPedestalSigL(aTile->GetCellID()));
+        if (toa > 0 ){      // needed for summing tests
+        // if (toa > 0 && nADCFirst == 4 && nDiffFirstM ==1 && nDiffMaxT == 0){      // needed for summing tests
+          // aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(aTile->GetCellID()), calib.GetPedestalMeanL(aTile->GetCellID()), calib.GetPedestalSigL(aTile->GetCellID()));
           hHighestADCAbovePedVsLayer->Fill(layer,chInLayer, adc);
           if(ithSpectraTrigg!=hSpectraTrigg.end()){
             ithSpectraTrigg->second.FillExtHGCROC(adc,toa,tot,nADCFirst);
@@ -2003,8 +2004,8 @@ bool Analyses::AnalyseWaveForm(void){
       CreateCanvasAndPadsFor8PannelTBPlot(canvas8PanelProf, pad8PanelProf,  topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 0.045, "Prof", false);
 
       std::cout << "plotting single  8M layers" << std::endl;
-      for (Int_t l = 0; l < 5; l++){    
-      // for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
+      // for (Int_t l = 0; l < 5; l++){    
+      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
         for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
           if (l%10 == 0 && l > 0 && debug > 0)
             std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     

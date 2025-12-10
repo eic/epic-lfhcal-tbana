@@ -1,7 +1,7 @@
 #! /bin/bash
 
 PlotBaseDir=..
-runNrFile=../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt
+runNrFile=../configs/LocalTesting/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt
 
 function MuonCalibHGCROC()
 {
@@ -73,19 +73,19 @@ fi
 # pedestal runs 
 if [ $2 = "pedestalSkimmed" ]; then
   runNr="007"
-  ./DataPrep -d 1 -p -i $dataDirRaw/rawHGCROCskimmed_$runNr.root -f -o $dataDirOut/rawHGCROCskimmed_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestal/Run$runNr -r ../configs/DataTakingDB_ORNL_HGCROC.txt
+  ./DataPrep -d 1 -p -i $dataDirRaw/rawHGCROCskimmed_$runNr.root -f -o $dataDirOut/rawHGCROCskimmed_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestal/Run$runNr -r ../configs/LocalTesting/DataTakingDB_ORNL_HGCROC.txt
 fi
 
 if [ $2 = "pedestalJune" ]; then
   runNr="007"
-  ./DataPrep -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestalUnSkimmed/Run$runNr -r ../configs/DataTakingDB_ORNL_HGCROC.txt
+  ./DataPrep -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestalUnSkimmed/Run$runNr -r ../configs/LocalTesting/DataTakingDB_ORNL_HGCROC.txt
 fi
 
 if [ $2 = "pedestalOct" ]; then
 #   runs="008 004 005 013 014 017 018"
 #   runs="018"
 #   for runNr in $runs; do 
-#     ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestalUnSkimmed/Run$runNr -r ../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt		
+#     ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestalUnSkimmed/Run$runNr -r ../configs/LocalTesting/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt		
 #   done
   
 #   runs='018' # F-Stack,  ORNL-01
@@ -96,7 +96,7 @@ if [ $2 = "pedestalOct" ]; then
 #   runs='036 037 038 039 040 041'  #UCR-01 30-32, UCR-02 33-41, starting 38 T0A lower DAC calib
   runs='051 052 053 054'  #UCR-02 51-52, UCR-01 53-54, low ToA
   for runNr in $runs; do 
-    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestalUnSkimmed/Run$runNr -r ../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt		
+    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestalUnSkimmed/Run$runNr -r ../configs/LocalTesting/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt		
   done
 fi
 
@@ -108,8 +108,8 @@ if [ $2 == "calibMuonOct" ]; then
 	
 # 	runs='018 021 022 029 032 034 036 038 041'
 	runs='041'
-	badChannelMap=../configs/badChannelMap_TBSetup_HGCROC_cosmics_202510_Fstack.txt
-	runNrFile=../configs/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt
+	badChannelMap=../configs/LocalTesting/badChannelMap_TBSetup_HGCROC_cosmics_202510_Fstack.txt
+	runNrFile=../configs/LocalTesting/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt
 	for runNr in $runs; do 
 		MuonCalibHGCROC $3 $runNr $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap
 	done
@@ -119,7 +119,7 @@ if [ $2 = "pedestalSumming" ]; then
 #   runs="100 101"
   runs="100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115"
   for runNr in $runs; do 
-    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestalUnSkimmed/Run$runNr -r ../configs/DataTakingDB_ORNL_Summing_HGCROC_202508.txt		
+    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestalUnSkimmed/Run$runNr -r ../configs/LocalTesting/DataTakingDB_ORNL_Summing_HGCROC_202508.txt		
   done
 fi
 
@@ -127,8 +127,8 @@ if [ $2 == "calibSum" ]; then
 #   runs="100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115"
   runs="107"
 # 	runs="102"
-	badChannelMap=../configs/badChannelMap_TBSetup_HGCROC_cosmics_202510_Fstack.txt
-	runNrFile=../configs/DataTakingDB_ORNL_Summing_HGCROC_202508.txt
+	badChannelMap=../configs/LocalTesting/badChannelMap_TBSetup_HGCROC_cosmics_202510_Fstack.txt
+	runNrFile=../configs/LocalTesting/DataTakingDB_ORNL_Summing_HGCROC_202508.txt
 	for runNr in $runs; do 
 		MuonCalibHGCROC $3 $runNr $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap
 	done

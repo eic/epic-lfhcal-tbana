@@ -181,7 +181,7 @@ bool DataAnalysis::QAData(void){
   TH2D* hspectraEnergyVsLayer         = nullptr;
   TH2D* hspectraEnergyVsLayerMuon     = nullptr;
   // muons 
-  if (species == 0 || species == 2){
+  if (species == 0 || species == 2 ){
     hspectraEnergyTotvsNCells       = new TH2D( "hspectraTotEnergy_vsNCells","Energy vs CellID; N_{Cells}; E_{tot} (mip eq./tile) ; counts",
                                                 setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4000,0,500);
     hspectraEnergyTotvsNCellsMuon   = new TH2D( "hspectraTotEnergy_vsNCellsMuon","Energy vs CellID; N_{Cells}; E_{tot} (mip eq./tile) ; counts",
@@ -191,7 +191,7 @@ bool DataAnalysis::QAData(void){
     hspectraEnergyVsLayerMuon       = new TH2D( "hspectraTotLayerEnergy_vsLayerMuon","Energy in layer vs Layer Muon triggers; Layer; E_{layer} (mip eq./tile) ; counts",
                                                 setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, 2000,0,400);
   // em-probes
-  } else if ( species == 1 || species == 3  ){
+  } else if ( species == 1 || species == 3 || species == 6 ){
     hspectraEnergyTotvsNCells       = new TH2D( "hspectraTotEnergy_vsNCells","Energy vs CellID; N_{Cells}; E_{tot} (mip eq./tile) ; counts",
                                                 setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 8000,0,1000);
     hspectraEnergyTotvsNCellsMuon   = new TH2D( "hspectraTotEnergy_vsNCellsMuon","Energy vs CellID; N_{Cells}; E_{tot} (mip eq./tile) ; counts",
@@ -673,7 +673,7 @@ bool DataAnalysis::QAData(void){
       maxEProp = 300;
       std::cout << "reset max for beam E" << beamE << "\t" << maxEProp << std::endl;
   }
-  if (species == 0 || species == 2){
+  if (species == 0 || species == 2 ){
     Plot2DWithGraph( canvas2DCorrWOLine, hspectraEnergyVsLayerMuon, nullptr, maxEProp, -10000,  textSizeRel, Form("%s/EnergyVsLayer_Propaganda.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", false, "");
     Plot2DWithGraph( canvas2DCorrWOLine, hspectraEnergyVsLayerMuon, graphMeanE_Layer_muon, maxEProp, -10000,  textSizeRel, Form("%s/EnergyVsLayer_PropagandaWGraph.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", false, "");
   } else {
@@ -681,7 +681,7 @@ bool DataAnalysis::QAData(void){
     Plot2DWithGraph( canvas2DCorrWOLine, hspectraEnergyVsLayer_WoMuon,  graphMeanE_Layer_woMuon, maxEProp, -10000, textSizeRel, Form("%s/EnergyVsLayer_PropagandaWGraph.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", false, "");
   }
   canvas2DCorrWOLine->SetLogy();
-  if (species == 0 || species == 2){
+  if (species == 0 || species == 2 ){
     Plot2DWithGraph( canvas2DCorrWOLine, hspectraEnergyVsLayerMuon, nullptr, 400, -10000,  textSizeRel, Form("%s/EnergyVsLayer_Propaganda_LogY.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", false, "");
     Plot2DWithGraph( canvas2DCorrWOLine, hspectraEnergyVsLayerMuon, graphMeanE_Layer_muon, 400, -10000,  textSizeRel, Form("%s/EnergyVsLayer_PropagandaWGraph_LogY.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", false, "");
   } else {
@@ -713,7 +713,7 @@ bool DataAnalysis::QAData(void){
   PlotLayerOverlay(canvas1DSimple, histELayer_Muon, evtsMuon*10, maxXLMuon, GetAverageLayer(layersMeanMuon), GetMaxLayer(layersMeanMuon),textSizeRel, Form("%s/ELayerOverlay_MuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Muon triggers");
   PlotLayerOverlay(canvas1DSimple, histELayer_WoMuon, (evts-evtsMuon)*10, maxXLAll, GetAverageLayer(layersMeanWOMuon), GetMaxLayer(layersMeanWOMuon),textSizeRel, Form("%s/ELayerOverlay_NonMuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Non muon triggers");
   
-  if (species == 0 || species == 2){
+  if (species == 0 || species == 2 ){
     PlotLayerOverlay(canvas1DSimple, histELayer_Muon, evtsMuon*10, maxXLMuon, GetAverageLayer(layersMeanMuon), GetMaxLayer(layersMeanMuon),textSizeRel, Form("%s/ELayerOverlay_Propaganda.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "", false);
   } else {
     PlotLayerOverlay(canvas1DSimple, histELayer_WoMuon, (evts-evtsMuon)*10, maxXLAll, GetAverageLayer(layersMeanWOMuon), GetMaxLayer(layersMeanWOMuon),textSizeRel, Form("%s/ELayerOverlay_Propaganda.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "", false);

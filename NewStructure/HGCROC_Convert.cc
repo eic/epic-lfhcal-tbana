@@ -91,21 +91,24 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     
     auto decoder = new hgc_decoder( (char*)analysis->ASCIIinputName.Data(),   // filename for ascii file
                                     1,                                        // detector ID (1: LFHCal)
-                                    analysis->setup->GetNMaxKCUs(),           // number of kcu's to be aligned & read out
-                                    analysis->setup->GetNMaxASICs(),          // number of asic's per KCU
-                                    5,                                        // debug level
-                                    analysis->GetHGCROCTrunctation());         // switch to enable artificial truncation to 8 bit, disregarding 2 least significant bits
+                                    it->second.nFPGA,                         // number of kcu's to be aligned & read out
+                                    it->second.nASIC,                         // number of asic's per KCU
+                                    3,                                        // debug level
+                                    analysis->GetHGCROCTrunctation());        // switch to enable artificial truncation to 8 bit, disregarding 2 least significant bits
     for (auto ae : *decoder) {
-        if (true || event_number % 100 == 0) {
-            std::cout << "\rFitting event " << event_number << std::flush;
-        }
         if (analysis->maxEvents != -1 && event_number > analysis->maxEvents ){
           break;  
         }
         // aligned_event *ae = *it;
         analysis->event.SetEventID(event_number);
         event_number++;
-        std::cout << "\nEvent: " << event_number << std::endl;
+        if (event_number % 500 == 0){
+          std::cout << "\nEvent: " << event_number << "\t"<< decoder->get_num_proc_events() << std::endl;
+          for (int i = 0; i < (int)it->second.nFPGA; i++) {
+              std::cout << "\t KCU: " << i << "\t att:" << decoder->get_attempted_waveforms(i) << "\t rec:" << decoder->get_completed_waveforms(i) << "\t in progress: " << decoder->get_inprogress_waveforms(i) << "\t aborted: " << decoder->get_discarded_waveforms(i) << std::endl;
+          }
+        }
+        
         // Loop over each tile
         for (int i = 0; i < ae->get_num_fpga(); i++) {
             // std::cout << "\nFPGA: " << i << std::endl;
@@ -115,7 +118,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                 // std::cout << "\nChannel: " << j << std::endl;
                 int channel_number = i * ae->get_channels_per_fpga() + j;
                 // std::cout << "Channel number: " << channel_number << std::endl;
-                int asic = i * analysis->setup->GetNMaxASICs() + (j / 72);
+                int asic = i * it->second.nASIC + (j / 72);
                 
                 auto cell_id = analysis->setup->GetCellID(asic, j % 72);
                 if (analysis->debug > 0 && event_number == 1) {
@@ -124,7 +127,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                 
                 if (cell_id != -1) {
                 // std::cout << "Channel number: " << channel_number << std::endl;
-                int asic = i * analysis->setup->GetNMaxASICs() + (j / 72);
+                int asic = i * it->second.nASIC + (j / 72);
                 
                 auto cell_id = analysis->setup->GetCellID(asic, j % 72);
                 if (analysis->debug > 0 && event_number == 1) {
@@ -191,16 +194,20 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                     analysis->event.AddTile(tile);
                 }
             }
-            
-            
         // Fill the event
         }
         }
         analysis->TdataOut->Fill();
         analysis->event.ClearTiles();
     }
+    
     std::cout << "\nFinished converting events\n" << std::endl;
+    std::cout << "\nTotal Events: " << decoder->get_num_proc_events() << std::endl;
+    for (int i = 0; i < (int)it->second.nFPGA; i++) {
+        std::cout << "\t KCU: " << i << "\t att:" << decoder->get_attempted_waveforms(i) << "\t rec:" << decoder->get_completed_waveforms(i) << "\t in progress: " << decoder->get_inprogress_waveforms(i) << std::endl;
+    }
     analysis->RootOutput->cd();
+    
     // setup 
     RootSetupWrapper rswtmp=RootSetupWrapper(analysis->setup);
     analysis->rsw=rswtmp;
@@ -213,6 +220,25 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     analysis->TsetupOut->Write();
     analysis->TdataOut->Write();
 
+    TH1D* hEventsKCU[it->second.nFPGA];
+    long maxAttempted = 0;
+    for (Int_t i = 0; i < (int)it->second.nFPGA; i++){
+      hEventsKCU[i] = new TH1D( Form("hNEventsKCU%i", i),"event KCU category; events",4,-0.5,3.5);
+      hEventsKCU[i]->SetBinContent(1, decoder->get_attempted_waveforms(i));
+      hEventsKCU[i]->SetBinContent(2, decoder->get_completed_waveforms(i));
+      hEventsKCU[i]->SetBinContent(3, decoder->get_discarded_waveforms(i));
+      hEventsKCU[i]->SetBinContent(4, decoder->get_inprogress_waveforms(i));
+      hEventsKCU[i]->Write();
+      if (maxAttempted < decoder->get_attempted_waveforms(i))
+        maxAttempted = decoder->get_attempted_waveforms(i);
+    }
+    
+    TH1D* hEvents = new TH1D( "hNEvents","event category; events",2,-0.5,1.5);
+    hEvents->SetBinContent(1, maxAttempted);
+    hEvents->SetBinContent(2, decoder->get_num_proc_events());
+    hEvents->Write();
+    
+    
     analysis->RootOutput->Close();
     return true;
 

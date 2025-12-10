@@ -93,6 +93,8 @@
     int trigDelay;
     int trigDead;
     int phase;
+    int nFPGA;
+    int nASIC;
   } ;
 
   TString GetStringFromRunInfo(RunInfo, Int_t);
@@ -175,6 +177,8 @@
         tempRun.samples   = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
         tempRun.trigDead  = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atoi();
         tempRun.phase     = ((TString)((TObjString*)tempArr->At(11))->GetString()).Atoi();
+        tempRun.nFPGA     = ((TString)((TObjString*)tempArr->At(12))->GetString()).Atoi();
+        tempRun.nASIC     = ((TString)((TObjString*)tempArr->At(13))->GetString()).Atoi();
       }
       tempRun.posX    = ((TString)((TObjString*)tempArr->At(8))->GetString()).Atoi();
       tempRun.posY    = ((TString)((TObjString*)tempArr->At(9))->GetString()).Atoi();
@@ -198,6 +202,8 @@
           return  2; // muon
       } else if (currRunInfo.species.Contains("Electron") || currRunInfo.species.Contains("electron") || currRunInfo.species.CompareTo("e-") == 0 ){
           return  3; // electron
+      } else if (currRunInfo.species.Contains("Positron") || currRunInfo.species.Contains("positron") || currRunInfo.species.CompareTo("e+") == 0 ){
+          return  6; // positron
       } else if (currRunInfo.species.Contains("Pion") || currRunInfo.species.Contains("pion") || currRunInfo.species.CompareTo("pi-") == 0 || currRunInfo.species.CompareTo("pi+") == 0 ){
           return  4; // pion
       } else if (currRunInfo.species.Contains("Hadron") || currRunInfo.species.Contains("hadron") || currRunInfo.species.CompareTo("h+") == 0 || currRunInfo.species.CompareTo("h-") == 0 ){

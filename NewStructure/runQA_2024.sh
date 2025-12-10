@@ -2,7 +2,7 @@
 
 function QARun()
 {
-	runNrFile='../configs/DataTakingDB_202409_CAEN.csv'
+	runNrFile='../configs/TB2024/DataTakingDB_202409_CAEN.csv'
 	echo "============================ QA running =========================================="
 	echo "option $1"
 	echo "DataDir: $2"
@@ -42,7 +42,7 @@ else
 	exit
 fi
 
-runNrFile='../configs/DataTakingDB_202409_CAEN.csv'
+runNrFile='../configs/TB2024/DataTakingDB_202409_CAEN.csv'
 muonScanA_45V='244 250 282 283'
 pedScanA_45V='271 277'
 if [ $2 == "ScanA" ]; then

@@ -798,6 +798,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
               TString beam = currRunInfo.species.Data();
               if (beam.CompareTo("Muon +") == 0) beam = "#mu^{+}";
               if (beam.CompareTo("Electron") == 0) beam = "e^{-}";              
+              if (beam.CompareTo("Positron") == 0) beam = "e^{+}";              
               if (beam.CompareTo("Pion -") == 0) beam = "#pi^{-}";              
               if (beam.CompareTo("Hadron +") == 0) beam = "h^{+}";              
               return  Form("%s-beam, #it{E}_{#it{b}}= %.0f GeV, Run %d, #it{V}_{#it{op}} = %1.1f V", beam.Data(), currRunInfo.energy, currRunInfo.runNr, currRunInfo.vop  );
@@ -811,6 +812,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
               TString beam = currRunInfo.species.Data();
               if (beam.CompareTo("Muon +") == 0) beam = "#mu^{+}";
               if (beam.CompareTo("Electron") == 0) beam = "e^{-}";              
+              if (beam.CompareTo("Positron") == 0) beam = "e^{+}";              
               if (beam.CompareTo("Pion -") == 0) beam = "#pi^{-}";              
               if (beam.CompareTo("Hadron +") == 0) beam = "h^{+}";              
               return  Form("%s-beam, #it{E}_{#it{b}}= %.0f GeV", beam.Data(), currRunInfo.energy);
@@ -826,6 +828,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
               TString beam = currRunInfo.species.Data();
               if (beam.CompareTo("Muon +") == 0) beam = "#mu^{+}";
               if (beam.CompareTo("Electron") == 0) beam = "e^{-}";              
+              if (beam.CompareTo("Positron") == 0) beam = "e^{+}";              
               if (beam.CompareTo("Pion -") == 0) beam = "#pi^{-}";              
               if (beam.CompareTo("Hadron +") == 0) beam = "h^{+}";                            
               return Form("%s-beam, #it{E}_{#it{b}}= %.0f GeV, Run %d, #it{V}_{#it{op}} = %1.1f V, HG = %1d, LG = %1d", beam.Data(), currRunInfo.energy, currRunInfo.runNr, currRunInfo.vop, currRunInfo.hgSet, currRunInfo.lgSet);
