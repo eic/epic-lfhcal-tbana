@@ -31,6 +31,9 @@ void PrintHelp(char* exe){
   std::cout<<"-d [0-n] switch on debug info with debug level 0 to n"<<std::endl;
   std::cout<<"-F fff   set plot extension explicitly, default is pdf "<<std::endl;
   std::cout<<"-i uuu   Input file in root format"<<std::endl;
+  std::cout<<"-c       Switches on to display HGCROC testbeam data: ADC"<<std::endl;
+  std::cout<<"-p       Switches on to display HGCROC testbeam data: ADC - pedestal"<<std::endl;
+  std::cout<<"-o       Switches on to display HGCROC testbeam data: TOT"<<std::endl;
   std::cout<<"-P zzz   Plots directory path"<<std::endl;
   std::cout<<"-r rrr   Name of run list file  2024 PS TB [../configs/DataTakingDB_202409_CAEN.csv] "<<std::endl;
   std::cout<<"-y yyyy  setting year externally to narrow parameters"<<std::endl;
@@ -50,7 +53,7 @@ int main(int argc, char* argv[]){
   }
   EventDisplay EvtDisplay;
   int c;
-  while((c=getopt(argc,argv,"F:P:r:d:i:y:e:N:hMt:"))!=-1){
+  while((c=getopt(argc,argv,"F:P:r:d:i:y:e:N:cpohMt:"))!=-1){
     switch(c){
     case 'd':
       std::cout<<"enable debug " << optarg <<std::endl;
@@ -83,6 +86,21 @@ int main(int argc, char* argv[]){
     case 'N':
       std::cout<<"Setting how many events to plot: "<<optarg<<std::endl;
       EvtDisplay.SetNumberOfEventsToPlot(atoi(optarg));
+      break;
+    case 'c':
+      std::cout<<"Switching to plotting HGCROC testbeam data."<<std::endl;
+      std::cout<<"Plotting ADC"<<std::endl;
+      EvtDisplay.PlotHGCROC_ADCData();
+      break;
+    case 'p':
+      std::cout<<"Switching to plotting HGCROC testbeam data."<<std::endl;
+      std::cout<<"Plotting (ADC - pedestal)"<<std::endl;
+      EvtDisplay.PlotHGCROC_ADCwPedData();
+      break;
+    case 'o':
+      std::cout<<"Switching to plotting HGCROC testbeam data."<<std::endl;
+      std::cout<<"Plotting TOT"<<std::endl;
+      EvtDisplay.PlotHGCROC_TOTData();
       break;
     case 'M':
       std::cout<<"Plot only muon-triggered events in the range"<<std::endl;

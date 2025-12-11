@@ -54,6 +54,9 @@ class EventDisplay{
   inline void SetNumberOfEventsToPlot(int n)      {nEvts = n;};
   inline void PlotMuonTriggeredEvents(bool y)     {plotMuonEvts=y;};
   inline void SetMinTilesHit(int n)               {minTilesHit = n;};
+  inline void PlotHGCROC_ADCData()                {plotHGCROC = true; dataTypeHGCROC = 0; }
+  inline void PlotHGCROC_ADCwPedData()            {plotHGCROC = true; dataTypeHGCROC = 1; }
+  inline void PlotHGCROC_TOTData()                {plotHGCROC = true; dataTypeHGCROC = 2; }
   
   //General methods
   bool CheckAndOpenIO(void);
@@ -84,6 +87,8 @@ class EventDisplay{
   int nEvts                   = 1;
   bool plotMuonEvts           = false;
   int minTilesHit             = 0;
+  bool plotHGCROC             = false;
+  int dataTypeHGCROC          = 0; // 0 - ADC, 1 - ADC-pedestal, 2 - ToT
   
   TTree* TsetupIn=nullptr;
   TTree* TdataIn=nullptr;

@@ -71,13 +71,15 @@ bool EventDisplay::CheckAndOpenIO(void){
     TcalibIn = (TTree*) RootInput->Get("Calib");
     if(!TcalibIn){
       std::cout<<"Could not retrieve Calib tree, leaving"<<std::endl;
-      //return false;
+      return false;
     }
     else {
       matchingbranch=TcalibIn->SetBranchAddress("calib",&calibptr);
       if(matchingbranch<0){
         std::cout<<"Error retrieving calibration info from the tree"<<std::endl;
         TcalibIn=nullptr;
+      } else {
+        std::cout<<"Loaded the calib object"<<std::endl;
       }
     }
   } else {
@@ -103,7 +105,7 @@ bool EventDisplay::Process(void){
 
 
 //***********************************************************************************************
-//*********************** Calibration routine ***************************************************
+//*********************** Plotting routine ***************************************************
 //***********************************************************************************************
 bool EventDisplay::Plot(){
   std::cout<<"Plotting events "<<plotEvt<<" to " << plotEvt+nEvts-1<<std::endl;
@@ -168,6 +170,8 @@ bool EventDisplay::Plot(){
   
   TCanvas* canvas3D = new TCanvas("canvas3D","",0,0,1400,750);  // gives the page size
   DefaultCancasSettings( canvas3D, 0.12, 0.08, 0.05, 0.1);
+
+  // processing events
   int evts=TdataIn->GetEntries();
   int evtsMuon= 0;
   for(int i=plotEvt; i<plotEvt+nEvts; i++){
@@ -185,28 +189,77 @@ bool EventDisplay::Plot(){
     std::map<int, Layer>::iterator ithLayer;
     
     for(int j=0; j<event.GetNTiles(); j++){
-      Caen* aTile=(Caen*)event.GetTile(j);
-      if(aTile->GetE()>0.3 ){ 
+      if(plotHGCROC){
+        Hgcroc* aTile = (Hgcroc*)event.GetTile(j);
+        // no "energy" threshold for now - just plot everything
         nCells++;
-        int currLayer = setup->GetLayer(aTile->GetCellID());
-        ithLayer=layers.find(currLayer);
+        int currLayer   = setup->GetLayer(aTile->GetCellID());
+        ithLayer        = layers.find(currLayer);
         if(ithLayer!=layers.end()){
           ithLayer->second.nCells+=1;
-          ithLayer->second.energy+=aTile->GetE();
-          ithLayer->second.avX+=setup->GetX(aTile->GetCellID())*aTile->GetE();
-          ithLayer->second.avY+=setup->GetY(aTile->GetCellID())*aTile->GetE();
+          double energy = 0;
+          switch( dataTypeHGCROC ){
+            case 0:
+              energy = aTile->GetMaxSampleADC(); 
+              if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << aTile->GetMaxSampleADC() << "\t energy " << energy << std::endl;
+              break;
+            case 1:
+              energy = aTile->GetMaxSampleADC() - aTile->GetPedestal(); 
+              if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << aTile->GetMaxSampleADC() << "\t pedestal (calib) " << calib.GetPedestalMeanH( aTile->GetCellID() ) << "\t pedestal (aTile) " << aTile->GetPedestal() << "\t energy " << energy << std::endl;
+              break;
+            case 2:
+              energy = aTile->GetTOT(); 
+              if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t TOT: " << aTile->GetTOT() << "\t energy " << energy << std::endl;
+              break;
+          }
+          ithLayer->second.energy+=energy;
+          ithLayer->second.avX+=setup->GetX(aTile->GetCellID())*energy;
+          ithLayer->second.avY+=setup->GetY(aTile->GetCellID())*energy;
         } else {
           layers[currLayer]=Layer();
           layers[currLayer].nCells+=1;
-          layers[currLayer].energy+=aTile->GetE();
-          layers[currLayer].avX+=setup->GetX(aTile->GetCellID())*aTile->GetE();
-          layers[currLayer].avY+=setup->GetY(aTile->GetCellID())*aTile->GetE();
+          double energy = 0;
+          switch( dataTypeHGCROC ){
+            case 0:
+              energy = aTile->GetMaxSampleADC(); 
+              if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << aTile->GetMaxSampleADC() << "\t energy " << energy << std::endl;
+              break;
+            case 1:
+              energy = aTile->GetMaxSampleADC() - aTile->GetPedestal(); 
+              if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << aTile->GetMaxSampleADC() << "\t pedestal (calib) " << calib.GetPedestalMeanH( aTile->GetCellID() ) << "\t pedestal (aTile) " << aTile->GetPedestal() << "\t energy " << energy << std::endl;
+              break;
+            case 2:
+              energy = aTile->GetTOT(); 
+              if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t TOT: " << aTile->GetTOT() << "\t energy " << energy << std::endl;
+              break;
+          }
+          layers[currLayer].energy+=energy;
+          layers[currLayer].avX+=setup->GetX(aTile->GetCellID())*energy;
+          layers[currLayer].avY+=setup->GetY(aTile->GetCellID())*energy;
         }
+      } else {
+        Caen* aTile=(Caen*)event.GetTile(j);
+        if(aTile->GetE()>0.3 ){ 
+          nCells++;
+          int currLayer = setup->GetLayer(aTile->GetCellID());
+          ithLayer=layers.find(currLayer);
+          if(ithLayer!=layers.end()){
+            ithLayer->second.nCells+=1;
+            ithLayer->second.energy+=aTile->GetE();
+            ithLayer->second.avX+=setup->GetX(aTile->GetCellID())*aTile->GetE();
+            ithLayer->second.avY+=setup->GetY(aTile->GetCellID())*aTile->GetE();
+          } else {
+            layers[currLayer]=Layer();
+            layers[currLayer].nCells+=1;
+            layers[currLayer].energy+=aTile->GetE();
+            layers[currLayer].avX+=setup->GetX(aTile->GetCellID())*aTile->GetE();
+            layers[currLayer].avY+=setup->GetY(aTile->GetCellID())*aTile->GetE();
+          }
+        }
+        if (aTile->GetLocalTriggerBit() == 1){
+          locMuon++;        
+        }      
       }
-
-      if (aTile->GetLocalTriggerBit() == 1){
-        locMuon++;        
-      }      
     }
     
     if (nCells > minTilesHit) {
@@ -227,29 +280,55 @@ bool EventDisplay::Plot(){
       Float_t minE = 1e10;
       Float_t maxE = 0;
       for(int j=0; j<event.GetNTiles(); j++){
-        Caen* aTile=(Caen*)event.GetTile(j);
-        // remove bad channels from output
-        Float_t energy = (Float_t)aTile->GetE();
-        Etot+=aTile->GetE();
+        double energy  = 0;
+        double x, y, z; 
+        unsigned char muonTrigger = 0;
+        if(plotHGCROC){
+          Hgcroc* aTile   = (Hgcroc*)event.GetTile(j);
+          if( calib.GetBadChannel(aTile->GetCellID())!=3) continue;
+          switch( dataTypeHGCROC ){
+            case 0:
+              energy = aTile->GetMaxSampleADC();
+              break;
+            case 1:
+              energy = aTile->GetMaxSampleADC()- calib.GetPedestalMeanL(aTile->GetCellID());
+              break;
+            case 2:
+              energy = aTile->GetTOT();
+              break;
+          }
+          x = (double) aTile->GetX();
+          y = (double) aTile->GetY();
+          z = (double) aTile->GetZ();
+        } else {
+          Caen* aTile=(Caen*)event.GetTile(j);
+          // if( calib.GetBadChannel(aTile->GetCellID())!=3) continue; // commented out because of the calib object issues
+          energy = (Float_t)aTile->GetE();
+          x = (double) aTile->GetX();
+          y = (double) aTile->GetY();
+          z = (double) aTile->GetZ();
+          muonTrigger = (unsigned char)aTile->GetLocalTriggerBit();
+        }
+        Etot+=energy;
         if (energy < minE) minE = energy;
         if (energy > maxE) maxE = energy;
         if(energy>0.3){ 
-          hXYZMapEvt->Fill(aTile->GetZ(),aTile->GetX(),aTile->GetY(),energy);
-          hX_energy_Evt->Fill(aTile->GetX(), energy);
-          hY_energy_Evt->Fill(aTile->GetY(), energy);
-          hZ_energy_Evt->Fill(aTile->GetZ(), energy);
-          if(debug > 2) std::cout << "Event, x, y, z, E: " << i << "\t" <<aTile->GetX()<< "\t" <<aTile->GetY()<< "\t" << aTile->GetZ()<< "\t" <<energy<<std::endl;
-          if (aTile->GetLocalTriggerBit() == 1){
-            hXYZMapEvt_Muon->Fill(aTile->GetZ(),aTile->GetX(),aTile->GetY(),energy);
-            hX_energy_Evt_Muon->Fill(aTile->GetX(), energy);
-            hY_energy_Evt_Muon->Fill(aTile->GetY(), energy);
-            hZ_energy_Evt_Muon->Fill(aTile->GetZ(), energy);
+          hXYZMapEvt->Fill(z,x,y,energy);
+          hX_energy_Evt->Fill(x, energy);
+          hY_energy_Evt->Fill(y, energy);
+          hZ_energy_Evt->Fill(z, energy);
+          if(debug > 2) std::cout << "Event, x, y, z, E: " << i << "\t" <<x<< "\t" <<y<< "\t" << z<< "\t" <<energy<<std::endl;
+          if (muonTrigger == 1){
+            hXYZMapEvt_Muon->Fill(z,x,y,energy);
+            hX_energy_Evt_Muon->Fill(x, energy);
+            hY_energy_Evt_Muon->Fill(y, energy);
+            hZ_energy_Evt_Muon->Fill(z, energy);
 
           } else {
-            hXYZMapEvt_nonMuon->Fill(aTile->GetZ(),aTile->GetX(),aTile->GetY(),energy);
-            hX_energy_Evt_nonMuon->Fill(aTile->GetX(), energy);
-            hY_energy_Evt_nonMuon->Fill(aTile->GetY(), energy);
-            hZ_energy_Evt_nonMuon->Fill(aTile->GetZ(), energy);
+            hXYZMapEvt_nonMuon->Fill(z,x,y,energy);
+            hX_energy_Evt_nonMuon->Fill(x, energy);
+            hY_energy_Evt_nonMuon->Fill(y, energy);
+            hZ_energy_Evt_nonMuon->Fill(z, energy);
           }
         } 
       }
