@@ -188,12 +188,18 @@ bool CompareHGCROCCalib::CompareTOT(void){
         graphTOT[i]->Draw("same,p");
         graphADC[i]->Draw("same,p");
 
-        TLatex  latexCellID     = TLatex(0.92, 0.17, Form("#bf{Cell %d}", cellID[i]));
+        TLatex  latexCellID     = TLatex(0.94, 0.89, Form("#bf{Cell %d}", cellID[i]));
         latexCellID.SetNDC();
         latexCellID.SetTextFont(42);
         latexCellID.SetTextSize(0.045);
         latexCellID.SetTextAlign(32);
         latexCellID.Draw("same");
+
+        TLegend* legend = GetAndSetLegend(0.15, 0.82, 2);
+        legend->AddEntry( graphTOT[i], "TOT", "p");
+        legend->AddEntry( graphADC[i], "ADC", "p");
+        legend->Draw("same");
+        
 
         canvas->SaveAs( Form("%s/TOT_ADCvsInjVal_Cell%d.pdf", outputDirPlots.Data(), cellID[i] ) );
         delete canvas; delete hDummy;

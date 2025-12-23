@@ -42,7 +42,7 @@ int main(int argc, char* argv[]){
 
     CompareHGCROCCalib compSamples;
     int c;
-    while( (c=getopt(argc,argv,"d:i:hp::"))!=-1){
+    while( (c=getopt(argc,argv,"d:i:p:h"))!=-1){
         switch(c){
             case 'd':
                 std::cout << "Enable debug " << optarg << std::endl;
