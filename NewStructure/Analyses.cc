@@ -1191,7 +1191,7 @@ bool Analyses::GetPedestal(void){
   SetPlotStyle();
   
   TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1200);  // gives the page size
-  DefaultCancasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
+  DefaultCanvasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
   canvas2DCorr->SetLogz();
   
   if (typeRO == ReadOut::Type::Hgcroc) hspectraHGvsCellID->GetYaxis()->SetTitle("Pedestal ADC (arb units)");
@@ -1545,7 +1545,7 @@ bool Analyses::TransferCalib(void){
     // create directory for plot output
   
     TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
-    DefaultCancasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
+    DefaultCanvasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
 
     canvas2DCorr->SetLogz(0);
     
@@ -1557,7 +1557,7 @@ bool Analyses::TransferCalib(void){
     
     if (typeRO == ReadOut::Type::Hgcroc){
       TCanvas* canvas2DSigQA = new TCanvas("canvas2DSigQA","",0,0,1450,1300);  // gives the page size
-      DefaultCancasSettings( canvas2DSigQA, 0.08, 0.13, 0.045, 0.07);
+      DefaultCanvasSettings( canvas2DSigQA, 0.08, 0.13, 0.045, 0.07);
 
       canvas2DSigQA->SetLogz(1);
       PlotSimple2DZRange( canvas2DSigQA, hHighestADCAbovePedVsLayer, -10000, -10000, 0.1, 20000, textSizeRel, Form("%s/MaxADCAboveNoise_vsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, "colz", true);    
@@ -1955,7 +1955,7 @@ bool Analyses::AnalyseWaveForm(void){
   if (ExtPlot > 0){
     
     TCanvas* canvas2DSigQA = new TCanvas("canvas2DSigQA","",0,0,1450,1300);  // gives the page size
-    DefaultCancasSettings( canvas2DSigQA, 0.08, 0.13, 0.045, 0.07);
+    DefaultCanvasSettings( canvas2DSigQA, 0.08, 0.13, 0.045, 0.07);
 
     PlotSimple2D( canvas2DSigQA, hSampleTOAVsCellID, (double)it->second.samples,setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleTOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
     PlotSimple2D( canvas2DSigQA, hSampleMaxADCVsCellID, (double)it->second.samples, setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleMaxADCvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
@@ -2778,7 +2778,7 @@ bool Analyses::GetScaling(void){
   SetPlotStyle();
 
   TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
-  DefaultCancasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
+  DefaultCanvasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
 
   canvas2DCorr->SetLogz(0);
   PlotSimple2D( canvas2DCorr, hspectraHGMeanVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_NoiseMean.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
@@ -3281,7 +3281,7 @@ bool Analyses::GetImprovedScaling(void){
   SetPlotStyle();
 
   TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
-  DefaultCancasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
+  DefaultCanvasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
 
   canvas2DCorr->SetLogz(0);
   PlotSimple2D( canvas2DCorr, hspectraHGMaxVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_MaxMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form( "#LT Max_{HG} #GT = %.1f", averageScaleUpdated) );
@@ -3358,7 +3358,7 @@ bool Analyses::GetImprovedScaling(void){
 
     
     TCanvas* canvasSTile = new TCanvas("canvasSignleTile","",0,0,1600,1300);  // gives the page size
-    DefaultCancasSettings( canvasSTile, 0.08, 0.01, 0.01, 0.082);
+    DefaultCanvasSettings( canvasSTile, 0.08, 0.01, 0.01, 0.082);
 
     int counter = 0;
     for(ithSpectraTrigg=hSpectraTrigg.begin(); ithSpectraTrigg!=hSpectraTrigg.end(); ++ithSpectraTrigg){
@@ -3601,7 +3601,7 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
   SetPlotStyle();
 
   TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
-  DefaultCancasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
+  DefaultCanvasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
 
   canvas2DCorr->SetLogz(0);
   PlotSimple2D( canvas2DCorr, hspectraHGMeanVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_NoiseMean.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true );
@@ -3999,7 +3999,7 @@ bool Analyses::Calibrate(void){
   SetPlotStyle();
   
   TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
-  DefaultCancasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
+  DefaultCanvasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
   canvas2DCorr->SetLogz(1);
   PlotSimple2D( canvas2DCorr, hspectraHGvsCellID, -10000, -10000, textSizeRel, Form("%s/HG.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraLGvsCellID, -10000, -10000, textSizeRel, Form("%s/LG.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
@@ -4013,7 +4013,7 @@ bool Analyses::Calibrate(void){
   PlotSimple2D( canvas2DCorr, hspectraEnergyTotvsNCells, -10000, -10000, textSizeRel, Form("%s/EnergyTotalVsNCells.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   
   TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
-  DefaultCancasSettings( canvas1DSimple, 0.08, 0.03, 0.03, 0.07);
+  DefaultCanvasSettings( canvas1DSimple, 0.08, 0.03, 0.03, 0.07);
   hspectraEnergyTot->Scale(1./evts);
   hspectraEnergyTot->GetYaxis()->SetTitle("counts/event");
   PlotSimple1D(canvas1DSimple, hspectraEnergyTot, -10000, -10000, textSizeRel, Form("%s/EnergyTot.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT E_{Tot} #GT = %.1f (mip/tile eq.)",hspectraEnergyTot->GetMean() ));

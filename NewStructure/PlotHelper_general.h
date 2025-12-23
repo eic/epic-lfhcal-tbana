@@ -380,7 +380,7 @@
   
 
     //__________________________________________________________________________________________________________
-  void DefaultCancasSettings( TCanvas* c1,
+  void DefaultCanvasSettings( TCanvas* c1,
                               Double_t leftMargin,
                               Double_t rightMargin,
                               Double_t topMargin,

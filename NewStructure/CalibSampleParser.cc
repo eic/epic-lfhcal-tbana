@@ -145,7 +145,7 @@ bool CalibSampleParser::Parse(){
     setup->Initialize(MapInputName.Data(),debug);
 
     // initialize a dummy event - it will be a tree with one branch containing one event, event contains multiple tiles
-    event.SetRunNumber( 0 ); // to be fixed?
+    event.SetRunNumber( RunNr ); // to be fixed?
     event.SetROtype(ReadOut::Type::Hgcroc);
     event.SetBeamName( "dummy" );
     event.SetBeamID( 0 );
@@ -182,18 +182,24 @@ bool CalibSampleParser::Parse(){
 
       if(temp_channel == -1) {
         temp_channel = channel;
+        if( channel%76 < 37 ){          // correction in the channel number to remove calib channels: 37, 38
+          channel = 72*(channel/76) + channel%76;
+        } else if( channel%76 == 37 || channel%76 == 38){
+          continue;
+        } else {
+          channel = 72*(channel/76) + (channel-2);
+        }
         asic    = (channel/72);
         cell_id  = setup->GetCellID(asic, channel % 72);
         temp_adc.push_back( std::atoi(tokens[3].c_str()) ); 
-        temp_toa.push_back( std::atoi(tokens[4].c_str()) );
-        temp_tot.push_back( std::atoi(tokens[5].c_str()) );
+        temp_toa.push_back( std::atoi(tokens[5].c_str()) );
+        temp_tot.push_back( std::atoi(tokens[4].c_str()) );
       } else if( temp_channel == channel){
-
         sample_counter++;
         if( std::atof( tokens[1].c_str() ) == (sample_counter-1)*1.5625 ) {         // check the timing - some channels are missing entries from waveforms
           temp_adc.push_back( std::atoi(tokens[3].c_str()) ); 
-          temp_toa.push_back( std::atoi(tokens[4].c_str()) );
-          temp_tot.push_back( std::atoi(tokens[5].c_str()) );
+          temp_toa.push_back( std::atoi(tokens[5].c_str()) );
+          temp_tot.push_back( std::atoi(tokens[4].c_str()) );
         } else {
           if( debug > 3){
             std::cout << "missing entry, channel: " << channel << "\t time " << std::atof( tokens[1].c_str() ) << "\t target value: " << (sample_counter-1)*1.5625 << std::endl;
@@ -203,8 +209,8 @@ bool CalibSampleParser::Parse(){
           temp_tot.push_back( 0 );
           sample_counter++;                                                         // incrementing the sample counter to account for the missing entry
           temp_adc.push_back( std::atoi(tokens[3].c_str()) );                       // and then the read values
-          temp_toa.push_back( std::atoi(tokens[4].c_str()) );
-          temp_tot.push_back( std::atoi(tokens[5].c_str()) );
+          temp_toa.push_back( std::atoi(tokens[5].c_str()) );
+          temp_tot.push_back( std::atoi(tokens[4].c_str()) );
         }
       } else if( temp_channel != channel){
         // save the current tiles waveforms, and then push the tile to the samples vector
@@ -212,12 +218,17 @@ bool CalibSampleParser::Parse(){
         tmpTile.SetCellID(cell_id);
         tmpTile.SetE(0);          // need to process waveform to set this
         tmpTile.SetTOA(0);        // need to process waveform to set this
-        tmpTile.SetTOT(0);        // need to process waveform to set this
+        // TOT - the first non-zero value
+        int tempTOT   = *(std::find_if(temp_tot.begin(), temp_tot.end(), [](int n){ return n!=0; }) );
+        tmpTile.SetTOT( tempTOT );        // need to process waveform to set this - the first value that comes up 
+        // SetIntegratedADC as max ADC 
+        int tempIntADC    = *(std::max_element( temp_adc.begin(), temp_adc.end() ));
+        tmpTile.SetIntegratedADC( tempIntADC );
         tmpTile.SetADCWaveform( temp_adc );
         tmpTile.SetTOAWaveform( temp_toa );
         tmpTile.SetTOTWaveform( temp_tot );
         samples.push_back( tmpTile );
-        if(debug > 1) std::cout << "Channel: " << temp_channel << "\t Cell ID: " << cell_id << "\t NSamples: " << sample_counter << std::endl;
+        if(debug > 1) std::cout << "Channel: " << temp_channel << "\t Cell ID: " << cell_id << "\t NSamples: " << sample_counter << "\t ADC: " << tempIntADC << "\t ToT: " << tempTOT << std::endl;
         
         // we're moving to the next tile
         temp_adc.clear();
@@ -225,6 +236,13 @@ bool CalibSampleParser::Parse(){
         temp_tot.clear();
         sample_counter = 1;
         temp_channel = channel; 
+        if( channel%76 < 37 ){      // correction in the channel number to remove calib channels: 37, 38
+          channel = 72*(channel/76) + channel%76;
+        } else if( channel%76 == 37 || channel%76 == 38){
+          continue;
+        } else {
+          channel = 72*(channel/76) + (channel-2);
+        }
         asic    = (channel/72);
         cell_id  = setup->GetCellID(asic, channel % 72);       
         if(debug > 1 ) std::cout << "layer " << setup->GetLayer(cell_id) << "\t module " << setup->GetModule(cell_id) << "\t column " << setup->GetColumn(cell_id) << "\t row " << setup->GetRow(cell_id) << std::endl;
@@ -240,12 +258,17 @@ bool CalibSampleParser::Parse(){
       tmpTile.SetCellID(cell_id);
       tmpTile.SetE(0);
       tmpTile.SetTOA(0);
-      tmpTile.SetTOT(0);
+      // TOT - the first non-zero value
+      int tempTOT   = *(std::find_if(temp_tot.begin(), temp_tot.end(), [](int n){ return n!=0; }) );
+      tmpTile.SetTOT( tempTOT );        // need to process waveform to set this - the first value that comes up 
+      // SetIntegratedADC as max ADC 
+      int tempIntADC    = *(std::max_element( temp_adc.begin(), temp_adc.end() ));
+      tmpTile.SetIntegratedADC( tempIntADC );
       tmpTile.SetADCWaveform( temp_adc );
       tmpTile.SetTOAWaveform( temp_toa );
       tmpTile.SetTOTWaveform( temp_tot );
       samples.push_back(tmpTile);
-      if(debug > 1) std::cout << "Channel: " << temp_channel << "\t Cell ID: " << cell_id << "\t NSamples: " << sample_counter << std::endl;
+      if(debug > 1) std::cout << "Channel: " << temp_channel << "\t Cell ID: " << cell_id << "\t NSamples: " << sample_counter << "\t ADC: " << tempIntADC << "\t ToT: " << tempTOT << std::endl; 
     }
     if( debug > 1)  std::cout << "Total number of parsed samples: " << counter << std::endl;
 
@@ -266,6 +289,7 @@ bool CalibSampleParser::Parse(){
     RootSetupWrapper rswtmp=RootSetupWrapper(setup);
     rsw=rswtmp;
     TsetupOut->Fill();
+    TsetupOut->Write();
     // data
     tOutTree->Fill();
     tOutTree->Write();

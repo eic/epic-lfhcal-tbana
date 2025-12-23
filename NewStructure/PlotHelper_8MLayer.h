@@ -829,8 +829,7 @@
         if( !noCalib ){
           DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
           temp2D->Draw("axis,same");
-        }
-        
+        }        
         if (tempProfile ){
           SetMarkerDefaultsProfile(tempProfile, 24, 0.7, kRed+2, kRed+2);           
           tempProfile->Draw("pe, same");
@@ -876,7 +875,7 @@
         }
       }
     }
-    if (skipped < 6)
+    if (skipped < 8)
       canvas8Panel->SaveAs(nameOutput.Data());
   }
   

@@ -631,14 +631,14 @@ bool DataAnalysis::QAData(void){
   SetPlotStyle();
   
   TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
-  DefaultCancasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
+  DefaultCanvasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
   canvas2DCorr->SetLogz(1);
   TCanvas* canvas2DCorrWOLine = new TCanvas("canvasCorrPlotsWoLine","",0,0,1450,1300);  // gives the page size
-  DefaultCancasSettings( canvas2DCorrWOLine, 0.08, 0.13, 0.01, 0.07);
+  DefaultCanvasSettings( canvas2DCorrWOLine, 0.08, 0.13, 0.01, 0.07);
   canvas2DCorrWOLine->SetLogz(1);
   
  TCanvas* canvasDeltaTime = new TCanvas("canvasDeltaTime","",0,0,1450,1300);  // gives the page size
-  DefaultCancasSettings( canvasDeltaTime, 0.08, 0.07, 0.01, 0.07);
+  DefaultCanvasSettings( canvasDeltaTime, 0.08, 0.07, 0.01, 0.07);
   canvasDeltaTime->SetLogy(1);
 
 
@@ -692,7 +692,7 @@ bool DataAnalysis::QAData(void){
   
 
   TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
-  DefaultCancasSettings( canvas1DSimple, 0.08, 0.01, 0.03, 0.07);
+  DefaultCanvasSettings( canvas1DSimple, 0.08, 0.01, 0.03, 0.07);
   hspectraEnergyTot->Scale(1./evts);
   hspectraEnergyTot->GetYaxis()->SetTitle("counts/event");
   PlotSimple1D(canvas1DSimple, hspectraEnergyTot, -10000, -10000, textSizeRel, Form("%s/EnergyTot.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT E_{Tot} #GT = %.1f (mip/tile eq.)",hspectraEnergyTot->GetMean() ));
@@ -968,7 +968,7 @@ bool DataAnalysis::SimpleQAData(void){
   SetPlotStyle();
   
   TCanvas* canvasDeltaTime = new TCanvas("canvasDeltaTime","",0,0,1450,1300);  // gives the page size
-  DefaultCancasSettings( canvasDeltaTime, 0.08, 0.07, 0.01, 0.07);
+  DefaultCanvasSettings( canvasDeltaTime, 0.08, 0.07, 0.01, 0.07);
   canvasDeltaTime->SetLogy(1);
   
   if(DeltaTimePlot>0){
@@ -976,10 +976,10 @@ bool DataAnalysis::SimpleQAData(void){
   } 
   
   TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
-  DefaultCancasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
+  DefaultCanvasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
   canvas2DCorr->SetLogz(1);
   TCanvas* canvas2DCorrWOLine = new TCanvas("canvasCorrPlotsWoLine","",0,0,1450,1300);  // gives the page size
-  DefaultCancasSettings( canvas2DCorrWOLine, 0.08, 0.13, 0.01, 0.07);
+  DefaultCanvasSettings( canvas2DCorrWOLine, 0.08, 0.13, 0.01, 0.07);
   canvas2DCorrWOLine->SetLogz(1);
   PlotSimple2D( canvas2DCorr, hspectraHGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/HGCorr_%.0f_%.0f.%s", outputDirPlots.Data(),timemin, timemax, plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraLGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/LGCorr_%.0f_%.0f.%s", outputDirPlots.Data(),timemin, timemax, plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);

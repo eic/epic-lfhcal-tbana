@@ -510,7 +510,7 @@ bool ComparisonCalib::ProcessCalib(void){
   Int_t textSizePixel   = 30;
   Float_t textSizeRel   = 0.04;  
   TCanvas* canvas1DRunsOverlay = new TCanvas("canvas1DRunsOverlay","",0,0,1450,1300);  // gives the page size
-  DefaultCancasSettings( canvas1DRunsOverlay, 0.075, 0.015, 0.025, 0.09);
+  DefaultCanvasSettings( canvas1DRunsOverlay, 0.075, 0.015, 0.025, 0.09);
 
   PlotCalibRunOverlay( canvas1DRunsOverlay, 0, sumCalibs, textSizeRel, 
                       Form("%s/HGPedSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);

@@ -191,6 +191,15 @@ else()
   message(WARNING "HGCROC calib sample parser will not be built - h2g_decode library not found")
 endif()
 
+# Compare HGCROC calib samples
+if(H2G_DECODE_FOUND)
+  add_executable(CompareHGCROCCalib CompareParsedHGCROC.cc CompareHGCROCCalib.cc)
+  target_compile_definitions(CompareHGCROCCalib PRIVATE DECODE_HGCROC)
+  target_link_libraries(CompareHGCROCCalib LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES} h2g_decode)
+else()
+  message(WARNING "HGCROC calib sample parser will not be built - h2g_decode library not found")
+endif()
+
 
 # Set default build target
 set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT DataPrep)
