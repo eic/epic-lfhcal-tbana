@@ -1,5 +1,5 @@
 #include "HGCROC_Convert.h"
-
+#include <chrono>
 #include "Analyses.h"
 #include "Event.h"
 #include "Tile.h"
@@ -89,6 +89,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
         std::cout << "Event conversion will be stopped at " << analysis->maxEvents << std::endl;
     }
     
+    auto start = std::chrono::steady_clock::now();
     auto decoder = new hgc_decoder( (char*)analysis->ASCIIinputName.Data(),   // filename for ascii file
                                     1,                                        // detector ID (1: LFHCal)
                                     it->second.nFPGA,                         // number of kcu's to be aligned & read out
@@ -103,9 +104,11 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
         analysis->event.SetEventID(event_number);
         event_number++;
         if (event_number % 500 == 0){
-          std::cout << "\nEvent: " << event_number << "\t"<< decoder->get_num_proc_events() << std::endl;
+          auto end = std::chrono::steady_clock::now();
+          auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+          std::cout << "\nEvent: " << event_number << "\t"<< decoder->get_num_proc_events() << " duration: " << duration.count() << " seconds"<< std::endl;
           for (int i = 0; i < (int)it->second.nFPGA; i++) {
-              std::cout << "\t KCU: " << i << "\t att:" << decoder->get_attempted_waveforms(i) << "\t rec:" << decoder->get_completed_waveforms(i) << "\t in progress: " << decoder->get_inprogress_waveforms(i) << "\t aborted: " << decoder->get_discarded_waveforms(i) << std::endl;
+              std::cout << "\t KCU: " << i << "\t att: " << decoder->get_attempted_waveforms(i) << "\t rec: " << decoder->get_completed_waveforms(i) << "\t in progress: " << decoder->get_inprogress_waveforms(i) << "\t aborted: " << decoder->get_discarded_waveforms(i) << std::endl;
           }
         }
         
@@ -204,7 +207,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     std::cout << "\nFinished converting events\n" << std::endl;
     std::cout << "\nTotal Events: " << decoder->get_num_proc_events() << std::endl;
     for (int i = 0; i < (int)it->second.nFPGA; i++) {
-        std::cout << "\t KCU: " << i << "\t att:" << decoder->get_attempted_waveforms(i) << "\t rec:" << decoder->get_completed_waveforms(i) << "\t in progress: " << decoder->get_inprogress_waveforms(i) << std::endl;
+        std::cout << "\t KCU: " << i << "\t att: " << decoder->get_attempted_waveforms(i) << "\t rec: " << decoder->get_completed_waveforms(i) << "\t in progress: " << decoder->get_inprogress_waveforms(i) << std::endl;
     }
     analysis->RootOutput->cd();
     
