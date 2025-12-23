@@ -36,3 +36,15 @@ Run #,beam species,pdg,Beam energy (GeV),Voltage,Vbr,trig delay,machine gun,xpos
 52,cosmics,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with reset  TOA calib
 53,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-01 both stacks lower asic 0 F-stack upper asic 1 C stack with reset TOA calib
 54,cosmics,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-01 both stacks lower asic 0 F-stack upper asic 1 C stack with reset  TOA calib
+1020,pedestal,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 1 UCR-01 F-Stack 
+1023,pedestal,-13,5,0,38.3,0,10,0,0,0,-1,0,asic 0 UCR-01 F-Stack L1 offset 9 asic 0
+1026,pedestal,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 0 UCR-01 F-Stack L1 offset 9 asic 0 wrong config
+1028,pedestal,-13,5,46,38.3,0,10,0,0,0,-1,0,asic 0 UCR-01 F-Stack L1 offset 9 asic 0
+1030,pedestal,-13,5,46,38.3,0,10,0,0,0,-1,0,UCR-01 both stacks lower asic 0 F-stack upper asic 1 C stack
+1031,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-01 both stacks lower asic 0 F-stack upper asic 1 C stack
+1033,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack
+1037,pedestal,-13,5,0,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with new TOA calib 12 DAC
+1039,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with new TOA calib
+1040,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with new TOA calib
+1051,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-02 both stacks lower asic 0 F-stack upper asic 1 C stack with reset TOA calib
+1053,pedestal,-13,5,44,38.3,0,10,0,0,0,-1,0,UCR-01 both stacks lower asic 0 F-stack upper asic 1 C stack with reset TOA calib

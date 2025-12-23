@@ -1,0 +1,2 @@
+8,0,37,38,75,76,113,114,151
+0,/home/ewa/EIC/DATA/HGCROCData/PedestalRun_PairWithRun051/103_PedestalCalib_pedecalib_20251029_182545.json

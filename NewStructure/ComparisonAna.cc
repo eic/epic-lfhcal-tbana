@@ -269,7 +269,7 @@ bool ComparisonAna::ProcessAna(void){
         Int_t textSizePixel   = 30;
         Float_t textSizeRel   = 0.04;  
         TCanvas* canvasDeltaTime = new TCanvas("canvasDeltaTime","",0,0,1450,1300);  // gives the page size
-        DefaultCancasSettings( canvasDeltaTime,  0.08, 0.062, 0.025, 0.09);
+        DefaultCanvasSettings( canvasDeltaTime,  0.08, 0.062, 0.025, 0.09);
         canvasDeltaTime->SetLogy(1);
         PlotAnalysisComparison( canvasDeltaTime, 0, sumCalibs, textSizeRel, 
                             Form("%s/TimeDiff_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);

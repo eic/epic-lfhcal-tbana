@@ -65,6 +65,10 @@ elif [ $1 = "fbockSum" ]; then
   dataDirRaw=/media/fbock/LFHCal2/SummingTest/convertedHGCROC
   dataDirOut=/media/fbock/LFHCal2/SummingTest/convertedHGCROC
   PlotBaseDir=/media/fbock/LFHCal2/SummingTest
+elif [ $1 = "eglimos_CosmOct" ]; then
+	dataDirRaw=/home/ewa/EIC/DATA/HGCROCData/Cosmics_Oct25/converted
+	dataDirOut=/home/ewa/EIC/DATA/HGCROCData/Cosmics_Oct25/converted
+	PlotBaseDir=/home/ewa/EIC/DATA/HGCROCData/Cosmics_Oct25
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -107,11 +111,12 @@ if [ $2 == "calibMuonOct" ]; then
 # 	runs='036 037 038 039 040 041'  #UCR-01 30-32, UCR-02 33-41, starting 38 T0A lower DAC calib
 	
 # 	runs='018 021 022 029 032 034 036 038 041'
-	runs='041'
 	badChannelMap=../configs/LocalTesting/badChannelMap_TBSetup_HGCROC_cosmics_202510_Fstack.txt
 	runNrFile=../configs/LocalTesting/DataTakingDB_ORNL_Cosmics_HGCROC_202510.txt
+	pedestalRun='051' 
+	runs='052' 
 	for runNr in $runs; do 
-		MuonCalibHGCROC $3 $runNr $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap
+		MuonCalibHGCROC $3 $pedestalRun $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap
 	done
 fi
 

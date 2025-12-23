@@ -106,9 +106,10 @@
   //__________________________________________________________________________________________________________
   // Plot Noise with Fits for Full layer
   //__________________________________________________________________________________________________________
-  void PlotNoiseWithFits8MLayer (TCanvas* canvas8Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
-                                  std::map<int,TileSpectra> spectra, int option, 
-                                  Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
+  void PlotNoiseWithFits8MLayer (TCanvas* canvas8Panel, TPad* pads[8], 
+                                 Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
+                                 std::map<int,TileSpectra> spectra, int option, 
+                                 Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
                                   
     Double_t maxY = 0;
     std::map<int, TileSpectra>::iterator ithSpectra;
@@ -768,7 +769,7 @@
   void PlotCorr2D8MLayer (TCanvas* canvas8Panel, TPad* pads[8], 
                           Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                           std::map<int,TileSpectra> spectra, int option,
-                          Double_t xPMin, Double_t xPMax, Double_t maxY, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
+                          Double_t xPMin, Double_t xPMax, Double_t maxY, int layer, int mod,  TString nameOutput, RunInfo currRunInfo, bool noCalib = 0){
                                   
     Setup* setupT = Setup::GetInstance();
     
@@ -827,9 +828,10 @@
         temp2D->GetXaxis()->SetRangeUser(xPMin,xPMax);
         temp2D->Draw("col");
 
-        DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
-        temp2D->Draw("axis,same");
-        
+        if( !noCalib ){
+          DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
+          temp2D->Draw("axis,same");
+        }        
         if (tempProfile ){
           SetMarkerDefaultsProfile(tempProfile, 24, 0.7, kRed+2, kRed+2);           
           tempProfile->Draw("pe, same");
@@ -875,7 +877,7 @@
         }
       }
     }
-    if (skipped < 6)
+    if (skipped < 8)
       canvas8Panel->SaveAs(nameOutput.Data());
   }
   

@@ -521,7 +521,7 @@
     Double_t textSizeSubpad = 0.06;
     
     TCanvas* canvas3D2 = new TCanvas("canvas3D2","",0,0,1400,750);  // gives the page size
-    // DefaultCancasSettings( canvas3D2, 0.05, 0.25, 0.05, 0.1);
+    // DefaultCanvasSettings( canvas3D2, 0.05, 0.25, 0.05, 0.1);
     TPad* padEvt[4];
     padEvt[0] = new TPad("pad_0", "", 0, 0, 0.75, 0.9,-1, -1, -2);
     padEvt[1] = new TPad("pad_1", "", 0.75, 0.66, 1, 1,-1, -1, -2);
@@ -637,7 +637,7 @@
     Double_t textSizeSubpad = 0.06;
     
     TCanvas* canvas3D2 = new TCanvas("canvas3D2","",0,0,1400,750);  // gives the page size
-    // DefaultCancasSettings( canvas3D2, 0.05, 0.25, 0.05, 0.1);
+    // DefaultCanvasSettings( canvas3D2, 0.05, 0.25, 0.05, 0.1);
     TPad* padEvt[4];
     padEvt[0] = new TPad("pad_0", "", 0, 0, 0.75, 0.9,-1, -1, -2);
     padEvt[1] = new TPad("pad_1", "", 0.75, 0.66, 1, 1,-1, -1, -2);

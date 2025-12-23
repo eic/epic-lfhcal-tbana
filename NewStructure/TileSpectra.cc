@@ -114,6 +114,14 @@ bool TileSpectra::FillWaveformVsTime(std::vector<int> samples, double toa = 0, d
   return true;
 }
 
+bool TileSpectra::FillWaveformVsTimeParser(std::vector<int> samples, double ped = 0){
+  for( int k = 0; k < (int)samples.size(); k++){
+    hcorr.Fill(k*1562.5, samples.at(k)-ped);
+    if( extend == 3) hspectraLGHG.Fill(k*1562.5,samples.at(k)-ped);
+  }
+  return true;
+}
+
 
 bool TileSpectra::FillTrigger(double t){
   if (!bTriggPrim) bTriggPrim =true;
@@ -262,7 +270,7 @@ bool TileSpectra::FitNoise(double* out, int year = -1, bool isNoiseTrigg = false
 
     // Second iteration
     double minHGFit = result->Parameter(1) - 2 * result->Parameter(2);
-    double maxHGFit = result->Parameter(1) + 1 * result->Parameter(2);
+    double maxHGFit = result->Parameter(1) + 2 * result->Parameter(2);
     if (debug > 1) std::cout << "HG: " << minHGFit << "\t" << maxHGFit << "\t" << hspectraHG.GetEntries() << "\t" << hspectraHG.GetMean()<< std::endl;
     result = hspectraHG.Fit(&BackgroundHG, "QNSWW", "", minHGFit, maxHGFit);  // limit to 2sigma
     if ((int)result != 0 || result->IsValid() != true){

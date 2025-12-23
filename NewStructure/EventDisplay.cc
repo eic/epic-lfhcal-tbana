@@ -169,8 +169,7 @@ bool EventDisplay::Plot(){
   gSystem->Exec("mkdir -p "+outputDirPlots);
   
   TCanvas* canvas3D = new TCanvas("canvas3D","",0,0,1400,750);  // gives the page size
-  DefaultCancasSettings( canvas3D, 0.12, 0.08, 0.05, 0.1);
-
+  DefaultCanvasSettings( canvas3D, 0.12, 0.08, 0.05, 0.1);
   // processing events
   int evts=TdataIn->GetEntries();
   int evtsMuon= 0;
