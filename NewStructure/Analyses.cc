@@ -1253,23 +1253,21 @@ bool Analyses::GetPedestal(void){
   for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
     for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
       PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  hSpectra, setup, true, minADCRange, maxADCRange, 1.2, l, m,
+                                  hSpectra, 0, minADCRange, maxADCRange, 1.2, l, m,
                                   Form("%s/Noise_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
       if (typeRO == ReadOut::Type::Caen){
         PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  hSpectra, setup, false, minADCRange, maxADCRange, 1.2, l, m,
+                                  hSpectra, 1, minADCRange, maxADCRange, 1.2, l, m,
                                   Form("%s/Noise_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
       } else if (typeRO == ReadOut::Type::Hgcroc){
         PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, hSpectra, 1, 0, it->second.samples+1, 300, l, m,
                                     Form("%s/Waveform_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
         PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  hSpectra, setup, false, minADCRange, maxADCRange, 1.2, l, m,
+                                  hSpectra, 1, minADCRange, maxADCRange, 1.2, l, m,
                                   Form("%s/AllSampleADC_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
       }
     }
   }
-
-  
   return true;
 }
 
@@ -1968,7 +1966,7 @@ bool Analyses::AnalyseWaveForm(void){
     PlotSimple2D( canvas2DSigQA, hHighestADCAbovePedVsLayer, -10000, -10000, textSizeRel, Form("%s/MaxADCAboveNoise_vsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);    
     
     TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
-    DefaultCancasSettings( canvas1DSimple, 0.08, 0.03, 0.03, 0.07);
+    DefaultCanvasSettings( canvas1DSimple, 0.08, 0.03, 0.03, 0.07);
 
     PlotSimple1D(canvas1DSimple, hSampleTOA, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleToA.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
     PlotSimple1D(canvas1DSimple, hSampleMaxADC, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleMaxADC.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);

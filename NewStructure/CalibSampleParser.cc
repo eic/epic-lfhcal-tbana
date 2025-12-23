@@ -358,12 +358,12 @@ bool CalibSampleParser::ProcessAndPlotWaveforms(){
     aTile->SetPedestal(waveform_builder->get_pedestal());
     
     if(ithSpectra!=hSpectra.end()){
-      ithSpectra->second.FillExt(tot,adc, 0., 0.);
-      ithSpectra->second.FillWaveform(aTile->GetADCWaveform(),ped);
+      ithSpectra->second.FillExtHGCROC(adc, 0., tot, 0);
+      ithSpectra->second.FillWaveformVsTimeParser(aTile->GetADCWaveform(),ped);
     } else {
       RootOutputHist->cd("IndividualCells");
       hSpectra[aTile->GetCellID()]=TileSpectra("ped",3,aTile->GetCellID(),nullptr,event.GetROtype(),debug);
-      hSpectra[aTile->GetCellID()].FillExt(tot,adc, 0., 0.);
+      hSpectra[aTile->GetCellID()].FillExtHGCROC(adc, 0., tot, 0);
       hSpectra[aTile->GetCellID()].FillWaveformVsTimeParser(aTile->GetADCWaveform(),ped);
       hSpectra[aTile->GetCellID()].WriteExt(false);
       RootOutput->cd();
@@ -385,11 +385,11 @@ bool CalibSampleParser::ProcessAndPlotWaveforms(){
     for(int m=0; m < setup->GetNMaxModule()+1; m++ ){
         if (l%10 == 0 && l > 0 && debug > 0) std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;    
         
-          PlotCorr2D8MLayer(canvas8PanelProf, pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, hSpectra, 0, t_max, 1024, l, m,
-                                    Form("%s/Waveform_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, "pdf"), it->second, 1);
+          PlotCorr2D8MLayer(canvas8PanelProf, pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
+                            hSpectra, 1, 0, t_max, 1024, l, m,
+                            Form("%s/Waveform_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, "pdf"), it->second, 1);
     }
   }
-  
 
   std::cout <<"=============================================================" << std::endl;
   std::cout <<" Plots saved to " << outputDirPlots.Data() << std::endl;

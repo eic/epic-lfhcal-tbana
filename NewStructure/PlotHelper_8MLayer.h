@@ -106,9 +106,10 @@
   //__________________________________________________________________________________________________________
   // Plot Noise with Fits for Full layer
   //__________________________________________________________________________________________________________
-  void PlotNoiseWithFits8MLayer (TCanvas* canvas8Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
-                                  std::map<int,TileSpectra> spectra, int option, 
-                                  Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
+  void PlotNoiseWithFits8MLayer (TCanvas* canvas8Panel, TPad* pads[8], 
+                                 Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
+                                 std::map<int,TileSpectra> spectra, int option, 
+                                 Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
                                   
     Double_t maxY = 0;
     std::map<int, TileSpectra>::iterator ithSpectra;
@@ -819,6 +820,7 @@
           temp2D          = ithSpectra->second.GetCorrTOAADC();                    
         } else if (option == 3){
           temp2D          = ithSpectra->second.GetCorrTOASample();
+        }
         
         if (!temp2D) continue;
         SetStyleHistoTH2ForGraphs( temp2D, temp2D->GetXaxis()->GetTitle(), temp2D->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
