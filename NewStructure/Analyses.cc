@@ -1252,6 +1252,11 @@ bool Analyses::GetPedestal(void){
  
   for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
     for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+      if (!setup->IsLayerOn(l,m)){
+        std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+        continue;
+      }
+      
       PlotNoiseWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   hSpectra, 0, minADCRange, maxADCRange, 1.2, l, m,
                                   Form("%s/Noise_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
@@ -1425,9 +1430,9 @@ bool Analyses::TransferCalib(void){
           
           int layer     = setup->GetLayer(aTile->GetCellID());
           int chInLayer = setup->GetChannelInLayer(aTile->GetCellID());          
-          if (debug > 3 || adc > 10 || aTile->GetTOA() > 0 ){
-            aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(aTile->GetCellID()), calib.GetPedestalMeanL(aTile->GetCellID()), calib.GetPedestalSigL(aTile->GetCellID()));
-          }
+          // if (debug > 3 || adc > 10 || aTile->GetTOA() > 0 ){
+            // aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(aTile->GetCellID()), calib.GetPedestalMeanL(aTile->GetCellID()), calib.GetPedestalSigL(aTile->GetCellID()));
+          // }
           if(ithSpectra!=hSpectra.end()){
             ithSpectra->second.FillExtHGCROC(adc,toa,tot,0);
             ithSpectra->second.FillWaveform(aTile->GetADCWaveform(),0);
@@ -1601,6 +1606,11 @@ bool Analyses::TransferCalib(void){
         for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
           if (l%10 == 0 && l > 0 && debug > 0)
             std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+          if (!setup->IsLayerOn(l,m)){
+            std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+            continue;
+          }
+          
           if (typeRO == ReadOut::Type::Caen) {
             PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
                                 textSizePixel, hSpectra, 0, -20, 340, 4000, l, m,
@@ -2013,6 +2023,12 @@ bool Analyses::AnalyseWaveForm(void){
         for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
           if (l%10 == 0 && l > 0 && debug > 0)
             std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+          if (!setup->IsLayerOn(l,m)){
+            std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+            continue;
+          }
+          
+          
           PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
                               textSizePixel, hSpectra, 1, -25000, (it->second.samples)*25000, 300, l, m,
                               Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(),m,  l, plotSuffix.Data()), it->second);
@@ -2853,6 +2869,11 @@ bool Analyses::GetScaling(void){
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){    
         if (l%10 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
+        if (!setup->IsLayerOn(l,m)){
+          std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+          continue;
+        }
+        
         if (ExtPlot > 0){
           PlotMipWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                     hSpectra, hSpectraTrigg, setup, true, -100, maxHG, 1.2, l, m,
@@ -3332,6 +3353,11 @@ bool Analyses::GetImprovedScaling(void){
     for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){ 
       if (l%10 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
+      if (!setup->IsLayerOn(l,m)){
+        std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+        continue;
+      }
+          
       PlotMipWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                 hSpectra, hSpectraTrigg, setup, true, -100, maxHG, 1.2, l, m,
                                 Form("%s/MIP_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
@@ -4247,10 +4273,10 @@ bool Analyses::SkimHGCROCData(void){
       // std::cout << " integ: "<< aTile->GetTOT() << "\t" << aTile->GetTOA() << std::endl;
       
       if (aTile->GetTOA() > 0) triggered= true;
-      // if(aTile->GetLocalTriggerBit()!= (char)1){
-        // event.RemoveTile(aTile);
-        // j--;
-      // }
+      if(aTile->GetLocalTriggerBit()!= (char)1 && !triggered){
+        event.RemoveTile(aTile);
+        j--;
+      }
     }
     
     if (!triggered && debug == 3){
@@ -4277,7 +4303,7 @@ bool Analyses::SkimHGCROCData(void){
     }
     
     RootOutput->cd();
-    if (triggered){
+    if (event->GetNTiles() > 0){
       evtTrigg++;
       TdataOut->Fill();
     }

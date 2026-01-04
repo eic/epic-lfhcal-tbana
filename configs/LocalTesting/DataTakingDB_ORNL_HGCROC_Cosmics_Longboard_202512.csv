@@ -1,0 +1,24 @@
+year 2025
+month 12
+readout HGCROC
+facility ORNL
+beam-line cosmics
+Run Number,beam species,pdg,beam energy (GeV),bias Voltage ,V_br,trigger delay,machine gun number,Table Position x,Table Position (y),dead time,phase,nrKCU,nrAsic,spare,comments
+158,pedestal,0,5,47,38.3,4,10,0.,0.,10000,12,1,2,,22.12.2025 config 1 ANL-01 
+159,pedestal,0,5,47,38.3,4,10,0.,0.,10000,12,1,2,,22.12.2025 config 1 ANL-01 trigger something wrong
+160,cosmics,-13,5,47,38.3,4,10,0.,0.,10000,12,1,2,,22.12.2025 config 1 ANL-01 trigger OR
+161,pedestal,0,5,47,38.3,4,10,0.,0.,10000,12,1,2,,23.12.2025 config 2 ANL-01 
+162,cosmics,-13,5,47,38.3,4,10,0.,0.,10000,12,1,2,,23.12.2025 config 2 ANL-01 trigger OR
+163,cosmics,-13,5,47,38.3,4,10,0.,0.,10000,12,1,2,,23.12.2025 config 2 ANL-01 trigger AND
+164,cosmics,-13,5,47,38.3,4,10,0.,0.,10000,12,1,2,,26.12.2025 config 3 ANL-01 trigger OR
+165,pedestal,0,5,47,38.3,4,10,0.,0.,10000,12,1,2,,26.12.2025 config 3 ANL-01 
+166,pedestal,0,5,47,38.3,4,10,0.,0.,10000,12,1,4,,26.12.2025 config 4 GSU-01 & ANL-01
+167,cosmics,-13,5,47,38.3,4,10,0.,0.,10000,12,1,4,,26.12.2025 config 4 GSU-01 & ANL-01 trigger AND - something wrong with channel 40 & 41
+170,pedestal,0,5,47,38.3,4,10,0.,0.,10000,12,1,4,,29.12.2025 config 5 GSU-01 & ANL-01
+171,cosmics,-13,5,47,38.3,4,10,0.,0.,10000,12,1,4,,29.12.2025 config 5 GSU-01 & ANL-01 trigger OR
+172,cosmics,-13,5,47,38.3,4,10,0.,0.,10000,12,1,4,,29.12.2025 config 5 GSU-01 & ANL-01 trigger OR asic 2 connector pushed in more
+173,pedestal,0,5,47,38.3,4,10,0.,0.,10000,12,1,4,,29.12.2025 config 6 GSU-01 & ANL-01
+175,cosmics,-13,5,47,38.3,4,10,0.,0.,10000,12,1,4,,29.12.2025 config 6 GSU-01 & ANL-01 trigger OR
+176,cosmics,-13,5,47,38.3,4,10,0.,0.,10000,12,1,4,,29.12.2025 config 6 GSU-01 & ANL-01 trigger AND asic 2 connector pushed in more
+
+

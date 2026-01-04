@@ -49,6 +49,7 @@ class Setup{
   bool    Initialize   (TString, int);
   bool    Initialize   (RootSetupWrapper&);
   bool    IsInit       (void) const;
+  bool    IsLayerOn     (int /**/, int /**/) const; 
   float     GetMinX       (void) const;
   float     GetMaxX       (void) const;
   float     GetMinY       (void) const;
@@ -58,7 +59,7 @@ class Setup{
   float     GetCellWidth  (void) const;
   float     GetCellHeight (void) const;
   float     GetCellDepth  (void) const;
-
+  
   friend class RootSetupWrapper;
   
  private:

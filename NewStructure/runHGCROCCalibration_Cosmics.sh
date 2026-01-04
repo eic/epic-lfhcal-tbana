@@ -104,7 +104,6 @@ if [ $2 = "pedestalOct" ]; then
   done
 fi
 
-
 if [ $2 == "calibMuonOct" ]; then
 # 	runs='018' 
 # 	runs='018 020 021 022 028 029 030 031 032 033 034'  #UCR-01 30-32, UCR-02 33-41, starting 38 T0A lower DAC calib
@@ -138,3 +137,5 @@ if [ $2 == "calibSum" ]; then
 		MuonCalibHGCROC $3 $runNr $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap
 	done
 fi
+
+

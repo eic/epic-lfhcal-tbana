@@ -319,6 +319,22 @@ float Setup::GetMaxZ() const{
   return max+(cellD/2);/*to get to the center of the tile*/
 }
 
+bool Setup::IsLayerOn(int layer, int mod) const{
+  bool isOn = false;
+  for (int r = 0; r< GetNMaxRow(); r++){
+      for (int c = 0; c < GetNMaxColumn(); c++){
+          int cellID = GetCellID(r, c, layer, mod);
+          std::map<int, TString>::const_iterator it=assemblyID.find(cellID);
+          if (it != assemblyID.end()){
+            isOn = true;
+            break;
+          }
+      }
+  }
+  return isOn;
+}
+
+
 float Setup::GetCellWidth() const{
   return cellW;
 }

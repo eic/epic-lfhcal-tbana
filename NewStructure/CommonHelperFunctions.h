@@ -10,6 +10,9 @@
   #include <map>
   #include <utility>
 
+  #include <cstdint>
+  #include <string>
+  
   struct Layer{
     Layer(): nCells(0), energy(0.), avX(0.), avY(0.) {}
     double nCells;
@@ -242,8 +245,42 @@
       return 410.;
     }
   }
-  
 
-  
+  // // Function to generate the CRC-32 lookup table at runtime (or compile time with C++11 constexpr)
+  // void generate_crc32_table(uint32_t(&table)[256]) {
+  //     uint32_t polynomial = 0x104C11DB7; // Common CRC-32 polynomial
+  //     for (uint32_t i = 0; i < 256; i++) {
+  //         uint32_t c = i;
+  //         for (size_t j = 0; j < 8; j++) {
+  //             if (c & 1) {
+  //                 c = polynomial ^ (c >> 1);
+  //             } else {
+  //                 c >>= 1;
+  //             }
+  //         }
+  //         table[i] = c;
+  //     }
+  // }
+  // 
+  // // Function to calculate the CRC-32 checksum for a buffer
+  // uint32_t calculate_crc32(const uint8_t* data, size_t length) {
+  //     uint32_t crc = 0x0;           // Initial value (standard for HGCROC)
+  //     // uint32_t crc = 0xFFFFFFFF; // Initial value (standard for CRC-32)
+  //     uint32_t table[256];
+  //     generate_crc32_table(table);
+  // 
+  //     for (size_t i = 0; i < length; ++i) {
+  //         crc = table[(crc ^ data[i]) & 0xFF] ^ (crc >> 8);
+  //     }
+  // 
+  //     return crc ^ 0xFFFFFFFF; // Final XOR (standard for CRC-32)
+  // }  
+
+  // Usage CRC
+  // std::string message = "123456789"; // Standard test string for CRC-32 check value
+  // The expected CRC-32 result for this string is 0xCBF43926
+  //  uint32_t checksum = calculate_crc32(reinterpret_cast<const uint8_t*>(message.c_str()), message.length());
+  //  std::cout << "CRC-32 Checksum: 0x" << std::hex << std::uppercase << checksum << std::endl;
+
   
 #endif
