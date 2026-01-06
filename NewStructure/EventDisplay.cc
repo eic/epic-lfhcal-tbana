@@ -302,7 +302,7 @@ bool EventDisplay::Plot(){
           x = (double) aTile->GetX();
           y = (double) aTile->GetY();
           z = (double) aTile->GetZ();
-          if( debug>2 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << energy  << "\tx,y,z: " <<x<< "\t" <<y<< "\t" << z << std::endl;
+          if( debug>2 ) std::cout << "CellID: " << aTile->GetCellID() << "\t value: " << energy  << "\tx,y,z: " <<x<< "\t" <<y<< "\t" << z << std::endl;
           muonTrigger = (unsigned char)aTile->GetLocalTriggerBit();
         } else {
           Caen* aTile=(Caen*)event.GetTile(j);
@@ -335,6 +335,7 @@ bool EventDisplay::Plot(){
           }
         } 
       }
+      std::cout << "Etot: "  << Etot << std::endl;
 
       //**********************************************************************
       //********************* Plotting ***************************************
@@ -357,30 +358,32 @@ bool EventDisplay::Plot(){
       Double_t textSizeRel = 0.035;
       StyleSettingsBasics("pdf");
       SetPlotStyle();
-      if( (muontrigg&&plotMuonEvts) || !plotMuonEvts){
-        EventDisplayWithSliceHighlighted( hXYZMapEvt, hX_energy_Evt, hY_energy_Evt, hZ_energy_Evt, 
-                                         hXYZMapEvt_Muon, hX_energy_Evt_Muon, hY_energy_Evt_Muon, hZ_energy_Evt_Muon, 
-                                         hXYZMapEvt_nonMuon, hX_energy_Evt_nonMuon, hY_energy_Evt_nonMuon, hZ_energy_Evt_nonMuon, 
-                                         i, Etot, maxE, maxEX, maxEY, maxEZ,  muontrigg,
-                                         it->second, Form("%s/EventDisplay_muonHighlighed_evt", outputDirPlots.Data()), plotSuffix);    
-      }
+      if (Etot > 0){
+        if( (muontrigg&&plotMuonEvts) || !plotMuonEvts){
+          EventDisplayWithSliceHighlighted( hXYZMapEvt, hX_energy_Evt, hY_energy_Evt, hZ_energy_Evt, 
+                                          hXYZMapEvt_Muon, hX_energy_Evt_Muon, hY_energy_Evt_Muon, hZ_energy_Evt_Muon, 
+                                          hXYZMapEvt_nonMuon, hX_energy_Evt_nonMuon, hY_energy_Evt_nonMuon, hZ_energy_Evt_nonMuon, 
+                                          i, Etot, maxE, maxEX, maxEY, maxEZ,  muontrigg,
+                                          it->second, Form("%s/EventDisplay_muonHighlighed_evt", outputDirPlots.Data()), plotSuffix);    
+        }
 
-      if( (muontrigg&&plotMuonEvts) || !plotMuonEvts){
-        EventDisplayWithSlice(  hXYZMapEvt, hX_energy_Evt, hY_energy_Evt, hZ_energy_Evt, 
-                                i, Etot, maxE, maxEX, maxEY, maxEZ,  muontrigg,
-                                it->second, Form("%s/EventDisplay_MonoChrome_evt", outputDirPlots.Data()), plotSuffix);    
+        if( (muontrigg&&plotMuonEvts) || !plotMuonEvts){
+          EventDisplayWithSlice(  hXYZMapEvt, hX_energy_Evt, hY_energy_Evt, hZ_energy_Evt, 
+                                  i, Etot, maxE, maxEX, maxEY, maxEZ,  muontrigg,
+                                  it->second, Form("%s/EventDisplay_MonoChrome_evt", outputDirPlots.Data()), plotSuffix);    
 
-        canvas3D->cd();
+          canvas3D->cd();
 
-        SetStyleHistoTH3ForGraphs(hXYZMapEvt, "z", "x","y", 0.85*textSizeRel,textSizeRel, 0.85*textSizeRel,textSizeRel, 0.85*textSizeRel,textSizeRel, 1.1, 1.1, 1.15, 505, 510,510);
-        hXYZMapEvt->SetMaximum(maxE);
-        hXYZMapEvt->DrawCopy("box2z");
-        DrawLatex(0.05, 0.94, GetStringFromRunInfo(it->second, 1), false, 0.85*textSizeRel, 42);
-        if(muontrigg) DrawLatex(0.05, 0.90, Form("Event %d, muon triggered",i), false, 0.85*textSizeRel, 42);
-        else DrawLatex(0.05, 0.90, Form("Event %d",i), false, 0.85*textSizeRel, 42);
-        
-        canvas3D->SaveAs( Form("%s/EventDisplay_Colored_evt%06i.%s", outputDirPlots.Data(), i, plotSuffix.Data()));
-        canvas3D->ResetDrawn();
+          SetStyleHistoTH3ForGraphs(hXYZMapEvt, "z", "x","y", 0.85*textSizeRel,textSizeRel, 0.85*textSizeRel,textSizeRel, 0.85*textSizeRel,textSizeRel, 1.1, 1.1, 1.15, 505, 510,510);
+          hXYZMapEvt->SetMaximum(maxE);
+          hXYZMapEvt->DrawCopy("box2z");
+          DrawLatex(0.05, 0.94, GetStringFromRunInfo(it->second, 1), false, 0.85*textSizeRel, 42);
+          if(muontrigg) DrawLatex(0.05, 0.90, Form("Event %d, muon triggered",i), false, 0.85*textSizeRel, 42);
+          else DrawLatex(0.05, 0.90, Form("Event %d",i), false, 0.85*textSizeRel, 42);
+          
+          canvas3D->SaveAs( Form("%s/EventDisplay_Colored_evt%06i.%s", outputDirPlots.Data(), i, plotSuffix.Data()));
+          canvas3D->ResetDrawn();
+        }
       }
     }
 
