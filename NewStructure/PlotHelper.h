@@ -515,7 +515,7 @@
                                          TH3F* h3Remain, TH1D* h1XRemain, TH1D* h1YRemain, TH1D* h1ZRemain, 
                                          Int_t evtNr, Float_t etot, Float_t maxE, 
                                          Float_t maxEX, Float_t maxEY, Float_t maxEZ, bool ktrigg,
-                                         RunInfo currRunInfo, TString outputName, TString suffix = "pdf"
+                                         RunInfo currRunInfo, TString outputName, TString suffix = "pdf", TString unit = "mip eq/tile"
                                         ){
     Double_t textSizeRel = 0.035;
     Double_t textSizeSubpad = 0.06;
@@ -548,8 +548,8 @@
     DrawLatex(0.01, 0.92, GetStringFromRunInfo(currRunInfo, 1), false, 0.85*textSizeRel, 42);
     if(ktrigg) DrawLatex(0.01, 0.89, Form("Event %d, muon triggered",evtNr), false, 0.85*textSizeRel, 42);
     else DrawLatex(0.01, 0.89, Form("Event %d",evtNr), false, 0.85*textSizeRel, 42);
-    DrawLatex(0.01, 0.86, Form("#it{E}_{tot} = %.2f mip eq/tile", etot), false, 0.85*textSizeRel, 42);
-    DrawLatex(0.01, 0.83, Form("#it{E}_{max,cell} = %.2f mip eq/tile", maxE), false, 0.85*textSizeRel, 42);
+    DrawLatex(0.01, 0.86, Form("#it{E}_{tot} = %.2f %s", etot, unit.Data()), false, 0.85*textSizeRel, 42);
+    DrawLatex(0.01, 0.83, Form("#it{E}_{max,cell} = %.2f %s", maxE, unit.Data()), false, 0.85*textSizeRel, 42);
     
     padEvt[0]->Draw();
     padEvt[0]->cd();
@@ -575,7 +575,7 @@
     canvas3D2->cd();
     padEvt[1]->Draw();
     padEvt[1]->cd();
-    SetStyleHistoTH1ForGraphs( h1XAll, "#it{x} (cm)", "#it{E} (mip eq./tile)", 0.85*textSizeSubpad, textSizeSubpad, 0.85*textSizeSubpad, textSizeSubpad,0.9, 0.9);  
+    SetStyleHistoTH1ForGraphs( h1XAll, "#it{x} (cm)", Form("#it{E} (%s)",unit.Data()), 0.85*textSizeSubpad, textSizeSubpad, 0.85*textSizeSubpad, textSizeSubpad,0.9, 0.9);  
     SetMarkerDefaults(h1XAll, 24, 1, kBlack, kBlack, kFALSE);   
     SetMarkerDefaults(h1XLocTrigg, 20, 0.8, kRed+1, kRed+1, kFALSE);   
     SetMarkerDefaults(h1XRemain, 34, 0.8, kBlue+1, kBlue+1, kFALSE);   
@@ -586,7 +586,7 @@
     canvas3D2->cd();
     padEvt[2]->Draw();
     padEvt[2]->cd();
-    SetStyleHistoTH1ForGraphs( h1YAll, "#it{y} (cm)", "#it{E} (mip eq./tile)", 0.85*textSizeSubpad, textSizeSubpad, 0.85*textSizeSubpad, textSizeSubpad,0.9, 0.9);  
+    SetStyleHistoTH1ForGraphs( h1YAll, "#it{y} (cm)", Form("#it{E} (%s)",unit.Data()), 0.85*textSizeSubpad, textSizeSubpad, 0.85*textSizeSubpad, textSizeSubpad,0.9, 0.9);  
     SetMarkerDefaults(h1YAll, 24, 1, kBlack, kBlack, kFALSE);   
     SetMarkerDefaults(h1YLocTrigg, 20, 0.8, kRed+1, kRed+1, kFALSE);   
     SetMarkerDefaults(h1YRemain, 34, 0.8, kBlue+1, kBlue+1, kFALSE);   
@@ -598,7 +598,7 @@
     canvas3D2->cd();
     padEvt[3]->Draw();
     padEvt[3]->cd();
-    SetStyleHistoTH1ForGraphs( h1ZAll, "#it{z} (cm)", "#it{E} (mip eq./tile)", 0.85*textSizeSubpad, textSizeSubpad, 0.85*textSizeSubpad, textSizeSubpad,0.9, 0.9);  
+    SetStyleHistoTH1ForGraphs( h1ZAll, "#it{z} (cm)", Form("#it{E} (%s)",unit.Data()), 0.85*textSizeSubpad, textSizeSubpad, 0.85*textSizeSubpad, textSizeSubpad,0.9, 0.9);  
     SetMarkerDefaults(h1ZAll, 24, 1, kBlack, kBlack, kFALSE);   
     SetMarkerDefaults(h1ZLocTrigg, 20, 0.8, kRed+1, kRed+1, kFALSE);   
     SetMarkerDefaults(h1ZRemain, 34, 0.8, kBlue+1, kBlue+1, kFALSE);   
@@ -631,7 +631,7 @@
   void EventDisplayWithSlice( TH3F* h3All, TH1D* h1XAll, TH1D* h1YAll, TH1D* h1ZAll, 
                               Int_t evtNr, Float_t etot, Float_t maxE, 
                               Float_t maxEX, Float_t maxEY, Float_t maxEZ, bool ktrigg,
-                              RunInfo currRunInfo, TString outputName, TString suffix = "pdf"
+                              RunInfo currRunInfo, TString outputName, TString suffix = "pdf", TString unit = "mip eq/tile"
                             ){
     Double_t textSizeRel = 0.035;
     Double_t textSizeSubpad = 0.06;
@@ -664,8 +664,8 @@
     DrawLatex(0.01, 0.92, GetStringFromRunInfo(currRunInfo, 1), false, 0.85*textSizeRel, 42);
     if(ktrigg) DrawLatex(0.01, 0.89, Form("Event %d, muon triggered",evtNr), false, 0.85*textSizeRel, 42);
     else DrawLatex(0.01, 0.89, Form("Event %d",evtNr), false, 0.85*textSizeRel, 42);
-    DrawLatex(0.01, 0.86, Form("#it{E}_{tot} = %.2f mip eq/tile", etot), false, 0.85*textSizeRel, 42);
-    DrawLatex(0.01, 0.83, Form("#it{E}_{max,cell} = %.2f mip eq/tile", maxE), false, 0.85*textSizeRel, 42);
+    DrawLatex(0.01, 0.86, Form("#it{E}_{tot} = %.2f %s", etot, unit.Data()), false, 0.85*textSizeRel, 42);
+    DrawLatex(0.01, 0.83, Form("#it{E}_{max,cell} = %.2f %s", maxE, unit.Data()), false, 0.85*textSizeRel, 42);
     
     padEvt[0]->Draw();
     padEvt[0]->cd();
@@ -683,7 +683,7 @@
     canvas3D2->cd();
     padEvt[1]->Draw();
     padEvt[1]->cd();
-    SetStyleHistoTH1ForGraphs( h1XAll, "#it{x} (cm)", "#it{E} (mip eq./tile)", 0.85*textSizeSubpad, textSizeSubpad, 0.85*textSizeSubpad, textSizeSubpad,0.9, 0.9);  
+    SetStyleHistoTH1ForGraphs( h1XAll, "#it{x} (cm)", Form("#it{E} (%s)",unit.Data()), 0.85*textSizeSubpad, textSizeSubpad, 0.85*textSizeSubpad, textSizeSubpad,0.9, 0.9);  
     SetMarkerDefaults(h1XAll, 24, 1, kBlue+1, kBlue+1, kFALSE);   
     h1XAll->GetYaxis()->SetRangeUser(0.,1.1*maxEX);
     h1XAll->Draw("pe");
@@ -691,7 +691,7 @@
 
     padEvt[2]->Draw();
     padEvt[2]->cd();
-    SetStyleHistoTH1ForGraphs( h1YAll, "#it{y} (cm)", "#it{E} (mip eq./tile)", 0.85*textSizeSubpad, textSizeSubpad, 0.85*textSizeSubpad, textSizeSubpad,0.9, 0.9);  
+    SetStyleHistoTH1ForGraphs( h1YAll, "#it{y} (cm)", Form("#it{E} (%s)",unit.Data()), 0.85*textSizeSubpad, textSizeSubpad, 0.85*textSizeSubpad, textSizeSubpad,0.9, 0.9);  
     SetMarkerDefaults(h1YAll, 24, 1, kBlue+1, kBlue+1, kFALSE);   
     h1YAll->GetYaxis()->SetRangeUser(0.,1.1*maxEY);
     h1YAll->Draw("pe");
@@ -699,7 +699,7 @@
     canvas3D2->cd();
     padEvt[3]->Draw();
     padEvt[3]->cd();
-    SetStyleHistoTH1ForGraphs( h1ZAll, "#it{z} (cm)", "#it{E} (mip eq./tile)", 0.85*textSizeSubpad, textSizeSubpad, 0.85*textSizeSubpad, textSizeSubpad,0.9, 0.9);  
+    SetStyleHistoTH1ForGraphs( h1ZAll, "#it{z} (cm)", Form("#it{E} (%s)",unit.Data()), 0.85*textSizeSubpad, textSizeSubpad, 0.85*textSizeSubpad, textSizeSubpad,0.9, 0.9);  
     SetMarkerDefaults(h1ZAll, 24, 1, kBlue+1, kBlue+1, kFALSE);   
     h1ZAll->GetYaxis()->SetRangeUser(0.,1.1*maxEZ);
     h1ZAll->Draw("pe");

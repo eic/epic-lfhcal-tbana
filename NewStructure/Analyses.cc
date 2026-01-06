@@ -925,7 +925,8 @@ bool Analyses::GetPedestal(void){
   
   std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
   
-  int maxChannelPerLayer = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+  int maxChannelPerLayer          = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
+  int maxChannelPerLayerSingleMod = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
   ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2", "Migrad");  
   
   // create HG and LG histo's per channel
@@ -1095,7 +1096,7 @@ bool Analyses::GetPedestal(void){
     }
     
     int layer     = setup->GetLayer(ithSpectra->second.GetCellID());
-    int chInLayer = setup->GetChannelInLayer(ithSpectra->second.GetCellID());
+    int chInLayer = setup->GetChannelInLayer(ithSpectra->second.GetCellID())+setup->GetModule(ithSpectra->second.GetCellID())*maxChannelPerLayerSingleMod;
 
     hMeanPedHGvsCellID->SetBinContent(hMeanPedHGvsCellID->FindBin(ithSpectra->second.GetCellID()), parameters[4]);
     hMeanPedHGvsCellID->SetBinError  (hMeanPedHGvsCellID->FindBin(ithSpectra->second.GetCellID()), parameters[6]);
@@ -1334,7 +1335,8 @@ bool Analyses::TransferCalib(void){
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
   hspectraADCPedvsCellID->SetDirectory(0);
   
-  int maxChannelPerLayer = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+  int maxChannelPerLayer             = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
+  int maxChannelPerLayerSingleMod    = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
   TH2D* hHighestADCAbovePedVsLayer   = new TH2D( "hHighestEAbovePedVsLayer","Highest ADC above PED; layer; brd channel; #Sigma(ADC) (arb. units) ",
                                             setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
   hHighestADCAbovePedVsLayer->SetDirectory(0);
@@ -1429,7 +1431,7 @@ bool Analyses::TransferCalib(void){
           hspectraTOAvsCellID->Fill(aTile->GetCellID(),toa);
           
           int layer     = setup->GetLayer(aTile->GetCellID());
-          int chInLayer = setup->GetChannelInLayer(aTile->GetCellID());          
+          int chInLayer = setup->GetChannelInLayer(ithSpectra->second.GetCellID())+setup->GetModule(ithSpectra->second.GetCellID())*maxChannelPerLayerSingleMod;
           // if (debug > 3 || adc > 10 || aTile->GetTOA() > 0 ){
             // aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(aTile->GetCellID()), calib.GetPedestalMeanL(aTile->GetCellID()), calib.GetPedestalSigL(aTile->GetCellID()));
           // }
@@ -1488,7 +1490,9 @@ bool Analyses::TransferCalib(void){
     //***********************************************************************************************
     //***** Monitoring histos for calib parameters & fits results of 1st iteration ******************
     //***********************************************************************************************
-    int maxChannelPerLayer        = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+    int maxChannelPerLayer             = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
+    int maxChannelPerLayerSingleMod    = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+
     // monitoring applied pedestals
     TH1D* hBCvsCellID      = new TH1D( "hBC_vsCellID","Bad Channel vs CellID ; cell ID; BC flag ",
                                               setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5);
@@ -1526,7 +1530,7 @@ bool Analyses::TransferCalib(void){
       ithSpectra->second.InitializeNoiseFitsFromCalib();
       
       int layer     = setup->GetLayer(cellID);
-      int chInLayer = setup->GetChannelInLayer(cellID);
+      int chInLayer = setup->GetChannelInLayer(ithSpectra->second.GetCellID())+setup->GetModule(ithSpectra->second.GetCellID())*maxChannelPerLayerSingleMod;
       if (debug > 0 && bc > -1 && bc < 3)
         std::cout << "\t" << cellID << "\t" << layer << "\t" << setup->GetRow(cellID) << "\t" << setup->GetColumn(cellID)<< "\t" << setup->GetModule(cellID) << " - quality flag: " << bc << "\t" << calib.GetBadChannel(cellID) << "\t ped H: " << calib.GetPedestalMeanH(cellID) << "\t ped L: " << calib.GetPedestalMeanL(cellID)<< std::endl;
 
@@ -1775,7 +1779,8 @@ bool Analyses::AnalyseWaveForm(void){
     RootOutputHist = new TFile(RootOutputNameHist.Data(),"CREATE");
   }
 
-  int maxChannelPerLayer = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+  int maxChannelPerLayer             = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
+  int maxChannelPerLayerSingleMod    = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
   TH2D* hHighestADCAbovePedVsLayer   = new TH2D( "hHighestEAbovePedVsLayer","Highest ADC above PED; layer; brd channel; #Sigma(ADC) (arb. units) ",
                                             setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
   hHighestADCAbovePedVsLayer->SetDirectory(0);
@@ -1907,7 +1912,7 @@ bool Analyses::AnalyseWaveForm(void){
         hspectraTOTvsCellID->Fill(aTile->GetCellID(),tot);
         
         int layer     = setup->GetLayer(aTile->GetCellID());
-        int chInLayer = setup->GetChannelInLayer(aTile->GetCellID());          
+        int chInLayer = setup->GetChannelInLayer(ithSpectra->second.GetCellID())+setup->GetModule(ithSpectra->second.GetCellID())*maxChannelPerLayerSingleMod;
         // int offset    = nSampTOA-(nSampTOA-nADCFirst);
         int offset    = nADCFirst+nDiffFirstM;
         if (nDiffMaxT == 0 )
@@ -2318,7 +2323,9 @@ bool Analyses::GetScaling(void){
   //***********************************************************************************************
   //***** Monitoring histos for calib parameters & fits results of 1st iteration ******************
   //***********************************************************************************************
-  int maxChannelPerLayer        = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+  int maxChannelPerLayer             = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
+  int maxChannelPerLayerSingleMod    = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+
   // monitoring applied pedestals
   TH1D* hMeanPedHGvsCellID      = new TH1D( "hMeanPedHG_vsCellID","mean Ped High Gain vs CellID ; cell ID; #mu_{noise, HG} (arb. units) ",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5);
@@ -2403,7 +2410,7 @@ bool Analyses::GetScaling(void){
     isGood        = ithSpectra->second.FitMipHG(parameters, parErrAndRes, debug, yearData, false, calib.GetVov(), 1);
     long cellID   = ithSpectra->second.GetCellID();
     int layer     = setup->GetLayer(cellID);
-    int chInLayer = setup->GetChannelInLayer(cellID);
+    int chInLayer = setup->GetChannelInLayer(ithSpectra->second.GetCellID())+setup->GetModule(ithSpectra->second.GetCellID())*maxChannelPerLayerSingleMod;
     
     // fill cross-check histos
     hMeanPedHGvsCellID->SetBinContent(hMeanPedHGvsCellID->FindBin(cellID), calib.GetPedestalMeanH(cellID));
@@ -2502,7 +2509,7 @@ bool Analyses::GetScaling(void){
         aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, currCellID, localTriggerTiles, avLGHGCorr));
         // estimate local muon trigger
         bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScale, factorMinTrigg, factorMaxTrigg);
-        int chInLayer = setup->GetChannelInLayer(currCellID);    
+        int chInLayer = setup->GetChannelInLayer(ithSpectra->second.GetCellID())+setup->GetModule(ithSpectra->second.GetCellID())*maxChannelPerLayerSingleMod;
         hHGTileSum[chInLayer]->Fill(aTile->GetLocalTriggerPrimitive());
         
         if(ithSpectraTrigg!=hSpectraTrigg.end()){
@@ -2535,7 +2542,7 @@ bool Analyses::GetScaling(void){
         aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, currCellID, localTriggerTiles, 0));
         // estimate local muon trigger
         bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScale, factorMinTrigg, factorMaxTrigg);
-        int chInLayer = setup->GetChannelInLayer(currCellID);    
+        int chInLayer = setup->GetChannelInLayer(ithSpectra->second.GetCellID())+setup->GetModule(ithSpectra->second.GetCellID())*maxChannelPerLayerSingleMod;
         hHGTileSum[chInLayer]->Fill(aTile->GetLocalTriggerPrimitive());
         
         if(ithSpectraTrigg!=hSpectraTrigg.end()){
@@ -2631,7 +2638,7 @@ bool Analyses::GetScaling(void){
     
     long cellID     = ithSpectraTrigg->second.GetCellID();
     int layer       = setup->GetLayer(cellID);
-    int chInLayer   = setup->GetChannelInLayer(cellID);    
+    int chInLayer   = setup->GetChannelInLayer(ithSpectra->second.GetCellID())+setup->GetModule(ithSpectra->second.GetCellID())*maxChannelPerLayerSingleMod;
     int bin2D       = hspectraHGMeanVsLayer->FindBin(layer,chInLayer);
 
     double pedSigHG = 0;
@@ -3083,7 +3090,9 @@ bool Analyses::GetImprovedScaling(void){
   //***** Monitoring histos for fits results of 2nd iteration ******************
   //***********************************************************************************************
   RootOutputHist->cd();
-  int maxChannelPerLayer        = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+  int maxChannelPerLayer             = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
+  int maxChannelPerLayerSingleMod    = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+
   // monitoring trigger 
   TH2D* hmipTriggers              = new TH2D( "hmipTriggers","muon triggers; layer; brd channel; counts ",
                                             setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
@@ -3156,7 +3165,7 @@ bool Analyses::GetImprovedScaling(void){
     
     long cellID     = ithSpectraTrigg->second.GetCellID();
     int layer       = setup->GetLayer(cellID);
-    int chInLayer   = setup->GetChannelInLayer(cellID);    
+    int chInLayer   = setup->GetChannelInLayer(ithSpectra->second.GetCellID())+setup->GetModule(ithSpectra->second.GetCellID())*maxChannelPerLayerSingleMod;
     int bin2D       = hspectraHGMaxVsLayer->FindBin(layer,chInLayer);
 
     double pedSigHG = 0;
@@ -3511,7 +3520,9 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
   //***** Monitoring histos for fits results of 2nd iteration ******************
   //***********************************************************************************************
   RootOutputHist->cd();
-  int maxChannelPerLayer        = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+  int maxChannelPerLayer             = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
+  int maxChannelPerLayerSingleMod    = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+
   // monitoring trigger 
   TH2D* hnoiseTriggers              = new TH2D( "hnoiseTriggers","muon triggers; layer; brd channel; counts ",
                                             setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
@@ -3556,7 +3567,7 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
     hMeanPedLGvsCellID->SetBinError  (hMeanPedLGvsCellID->FindBin(ithSpectraTrigg->second.GetCellID()), parameters[2]);
     
     int layer     = setup->GetLayer(ithSpectraTrigg->second.GetCellID());
-    int chInLayer = setup->GetChannelInLayer(ithSpectraTrigg->second.GetCellID());
+    int chInLayer = setup->GetChannelInLayer(ithSpectra->second.GetCellID())+setup->GetModule(ithSpectra->second.GetCellID())*maxChannelPerLayerSingleMod;
   
     hspectraHGMeanVsLayer->SetBinContent(hspectraHGMeanVsLayer->FindBin(layer,chInLayer), parameters[4]);
     hspectraHGMeanVsLayer->SetBinError(hspectraHGMeanVsLayer->FindBin(layer,chInLayer), parameters[5]);
@@ -4192,16 +4203,31 @@ bool Analyses::SaveMuonTriggersOnly(void){
     calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
   }
 
+  ReadOut::Type typeRO = ReadOut::Type::Caen;
+
   int evts=TdataIn->GetEntries();
   for(int i=0; i<evts; i++){
     TdataIn->GetEntry(i);
+    if (i == 0){
+      typeRO = event.GetROtype();
+      std::cout<< "Total number of events: " << evts << std::endl;
+    }    
     if (i%5000 == 0 && i > 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
     for(int j=0; j<event.GetNTiles(); j++){
-      Caen* aTile=(Caen*)event.GetTile(j);
-      // testing for muon trigger
-      if(aTile->GetLocalTriggerBit()!= (char)1){
-        event.RemoveTile(aTile);
-        j--;
+      if (typeRO == ReadOut::Type::Caen) {
+        Caen* aTile=(Caen*)event.GetTile(j);
+        // testing for muon trigger
+        if(aTile->GetLocalTriggerBit()!= (char)1){
+          event.RemoveTile(aTile);
+          j--;
+        }
+      } else if (typeRO == ReadOut::Type::Hgcroc){
+        Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
+        // testing for muon trigger
+        if(aTile->GetLocalTriggerBit()!= (char)1){
+          event.RemoveTile(aTile);
+          j--;
+        }
       }
     }
     RootOutput->cd();
@@ -4273,7 +4299,8 @@ bool Analyses::SkimHGCROCData(void){
       // std::cout << " integ: "<< aTile->GetTOT() << "\t" << aTile->GetTOA() << std::endl;
       
       if (aTile->GetTOA() > 0) triggered= true;
-      if(aTile->GetLocalTriggerBit()!= (char)1 && !triggered){
+      if (aTile->GetLocalTriggerBit()== (char)1) triggered= true;
+      if( !triggered){
         event.RemoveTile(aTile);
         j--;
       }

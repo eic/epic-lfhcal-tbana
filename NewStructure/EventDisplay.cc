@@ -179,6 +179,16 @@ bool EventDisplay::Plot(){
   
   // print calib info
   calib.PrintGlobalInfo();
+  double averagePedMeanHG = calib.GetAveragePedestalMeanHigh();
+  double averagePedSigHG  = calib.GetAveragePedestalSigHigh();
+  double averagePedMeanLG = calib.GetAveragePedestalMeanLow();
+  double averagePedSigLG  = calib.GetAveragePedestalSigLow();
+  std::cout<< averagePedMeanHG << "\t" << averagePedSigHG << "\t" << averagePedMeanLG << "\t" << averagePedSigLG << std::endl;
+
+  Double_t eCutoff = 0.3;
+  if (plotHGCROC && dataTypeHGCROC==0)
+    eCutoff = calib.GetAveragePedestalSigHigh()*5.;
+  std::cout << "setting energy cut-off to: " << eCutoff << std::endl;
   
   for(int i=plotEvt; i<plotEvt+nEvts; i++){
     if(i > evts ) {
@@ -237,7 +247,7 @@ bool EventDisplay::Plot(){
         }
       } else {
         Caen* aTile=(Caen*)event.GetTile(j);
-        if(aTile->GetE()>0.3 ){ 
+        if(aTile->GetE()>eCutoff ){ 
           nCells++;
           int currLayer = setup->GetLayer(aTile->GetCellID());
           ithLayer=layers.find(currLayer);
@@ -284,7 +294,7 @@ bool EventDisplay::Plot(){
         unsigned char muonTrigger = 0;
         if(plotHGCROC){
           Hgcroc* aTile   = (Hgcroc*)event.GetTile(j);
-          if( calib.GetBadChannel(aTile->GetCellID())!=3) continue;
+          if( calib.GetBadChannel(aTile->GetCellID())!=3 && calib.GetBCCalib() == true) continue;
           switch( dataTypeHGCROC ){
             case 0:
               energy = aTile->GetIntegratedADC();
@@ -316,7 +326,8 @@ bool EventDisplay::Plot(){
         Etot+=energy;
         if (energy < minE) minE = energy;
         if (energy > maxE) maxE = energy;
-        if(energy>0.3){ 
+        
+        if(energy>eCutoff){ 
           hXYZMapEvt->Fill(z,x,y,energy);
           hX_energy_Evt->Fill(x, energy);
           hY_energy_Evt->Fill(y, energy);
@@ -358,19 +369,32 @@ bool EventDisplay::Plot(){
       Double_t textSizeRel = 0.035;
       StyleSettingsBasics("pdf");
       SetPlotStyle();
+      TString unit = "mip eq/tile";
+      if (plotHGCROC){
+        switch( dataTypeHGCROC ){
+            case 0:
+            case 1:
+              unit = "ADC units";
+              break;
+            case 2:
+              unit = "TOT units";
+              break;
+          }
+      }
+      
       if (Etot > 0){
         if( (muontrigg&&plotMuonEvts) || !plotMuonEvts){
           EventDisplayWithSliceHighlighted( hXYZMapEvt, hX_energy_Evt, hY_energy_Evt, hZ_energy_Evt, 
                                           hXYZMapEvt_Muon, hX_energy_Evt_Muon, hY_energy_Evt_Muon, hZ_energy_Evt_Muon, 
                                           hXYZMapEvt_nonMuon, hX_energy_Evt_nonMuon, hY_energy_Evt_nonMuon, hZ_energy_Evt_nonMuon, 
                                           i, Etot, maxE, maxEX, maxEY, maxEZ,  muontrigg,
-                                          it->second, Form("%s/EventDisplay_muonHighlighed_evt", outputDirPlots.Data()), plotSuffix);    
+                                          it->second, Form("%s/EventDisplay_muonHighlighed_evt", outputDirPlots.Data()), plotSuffix, unit);    
         }
 
         if( (muontrigg&&plotMuonEvts) || !plotMuonEvts){
           EventDisplayWithSlice(  hXYZMapEvt, hX_energy_Evt, hY_energy_Evt, hZ_energy_Evt, 
                                   i, Etot, maxE, maxEX, maxEY, maxEZ,  muontrigg,
-                                  it->second, Form("%s/EventDisplay_MonoChrome_evt", outputDirPlots.Data()), plotSuffix);    
+                                  it->second, Form("%s/EventDisplay_MonoChrome_evt", outputDirPlots.Data()), plotSuffix, unit);    
 
           canvas3D->cd();
 
