@@ -57,6 +57,7 @@ class EventDisplay{
   inline void PlotHGCROC_ADCData()                {plotHGCROC = true; dataTypeHGCROC = 0; }
   inline void PlotHGCROC_ADCwPedData()            {plotHGCROC = true; dataTypeHGCROC = 1; }
   inline void PlotHGCROC_TOTData()                {plotHGCROC = true; dataTypeHGCROC = 2; }
+  inline void PlotHGCROC_ADCmipCorr()                {plotHGCROC = true; dataTypeHGCROC = 3; }
   
   //General methods
   bool CheckAndOpenIO(void);
@@ -88,7 +89,7 @@ class EventDisplay{
   bool plotMuonEvts           = false;
   int minTilesHit             = 0;
   bool plotHGCROC             = false;
-  int dataTypeHGCROC          = 0; // 0 - ADC, 1 - ADC-pedestal, 2 - ToT
+  int dataTypeHGCROC          = 0; // 0 - ADC, 1 - ADC-pedestal, 2 - ToT, 3 - ADC/mip-scale
   
   TTree* TsetupIn=nullptr;
   TTree* TdataIn=nullptr;

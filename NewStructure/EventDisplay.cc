@@ -117,6 +117,9 @@ bool EventDisplay::Plot(){
   // Get run info object
   std::map<int,RunInfo>::iterator it=ri.find(runNr);
 
+  // load calib
+  TcalibIn->GetEntry(0);
+  
   int species = -1;
   species = GetSpeciesIntFromRunInfo(it->second);
   if (species == -1){
@@ -173,13 +176,17 @@ bool EventDisplay::Plot(){
   // processing events
   int evts=TdataIn->GetEntries();
   int evtsMuon= 0;
+  
+  // print calib info
+  calib.PrintGlobalInfo();
+  
   for(int i=plotEvt; i<plotEvt+nEvts; i++){
     if(i > evts ) {
       std::cout<<"Requested event outside of the range. Aborting..."<<std::endl;
       return false;
     }
     TdataIn->GetEntry(i);
-    if (i%100 == 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
+    if (i%1 == 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
     double Etot = 0;
     int nCells  = 0;
     bool muontrigg = false;
@@ -187,51 +194,43 @@ bool EventDisplay::Plot(){
     std::map<int,Layer> layers;
     std::map<int, Layer>::iterator ithLayer;
     
+    if( debug>1 ) std::cout << "Event has " << event.GetNTiles() << " active tiles" << std::endl;
     for(int j=0; j<event.GetNTiles(); j++){
+      
       if(plotHGCROC){
         Hgcroc* aTile = (Hgcroc*)event.GetTile(j);
         // no "energy" threshold for now - just plot everything
         nCells++;
         int currLayer   = setup->GetLayer(aTile->GetCellID());
         ithLayer        = layers.find(currLayer);
+        double energy = 0;
+        switch( dataTypeHGCROC ){
+          case 0:
+            energy = aTile->GetIntegratedADC(); 
+            if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << aTile->GetIntegratedADC() << "\t energy " << energy << std::endl;
+            break;
+          case 1:
+            energy = aTile->GetMaxSampleADC() - aTile->GetPedestal(); 
+            if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << aTile->GetIntegratedADC() << "\t pedestal (calib) " << calib.GetPedestalMeanH( aTile->GetCellID() ) << "\t pedestal (aTile) " << aTile->GetPedestal() << "\t energy " << energy << std::endl;
+            break;
+          case 2:
+            energy = aTile->GetTOT(); 
+            if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t TOT: " << aTile->GetTOT() << "\t energy " << energy << std::endl;
+            break;
+          case 3:
+            energy = aTile->GetIntegratedADC()/ calib.GetScaleHigh(aTile->GetCellID()); 
+            if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << aTile->GetIntegratedADC() << "\t scale (calib) " << calib.GetScaleHigh( aTile->GetCellID() ) << "\t energy " << energy << std::endl;
+            break;
+        }
+
         if(ithLayer!=layers.end()){
           ithLayer->second.nCells+=1;
-          double energy = 0;
-          switch( dataTypeHGCROC ){
-            case 0:
-              energy = aTile->GetMaxSampleADC(); 
-              if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << aTile->GetMaxSampleADC() << "\t energy " << energy << std::endl;
-              break;
-            case 1:
-              energy = aTile->GetMaxSampleADC() - aTile->GetPedestal(); 
-              if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << aTile->GetMaxSampleADC() << "\t pedestal (calib) " << calib.GetPedestalMeanH( aTile->GetCellID() ) << "\t pedestal (aTile) " << aTile->GetPedestal() << "\t energy " << energy << std::endl;
-              break;
-            case 2:
-              energy = aTile->GetTOT(); 
-              if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t TOT: " << aTile->GetTOT() << "\t energy " << energy << std::endl;
-              break;
-          }
           ithLayer->second.energy+=energy;
           ithLayer->second.avX+=setup->GetX(aTile->GetCellID())*energy;
           ithLayer->second.avY+=setup->GetY(aTile->GetCellID())*energy;
         } else {
           layers[currLayer]=Layer();
           layers[currLayer].nCells+=1;
-          double energy = 0;
-          switch( dataTypeHGCROC ){
-            case 0:
-              energy = aTile->GetMaxSampleADC(); 
-              if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << aTile->GetMaxSampleADC() << "\t energy " << energy << std::endl;
-              break;
-            case 1:
-              energy = aTile->GetMaxSampleADC() - aTile->GetPedestal(); 
-              if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << aTile->GetMaxSampleADC() << "\t pedestal (calib) " << calib.GetPedestalMeanH( aTile->GetCellID() ) << "\t pedestal (aTile) " << aTile->GetPedestal() << "\t energy " << energy << std::endl;
-              break;
-            case 2:
-              energy = aTile->GetTOT(); 
-              if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t TOT: " << aTile->GetTOT() << "\t energy " << energy << std::endl;
-              break;
-          }
           layers[currLayer].energy+=energy;
           layers[currLayer].avX+=setup->GetX(aTile->GetCellID())*energy;
           layers[currLayer].avY+=setup->GetY(aTile->GetCellID())*energy;
@@ -260,6 +259,7 @@ bool EventDisplay::Plot(){
         }      
       }
     }
+    std::cout << "NCells hit: "  << nCells << "\t" << minTilesHit << std::endl;
     
     if (nCells > minTilesHit) {
       int nLayerSingleCell = 0;
@@ -287,21 +287,26 @@ bool EventDisplay::Plot(){
           if( calib.GetBadChannel(aTile->GetCellID())!=3) continue;
           switch( dataTypeHGCROC ){
             case 0:
-              energy = aTile->GetMaxSampleADC();
+              energy = aTile->GetIntegratedADC();
               break;
             case 1:
-              energy = aTile->GetMaxSampleADC()- calib.GetPedestalMeanL(aTile->GetCellID());
+              energy = aTile->GetIntegratedADC()- calib.GetPedestalMeanL(aTile->GetCellID());
               break;
             case 2:
               energy = aTile->GetTOT();
+              break;
+            case 3:
+              energy = aTile->GetIntegratedADC()/calib.GetScaleHigh(aTile->GetCellID());
               break;
           }
           x = (double) aTile->GetX();
           y = (double) aTile->GetY();
           z = (double) aTile->GetZ();
+          if( debug>2 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << energy  << "\tx,y,z: " <<x<< "\t" <<y<< "\t" << z << std::endl;
+          muonTrigger = (unsigned char)aTile->GetLocalTriggerBit();
         } else {
           Caen* aTile=(Caen*)event.GetTile(j);
-          // if( calib.GetBadChannel(aTile->GetCellID())!=3) continue; // commented out because of the calib object issues
+          if( calib.GetBadChannel(aTile->GetCellID())!=3) continue; 
           energy = (Float_t)aTile->GetE();
           x = (double) aTile->GetX();
           y = (double) aTile->GetY();
@@ -322,7 +327,6 @@ bool EventDisplay::Plot(){
             hX_energy_Evt_Muon->Fill(x, energy);
             hY_energy_Evt_Muon->Fill(y, energy);
             hZ_energy_Evt_Muon->Fill(z, energy);
-
           } else {
             hXYZMapEvt_nonMuon->Fill(z,x,y,energy);
             hX_energy_Evt_nonMuon->Fill(x, energy);
@@ -355,7 +359,7 @@ bool EventDisplay::Plot(){
       SetPlotStyle();
       if( (muontrigg&&plotMuonEvts) || !plotMuonEvts){
         EventDisplayWithSliceHighlighted( hXYZMapEvt, hX_energy_Evt, hY_energy_Evt, hZ_energy_Evt, 
-                                         hXYZMapEvt_Muon, hX_energy_Evt_Muon, hY_energy_Evt_Muon, hX_energy_Evt_Muon, 
+                                         hXYZMapEvt_Muon, hX_energy_Evt_Muon, hY_energy_Evt_Muon, hZ_energy_Evt_Muon, 
                                          hXYZMapEvt_nonMuon, hX_energy_Evt_nonMuon, hY_energy_Evt_nonMuon, hZ_energy_Evt_nonMuon, 
                                          i, Etot, maxE, maxEX, maxEY, maxEZ,  muontrigg,
                                          it->second, Form("%s/EventDisplay_muonHighlighed_evt", outputDirPlots.Data()), plotSuffix);    

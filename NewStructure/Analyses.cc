@@ -4303,7 +4303,7 @@ bool Analyses::SkimHGCROCData(void){
     }
     
     RootOutput->cd();
-    if (event->GetNTiles() > 0){
+    if (event.GetNTiles() > 0){
       evtTrigg++;
       TdataOut->Fill();
     }

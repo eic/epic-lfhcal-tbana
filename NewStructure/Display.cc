@@ -53,7 +53,7 @@ int main(int argc, char* argv[]){
   }
   EventDisplay EvtDisplay;
   int c;
-  while((c=getopt(argc,argv,"F:P:r:d:i:y:e:N:cpohMt:"))!=-1){
+  while((c=getopt(argc,argv,"F:P:r:d:i:y:e:N:cpoqhMt:"))!=-1){
     switch(c){
     case 'd':
       std::cout<<"enable debug " << optarg <<std::endl;
@@ -101,6 +101,11 @@ int main(int argc, char* argv[]){
       std::cout<<"Switching to plotting HGCROC testbeam data."<<std::endl;
       std::cout<<"Plotting TOT"<<std::endl;
       EvtDisplay.PlotHGCROC_TOTData();
+      break;
+    case 'q':
+      std::cout<<"Switching to plotting HGCROC testbeam data."<<std::endl;
+      std::cout<<"Plotting (ADC/Mip scale)"<<std::endl;
+      EvtDisplay.PlotHGCROC_ADCmipCorr();
       break;
     case 'M':
       std::cout<<"Plot only muon-triggered events in the range"<<std::endl;
