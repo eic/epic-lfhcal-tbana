@@ -20,12 +20,13 @@ runList=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
 if [ $2 = "pedestals" ]; then 
 	mkdir -p $dataDir/
 	# pedestals with different Nr of asics
-	runs='122 123 124 125 126 128 129'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-	done
+# 	runs='122 123 124 125 126 128 129'
+# 	for runNr in $runs; do 
+# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+# 	done
 # 	# pedestals with different Nr of asics
-	runs='036 055 056 058 059 068 130 141 156 161 207 208 209 210 259 269 270 291 292 293 295 314 315 316 317 318 321 322 323 381 391'
+# 	runs='036 055 056 058 059 068 130 141 156 161 207 208 209 210 259 269 270 291 292 293 295 314 315 316 317 318 321 322 323 351 381 391'
+  runs='351'
 	for runNr in $runs; do 
 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
 	done
@@ -123,22 +124,23 @@ elif [ $2 = "MergeMuons" ]; then
 elif [ $2 = "electrons" ]; then 
 	mkdir -p $dataRaw
 # default mapping 44 V
-# 	runs='165 166 167 168 169 170 191 192 193 194'
+# 	runs='165 166 167 168 169 170 191 192 193 194 195'
 #   runs='191 192 193 194'
-# 	for runNr in $runs; do 
-# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-# 	done
+  runs='195'
+	for runNr in $runs; do 
+		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+	done
 # # default mapping 45 V
 # 	runs='189 190 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236'
 # 	for runNr in $runs; do 
 # 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
 # 	done
 	
-	# electron set 42.5V
-	runs='386 387 388 389 390'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-	done
+# 	# electron set 42.5V
+# 	runs='386 387 388 389 390'
+# 	for runNr in $runs; do 
+# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+# 	done
 	
 	
 elif [ $2 = "positrons" ]; then 
@@ -178,11 +180,12 @@ elif [ $2 = "hadrons" ]; then
 # 
 # 	# Hadron set 2 
 #   runs='301 302 303 304 305 306 307 308 309 310 311 312 313'
-# 	for runNr in $runs; do 
-# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-# 	done
+  runs='308 309 310 311 312 313'
+	for runNr in $runs; do 
+		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+	done
 # 
-# 	# Hadron set 3 
+	# Hadron set 3 
 #   runs='331 332 333 334 335 336 337 339 340 341 342 343 344'
 # 	for runNr in $runs; do 
 # 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
