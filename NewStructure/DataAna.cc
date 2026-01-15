@@ -3,6 +3,9 @@
 #include <vector>
 #include <map>
 #include <utility>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h> // Add for use on Mac OS -> Same goes for Analyses.cc
 #include "TString.h"
 #include "TFile.h"

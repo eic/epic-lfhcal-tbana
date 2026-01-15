@@ -12,6 +12,10 @@
 #include "TH1D.h"
 #include "TObjArray.h"
 #include "TObjString.h"
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "Setup.h"
 #include "Calib.h"
