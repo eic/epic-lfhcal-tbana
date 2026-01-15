@@ -4,6 +4,10 @@
 #include <map>
 #include <utility>
 #include <string>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #ifdef __APPLE__
 #include <unistd.h>
 #endif
