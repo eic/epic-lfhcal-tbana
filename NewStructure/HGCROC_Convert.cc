@@ -140,9 +140,8 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                 if (cell_id != -1) {
                     Hgcroc *tile = new Hgcroc();
                     tile->SetCellID(cell_id);        
-                    tile->SetCellID(cell_id);        
                     tile->SetROtype(ReadOut::Type::Hgcroc);
-                    tile->SetLocalTriggerBit(0);            // What are these supposed to be?
+                    tile->SetLocalTriggerBit(0);            
                     tile->SetLocalTriggerPrimitive(0);
                     tile->SetE(0);                          // Need to process waveform to get this
                     tile->SetTOA(0);                        // Need to process waveform to get this

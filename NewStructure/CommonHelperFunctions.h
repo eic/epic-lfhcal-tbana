@@ -215,6 +215,31 @@
       
       return -1;
   }
+
+  inline TString GetSpeciesStringFromPDG(int pdg){
+    switch (pdg){
+      case 0:
+        return "ped";
+      case 11:
+        return "e^{-}";
+      case -11:
+        return "e^{+}";
+      case 13:
+        return "#mu^{-}";
+      case -13:
+        return "#mu^{+}";
+      case 211:
+        return "#pi^{+}";
+      case -211:
+        return "#pi^{-}";
+      case 2212:
+        return "p";
+      case -2212:
+        return "#bar{p}";
+      default: 
+        return "";
+    }
+  }
   
   inline Double_t ReturnMipPlotRangeDepVov(double Vov, bool isHG, ReadOut::Type type){
     if (type == ReadOut::Type::Caen){
@@ -242,10 +267,22 @@
           return 165.;      
       }
     } else {
-      return 410.;
+      return 250.;
     }
   }
 
+  inline Double_t ReturnMipMinPlotRangeDepVov(double Vov, bool isHG, ReadOut::Type type){
+    if (type == ReadOut::Type::Caen){
+      if (isHG){
+        return -100;
+      } else {
+        return -100;
+      }
+    } else {
+      return -25.;
+    }
+  }
+  
   // // Function to generate the CRC-32 lookup table at runtime (or compile time with C++11 constexpr)
   // void generate_crc32_table(uint32_t(&table)[256]) {
   //     uint32_t polynomial = 0x104C11DB7; // Common CRC-32 polynomial

@@ -252,10 +252,24 @@ int Setup::GetMaxCellID() const{
   return maxCellID;
 }
 
+int Setup::GetMaxChannelInLayerFull() const{
+  int maxChInLayer  = (nMaxColumn+1)*(nMaxRow+1)*(nMaxModule+1);
+  return maxChInLayer;
+}
+
+
 int Setup::GetChannelInLayer(int cellID) const{
   int row     = GetRow(cellID);
   int column  = GetColumn(cellID);
   int absChL  = row*(nMaxColumn+1)+column;
+  return absChL;
+}
+
+int Setup::GetChannelInLayerFull(int cellID) const{
+  int row     = GetRow(cellID);
+  int column  = GetColumn(cellID);
+  int mod     = GetModule(cellID);
+  int absChL  = mod*((nMaxColumn+1)*(nMaxRow+1))+row*(nMaxColumn+1)+column;
   return absChL;
 }
 
@@ -323,17 +337,40 @@ bool Setup::IsLayerOn(int layer, int mod) const{
   bool isOn = false;
   for (int r = 0; r< GetNMaxRow(); r++){
       for (int c = 0; c < GetNMaxColumn(); c++){
+        if (mod == -1){
+          for (int m = 0; m < GetNMaxModule(); m++){
+            int cellID = GetCellID(r, c, layer, m);
+            std::map<int, TString>::const_iterator it=assemblyID.find(cellID);
+            if (it != assemblyID.end()){
+              isOn = true;
+              break;
+            }
+          }
+        } else {
           int cellID = GetCellID(r, c, layer, mod);
           std::map<int, TString>::const_iterator it=assemblyID.find(cellID);
           if (it != assemblyID.end()){
             isOn = true;
             break;
           }
+        }
       }
   }
   return isOn;
 }
 
+int Setup::GetNActiveLayers() const{
+  int nActLayer = 0;
+  for (Int_t l = 0; l < GetNMaxLayer()+1; l++){
+    if (IsLayerOn(l,-1)) nActLayer++;
+  }
+  return nActLayer;
+}
+
+int Setup::GetNActiveCells() const{
+  int nActCells = assemblyID.size();
+  return nActCells;
+}
 
 float Setup::GetCellWidth() const{
   return cellW;
@@ -345,4 +382,28 @@ float Setup::GetCellHeight() const{
 
 float Setup::GetCellDepth() const{
   return cellD;
+}
+
+DetConf::Type Setup::GetDetectorConfig() const{
+  if (GetNMaxModule()+1 == 2){
+    if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
+    return DetConf::Type::Dual8M;
+  } else if (GetNMaxModule()+1 == 8){
+    if(GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
+      return DetConf::Type::LargeTB;
+  } else if (GetNMaxModule()+1 == 1){
+    if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
+      return DetConf::Type::Single8M;
+    else if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 2)
+      return DetConf::Type::Single4M;
+    else if (GetNMaxRow()+1 == 1 && GetNMaxColumn()+1 == 2)
+      return DetConf::Type::Single2MH;
+    else if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 1)
+      return DetConf::Type::Single2MV;
+    else if (GetNMaxRow()+1 == 1 && GetNMaxColumn()+1 == 1)
+      return DetConf::Type::SingleTile;
+  } 
+  return DetConf::Type::Undef;
+  
+  
 }

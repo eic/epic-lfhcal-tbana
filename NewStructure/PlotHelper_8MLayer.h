@@ -4,6 +4,16 @@
   // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // dedicated class for all 8M layer plotting functions
   // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  //*****************************************************************
+    // Test beam geometry (beam coming from viewer)
+    //===========================================================
+    //||    8 (4)    ||    7 (5)   ||    6 (6)   ||    5 (7)   ||  row 0
+    //===========================================================
+    //||    1 (0)    ||    2 (1)   ||    3 (2)   ||    4 (3)   ||  row 1
+    //===========================================================
+    //    col 0     col 1       col 2     col  3
+    // rebuild pad geom in similar way (numbering -1)
+  //*****************************************************************
 
   //__________________________________________________________________________________________________________
   // Plot Trigger Primitive with Fits for Full layer
@@ -63,19 +73,10 @@
         tempHist->GetYaxis()->SetRangeUser(0.7,scaleYMax*maxY);
         
         tempHist->Draw("pe");
-        short bctemp = ithSpectra->second.GetCalib()->BadChannel;
-        if (bctemp != -64 && bctemp < 3){
-          Color_t boxCol = kGray;
-          if (bctemp == 1)
-            boxCol = kGray+1;
-          else if (bctemp == 0)
-            boxCol = kGray+2;
-          TBox* badChannelArea =  CreateBox(boxCol, xPMin, 0.7, xPMax,scaleYMax*maxY, 1001 );
-          badChannelArea->Draw();
-          tempHist->Draw("same,axis");
-          tempHist->Draw("same,pe");
-        }
-
+        DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
+        tempHist->Draw("same,axis");
+        tempHist->Draw("same,pe");
+        
         TString label           = Form("row %d col %d", r, c);
         if (p == 7){
           label = Form("row %d col %d layer %d", r, c, layer);
@@ -176,19 +177,9 @@
         tempHist->GetYaxis()->SetRangeUser(0.7,scaleYMax*maxY);
         
         tempHist->Draw("pe");
-        short bctemp = ithSpectra->second.GetCalib()->BadChannel;
-        if (bctemp != -64 && bctemp < 3){
-          Color_t boxCol = kGray;
-          if (bctemp == 1)
-            boxCol = kGray+1;
-          else if (bctemp == 0)
-            boxCol = kGray+2;
-          TBox* badChannelArea =  CreateBox(boxCol, xPMin, 0.7, xPMax,scaleYMax*maxY, 1001 );
-          badChannelArea->SetFillColorAlpha(boxCol, 0.35);
-          badChannelArea->Draw();
-          tempHist->Draw("same,axis");
-          tempHist->Draw("same,pe");
-        }
+        DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
+        tempHist->Draw("same,axis");
+        tempHist->Draw("same,pe");
         
         TString label           = Form("row %d col %d", r, c);
         if (p == 7){
@@ -441,18 +432,9 @@
         tempHist->GetYaxis()->SetRangeUser(0.7,scaleYMax*maxY);
         
         tempHist->Draw("pe");
-        short bctemp = ithSpectra->second.GetCalib()->BadChannel;
-        if (bctemp != -64 && bctemp < 3){
-          Color_t boxCol = kGray;
-          if (bctemp == 1)
-            boxCol = kGray+1;
-          else if (bctemp == 0)
-            boxCol = kGray+2;
-          TBox* badChannelArea =  CreateBox(boxCol, xPMin, 0.7, xPMax,scaleYMax*maxY, 1001 );
-          badChannelArea->Draw();
-          tempHist->Draw("same,axis");
-          tempHist->Draw("same,pe");
-        }
+        DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
+        tempHist->Draw("same,axis");
+        tempHist->Draw("same,pe");
         
         TH1D* tempHistT = nullptr;
         
@@ -609,18 +591,10 @@
         tempHist->GetYaxis()->SetRangeUser(0.7,scaleYMax*maxY);
         
         tempHist->Draw("pe");
-        short bctemp = ithSpectra->second.GetCalib()->BadChannel;
-        if (bctemp != -64 && bctemp < 3){
-          Color_t boxCol = kGray;
-          if (bctemp == 1)
-            boxCol = kGray+1;
-          else if (bctemp == 0)
-            boxCol = kGray+2;
-          TBox* badChannelArea =  CreateBox(boxCol, xPMin, 0.7, xPMax,scaleYMax*maxY, 1001 );
-          badChannelArea->Draw();
-          tempHist->Draw("same,axis");
-          tempHist->Draw("same,pe");
-        }
+        DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
+        tempHist->Draw("same,axis");
+        tempHist->Draw("same,pe");
+        
                 
         TString label           = Form("row %d col %d", r, c);
         if (p == 7){
@@ -707,19 +681,9 @@
         
         
         dummyhist->Draw("axis");
-
-        short bctemp = ithSpectra->second.GetCalib()->BadChannel;
-        if (bctemp != -64 && bctemp < 3){
-          Color_t boxCol = kGray;
-          if (bctemp == 1)
-            boxCol = kGray+1;
-          else if (bctemp == 0)
-            boxCol = kGray+2;
-          TBox* badChannelArea =  CreateBox(boxCol, 0, 0, maxX,maxY, 1001 );
-          badChannelArea->Draw();
-          dummyhist->Draw("axis,same");
-        }
-
+        DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
+        dummyhist->Draw("axis,same");
+        
         tempProfile->Draw("pe, same");
                 
         TString label           = Form("row %d col %d", r, c);
@@ -820,18 +784,33 @@
           temp2D          = ithSpectra->second.GetCorrTOAADC();                    
         } else if (option == 3){
           temp2D          = ithSpectra->second.GetCorrTOASample();
+        } else if (option == 4){
+          tempProfile     = ithSpectra->second.GetADCTOT();
         }
         
-        if (!temp2D) continue;
-        SetStyleHistoTH2ForGraphs( temp2D, temp2D->GetXaxis()->GetTitle(), temp2D->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
-        temp2D->GetYaxis()->SetRangeUser(0,maxY);
-        temp2D->GetXaxis()->SetRangeUser(xPMin,xPMax);
-        temp2D->Draw("col");
-
-        if( !noCalib ){
-          DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
-          temp2D->Draw("axis,same");
-        }        
+        if (!temp2D && option != 4) continue;
+        
+        if (temp2D){
+          SetStyleHistoTH2ForGraphs( temp2D, temp2D->GetXaxis()->GetTitle(), temp2D->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
+          temp2D->GetYaxis()->SetRangeUser(0,maxY);
+          temp2D->GetXaxis()->SetRangeUser(xPMin,xPMax);
+          temp2D->Draw("col");
+          if( !noCalib ){
+            DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
+            temp2D->Draw("axis,same");
+          }        
+        } else {
+          if (!tempProfile) continue;
+          TH1D* dummyhist = new TH1D("dummyhist", "", tempProfile->GetNbinsX(), tempProfile->GetXaxis()->GetXmin(), tempProfile->GetXaxis()->GetXmax());
+          SetStyleHistoTH1ForGraphs( dummyhist, tempProfile->GetXaxis()->GetTitle(), tempProfile->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
+          dummyhist->GetXaxis()->SetRangeUser(xPMin,xPMax);
+          dummyhist->GetYaxis()->SetRangeUser(0,maxY);
+          dummyhist->Draw("axis");
+          if( !noCalib ){
+            DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
+            dummyhist->Draw("axis,same");
+          }                  
+        }
         if (tempProfile ){
           SetMarkerDefaultsProfile(tempProfile, 24, 0.7, kRed+2, kRed+2);           
           tempProfile->Draw("pe, same");
@@ -845,7 +824,7 @@
         SetStyleTLatex( labelChannel, 0.85*textSizePixel,4,1,43,kTRUE,11);
 
         TF1* fit            = ithSpectra->second.GetCorrModel(0);
-        if (rotype == ReadOut::Type::Hgcroc)
+        if (rotype == ReadOut::Type::Hgcroc && option != 4)
           fit            = ithSpectra->second.GetCorrModel(2);
         int nlinesTot = 1;
         if (fit){

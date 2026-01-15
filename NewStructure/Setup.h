@@ -7,6 +7,19 @@
 
 class RootSetupWrapper;
 
+namespace DetConf{
+  enum Type { Undef, 
+              Single8M, 
+              Single4M, 
+              Single2MH, 
+              Single2MV, 
+              SingleTile, 
+              Dual8M, 
+              LargeTB
+            };
+}
+
+
 class Setup{
   
  public:
@@ -25,6 +38,10 @@ class Setup{
   int     GetCellID    (int /**/, int /**/, int /**/, int /**/)const;
   int     GetColumn    (int /**/) const;
   int     GetChannelInLayer(int /**/) const;
+  int     GetChannelInLayerFull(int /**/) const;
+  int     GetMaxChannelInLayerFull(void) const;
+  int     GetNActiveLayers(void) const;
+  int     GetNActiveCells(void) const;
   int     GetLayer     (int /**/) const;
   int     GetModule    (int /**/) const;
   double  GetModuleX   (int /**/) const;
@@ -59,7 +76,7 @@ class Setup{
   float     GetCellWidth  (void) const;
   float     GetCellHeight (void) const;
   float     GetCellDepth  (void) const;
-  
+  DetConf::Type GetDetectorConfig(void) const;
   friend class RootSetupWrapper;
   
  private:

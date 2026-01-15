@@ -145,7 +145,9 @@ bool DataAnalysis::QAData(void){
   }
   std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
   TdataIn->GetEntry(0);
-  Int_t runNr = event.GetRunNumber();
+  Int_t runNr           = event.GetRunNumber();
+  ReadOut::Type typeRO  = event.GetROtype();
+
   // Get run info object
   std::map<int,RunInfo>::iterator it=ri.find(runNr);
 
@@ -158,19 +160,38 @@ bool DataAnalysis::QAData(void){
       return false;
   }
   
+  Int_t maxCellsPerLayer = setup->GetMaxChannelInLayerFull()+1;
+  //=============================================================================================
+  // Create output histos
+  //=============================================================================================
   // create HG and LG histo's per channel
-  TH2D* hspectraHGCorrvsCellID      = new TH2D( "hspectraHGCorr_vsCellID","ADC spectrum High Gain corrected vs CellID; cell ID; ADC_{HG} (arb. units)  ; counts ",
+  TH2D* hspectraHGCorrvsCellID      = nullptr;
+  TH2D* hspectraLGCorrvsCellID      = nullptr;
+  TH2D* hspectraHGvsCellID          = nullptr;
+  TH2D* hspectraLGvsCellID          = nullptr;
+  TH2D* hspectraTOTvsCellID         = nullptr;
+
+  if (typeRO == ReadOut::Type::Caen) {
+    hspectraHGCorrvsCellID      = new TH2D( "hspectraHGCorr_vsCellID","ADC spectrum High Gain corrected vs CellID; cell ID; ADC_{HG} (arb. units)  ; counts ",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4000,-200,3800);
-  hspectraHGCorrvsCellID->SetDirectory(0);
-  TH2D* hspectraLGCorrvsCellID      = new TH2D( "hspectraLGCorr_vsCellID","ADC spectrum Low Gain corrected vs CellID; cell ID; ADC_{LG} (arb. units)  ; counts  ",
+    hspectraHGCorrvsCellID->SetDirectory(0);
+    hspectraLGCorrvsCellID      = new TH2D( "hspectraLGCorr_vsCellID","ADC spectrum Low Gain corrected vs CellID; cell ID; ADC_{LG} (arb. units)  ; counts  ",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4000,-200,3800);
-  hspectraLGCorrvsCellID->SetDirectory(0);
-  TH2D* hspectraHGvsCellID      = new TH2D( "hspectraHG_vsCellID","ADC spectrum High Gain vs CellID; cell ID; ADC_{HG} (arb. units)   ; counts ",
+    hspectraLGCorrvsCellID->SetDirectory(0);
+    hspectraHGvsCellID      = new TH2D( "hspectraHG_vsCellID","ADC spectrum High Gain vs CellID; cell ID; ADC_{HG} (arb. units)   ; counts ",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4000,0,4000);
-  hspectraHGvsCellID->SetDirectory(0);
-  TH2D* hspectraLGvsCellID      = new TH2D( "hspectraLG_vsCellID","ADC spectrum Low Gain vs CellID; cell ID; ADC_{LG} (arb. units)  ; counts",
+    hspectraHGvsCellID->SetDirectory(0);
+    hspectraLGvsCellID      = new TH2D( "hspectraLG_vsCellID","ADC spectrum Low Gain vs CellID; cell ID; ADC_{LG} (arb. units)  ; counts",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4000,0,4000);
-  hspectraLGvsCellID->SetDirectory(0);
+    hspectraLGvsCellID->SetDirectory(0);
+  } else if (typeRO == ReadOut::Type::Hgcroc) {
+    hspectraHGvsCellID      = new TH2D( "hspectraADCvsCellID","ADC vs CellID; cell ID; ADC (arb. units)  ; counts ",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1128,-100,1028);
+    hspectraHGvsCellID->SetDirectory(0);
+    hspectraTOTvsCellID= new TH2D( "hspectraTOTvsCellID","TOT vs CellID; cell ID; TOT (arb. units)  ; counts ",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4096,0,4096);
+    hspectraTOTvsCellID->SetDirectory(0);
+  }
   TH2D* hspectraEnergyvsCellID  = new TH2D( "hspectraEnergy_vsCellID","Energy vs CellID; cell ID; E (mip eq./tile)    ; counts",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 8000,0,250);
   hspectraEnergyvsCellID->SetDirectory(0);
@@ -183,9 +204,9 @@ bool DataAnalysis::QAData(void){
   // muons 
   if (species == 0 || species == 2 ){
     hspectraEnergyTotvsNCells       = new TH2D( "hspectraTotEnergy_vsNCells","Energy vs CellID; N_{Cells}; E_{tot} (mip eq./tile) ; counts",
-                                                setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4000,0,500);
+                                                setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5, 4000,0,500);
     hspectraEnergyTotvsNCellsMuon   = new TH2D( "hspectraTotEnergy_vsNCellsMuon","Energy vs CellID; N_{Cells}; E_{tot} (mip eq./tile) ; counts",
-                                                setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4000,0,500);    
+                                                setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5, 4000,0,500);    
     hspectraEnergyVsLayer           = new TH2D( "hspectraTotLayerEnergy_vsLayer","Energy in layer vs Layer; Layer; E_{layer} (mip eq./tile) ; counts",
                                                 setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, 2000,0,400);
     hspectraEnergyVsLayerMuon       = new TH2D( "hspectraTotLayerEnergy_vsLayerMuon","Energy in layer vs Layer Muon triggers; Layer; E_{layer} (mip eq./tile) ; counts",
@@ -193,9 +214,9 @@ bool DataAnalysis::QAData(void){
   // em-probes
   } else if ( species == 1 || species == 3 || species == 6 ){
     hspectraEnergyTotvsNCells       = new TH2D( "hspectraTotEnergy_vsNCells","Energy vs CellID; N_{Cells}; E_{tot} (mip eq./tile) ; counts",
-                                                setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 8000,0,1000);
+                                                setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5, 8000,0,1000);
     hspectraEnergyTotvsNCellsMuon   = new TH2D( "hspectraTotEnergy_vsNCellsMuon","Energy vs CellID; N_{Cells}; E_{tot} (mip eq./tile) ; counts",
-                                                setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 8000,0,1000);    
+                                                setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5, 8000,0,1000);    
     hspectraEnergyVsLayer           = new TH2D( "hspectraTotLayerEnergy_vsLayer","Energy in layer vs Layer; Layer; E_{layer} (mip eq./tile) ; counts",
                                                 setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, 2000,0,400);
     hspectraEnergyVsLayerMuon       = new TH2D( "hspectraTotLayerEnergy_vsLayerMuon","Energy in layer vs Layer Muon triggers; Layer; E_{layer} (mip eq./tile) ; counts",
@@ -203,9 +224,9 @@ bool DataAnalysis::QAData(void){
   // hadrons
   } else if ( species == 4 || species == 5  ){
     hspectraEnergyTotvsNCells       = new TH2D( "hspectraTotEnergy_vsNCells","Energy vs CellID; N_{Cells}; E_{tot} (mip eq./tile) ; counts",
-                                                setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 16000,0,2000);
+                                                setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5, 16000,0,2000);
     hspectraEnergyTotvsNCellsMuon   = new TH2D( "hspectraTotEnergy_vsNCellsMuon","Energy vs CellID; N_{Cells}; E_{tot} (mip eq./tile) ; counts",
-                                                setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 16000,0,2000);
+                                                setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5, 16000,0,2000);
     hspectraEnergyVsLayer           = new TH2D( "hspectraTotLayerEnergy_vsLayer","Energy in layer vs Layer; Layer; E_{layer} (mip eq./tile) ; counts",
                                                 setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, 4000,0,800);
     hspectraEnergyVsLayerMuon       = new TH2D( "hspectraTotLayerEnergy_vsLayerMuon","Energy in layer vs Layer Muon triggers; Layer; E_{layer} (mip eq./tile) ; counts",
@@ -221,28 +242,35 @@ bool DataAnalysis::QAData(void){
   hspectraEnergyVsLayerMuon->SetDirectory(0);
   hspectraEnergyVsLayerMuon->Sumw2();
   
+  Double_t minXPos = setup->GetMinX();
+  Double_t maxXPos = setup->GetMaxX();
+  Double_t minYPos = setup->GetMinY();
+  Double_t maxYPos = setup->GetMaxY();
+  Int_t nBinsXPos  = (Int_t)((maxXPos-minXPos)/0.1);
+  Int_t nBinsYPos  = (Int_t)((maxXPos-minXPos)/0.1);
+  
   TH2D* hAverageXVsLayer  = new TH2D( "hAverageX_vsLayer","Av. X pos in layer vs Layer; Layer; X_{pos} (cm) ; counts",
-                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, 100,-10,10);
+                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, nBinsXPos,minXPos,maxXPos);
   hAverageXVsLayer->SetDirectory(0);
   hAverageXVsLayer->Sumw2();
   TH2D* hAverageXVsLayerMuon  = new TH2D( "hAverageX_vsLayerMuon","Av. X pos in layer vs Layer Muon triggers; Layer; X_{pos} (cm) ; counts",
-                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, 100,-10,10);
+                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, nBinsXPos,minXPos,maxXPos);
   hAverageXVsLayerMuon->SetDirectory(0);
   hAverageXVsLayer->Sumw2();
   TH2D* hAverageYVsLayer  = new TH2D( "hAverageX_vsLayer","Av. Y pos in layer vs Layer; Layer; Y_{pos} (cm) ; counts",
-                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, 50,-5,5);
+                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, nBinsYPos,minYPos,maxYPos);
   hAverageYVsLayer->SetDirectory(0);
   hAverageYVsLayer->Sumw2();
   TH2D* hAverageYVsLayerMuon  = new TH2D( "hAverageX_vsLayerMuon","Av. Y pos in layer vs Layer Muon triggers; Layer; Y_{pos} (cm) ; counts",
-                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, 50,-5,5);
+                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, nBinsYPos,minYPos,maxYPos);
   hAverageYVsLayerMuon->SetDirectory(0);
   hAverageYVsLayerMuon->Sumw2();
   TH2D* hNCellsVsLayer  = new TH2D( "hnCells_vsLayer","NCells in layer vs Layer; Layer; N_{cells,layer} ; counts",
-                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, 9,-0.5,8.5);
+                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxCellsPerLayer,-0.5,maxCellsPerLayer-0.5);
   hNCellsVsLayer->SetDirectory(0);
   hNCellsVsLayer->Sumw2();
   TH2D* hNCellsVsLayerMuon  = new TH2D( "hnCells_vsLayerMuon","NCells in layer vs Layer  Muon triggers; Layer; N_{cells,layer} ; counts",
-                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, 9,-0.5,8.5);
+                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxCellsPerLayer,-0.5,maxCellsPerLayer-0.5);
   hNCellsVsLayerMuon->SetDirectory(0);
   hNCellsVsLayerMuon->Sumw2();
   
@@ -259,27 +287,39 @@ bool DataAnalysis::QAData(void){
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->mkdir("IndividualCellsTrigg");
   
+  //=============================================================================================
+  // Setup general variables for analysis
+  //=============================================================================================
   std::cout << "starting to run QA"<< std::endl;
+  // initialize calib
   TcalibIn->GetEntry(0);
   int actCh1st = 0;
   double averageScale = calib.GetAverageScaleHigh(actCh1st);
   std::cout << "average HG mip: " << averageScale << "\t active ch: "<< actCh1st<< std::endl;
 
-
-  
+  // get and set maximum event number
   int evts=TdataIn->GetEntries();
-
   if ((eventNumber > -1) && (eventNumber <= evts)){
     evts = eventNumber;
     std::cout<<"restricting number of events in QA to " << evts << std::endl;
   }
-
   int evtsMuon= 0;
   double last_time = 0;
   double DeltaTime = 1000000000;
+  double minESave  = 0.;
+  
+  int nActiveLayers = setup->GetNActiveLayers();
+  
+  //=============================================================================================
+  // Run over all events in tree
+  //=============================================================================================  
   for(int i=0; i<evts; i++){
     TdataIn->GetEntry(i);
     if (i%5000 == 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
+    
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // Set up event variables
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     double Etot = 0;
     int nCells  = 0;
     bool muontrigg = false;
@@ -309,61 +349,112 @@ bool DataAnalysis::QAData(void){
     }
     hDeltaTime->Fill(DeltaTime);
     last_time = current_time;
-    
-
-    
-
+        
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // Evaluate all cells in event
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     for(int j=0; j<event.GetNTiles(); j++){
-      Caen* aTile=(Caen*)event.GetTile(j);
-      double corrHG = aTile->GetADCHigh()-calib.GetPedestalMeanH(aTile->GetCellID());
-      double corrLG = aTile->GetADCLow()-calib.GetPedestalMeanL(aTile->GetCellID());
-      hspectraHGvsCellID->Fill(aTile->GetCellID(), aTile->GetADCHigh());
-      hspectraLGvsCellID->Fill(aTile->GetCellID(), aTile->GetADCLow());
-      hspectraHGCorrvsCellID->Fill(aTile->GetCellID(), corrHG);
-      hspectraLGCorrvsCellID->Fill(aTile->GetCellID(), corrLG);
-      if(aTile->GetE()!=0 ){ 
-        nCells++;
-        int currLayer = setup->GetLayer(aTile->GetCellID());
-        ithLayer=layers.find(currLayer);
-        if(ithLayer!=layers.end()){
-          ithLayer->second.nCells+=1;
-          ithLayer->second.energy+=aTile->GetE();
-          ithLayer->second.avX+=setup->GetX(aTile->GetCellID())*aTile->GetE();
-          ithLayer->second.avY+=setup->GetY(aTile->GetCellID())*aTile->GetE();
-        } else {
-          layers[currLayer]=Layer();
-          layers[currLayer].nCells+=1;
-          layers[currLayer].energy+=aTile->GetE();
-          layers[currLayer].avX+=setup->GetX(aTile->GetCellID())*aTile->GetE();
-          layers[currLayer].avY+=setup->GetY(aTile->GetCellID())*aTile->GetE();
+      if (typeRO == ReadOut::Type::Caen) {
+        Caen* aTile=(Caen*)event.GetTile(j);
+        double corrHG = aTile->GetADCHigh()-calib.GetPedestalMeanH(aTile->GetCellID());
+        double corrLG = aTile->GetADCLow()-calib.GetPedestalMeanL(aTile->GetCellID());
+        hspectraHGvsCellID->Fill(aTile->GetCellID(), aTile->GetADCHigh());
+        hspectraLGvsCellID->Fill(aTile->GetCellID(), aTile->GetADCLow());
+        hspectraHGCorrvsCellID->Fill(aTile->GetCellID(), corrHG);
+        hspectraLGCorrvsCellID->Fill(aTile->GetCellID(), corrLG);
+        if(aTile->GetE()> minESave ){ 
+          nCells++;
+          int currLayer = setup->GetLayer(aTile->GetCellID());
+          ithLayer=layers.find(currLayer);
+          if(ithLayer!=layers.end()){
+            ithLayer->second.nCells+=1;
+            ithLayer->second.energy+=aTile->GetE();
+            ithLayer->second.avX+=setup->GetX(aTile->GetCellID())*aTile->GetE();
+            ithLayer->second.avY+=setup->GetY(aTile->GetCellID())*aTile->GetE();
+          } else {
+            layers[currLayer]=Layer();
+            layers[currLayer].nCells+=1;
+            layers[currLayer].energy+=aTile->GetE();
+            layers[currLayer].avX+=setup->GetX(aTile->GetCellID())*aTile->GetE();
+            layers[currLayer].avY+=setup->GetY(aTile->GetCellID())*aTile->GetE();
+          }
         }
-      }
-      // read current tile
-      ithSpectraTrigg=hSpectraTrigg.find(aTile->GetCellID());
-      if (aTile->GetLocalTriggerBit() == 1){
-        if(ithSpectraTrigg!=hSpectraTrigg.end()){
-          ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
-          ithSpectraTrigg->second.FillSpectraCAEN(corrLG,corrHG);
+        // read current tile
+        ithSpectraTrigg=hSpectraTrigg.find(aTile->GetCellID());
+        if (aTile->GetLocalTriggerBit() == 1){
+          if(ithSpectraTrigg!=hSpectraTrigg.end()){
+            ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
+            ithSpectraTrigg->second.FillSpectraCAEN(corrLG,corrHG);
+          } else {
+            RootOutputHist->cd("IndividualCellsTrigg");
+            hSpectraTrigg[aTile->GetCellID()]=TileSpectra("muonTriggers",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectraTrigg[aTile->GetCellID()].FillTrigger(aTile->GetLocalTriggerPrimitive());
+            hSpectraTrigg[aTile->GetCellID()].FillSpectraCAEN(corrLG,corrHG);
+          }
+          locMuon++;        
+        }      
+        
+        ithSpectra=hSpectra.find(aTile->GetCellID());
+        if (ithSpectra!=hSpectra.end()){
+          ithSpectra->second.FillSpectraCAEN(corrLG,corrHG);
+          ithSpectra->second.FillTrigger(aTile->GetLocalTriggerPrimitive());;
+          ithSpectra->second.FillCorrCAEN(corrLG,corrHG);
         } else {
-          RootOutputHist->cd("IndividualCellsTrigg");
-          hSpectraTrigg[aTile->GetCellID()]=TileSpectra("muonTriggers",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
-          hSpectraTrigg[aTile->GetCellID()].FillTrigger(aTile->GetLocalTriggerPrimitive());
-          hSpectraTrigg[aTile->GetCellID()].FillSpectraCAEN(corrLG,corrHG);
+          RootOutputHist->cd("IndividualCells");
+          hSpectra[aTile->GetCellID()]=TileSpectra("AllTriggers",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+          hSpectra[aTile->GetCellID()].FillSpectraCAEN(corrLG,corrHG);;
+          hSpectra[aTile->GetCellID()].FillTrigger(aTile->GetLocalTriggerPrimitive());;
+          hSpectra[aTile->GetCellID()].FillCorrCAEN(corrLG,corrHG);
         }
-        locMuon++;        
-      }      
-      
-      ithSpectra=hSpectra.find(aTile->GetCellID());
-      if (ithSpectra!=hSpectra.end()){
-        ithSpectra->second.FillSpectraCAEN(corrLG,corrHG);
-        ithSpectra->second.FillTrigger(aTile->GetLocalTriggerPrimitive());;
-        ithSpectra->second.FillCorrCAEN(corrLG,corrHG);
-      } else {
-        RootOutputHist->cd("IndividualCells");
-        hSpectra[aTile->GetCellID()]=TileSpectra("AllTriggers",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
-        hSpectra[aTile->GetCellID()].FillSpectraCAEN(corrLG,corrHG);;
-        hSpectra[aTile->GetCellID()].FillTrigger(aTile->GetLocalTriggerPrimitive());;
-        hSpectra[aTile->GetCellID()].FillCorrCAEN(corrLG,corrHG);
+      } else if (typeRO == ReadOut::Type::Hgcroc){
+        Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
+        double adc = aTile->GetIntegratedADC();
+        double tot = aTile->GetTOT();
+        double toa = aTile->GetTOA();
+        hspectraHGvsCellID->Fill(aTile->GetCellID(), adc);
+        hspectraTOTvsCellID->Fill(aTile->GetCellID(), tot);
+        if(aTile->GetE() > minESave ){ 
+          nCells++;
+          int currLayer = setup->GetLayer(aTile->GetCellID());
+          ithLayer=layers.find(currLayer);
+          if(ithLayer!=layers.end()){
+            ithLayer->second.nCells+=1;
+            ithLayer->second.energy+=aTile->GetE();
+            ithLayer->second.avX+=setup->GetX(aTile->GetCellID())*aTile->GetE();
+            ithLayer->second.avY+=setup->GetY(aTile->GetCellID())*aTile->GetE();
+          } else {
+            layers[currLayer]=Layer();
+            layers[currLayer].nCells+=1;
+            layers[currLayer].energy+=aTile->GetE();
+            layers[currLayer].avX+=setup->GetX(aTile->GetCellID())*aTile->GetE();
+            layers[currLayer].avY+=setup->GetY(aTile->GetCellID())*aTile->GetE();
+          }
+        }
+        // read current tile
+        ithSpectraTrigg=hSpectraTrigg.find(aTile->GetCellID());
+        if (aTile->GetLocalTriggerBit() == 1){
+          if(ithSpectraTrigg!=hSpectraTrigg.end()){
+            ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
+            ithSpectraTrigg->second.FillHGCROC(adc,toa,tot);
+          } else {
+            RootOutputHist->cd("IndividualCellsTrigg");
+            hSpectraTrigg[aTile->GetCellID()]=TileSpectra("muonTriggers",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectraTrigg[aTile->GetCellID()].FillTrigger(aTile->GetLocalTriggerPrimitive());
+            hSpectraTrigg[aTile->GetCellID()].FillHGCROC(adc,toa,tot);
+          }
+          locMuon++;        
+        }      
+        
+        ithSpectra=hSpectra.find(aTile->GetCellID());
+        if (ithSpectra!=hSpectra.end()){
+          ithSpectra->second.FillTrigger(aTile->GetLocalTriggerPrimitive());;
+          ithSpectra->second.FillHGCROC(adc,toa,tot);
+        } else {
+          RootOutputHist->cd("IndividualCells");
+          hSpectra[aTile->GetCellID()]=TileSpectra("AllTriggers",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+          hSpectra[aTile->GetCellID()].FillTrigger(aTile->GetLocalTriggerPrimitive());;
+          hSpectra[aTile->GetCellID()].FillHGCROC(adc,toa,tot);
+        }
       }
     }
     if (nCells > 0) {
@@ -383,8 +474,9 @@ bool DataAnalysis::QAData(void){
         muontrigg = true;
         evtsMuon++;
       }
+      
       if (muontrigg && debug > 3){
-          std::cout << "Muon triggered:\t" <<  fracLayer1Cell << "\t" << fracLocMuon << std::endl;
+          std::cout << "Muon triggered:\t" <<  fracLayer1Cell << "\t" << fracLocMuon << "\t" << nActiveLayers << "\t" << nCells<< std::endl;
       }
       
       for(int l = 0; l < setup->GetNMaxLayer()+1;l++){
@@ -446,19 +538,23 @@ bool DataAnalysis::QAData(void){
   hDeltaTime->Write();
 
   hspectraHGvsCellID->Write();
-  hspectraLGvsCellID->Write();
-  hspectraHGCorrvsCellID->Write();
-  hspectraLGCorrvsCellID->Write();
+  if (typeRO == ReadOut::Type::Caen){
+    hspectraLGvsCellID->Write();
+    hspectraHGCorrvsCellID->Write();
+    hspectraLGCorrvsCellID->Write();    
+  } else if (typeRO == ReadOut::Type::Hgcroc){
+    hspectraTOTvsCellID->Write();
+  }
+  
   hspectraEnergyvsCellID->Write();
   hspectraEnergyTotvsNCells->Write();
   hspectraEnergyTotvsNCellsMuon->Write();
   
   TH2D* hspectraEnergyTotvsNCells_WoMuon = (TH2D*)hspectraEnergyTotvsNCells->Clone("hspectraTotEnergy_vsNCells_woMuon");
-  hspectraEnergyTotvsNCells_WoMuon->Sumw2();
+  // hspectraEnergyTotvsNCells_WoMuon->Sumw2();
   hspectraEnergyTotvsNCells_WoMuon->Add(hspectraEnergyTotvsNCellsMuon, -1);
   hspectraEnergyTotvsNCells_WoMuon->Write();
   
-  hspectraEnergyTotvsNCells->Sumw2();
   TH1D* hspectraEnergyTot = (TH1D*)hspectraEnergyTotvsNCells->ProjectionY();
   hspectraEnergyTot->SetDirectory(0);
   TH1D* hspectraNCells = (TH1D*)hspectraEnergyTotvsNCells->ProjectionX();
@@ -466,7 +562,6 @@ bool DataAnalysis::QAData(void){
   hspectraEnergyTot->Write("hTotEnergy");
   hspectraNCells->Write("hNCells");
 
-  hspectraEnergyTotvsNCellsMuon->Sumw2();
   TH1D* hspectraEnergyTotMuon = (TH1D*)hspectraEnergyTotvsNCellsMuon->ProjectionY();
   hspectraEnergyTotMuon->SetDirectory(0);
   TH1D* hspectraNCellsMuon = (TH1D*)hspectraEnergyTotvsNCellsMuon->ProjectionX();
@@ -485,30 +580,30 @@ bool DataAnalysis::QAData(void){
   hAverageXVsLayer->Write();
   hAverageXVsLayerMuon->Write();
   TH2D* hAverageXVsLayer_WoMuon = (TH2D*)hAverageXVsLayer->Clone("hAverageX_vsLayer_woMuon");
-  hAverageXVsLayer_WoMuon->Sumw2();
+  // hAverageXVsLayer_WoMuon->Sumw2();
   hAverageXVsLayer_WoMuon->Add(hAverageXVsLayerMuon, -1);
   hAverageXVsLayer_WoMuon->Write();
   
   hAverageYVsLayer->Write();
   hAverageYVsLayerMuon->Write();
   TH2D* hAverageYVsLayer_WoMuon = (TH2D*)hAverageYVsLayer->Clone("hAverageY_vsLayer_woMuon");
-  hAverageYVsLayer_WoMuon->Sumw2();
+  // hAverageYVsLayer_WoMuon->Sumw2();
   hAverageYVsLayer_WoMuon->Add(hAverageYVsLayerMuon, -1);
   hAverageYVsLayer_WoMuon->Write();
   
   hNCellsVsLayer->Write();
   hNCellsVsLayerMuon->Write();
   TH2D* hNCellsVsLayer_WoMuon = (TH2D*)hNCellsVsLayer->Clone("hnCells_vsLayer_woMuon");
-  hNCellsVsLayer_WoMuon->Sumw2();
+  // hNCellsVsLayer_WoMuon->Sumw2();
   hNCellsVsLayer_WoMuon->Add(hNCellsVsLayerMuon, -1);
   hNCellsVsLayer_WoMuon->Write();
   
   hspectraEnergyVsLayer->Write();
-  hspectraEnergyVsLayer->Sumw2();
+  // hspectraEnergyVsLayer->Sumw2();
   hspectraEnergyVsLayerMuon->Write();
-  hspectraEnergyVsLayerMuon->Sumw2();
+  // hspectraEnergyVsLayerMuon->Sumw2();
   TH2D* hspectraEnergyVsLayer_WoMuon = (TH2D*)hspectraEnergyVsLayer->Clone("hspectraTotLayerEnergy_vsLayer_woMuon");
-  hspectraEnergyVsLayer_WoMuon->Sumw2();
+  // hspectraEnergyVsLayer_WoMuon->Sumw2();
   hspectraEnergyVsLayer_WoMuon->Add(hspectraEnergyVsLayerMuon, -1);
   hspectraEnergyVsLayer_WoMuon->Write();
 
@@ -542,23 +637,37 @@ bool DataAnalysis::QAData(void){
   TGraphErrors* graphMeanE_Layer_woMuon = new TGraphErrors();
   
   for(int l = 0; l < setup->GetNMaxLayer()+1;l++){  
-    histELayer_All[l]     = (TH1D*)hspectraEnergyVsLayer->ProjectionY(Form("histELayer_AllTrigg_Layer_%02d",l),l+1,l+1);
-    histELayer_All[l]->Sumw2();
-    histELayer_All[l]->Write();
-    if (maxYLAll < histELayer_All[l]->GetMaximum() )maxYLAll =  histELayer_All[l]->GetMaximum();
     
-    if (maxXLAll < FindLastBinXAboveMin(histELayer_All[l],2)) maxXLAll = FindLastBinXAboveMin(histELayer_All[l],2);
-    histELayer_Muon[l]    = (TH1D*)hspectraEnergyVsLayerMuon->ProjectionY(Form("histELayer_MuonTrigg_Layer_%02d",l),l+1,l+1);
-    histELayer_Muon[l]->Sumw2();
-    histELayer_Muon[l]->Write();
-    if (maxYLMuon < histELayer_Muon[l]->GetMaximum() )maxYLMuon =  histELayer_Muon[l]->GetMaximum();
-    if (maxXLMuon < FindLastBinXAboveMin(histELayer_Muon[l],2)) maxXLMuon = FindLastBinXAboveMin(histELayer_Muon[l],2);
-    histELayer_WoMuon[l]  = (TH1D*)hspectraEnergyVsLayer_WoMuon->ProjectionY(Form("histELayer_WOMuonTrigg_Layer_%02d",l),l+1,l+1);
-    histELayer_WoMuon[l]->Sumw2();
-    histELayer_WoMuon[l]->Write();
-    if (maxYLWOMuon < histELayer_WoMuon[l]->GetMaximum() )maxYLWOMuon =  histELayer_WoMuon[l]->GetMaximum();
-    if (maxXLWOMuon < FindLastBinXAboveMin(histELayer_WoMuon[l],2)) maxXLWOMuon = FindLastBinXAboveMin(histELayer_WoMuon[l],2);
+    bool layerOn = true;
+    
+    histNCellsLayer_All[l]     = (TH1D*)hNCellsVsLayer->ProjectionY(Form("histNCellsLayer_AllTrigg_Layer_%02d",l),l+1,l+1);
+    histNCellsLayer_All[l]->Write();
+    histNCellsLayer_Muon[l]    = (TH1D*)hNCellsVsLayerMuon->ProjectionY(Form("histNCellsLayer_MuonTrigg_Layer_%02d",l),l+1,l+1);
+    histNCellsLayer_Muon[l]->Write();
+    histNCellsLayer_WoMuon[l]  = (TH1D*)hNCellsVsLayer_WoMuon->ProjectionY(Form("histNCellsLayer_WOMuonTrigg_Layer_%02d",l),l+1,l+1);
+    histNCellsLayer_WoMuon[l]->Write();
 
+    
+    if (histNCellsLayer_All[l]->GetMean() < 0.001) layerOn =false;
+    
+    histELayer_All[l]     = (TH1D*)hspectraEnergyVsLayer->ProjectionY(Form("histELayer_AllTrigg_Layer_%02d",l),l+1,l+1);
+    // histELayer_All[l]->Sumw2();
+    histELayer_All[l]->Write();
+    histELayer_Muon[l]    = (TH1D*)hspectraEnergyVsLayerMuon->ProjectionY(Form("histELayer_MuonTrigg_Layer_%02d",l),l+1,l+1);
+    // histELayer_Muon[l]->Sumw2();
+    histELayer_Muon[l]->Write();
+    histELayer_WoMuon[l]  = (TH1D*)hspectraEnergyVsLayer_WoMuon->ProjectionY(Form("histELayer_WOMuonTrigg_Layer_%02d",l),l+1,l+1);
+    // histELayer_WoMuon[l]->Sumw2();
+    histELayer_WoMuon[l]->Write();
+    
+    if (layerOn){
+      if (maxYLAll < histELayer_All[l]->GetMaximum())maxYLAll =  histELayer_All[l]->GetMaximum();
+      if (maxXLAll < FindLastBinXAboveMin(histELayer_All[l],2)) maxXLAll = FindLastBinXAboveMin(histELayer_All[l],2);
+      if (maxYLMuon < histELayer_Muon[l]->GetMaximum() )maxYLMuon =  histELayer_Muon[l]->GetMaximum();
+      if (maxXLMuon < FindLastBinXAboveMin(histELayer_Muon[l],2) ) maxXLMuon = FindLastBinXAboveMin(histELayer_Muon[l],2);
+      if (maxYLWOMuon < histELayer_WoMuon[l]->GetMaximum() )maxYLWOMuon =  histELayer_WoMuon[l]->GetMaximum();
+      if (maxXLWOMuon < FindLastBinXAboveMin(histELayer_WoMuon[l],2) ) maxXLWOMuon = FindLastBinXAboveMin(histELayer_WoMuon[l],2);
+    }
 
     histXLayer_All[l]     = (TH1D*)hAverageXVsLayer->ProjectionY(Form("histXLayer_AllTrigg_Layer_%02d",l),l+1,l+1);
     histXLayer_All[l]->Write();
@@ -573,13 +682,6 @@ bool DataAnalysis::QAData(void){
     histYLayer_Muon[l]->Write();
     histYLayer_WoMuon[l]  = (TH1D*)hAverageYVsLayer_WoMuon->ProjectionY(Form("histYLayer_WOMuonTrigg_Layer_%02d",l),l+1,l+1);
     histYLayer_WoMuon[l]->Write();
-
-    histNCellsLayer_All[l]     = (TH1D*)hNCellsVsLayer->ProjectionY(Form("histNCellsLayer_AllTrigg_Layer_%02d",l),l+1,l+1);
-    histNCellsLayer_All[l]->Write();
-    histNCellsLayer_Muon[l]    = (TH1D*)hNCellsVsLayerMuon->ProjectionY(Form("histNCellsLayer_MuonTrigg_Layer_%02d",l),l+1,l+1);
-    histNCellsLayer_Muon[l]->Write();
-    histNCellsLayer_WoMuon[l]  = (TH1D*)hNCellsVsLayer_WoMuon->ProjectionY(Form("histNCellsLayer_WOMuonTrigg_Layer_%02d",l),l+1,l+1);
-    histNCellsLayer_WoMuon[l]->Write();
 
     layersMeanAll[l]=Layer();
     layersMeanAll[l].energy+=histELayer_All[l]->GetMean();
@@ -623,6 +725,8 @@ bool DataAnalysis::QAData(void){
   TString outputDirPlots = GetPlotOutputDir();
   gSystem->Exec("mkdir -p "+outputDirPlots);
   
+  
+  
   //**********************************************************************
   // Create canvases for channel overview plotting
   //**********************************************************************
@@ -637,19 +741,21 @@ bool DataAnalysis::QAData(void){
   DefaultCanvasSettings( canvas2DCorrWOLine, 0.08, 0.13, 0.01, 0.07);
   canvas2DCorrWOLine->SetLogz(1);
   
- TCanvas* canvasDeltaTime = new TCanvas("canvasDeltaTime","",0,0,1450,1300);  // gives the page size
+  TCanvas* canvasDeltaTime = new TCanvas("canvasDeltaTime","",0,0,1450,1300);  // gives the page size
   DefaultCanvasSettings( canvasDeltaTime, 0.08, 0.07, 0.01, 0.07);
   canvasDeltaTime->SetLogy(1);
-
-
   if(DeltaTimePlot>0){
     PlotSimple1D( canvasDeltaTime, hDeltaTime, -10000, timemax, textSizeRel, Form("%s/deltaTime.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
   } 
 
   PlotSimple2D( canvas2DCorr, hspectraHGvsCellID, -10000, -10000, textSizeRel, Form("%s/HG.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DCorr, hspectraLGvsCellID, -10000, -10000, textSizeRel, Form("%s/LG.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DCorr, hspectraHGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/HGCorr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DCorr, hspectraLGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/LGCorr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  if (typeRO == ReadOut::Type::Caen){
+    PlotSimple2D( canvas2DCorr, hspectraLGvsCellID, -10000, -10000, textSizeRel, Form("%s/LG.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+    PlotSimple2D( canvas2DCorr, hspectraHGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/HGCorr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+    PlotSimple2D( canvas2DCorr, hspectraLGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/LGCorr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  } else if (typeRO == ReadOut::Type::Hgcroc){
+    PlotSimple2D( canvas2DCorr, hspectraTOTvsCellID, -10000, -10000, textSizeRel, Form("%s/TOT.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);    
+  }
   PlotSimple2D( canvas2DCorr, hspectraEnergyvsCellID, -10000, -10000, textSizeRel, Form("%s/EnergyVsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraEnergyTotvsNCells, -10000, -10000, textSizeRel, Form("%s/EnergyTotalVsNCells.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form("evts = %d",evts));
   PlotSimple2D( canvas2DCorr, hspectraEnergyTotvsNCellsMuon, -10000, -10000, textSizeRel, Form("%s/EnergyTotalVsNCells_MuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form("Muon evts = %d",evtsMuon));
@@ -693,13 +799,35 @@ bool DataAnalysis::QAData(void){
 
   TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
   DefaultCanvasSettings( canvas1DSimple, 0.08, 0.01, 0.03, 0.07);
+  hspectraEnergyTot->Rebin(4);
   hspectraEnergyTot->Scale(1./evts);
   hspectraEnergyTot->GetYaxis()->SetTitle("counts/event");
-  PlotSimple1D(canvas1DSimple, hspectraEnergyTot, -10000, -10000, textSizeRel, Form("%s/EnergyTot.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT E_{Tot} #GT = %.1f (mip/tile eq.)",hspectraEnergyTot->GetMean() ));
+  
+  TF1* fitGaussETot = new TF1("fitEtot","gaus",hspectraEnergyTot->GetMean()-1.5*hspectraEnergyTot->GetRMS(),hspectraEnergyTot->GetMean()+1.5*hspectraEnergyTot->GetRMS());
+  hspectraEnergyTot->Fit(fitGaussETot,"QRMEN0S");
+  std::cout<< "All trigg: "<<fitGaussETot->GetParameter(1) << "\t" << fitGaussETot->GetParameter(2) << std::endl;
+  
+  Double_t maxEPlot =  FindLastBinXAboveMin(hspectraEnergyTot,1./evts);
+  std::cout << maxEPlot << std::endl;
+  
+  PlotSimple1D(canvas1DSimple, hspectraEnergyTot, -10000, maxEPlot, textSizeRel, Form("%s/EnergyTot.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT E_{Tot} #GT = %.1f #pm %.1f (mip/tile eq.)", hspectraEnergyTot->GetMean(), hspectraEnergyTot->GetRMS() ));
 
+  
+  hspectraEnergyTotMuon->Rebin(4);
   hspectraEnergyTotMuon->Scale(1./evts);
+  hspectraEnergyTotNonMuon->Rebin(4);
   hspectraEnergyTotNonMuon->Scale(1./evts);
-  PlotContamination1D(canvas1DSimple, hspectraEnergyTot,hspectraEnergyTotMuon, hspectraEnergyTotNonMuon, -10000, -10000, textSizeRel, Form("%s/EnergyTotSplit.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT E_{Tot,non muon} #GT = %.1f (mip/tile eq.)",hspectraEnergyTotNonMuon->GetMean() ));
+
+  TF1* fitGaussETotNonMuon = new TF1("fitEtot","gaus",hspectraEnergyTotNonMuon->GetMean()-1.5*hspectraEnergyTotNonMuon->GetRMS(),hspectraEnergyTotNonMuon->GetMean()+1.5*hspectraEnergyTotNonMuon->GetRMS());
+  hspectraEnergyTotNonMuon->Fit(fitGaussETotNonMuon,"QRMEN0S");
+  std::cout<< "Non muon trigg: "<<fitGaussETotNonMuon->GetParameter(1) << "\t" << fitGaussETotNonMuon->GetParameter(2) << std::endl;
+  hspectraEnergyTotNonMuon->Fit(fitGaussETotNonMuon,"QRMEN0S","",fitGaussETotNonMuon->GetParameter(1)-1.*fitGaussETotNonMuon->GetParameter(2), fitGaussETotNonMuon->GetParameter(1)+1.*fitGaussETotNonMuon->GetParameter(2));
+  std::cout<< "Non muon trigg refit: "<<fitGaussETotNonMuon->GetParameter(1) << "\t" << fitGaussETotNonMuon->GetParameter(2) << std::endl;
+  
+  
+  PlotContamination1D(canvas1DSimple, hspectraEnergyTot,hspectraEnergyTotMuon, hspectraEnergyTotNonMuon, -10000, maxEPlot, textSizeRel, Form("%s/EnergyTotSplit.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT E_{Tot,non muon} #GT = %.1f#pm %.1f (mip/tile eq.)", hspectraEnergyTotNonMuon->GetMean(), hspectraEnergyTotNonMuon->GetRMS() ));
+
+  PlotSimpleWithFit1D(canvas1DSimple, hspectraEnergyTotNonMuon, fitGaussETotNonMuon , -10000, maxEPlot, textSizeRel, Form("%s/EnergyTotNonMuonWithFit.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT E_{Tot,non muon} #GT = %.1f #pm %.1f (mip/tile eq.)", fitGaussETotNonMuon->GetParameter(1), fitGaussETotNonMuon->GetParameter(2) ));
 
   hspectraNCells->Scale(1./evts);
   hspectraNCells->GetYaxis()->SetTitle("counts/event");
@@ -720,17 +848,17 @@ bool DataAnalysis::QAData(void){
   }
 
   
-  PlotLayerOverlay(canvas1DSimple, histXLayer_All, evts*100, 7.8 ,GetAverageLayer(layersMeanAll), GetMaxLayer(layersMeanAll), textSizeRel, Form("%s/XPosLayerOverlay_AllTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "All triggers");
-  PlotLayerOverlay(canvas1DSimple, histXLayer_Muon, evtsMuon*100, 7.8, GetAverageLayer(layersMeanMuon), GetMaxLayer(layersMeanMuon),textSizeRel, Form("%s/XPosLayerOverlay_MuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Muon triggers");
-  PlotLayerOverlay(canvas1DSimple, histXLayer_WoMuon, (evts-evtsMuon)*100, 7.8, GetAverageLayer(layersMeanWOMuon), GetMaxLayer(layersMeanWOMuon),textSizeRel, Form("%s/XPosLayerOverlay_NonMuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Non muon triggers");
+  PlotLayerOverlay(canvas1DSimple, histXLayer_All, evts*100, maxXPos-2. ,GetAverageLayer(layersMeanAll), GetMaxLayer(layersMeanAll), textSizeRel, Form("%s/XPosLayerOverlay_AllTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "All triggers");
+  PlotLayerOverlay(canvas1DSimple, histXLayer_Muon, evtsMuon*100, maxXPos-2., GetAverageLayer(layersMeanMuon), GetMaxLayer(layersMeanMuon),textSizeRel, Form("%s/XPosLayerOverlay_MuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Muon triggers");
+  PlotLayerOverlay(canvas1DSimple, histXLayer_WoMuon, (evts-evtsMuon)*100, maxXPos-2., GetAverageLayer(layersMeanWOMuon), GetMaxLayer(layersMeanWOMuon),textSizeRel, Form("%s/XPosLayerOverlay_NonMuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Non muon triggers");
 
-  PlotLayerOverlay(canvas1DSimple, histYLayer_All, evts*100, 2.8 ,GetAverageLayer(layersMeanAll), GetMaxLayer(layersMeanAll), textSizeRel, Form("%s/YPosLayerOverlay_AllTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "All triggers");
-  PlotLayerOverlay(canvas1DSimple, histYLayer_Muon, evtsMuon*100, 2.8, GetAverageLayer(layersMeanMuon), GetMaxLayer(layersMeanMuon),textSizeRel, Form("%s/YPosLayerOverlay_MuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Muon triggers");
-  PlotLayerOverlay(canvas1DSimple, histYLayer_WoMuon, (evts-evtsMuon)*100, 2.8, GetAverageLayer(layersMeanWOMuon), GetMaxLayer(layersMeanWOMuon),textSizeRel, Form("%s/YPosLayerOverlay_NonMuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Non muon triggers");
+  PlotLayerOverlay(canvas1DSimple, histYLayer_All, evts*100, maxYPos-2. ,GetAverageLayer(layersMeanAll), GetMaxLayer(layersMeanAll), textSizeRel, Form("%s/YPosLayerOverlay_AllTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "All triggers");
+  PlotLayerOverlay(canvas1DSimple, histYLayer_Muon, evtsMuon*100, maxYPos-2., GetAverageLayer(layersMeanMuon), GetMaxLayer(layersMeanMuon),textSizeRel, Form("%s/YPosLayerOverlay_MuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Muon triggers");
+  PlotLayerOverlay(canvas1DSimple, histYLayer_WoMuon, (evts-evtsMuon)*100, maxYPos-2., GetAverageLayer(layersMeanWOMuon), GetMaxLayer(layersMeanWOMuon),textSizeRel, Form("%s/YPosLayerOverlay_NonMuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Non muon triggers");
 
-  PlotLayerOverlay(canvas1DSimple, histNCellsLayer_All, evts*100, 8.5 ,GetAverageLayer(layersMeanAll), GetMaxLayer(layersMeanAll), textSizeRel, Form("%s/NCellsLayerOverlay_AllTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "All triggers");
-  PlotLayerOverlay(canvas1DSimple, histNCellsLayer_Muon, evtsMuon*100, 8.5, GetAverageLayer(layersMeanMuon), GetMaxLayer(layersMeanMuon),textSizeRel, Form("%s/NCellsLayerOverlay_MuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Muon triggers");
-  PlotLayerOverlay(canvas1DSimple, histNCellsLayer_WoMuon, (evts-evtsMuon)*100, 8.5, GetAverageLayer(layersMeanWOMuon), GetMaxLayer(layersMeanWOMuon),textSizeRel, Form("%s/NCellsLayerOverlay_NonMuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Non muon triggers");
+  PlotLayerOverlay(canvas1DSimple, histNCellsLayer_All, evts*100, maxCellsPerLayer-0.5 ,GetAverageLayer(layersMeanAll), GetMaxLayer(layersMeanAll), textSizeRel, Form("%s/NCellsLayerOverlay_AllTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "All triggers");
+  PlotLayerOverlay(canvas1DSimple, histNCellsLayer_Muon, evtsMuon*100, maxCellsPerLayer-0.5, GetAverageLayer(layersMeanMuon), GetMaxLayer(layersMeanMuon),textSizeRel, Form("%s/NCellsLayerOverlay_MuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Muon triggers");
+  PlotLayerOverlay(canvas1DSimple, histNCellsLayer_WoMuon, (evts-evtsMuon)*100, maxCellsPerLayer-0.5, GetAverageLayer(layersMeanWOMuon), GetMaxLayer(layersMeanWOMuon),textSizeRel, Form("%s/NCellsLayerOverlay_NonMuonTrigg.%s", outputDirPlots.Data(), plotSuffix.Data()),it->second, 1, "Non muon triggers");
 
   if (ExtPlot > 0){
     gSystem->Exec("mkdir -p "+outputDirPlots+"/detailed");

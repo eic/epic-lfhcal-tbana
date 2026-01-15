@@ -20,7 +20,8 @@ bool TileSpectra::FillHGCROC(double adc, double toa, double tot){
   hspectraHG.Fill(adc);
   hspectraTOT.Fill(toa);
   hspectraTOA.Fill(tot);
-  hADCTOT.Fill(adc, tot);
+  if (tot > 0)
+    hADCTOT.Fill(adc, tot);
   hTOAADC.Fill(toa, adc);
   return true;
 }
@@ -72,7 +73,10 @@ bool TileSpectra::FillExtHGCROC(double adc = 0., double toa= 0., double tot= 0.,
   hspectraTOA.Fill(toa);  
   hspectraTOT.Fill(tot);  
   if (extend ==  2 ){
-    hADCTOT.Fill(adc,tot);
+    if (tot > 0 && toa > 0){
+      hADCTOT.Fill(adc,tot);
+      hcorrADCTOT.Fill(adc,tot);
+    }
   }
   if (extend == 3){
     hcorrTOAADC.Fill(toa,adc);
@@ -362,13 +366,14 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
   
   double fitrange[2]      = {50, 2000};
   if (ROType == ReadOut::Type::Hgcroc){
-    // hspectraHG.Rebin(8);
     fitrange[0] = 16;
-    fitrange[1] = 500;    
+    fitrange[1] = 200; 
   }
   if (impE){
     fitrange[0] = 0.6*avmip;
     fitrange[1] = 3*avmip;
+    if (ROType == ReadOut::Type::Hgcroc)
+      fitrange[1] = 4*avmip;
   }
   if (year == 2023 && fitrange[0] < 100)
     fitrange[0] = 100;
@@ -391,14 +396,20 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
     parlimitshi[0]  = 1000;
     parlimitshi[1]  = 1500;
   } else if (ROType == ReadOut::Type::Hgcroc){
-    parlimitslo[1]  = 20;    
-    fitrange[0]     = 15;
+    startvalues[1]  = 25; 
+    parlimitslo[0]  = 0.1;
+    parlimitslo[1]  = 2;    
+    parlimitshi[0]  = 100;    
+    parlimitshi[1]  = 200;  
+    parlimitshi[3]  = calib->PedestalSigH*30;    
   }
   
   if (impE && (avmip =! -1000)){
     startvalues[1]  = avmip;    
     parlimitslo[1]  = 0.5*avmip;    
     parlimitshi[1]  = 1.7*avmip;
+    if (ROType == ReadOut::Type::Hgcroc)
+      parlimitshi[1]  = 2.2*avmip;
   }
   if (ROType == ReadOut::Type::Caen){
     if (vov != -1000){
@@ -804,6 +815,11 @@ TH2D* TileSpectra::GetCorrTOAADC(){
 TH2D* TileSpectra::GetCorrTOASample(){
   return &hcorrTOASample;
 }
+
+TH2D* TileSpectra::GetCorrADCTOT(){
+  return &hcorrADCTOT;
+}
+
 
 TF1* TileSpectra::GetBackModel(int lh){
   if(lh==0 && bpedLG){

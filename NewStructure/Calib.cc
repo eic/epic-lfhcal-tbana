@@ -963,3 +963,62 @@ void Calib::ReadCalibFromTextFile(TString filename, int debug){
   
 
 }
+
+
+void Calib::ReadExternalBadChannelMap(TString filename, int debug){
+  
+  std::cout << "Reading in external mapping file" << std::endl;
+  Setup* setup = Setup::GetInstance();
+  
+  std::ifstream bcmapFile;
+  bcmapFile.open(filename,std::ios_base::in);
+  if (!bcmapFile) {
+    std::cout << "ERROR: file " << filename.Data() << " not found!" << std::endl;
+    return;
+  }
+
+  int nBCs = 0;
+  for( TString tempLine; tempLine.ReadLine(bcmapFile, kTRUE); ) {
+    // check if line should be considered
+    if (tempLine.BeginsWith("%") || tempLine.BeginsWith("#")){
+      continue;
+    }
+    if (debug > 1) std::cout << tempLine.Data() << std::endl;
+
+    // Separate the string according to tabulators
+    TObjArray *tempArr  = tempLine.Tokenize(" ");
+    if(tempArr->GetEntries()<2){
+      if (debug > 1) std::cout << "nothing to be done" << std::endl;
+      delete tempArr;
+      continue;
+    } 
+    
+    int mod     = ((TString)((TObjString*)tempArr->At(0))->GetString()).Atoi();
+    int layer   = ((TString)((TObjString*)tempArr->At(1))->GetString()).Atoi();
+    int row     = ((TString)((TObjString*)tempArr->At(2))->GetString()).Atoi();
+    int col     = ((TString)((TObjString*)tempArr->At(3))->GetString()).Atoi();
+    short bc    = short(((TString)((TObjString*)tempArr->At(4))->GetString()).Atoi());
+    
+    int cellID  = setup->GetCellID( row, col, layer, mod);    
+    TileCalib* tileCal = GetTileCalib(cellID);
+    
+    tileCal->BadChannel = bc;
+    nBCs++;
+    
+    if (debug > 1) std::cout << "cellID " << cellID << "\t BC status: " << bc<< std::endl;
+  }
+  std::cout << "registered " << nBCs << " bad channels!" << std::endl;
+
+  std::map<int, TileCalib>::const_iterator it;
+  bool allBC =true;
+  for(it=CaloCalib.begin(); it!=CaloCalib.end(); ++it){
+    if (it->second.BadChannel == -64) allBC = false;
+  }
+  if (GetBCCalib() == false && allBC == true){
+    SetBCCalib(true);
+  }
+  if (GetBCCalib() == true && allBC == false){
+    std::cout << "At least one channel is missing the correct bad chanel value" << std::endl; 
+  }
+  return;
+}

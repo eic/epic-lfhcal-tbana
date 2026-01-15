@@ -27,9 +27,9 @@ function MuonCalibHGCROC()
 	elif [ $1 == "wave" ]; then 
     if [ -f "$4/rawHGCROC_wPed_$3_calib_mod.txt" ]; then
       echo "overwriting original calib file with manually modified $4/rawHGCROC_wPed_$3_calib_mod.txt"
-      ./DataPrep -d 1 -E -f -w $4/rawHGCROC_wPed_$2.root -i $4/rawHGCROC_$3.root -o $4/rawHGCROC_wave_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$6 -r $runNrFile -k $4/rawHGCROC_wPed_$3_calib_mod.txt     
+      ./DataPrep -d 1 -E 2 -f -w $4/rawHGCROC_wPed_$2.root -i $4/rawHGCROC_$3.root -o $4/rawHGCROC_wave_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$6 -r $runNrFile -k $4/rawHGCROC_wPed_$3_calib_mod.txt     
     else 
-      ./DataPrep -d 1 -E -f -w $4/rawHGCROC_wPed_$2.root -i $4/rawHGCROC_$3.root -o $4/rawHGCROC_wave_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$6 -r $runNrFile 
+      ./DataPrep -d 1 -E 2 -f -w $4/rawHGCROC_wPed_$2.root -i $4/rawHGCROC_$3.root -o $4/rawHGCROC_wave_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$6 -r $runNrFile 
     fi
 	elif [ $1 == "default" ]; then 
 		time ./DataPrep -f -d 1 -e  -s -i $4/rawHGCROC_wPed_wBC_$3.root -o $4/rawHGCROC_wPedwMuon_wBC_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuon/$6 -r $runNrFile
@@ -54,9 +54,9 @@ function MuonCalibHGCROC()
   elif [ $1 == "wave_red" ]; then 
     if [ -f "$4/rawHGCROC_wPed_$3_calib_mod.txt" ]; then
       echo "overwriting original calib file with manually modified $4/rawHGCROC_wPed_$3_calib_mod.txt"
-      ./DataPrep -d 1 -E -f -w $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$3.root -i $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$3.root -o $4/rawHGCROC_wave_red_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$6 -r $runNrFile -k $4/rawHGCROC_wPed_$3_calib_mod.txt     
+      ./DataPrep -d 1 -E 2 -f -w $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$3.root -i $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$3.root -o $4/rawHGCROC_wave_red_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$6 -r $runNrFile -k $4/rawHGCROC_wPed_$3_calib_mod.txt     
     else 
-      ./DataPrep -d 1 -E -f -w $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$3.root -i $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$3.root -o $4/rawHGCROC_wave_red_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibWave_Red/$6 -r $runNrFile 
+      ./DataPrep -d 1 -E 2 -f -w $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$3.root -i $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$3.root -o $4/rawHGCROC_wave_red_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibWave_Red/$6 -r $runNrFile 
     fi
 
 	fi

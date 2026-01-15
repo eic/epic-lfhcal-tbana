@@ -231,8 +231,14 @@ bool EventDisplay::Plot(){
             energy = aTile->GetIntegratedADC()/ calib.GetScaleHigh(aTile->GetCellID()); 
             if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << aTile->GetIntegratedADC() << "\t scale (calib) " << calib.GetScaleHigh( aTile->GetCellID() ) << "\t energy " << energy << std::endl;
             break;
+          case 4:
+            energy = aTile->GetE(); 
+            if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t E: " << aTile->GetE() << std::endl;
+            break;
         }
 
+        if (dataTypeHGCROC == 4 && energy < energy) continue;
+        
         if(ithLayer!=layers.end()){
           ithLayer->second.nCells+=1;
           ithLayer->second.energy+=energy;
@@ -307,6 +313,9 @@ bool EventDisplay::Plot(){
               break;
             case 3:
               energy = aTile->GetIntegratedADC()/calib.GetScaleHigh(aTile->GetCellID());
+              break;
+            case 4:
+              energy = aTile->GetE();
               break;
           }
           x = (double) aTile->GetX();

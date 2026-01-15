@@ -32,7 +32,7 @@ void PrintHelp(char* exe){
   std::cout<<"-C yyy   Apply calibrations stored in yyy root file to the input uncalibrated file"<<std::endl;
   std::cout<<"-d [0-n] switch on debug info with debug level 0 to n"<<std::endl;
   std::cout<<"-e       extended plotting = 1"<<std::endl;
-  std::cout<<"-E       extended plotting = 2"<<std::endl;
+  std::cout<<"-E [1-3] extended plotting set to whatever value you specify"<<std::endl;
   std::cout<<"-f       Force to write output if already exist"<<std::endl;
   std::cout<<"-F fff   set explicit plot extension explicitly, default is pdf "<<std::endl;
   std::cout<<"-i uuu   Input file in root format"<<std::endl;
@@ -51,6 +51,7 @@ void PrintHelp(char* exe){
   std::cout<<"-S       extract scaling constant from input data in 2nd iteration based on pretriggered data"<<std::endl;
   std::cout<<"-t       use local trigger eval from existing input, don't redo in calibrate"<<std::endl;
   std::cout<<"-T ttt   evaluate local triggers before calibrating, use external calib file ttt"<<std::endl;
+  std::cout<<"-u       disable trigger primitive calc"<<std::endl;
   std::cout<<"-w www   Analyse waveform of HGCROC data with www as pedestal file"<<std::endl;
   std::cout<<"-X       skim HGCROC events to a new file where there is at least a signal in the TOA "<<std::endl;
   std::cout<<"-y yyyy  setting year externally to narrow parameters"<<std::endl;
@@ -71,7 +72,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"c:F:pT:sk:P:SnbB:L:NtMC:fo:O:aA:eEm:d:i:w:Xy:r:h"))!=-1){
+  while((c=getopt(argc,argv,"aA:bB:c:C:d:eE:fF:hi:k:L:m:MnNo:O:pP:r:sStT:uw:Xy:"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"DataPrep: printing calib object to file"<<std::endl;
@@ -105,8 +106,8 @@ int main(int argc, char* argv[]){
       AnAnalysis.SetExtPlotting(1);
       break;
     case 'E':
-      std::cout<<"DataPrep: enabling more extended plotting"<<std::endl;
-      AnAnalysis.SetExtPlotting(2);
+      std::cout<<"DataPrep: enabling more extended plotting: "<< optarg<<std::endl;
+      AnAnalysis.SetExtPlotting(atoi(optarg));
       break;
     case 'f':
       std::cout<<"DataPrep: If output already exists it will be overwritten"<<std::endl;
@@ -182,6 +183,10 @@ int main(int argc, char* argv[]){
       std::cout<<"DataPrep: run local trigger, with calib file:" << optarg<<std::endl;
       AnAnalysis.IsToEvalLocalTrigg(true);
       AnAnalysis.SetRootCalibInput(Form("%s",optarg));
+      break;
+    case 'u':
+      std::cout<<"DataPrep: disable trigger primitive calculation" <<std::endl;
+      AnAnalysis.DisableRecalcTriggPrimitives();
       break;
     case 'w':
       std::cout<<"DataPrep: analyse HGCROC waveform and apply pedestal from: "<<optarg<<std::endl;

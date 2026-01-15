@@ -313,15 +313,15 @@ double Event::CalculateLocalMuonTrigg(  Calib calib,
     } else {
       // TODO: THIS NEEDS TO BE REWORKED ONCE WE HAVE THE CROSS CALIB BETWEEN ADC & TOT
       // if (((Hgcroc*)GetTileFromID(ids[t]))->GetTOT() >= 1) std::cout << "ADC: " << ((Hgcroc*)GetTileFromID(ids[t]))->GetIntegratedADC() << "\t TOT: "<<  ((Hgcroc*)GetTileFromID(ids[t]))->GetTOT() << std::endl;
-      if (((Hgcroc*)GetTileFromID(ids[t]))->GetTOT() >= 1)
-        tmpGain = 1000;
-      else 
+      // if (((Hgcroc*)GetTileFromID(ids[t]))->GetTOT() >= 1)
+        // tmpGain = 1000;
+      // else 
         tmpGain = ((Hgcroc*)GetTileFromID(ids[t]))->GetIntegratedADC();
       
-      if (((Hgcroc*)GetTileFromID(ids[t]))->GetTOA() > 0){
+      // if (((Hgcroc*)GetTileFromID(ids[t]))->GetTOA() > 0){
         avsurr +=tmpGain;
-        tilesWTOA++;
-      }
+        // tilesWTOA++;
+      // }
     }
   }
   if (activeTiles > 1)

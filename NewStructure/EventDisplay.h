@@ -57,7 +57,8 @@ class EventDisplay{
   inline void PlotHGCROC_ADCData()                {plotHGCROC = true; dataTypeHGCROC = 0; }
   inline void PlotHGCROC_ADCwPedData()            {plotHGCROC = true; dataTypeHGCROC = 1; }
   inline void PlotHGCROC_TOTData()                {plotHGCROC = true; dataTypeHGCROC = 2; }
-  inline void PlotHGCROC_ADCmipCorr()                {plotHGCROC = true; dataTypeHGCROC = 3; }
+  inline void PlotHGCROC_ADCmipCorr()             {plotHGCROC = true; dataTypeHGCROC = 3; }
+  inline void PlotHGCROC_E()                      {plotHGCROC = true; dataTypeHGCROC = 4; }
   
   //General methods
   bool CheckAndOpenIO(void);

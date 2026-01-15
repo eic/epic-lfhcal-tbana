@@ -126,7 +126,8 @@ class Calib{
   void PrintGlobalInfo();
   void PrintCalibToFile( TString );
   void ReadCalibFromTextFile( TString, int);
-
+  void ReadExternalBadChannelMap(TString, int);
+  
   inline std::map<int, TileCalib>::const_iterator begin() {return CaloCalib.cbegin();};
   inline std::map<int, TileCalib>::const_iterator end()   {return CaloCalib.cend();};
   

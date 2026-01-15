@@ -26,7 +26,9 @@
 #include "PlotHelper_8MLayer.h"
 #include "PlotHelper_2MLayer.h"
 #include "PlotHelper_1MLayer.h"
-  //__________________________________________________________________________________________________________
+#include "PlotHelper_2ModLayer.h"
+
+//__________________________________________________________________________________________________________
   // Plot 2D fit variables overview
   //__________________________________________________________________________________________________________  
   void PlotSimple2D( TCanvas* canvas2D, 
@@ -224,6 +226,48 @@
   //__________________________________________________________________________________________________________
   // Plot 1D distribution
   //__________________________________________________________________________________________________________  
+  void PlotSimpleWithFit1D( TCanvas* canvas2D, 
+                            TH1* hist, TF1* fit, Int_t maxy, Int_t maxx, 
+                            Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
+                            int labelOpt = 1,
+                            TString additionalLabel = ""
+                          ){
+      canvas2D->cd();
+      SetStyleHistoTH1ForGraphs( hist, hist->GetXaxis()->GetTitle(), hist->GetYaxis()->GetTitle(), 0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.9, 1.05);  
+      
+      SetMarkerDefaults(hist, 24, 1, kBlack, kBlack, kFALSE);
+      // if (hist->GetYaxis()->GetTitle().CompareTo("") != 0)
+        
+      if (maxy > -10000)hist->GetYaxis()->SetRangeUser(-0.5,maxy+0.1);
+      if (maxx > -10000)hist->GetXaxis()->SetRangeUser(-0.5,maxx+0.1);
+    
+      hist->Draw("p,e");
+    
+      if (fit){
+        Double_t xFitMax = -10000;
+        if (maxx > -10000) 
+          xFitMax = hist->GetXaxis()->GetBinCenter(hist->GetNbinsX());
+        else 
+          xFitMax = maxx;
+        SetStyleFit(fit , -10000, -10000, 7, 7, kRed+1);
+        fit->Draw("same");
+        
+        DrawLines(fit->GetParameter(1),fit->GetParameter(1),0, hist->GetMaximum()*0.1, 5, kRed+1, 10);  
+        DrawLines(fit->GetParameter(1)-fit->GetParameter(2),fit->GetParameter(1)-fit->GetParameter(2),0, hist->GetMaximum()*0.2, 5, kGray+1, 10);  
+        DrawLines(fit->GetParameter(1)+fit->GetParameter(2),fit->GetParameter(1)+fit->GetParameter(2),0, hist->GetMaximum()*0.2, 5, kGray+1, 10);  
+      }
+    
+      DrawLatex(0.95, 0.92, GetStringFromRunInfo(currRunInfo,labelOpt), true, 0.85*textSizeRel, 42);
+      if (additionalLabel.CompareTo("") != 0){
+        DrawLatex(0.95, 0.92-textSizeRel, additionalLabel, true, 0.85*textSizeRel, 42);
+      }
+    canvas2D->SaveAs(nameOutput.Data());
+  }
+
+  
+  //__________________________________________________________________________________________________________
+  // Plot 1D distribution
+  //__________________________________________________________________________________________________________  
   void PlotContamination1D( TCanvas* canvas2D, 
                      TH1* histAll, TH1* histMuon, TH1* histPrim, Int_t maxy, Int_t maxx, 
                      Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
@@ -301,7 +345,9 @@
       
       TLegend* legend   = nullptr;
       Int_t lineBottom  = (2+8);
-      if (!(setup->GetNMaxLayer()+1 == 64))
+      if (setup->GetNMaxLayer()+1 == 32)
+        lineBottom      = (2+5);
+      else if (!(setup->GetNMaxLayer()+1 == 64))
         lineBottom      = (2+4);
       else if ( setup->GetNMaxLayer()+1 == 64 && (NCellsxaxis || Posxaxis))
         lineBottom  = (2+5);
@@ -310,6 +356,8 @@
         legend = GetAndSetLegend2( 0.11, 0.93-lineBottom*0.85*textSizeRel, 0.95, 0.93-2*0.85*textSizeRel,0.75*textSizeRel, 15, Form("Layer, #LTlayer#GT = %.2f",meanLayer), 42,0.4);
       } else if (setup->GetNMaxLayer()+1 == 64 ){
         legend = GetAndSetLegend2( 0.4, 0.93-lineBottom*0.85*textSizeRel, 0.95, 0.93-2*0.85*textSizeRel,0.75*textSizeRel, 8, Form("Layer, #LTlayer#GT = %.2f",meanLayer), 42,0.4);
+      } else if (setup->GetNMaxLayer()+1 == 32 ){
+        legend = GetAndSetLegend2( 0.4, 0.93-lineBottom*0.85*textSizeRel, 0.95, 0.93-2*0.85*textSizeRel,0.75*textSizeRel, 6, Form("Layer, #LTlayer#GT = %.2f",meanLayer), 42,0.4);
       } else {
         legend = GetAndSetLegend2( 0.4, 0.93-lineBottom*0.85*textSizeRel, 0.95, 0.93-2*0.85*textSizeRel,0.75*textSizeRel, 5, Form("Layer, #LTlayer#GT = %.2f",meanLayer), 42,0.2);
       }
@@ -822,13 +870,14 @@
   void PlotAnalysisComparison( TCanvas* canvas2D, Int_t option, 
                             std::map<int, AnaSummary> sumRuns, 
                             Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
-                            //int labelOpt = 1,
+                            int labelOpt = 1,
                             TString additionalLabel = "", int debug = 0
                             ){
     //hardcode max X
     Double_t minY         = 0.1;
     Double_t maxY         = 0;
     Double_t minX         = 9999;
+    // Double_t minX         = 0;
     Double_t maxX         = 0;
     bool isSameVoltage    = true;
     double commanVoltage  = 0;
@@ -837,10 +886,16 @@
     Int_t nruns = 0;
     for(itrun=sumRuns.begin(); itrun!=sumRuns.end(); ++itrun){
       TH1D* tempH; 
-      if (option==0) tempH = itrun->second.GetDeltaTime();
+      if (option==0) tempH = itrun->second.GetDeltaTimeHist();
+      else if (option==1) tempH = itrun->second.GetEnergyHist();
+      else if (option==2) tempH = itrun->second.GetNCellsHist();
+      
+      std::cout << 2./tempH->GetEntries() << std::endl;
       if (maxY < tempH->GetMaximum()) maxY = tempH->GetMaximum();
-      if ( maxX < FindLastBinXAboveMin(tempH)) maxX = FindLastBinXAboveMin(tempH);
-      if ( minX > FindFirstBinXAboveMin(tempH)) minX = FindFirstBinXAboveMin(tempH);
+      if ( maxX < FindLastBinXAboveMin(tempH,2./tempH->GetEntries())) maxX = FindLastBinXAboveMin(tempH,2./tempH->GetEntries());
+      if ( minX > FindFirstBinXAboveMin(tempH,2./tempH->GetEntries())) minX = FindFirstBinXAboveMin(tempH,2./tempH->GetEntries());      
+      if (minY > 2./tempH->GetEntries()) minY = 2./tempH->GetEntries();
+      // std::cout << "min X\t"  << minX << "\t max X \t" << maxX << std::endl;
       if (nruns==0){
         commanVoltage = itrun->second.GetVoltage();
       } else {
@@ -848,7 +903,8 @@
       }
       nruns++;
     }
-    // std::cout << "min X\t"  << minX << "\t max X \t" << maxX << std::endl;
+    std::cout << "min X\t"  << minX << "\t max X \t" << maxX << std::endl;
+    std::cout << "min Y\t"  << minY << "\t max Y \t" << maxY << std::endl;
     
     TString label2          = Form("Common V_{op} = %2.1f V", commanVoltage);
     canvas2D->cd();  
@@ -857,31 +913,52 @@
         if (nruns > 30) std::cout << "more than 30 runs are included in this, only 30 will be plotted, currently " << nruns << "\t runs were requested" << std::endl;
         else std::cout << nruns << " will be plotted" << std::endl;
       }
+      double startLegend = 0.55;
+      int columns  = 5;
+      double columnwidth = 0.35;
+      if (labelOpt == 2){
+        columns     = 4;
+        startLegend = 0.45;
+        columnwidth = 0.17;
+      }
+
       double lineBottom  = 6;
-      if (nruns < 6) lineBottom = 1;
-      else if (nruns < 11) lineBottom = 2;
-      else if (nruns < 16) lineBottom = 3;
-      else if (nruns < 21) lineBottom = 4;
-      else if (nruns < 26) lineBottom = 5;
-      TLegend* legend = GetAndSetLegend2( 0.55, 0.88-lineBottom*textSizeRel, 0.95, 0.88,
-                                          0.85*textSizeRel, 5, "",42,0.35);;
+      if (nruns < columns+1) lineBottom = 1;
+      else if (nruns < 2*columns+1) lineBottom = 2;
+      else if (nruns < 3*columns+1) lineBottom = 3;
+      else if (nruns < 4*columns+1) lineBottom = 4;
+      else if (nruns < 5*columns+1) lineBottom = 5;
+
+      TLegend* legend = GetAndSetLegend2( startLegend, 0.88-lineBottom*textSizeRel, 0.95, 0.88,
+                                          0.75*textSizeRel, columns, "",42,columnwidth);;
       int currRun = 0;
       for(itrun=sumRuns.begin(); (itrun!=sumRuns.end()) && (currRun < 30); ++itrun){
         histos[currRun] = nullptr;
-        if (option==0) histos[currRun] = itrun->second.GetDeltaTime();
-//	std::cout <<"currentRun" <<std::endl;
+        if (option==0) histos[currRun] = itrun->second.GetDeltaTimeHist();
+        else if (option==1){
+          histos[currRun] = itrun->second.GetEnergyHist();
+          histos[currRun]->Rebin(4);
+        } else if (option==2){
+          histos[currRun] = itrun->second.GetNCellsHist();
+        }
         SetStyleHistoTH1ForGraphs( histos[currRun], histos[currRun]->GetXaxis()->GetTitle(), histos[currRun]->GetYaxis()->GetTitle(), 0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.95, 1.02);  
         SetLineDefaults(histos[currRun], GetColorLayer(currRun), 4, GetLineStyleLayer(currRun));   
         if(currRun == 0){
           histos[currRun]->GetXaxis()->SetRangeUser(minX-5*histos[currRun]->GetBinWidth(1),maxX+5*histos[currRun]->GetBinWidth(1));
-          histos[currRun]->GetYaxis()->SetRangeUser(minY,maxY*1.1);
+          if (option == 1)
+            histos[currRun]->GetYaxis()->SetRangeUser(minY*4,maxY*4.4);
+          else 
+            histos[currRun]->GetYaxis()->SetRangeUser(minY,maxY*1.1);
           histos[currRun]->Draw("hist");
-	//  std::cout<<"plot initial"<<std::endl;
         } else {
           histos[currRun]->Draw("same,hist");
-	//  std::cout<<"plot next" <<std::endl;
         }
-        legend->AddEntry(histos[currRun],Form("%d",itrun->second.GetRunNumber()),"l");
+        if (labelOpt == 2){
+          TString species = GetSpeciesStringFromPDG(itrun->second.GetPDG());
+          legend->AddEntry(histos[currRun],Form("%s %1.f GeV",species.Data(), itrun->second.GetEnergy()),"l");
+        } else {
+          legend->AddEntry(histos[currRun],Form("%d",itrun->second.GetRunNumber()),"l");
+        }
         currRun++;  
       }  
       histos[0]->DrawCopy("axis,same");

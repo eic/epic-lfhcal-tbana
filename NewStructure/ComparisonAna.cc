@@ -30,95 +30,51 @@ bool ComparisonAna::CheckAndOpenIO(void){
   // *****************************************************************************************
   if(!InputListName.IsNull()){
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    // text file with only 1 calib-file per line 
+    // text file with only 2 files per line 
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if (expandedList == 0){
-      std::cout << "*********************************************************" << std::endl;
-      std::cout << "Simple reading from file list" << std::endl;
-      std::cout << "*********************************************************" << std::endl;
-      // File exist?
-      std::cout << "reading from file list: " << InputListName.Data() << std::endl;
-      std::fstream dummyTxt;
-      dummyTxt.open(InputListName.Data(),std::ios::in);
-      if(!dummyTxt.is_open()){
-        std::cout<<"Error opening "<<InputListName.Data()<<", does the file exist?"<<std::endl;
-      }
+ 
+    std::cout << "You need to provide a calib file and an output of the improved muon calib in the textfile in each line" << std::endl;
+    std::fstream dummyTxt;
+    dummyTxt.open(InputListName.Data(),std::ios::in);
+    if(!dummyTxt.is_open()){
+      std::cout<<"Error opening "<<InputListName.Data()<<", does the file exist?"<<std::endl;
+    }
+    std::string dummyRootCalibName;
+    std::string dummyRootHistName;
+    // set first root file names
+    dummyTxt>>dummyRootCalibName >> dummyRootHistName;
     
-      // initialize root file name
-      std::string dummyRootName;
-      // set first root file name
-      dummyTxt>>dummyRootName;
-      // read files from text file
-      int goodsetup;
-      int goodcalib;
-      while(dummyTxt.good()){
-        std::cout << dummyRootName.data() << std::endl;
-        // check that file exists and can be opened
-        TFile dummyRoot=TFile(dummyRootName.c_str(),"READ");
-        if(dummyRoot.IsZombie()){
-          std::cout<<"Error opening '"<<dummyRootName<<", does the file exist?"<<std::endl;
-          return false;
-        }
-        dummyRoot.Close();
-        // Add file-name to setup and calib chain
-        goodsetup=TsetupIn->AddFile(dummyRootName.c_str());
-        goodcalib=TcalibIn->AddFile(dummyRootName.c_str());
-        if(goodcalib==0){
-          std::cout<<"Issues retrieving Calib tree from "<<dummyRootName<<", file is ignored"<<std::endl;
-        }
-        if(goodsetup==0){
-          std::cout<<"Issues retrieving Setup tree from "<<dummyRootName<<", file is ignored"<<std::endl;
-        }
-        // set next root file name
-        dummyTxt>>dummyRootName;
-      }
-    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    // text file with 2 files per line 1 calib file & 1 histo file
-    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    } else {  // read more complex files
-      std::cout << "You need to provide a calib file and an output of the improved muon calib in the textfile in each line" << std::endl;
-      std::fstream dummyTxt;
-      dummyTxt.open(InputListName.Data(),std::ios::in);
-      if(!dummyTxt.is_open()){
-        std::cout<<"Error opening "<<InputListName.Data()<<", does the file exist?"<<std::endl;
-      }
-      std::string dummyRootCalibName;
-      std::string dummyRootHistName;
-      // set first root file names
-      dummyTxt>>dummyRootCalibName >> dummyRootHistName;
+    int goodsetup;
+    int goodcalib;
+    while(dummyTxt.good()){
+      std::cout << dummyRootCalibName.data() << "\t" << dummyRootHistName.data() << std::endl;
       
-      int goodsetup;
-      int goodcalib;
-      while(dummyTxt.good()){
-        std::cout << dummyRootCalibName.data() << "\t" << dummyRootHistName.data() << std::endl;
-        
-        // check that files exist and can be opened
-        TFile dummyRootCalib=TFile(dummyRootCalibName.c_str(),"READ");
-        if(dummyRootCalib.IsZombie()){
-          std::cout<<"Error opening '"<<dummyRootCalibName<<", does the file exist?"<<std::endl;
-          return false;
-        }
-        dummyRootCalib.Close();
-        TFile dummyRootHist=TFile(dummyRootHistName.c_str(),"READ");
-        if(dummyRootHist.IsZombie()){
-          std::cout<<"Error opening '"<<dummyRootHistName<<", does the file exist?"<<std::endl;
-          return false;
-        }
-        dummyRootHist.Close();
-        
-        // Add file-name to setup and calib chain as well string-vector
-        AddInputFile(dummyRootHistName);
-        goodsetup=TsetupIn->AddFile(dummyRootCalibName.c_str());
-        goodcalib=TcalibIn->AddFile(dummyRootCalibName.c_str());
-        if(goodcalib==0){
-          std::cout<<"Issues retrieving Calib tree from "<<dummyRootCalibName<<", file is ignored"<<std::endl;
-        }
-        if(goodsetup==0){
-          std::cout<<"Issues retrieving Setup tree from "<<dummyRootCalibName<<", file is ignored"<<std::endl;
-        }
-        // set next root file names
-        dummyTxt>>dummyRootCalibName >> dummyRootHistName;
+      // check that files exist and can be opened
+      TFile dummyRootCalib=TFile(dummyRootCalibName.c_str(),"READ");
+      if(dummyRootCalib.IsZombie()){
+        std::cout<<"Error opening '"<<dummyRootCalibName<<", does the file exist?"<<std::endl;
+        return false;
       }
+      dummyRootCalib.Close();
+      TFile dummyRootHist=TFile(dummyRootHistName.c_str(),"READ");
+      if(dummyRootHist.IsZombie()){
+        std::cout<<"Error opening '"<<dummyRootHistName<<", does the file exist?"<<std::endl;
+        return false;
+      }
+      dummyRootHist.Close();
+      
+      // Add file-name to setup and calib chain as well string-vector
+      AddInputFile(dummyRootHistName);
+      goodsetup=TsetupIn->AddFile(dummyRootCalibName.c_str());
+      goodcalib=TcalibIn->AddFile(dummyRootCalibName.c_str());
+      if(goodcalib==0){
+        std::cout<<"Issues retrieving Calib tree from "<<dummyRootCalibName<<", file is ignored"<<std::endl;
+      }
+      if(goodsetup==0){
+        std::cout<<"Issues retrieving Setup tree from "<<dummyRootCalibName<<", file is ignored"<<std::endl;
+      }
+      // set next root file names
+      dummyTxt>>dummyRootCalibName >> dummyRootHistName;
     }
   }
   // *****************************************************************************************
@@ -200,84 +156,95 @@ bool ComparisonAna::CheckAndOpenIO(void){
 
 // Main Loop
 bool ComparisonAna::ProcessAna(void){
-    if(expandedList==4){
-      std::cout<<"in process"<<std::endl;
-        // *****************************************************************************************
-        // plotting settings
-        // *****************************************************************************************
-        gSystem->Exec("mkdir -p "+OutputNameDirPlots);
-        if (ExtPlot > 0) gSystem->Exec("mkdir -p "+OutputNameDirPlots+"/SingleLayer");
-        StyleSettingsBasics("pdf");
-        SetPlotStyle();  
+  std::cout<<"in process"<<std::endl;
+  // *****************************************************************************************
+  // plotting settings
+  // *****************************************************************************************
+  gSystem->Exec("mkdir -p "+OutputNameDirPlots);
+  if (ExtPlot > 0) gSystem->Exec("mkdir -p "+OutputNameDirPlots+"/SingleLayer");
+  StyleSettingsBasics("pdf");
+  SetPlotStyle();  
 
-        // *****************************************************************************************
-        // Some general setup
-        // *****************************************************************************************
-        bool status=true;
-        // enbale implitcit root multithreading
-        ROOT::EnableImplicitMT();
-        // get nuber of entires from Calib tree (how many runs do we have)
-        int entries=TcalibIn->GetEntries();
+  // *****************************************************************************************
+  // Some general setup
+  // *****************************************************************************************
+  bool status=true;
+  // enbale implitcit root multithreading
+  ROOT::EnableImplicitMT();
+  // get nuber of entires from Calib tree (how many runs do we have)
+  int entries=TcalibIn->GetEntries();
 
-        // *****************************************************************************************
-        // global variable setup, common iterators and ranges
-        // ******************************************************************************************
+  // *****************************************************************************************
+  // global variable setup, common iterators and ranges
+  // ******************************************************************************************
 
-        std::map<int, AnaSummary> sumCalibs;
-        std::map<int, AnaSummary>::iterator isumCalibs;
-        
-        double Xvalue;
-        double Xmin= 9999.;
-        double Xmax=-9999.;
-        int nRun = 0;
-        
-        // ******************************************************************************************
-        // ************* Get run data base to potentially obtain more information from file *********
-        // ******************************************************************************************
-        std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
-        std::map<int,RunInfo>::iterator it; // basic infos
-        
-        // ******************************************************************************************
-        // Iterate over all entries (runs) in the calib tree
-        // ******************************************************************************************
-        for(int ientry=0; ientry<entries;ientry++){
-            TcalibIn->GetEntry(ientry);
-            TsetupIn->GetEntry(ientry);
-            
-            // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            // set global iterator for runs to first run number in list to obtain beam-line, dates...
+  std::map<int, AnaSummary> sumCalibs;
+  std::map<int, AnaSummary>::iterator isumCalibs;
+  
+  double Xvalue;
+  double Xmin= 9999.;
+  double Xmax=-9999.;
+  int nRun = 0;
+  
+  // ******************************************************************************************
+  // ************* Get run data base to potentially obtain more information from file *********
+  // ******************************************************************************************
+  std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
+  std::map<int,RunInfo>::iterator it; // basic infos
+  
+  // ******************************************************************************************
+  // Iterate over all entries (runs) in the calib tree
+  // ******************************************************************************************
+  for(int ientry=0; ientry<entries;ientry++){
+    TcalibIn->GetEntry(ientry);
+    TsetupIn->GetEntry(ientry);
+    
+    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    // set global iterator for runs to first run number in list to obtain beam-line, dates...
 
-            if (ientry==0) it = ri.find(calib.GetRunNumber());
-                Xvalue=calib.GetRunNumber();
-              // TODO: Change id from run number, look at constructor ()
-                AnaSummary aSum = AnaSummary(nRun, calib.GetRunNumber(),calib.GetVop());
+    it = ri.find(calib.GetRunNumber());
+    Xvalue=calib.GetRunNumber();
+  
+    // TODO: Change id from run number, look at constructor ()
+    AnaSummary aSum = AnaSummary(nRun, calib.GetRunNumber(),calib.GetVop(),it->second.energy, it->second.pdg);
 
-                TH1D* hTimeDiff = nullptr;
-                TFile* tempFile = nullptr;
-            if (nRun < (int)RootInputNames.size()){
-                //std::cerr << "names: " << RootInputNames[nRun].Data() << std::endl;
-                tempFile      = new TFile(RootInputNames[nRun].Data(),"READ");   
-                TH1D* hTimeDiff = (TH1D*)tempFile->Get("hDeltaTime");
-                aSum.SetDeltaTimeHist(hTimeDiff);
-                std::cout<<"Run "<<Xvalue<<" mean: "<< hTimeDiff->GetMean()<<std::endl;
-            }
-            // append AnaSummary object to map
-            std::cout<<"filling for " << nRun <<std::endl; 
-            sumCalibs[nRun]=aSum;
-            nRun++;
-        }
-        Int_t textSizePixel   = 30;
-        Float_t textSizeRel   = 0.04;  
-        TCanvas* canvasDeltaTime = new TCanvas("canvasDeltaTime","",0,0,1450,1300);  // gives the page size
-        DefaultCanvasSettings( canvasDeltaTime,  0.08, 0.062, 0.025, 0.09);
-        canvasDeltaTime->SetLogy(1);
-        PlotAnalysisComparison( canvasDeltaTime, 0, sumCalibs, textSizeRel, 
-                            Form("%s/TimeDiff_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);
-        return true;
+    TH1D* hTimeDiff = nullptr;
+    TFile* tempFile = nullptr;
+    if (nRun < (int)RootInputNames.size()){
+      //std::cerr << "names: " << RootInputNames[nRun].Data() << std::endl;
+      tempFile      = new TFile(RootInputNames[nRun].Data(),"READ");   
+      TH1D* hTimeDiff   = (TH1D*)tempFile->Get("hDeltaTime");
+      aSum.SetDeltaTimeHist(hTimeDiff);
+      TH1D* hTotEnergy  =nullptr;
+      TH1D* hNCells  =nullptr;
+      if (it->second.pdg == 13 || it->second.pdg == -13){
+        hTotEnergy  = (TH1D*)tempFile->Get("hTotEnergyMuon");
+        hNCells     = (TH1D*)tempFile->Get("hNCellsMuon");
+      } else {
+        hTotEnergy  = (TH1D*)tempFile->Get("hTotEnergyNonMuon");
+        hNCells     = (TH1D*)tempFile->Get("hNCellsNonMuon");        
+      }
+      aSum.SetEnergyHist(hTotEnergy);
+      aSum.SetNCellsHist(hNCells);
+      std::cout<<"Run "<<Xvalue<<" mean time diff: "<< hTimeDiff->GetMean()<< "\t mean Energy:" << hTotEnergy->GetMean()<< "\t mean NCells:" << hNCells->GetMean() <<std::endl;
     }
-    else{
-        return false;
-    }
+    // append AnaSummary object to map
+    std::cout<<"filling for " << nRun <<std::endl; 
+    sumCalibs[nRun]=aSum;
+    nRun++;
+  }
+  Int_t textSizePixel   = 30;
+  Float_t textSizeRel   = 0.04;  
+  TCanvas* canvasDeltaTime = new TCanvas("canvasDeltaTime","",0,0,1450,1300);  // gives the page size
+  DefaultCanvasSettings( canvasDeltaTime,  0.08, 0.02, 0.025, 0.09);
+  canvasDeltaTime->SetLogy(1);
+  PlotAnalysisComparison( canvasDeltaTime, 0, sumCalibs, textSizeRel, 
+                      Form("%s/TimeDiff_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug);
+  PlotAnalysisComparison( canvasDeltaTime, 1, sumCalibs, textSizeRel, 
+                      Form("%s/Energy_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,2,"", debug);
+  PlotAnalysisComparison( canvasDeltaTime, 2, sumCalibs, textSizeRel, 
+                      Form("%s/NCells_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,2, "", debug);
+  return true;
 }
 
 

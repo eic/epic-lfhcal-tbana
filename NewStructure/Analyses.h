@@ -86,6 +86,7 @@ class Analyses{
   inline void IsToSaveNoiseOnly(bool b)          {SaveNoiseOnly = b;};
   inline void IsToSaveMipsOnly(bool b)           {SaveMipsOnly = b;};
   inline void IsToEvalLocalTrigg(bool b)         {EvalLocalTriggers = b;};
+  inline void DisableRecalcTriggPrimitives()     {EvalTriggerPrimitives = false;};
   inline void IsToSaveCalibOnly(bool b)          {SaveCalibOnly = b;};
   inline void IsToSkimHGCROC(bool b)             {SkimHGCROC = b;};
   inline void UseLocTriggFromFile(bool b)        {LocTriggFile = b;};
@@ -154,6 +155,7 @@ class Analyses{
   bool SaveCalibToFile        =false;     // Flag to save calib objects to text file
   bool SkimHGCROC             =false;     // Flag to skim HGCROC data from pure noise events
   bool EvalLocalTriggers      =false;     // Flag to run local trigger eval
+  bool EvalTriggerPrimitives  =true;      // Flag to evaluate trigger primitives
   bool LocTriggFile           =false;     // Flag to use already evaluated triggeres
   short CalcBadChannel        =0;         // Flag to create bad channel map
   bool OverWriteCalib         =false;     // Flag to overwrite calib from text file

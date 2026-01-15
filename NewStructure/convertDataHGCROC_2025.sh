@@ -1,17 +1,38 @@
 #! /bin/bash
+
+function MergeMuonsFileList(){
+  echo "========================================================================="
+  echo "dataDir: $1"
+  echo "run-list: $2"
+  echo "Additional name: $3"
+  echo "========================================================================="
+  runs=`cat $2`
+  if [ -f listMerge.txt ]; then
+    rm listMerge.txt
+  fi
+	for runNr in $runs; do 
+		ls $1/rawHGCROC_$runNr.root  >> listMerge.txt
+	done
+	cat listMerge.txt
+	fileList=`cat listMerge.txt`
+	hadd -f $1/rawHGCROC_$3.root $fileList
+  rm listMerge.txt
+}
+
 echo "username $1"
 echo "run option $2"
-
-if [ $1 = "fbockTB" ]; then 
-	dataRaw=/media/fbock/Lennard4TB/202511_PST09/raw/TBMain2025/      # source directory for output files from DAQ system
-	dataDir=/media/fbock/Lennard4TB/202511_PST09/HGCROCData           # base directory for root trees
-fi
 
 # different mapping files for layering
 mapConDef=../configs/TB2025/mapping_HGCROC_PSTB2025_default.txt   # layers 0-32 equipped
 mapCon2=../configs/TB2025/mapping_HGCROC_PSTB2025_config2.txt     # layers 0-24, 33-40 equipped
 mapCon3=../configs/TB2025/mapping_HGCROC_PSTB2025_config3.txt     # layers 0-16, 25-32, 41-49
 mapCon4=../configs/TB2025/mapping_HGCROC_PSTB2025_config4.txt     # layers 0-16, 33-40, 50-58
+
+
+if [ $1 = "fbockTB" ]; then 
+	dataRaw=/media/fbock/Lennard4TB/202511_PST09/raw/TBMain2025/      # source directory for output files from DAQ system
+	dataDir=/media/fbock/Lennard4TB/202511_PST09/HGCROCDataAlt           # base directory for root trees
+fi
   
 # global run list for 2025 TB
 runList=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
@@ -20,37 +41,35 @@ runList=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
 if [ $2 = "pedestals" ]; then 
 	mkdir -p $dataDir/
 	# pedestals with different Nr of asics
-# 	runs='122 123 124 125 126 128 129'
-# 	for runNr in $runs; do 
-# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-# 	done
-# 	# pedestals with different Nr of asics
-# 	runs='036 055 056 058 059 068 130 141 156 161 207 208 209 210 259 269 270 291 292 293 295 314 315 316 317 318 321 322 323 351 381 391'
-  runs='351'
+	runs='122 123 124 125 126 128 129'
 	for runNr in $runs; do 
 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
 	done
-	
-
+# 	# pedestals with different Nr of asics
+	runs='036 055 056 058 059 068 130 141 156 161 207 208 209 210 259 269 270 291 292 293 295 314 315 316 317 318 321 322 323 351 381 391'
+#   runs='351'
+	for runNr in $runs; do 
+		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+	done
 elif [ $2 = "muons" ]; then 
 # #   # position scan
-# 	mkdir -p $dataRaw
-# 	runs='007 008 009 010 011 012 013 014 015 016 017 018 019 020 021 022 023 024 025 026'
+	mkdir -p $dataRaw
+	runs='007 008 009 010 011 012 013 014 015 016 017 018 019 020 021 022 023 024 025 026'
 # # 	runs='007 008 009 010'
-# 	for runNr in $runs; do 
-# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-# 	done
-# 	# HV Scan
-# 	runs='027 028 029 030 031 032 033 034 035'
-# # 	runs='033 034 035'
-# 	for runNr in $runs; do 
-# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-# 	done
+	for runNr in $runs; do 
+		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+	done
+	# HV Scan
+	runs='027 028 029 030 031 032 033 034 035'
+# 	runs='033 034 035'
+	for runNr in $runs; do 
+		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+	done
 # 	
 # 	# default mapping 44 V
 # 	runs='069 070 071 072 073 074 075 076 157 164 201 202 203 204 205 206'
-# # 	runs='076'
-# # 	runs='164'
+# 	runs='070'
+# 	runs='164'
 # 	for runNr in $runs; do 
 # 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
 # 	done
@@ -58,41 +77,41 @@ elif [ $2 = "muons" ]; then
 	# default mapping 45 V
 # 	runs='211 '
 #   runs='211 212 213 214 215 216 217 252 253 254 255 256 257 258 260 '
-# #   runs='256 257 258 '
+#   runs='256 257 258 '
 # 	for runNr in $runs; do 
 # 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
 # 	done
 # # 	
 # 	# HV Scan
-# 	runs='260 261 262 263 264 265 266 267 268 271 272'
+	runs='260 261 262 263 264 265 266 267 268 271 272'
+	for runNr in $runs; do 
+		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+	done
+	
+# 	# Hadron scan 1 44V
+# 	runs='273 274 275 276 289'
 # 	for runNr in $runs; do 
 # 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
 # 	done
-	
-	# Hadron scan 1 44V
-	runs='273 274 275 276 289'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-	done
-	
-	# Hadron scan 2 44 V
-	runs='296 297 298 299 300'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-	done
-	
-	# Hadron scan 3 44V
-	runs='319 320 324 325 326 327 328 329 330'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-	done
-
-	# Hadron scan 4 44V
-	runs='352 353 354 355 356'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-	done
-
+# 	
+# 	# Hadron scan 2 44 V
+# 	runs='296 297 298 299 300'
+# 	for runNr in $runs; do 
+# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+# 	done
+# 	
+# 	# Hadron scan 3 44V
+# 	runs='319 320 324 325 326 327 328 329 330'
+# 	for runNr in $runs; do 
+# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+# 	done
+# 
+# 	# Hadron scan 4 44V
+# 	runs='352 353 354 355 356'
+# 	for runNr in $runs; do 
+# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+# 	done
+# 
 	# Electron scan 42.5V
 	runs='382 383 384 385'
 	for runNr in $runs; do 
@@ -104,43 +123,59 @@ elif [ $2 = "muons" ]; then
 	for runNr in $runs; do 
 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
 	done
-	
+# 	
 	
 elif [ $2 = "MergeMuons" ]; then 	
-  echo "nothing to be done"
-  
-  
-  runs='069 070 071 072 073 074 075 076 164' # Full Set A - muon set 1
-#   runs='201 202 203 204 205 206' # Full Set A - muon set 2
-# 	runs='069 070 071 072 073 074 075 076 164 201 202 203 204 205 206'
-	echo "" > listMerge.txt
-	for runNr in $runs; do 
-		ls $dataDir/rawHGCROC_$runNr.root  >> listMerge.txt
-	done
-	cat listMerge.txt
-	fileList=`cat listMerge.txt`
-	hadd -f $dataDir/rawHGCROC_FullSetA_1.root $fileList
+  echo "Merging muon files"
 
+#   runs='069 070 071 072 073 074 075 076 164' # Full Set A - muon set 1
+#   echo $runs > runList.txt
+#   MergeMuonsFileList $dataDir runList.txt FullSetA_1
+#   runs='201 202 203 204 205 206' # Full Set A - muon set 2
+#   echo $runs > runList.txt
+#   MergeMuonsFileList $dataDir runList.txt FullSetA_2
+#   runs='211 212 213 214 215 216 217' #Full set B - muon set 1
+#   echo $runs > runList.txt
+#   MergeMuonsFileList $dataDir runList.txt FullSetB_1
+#   runs='252 253 254 255 256 257 258 260' #Full set B - muon set 2
+#   echo $runs > runList.txt
+#   MergeMuonsFileList $dataDir runList.txt FullSetB_2
+#   runs='273 274 275 276 289'          #Hadron scan 1
+#   echo $runs > runList.txt
+#   MergeMuonsFileList $dataDir runList.txt HadScan_1
+#   runs='296 297 298 299 300'          #Hadron scan 2
+#   echo $runs > runList.txt
+#   MergeMuonsFileList $dataDir runList.txt HadScan_2
+#   runs='319 320 324 325 326 327 328 329 330'          #Hadron scan 3
+#   echo $runs > runList.txt
+#   MergeMuonsFileList $dataDir runList.txt HadScan_3
+#   runs='352 353 354 355 356'          #Hadron scan 4
+#   echo $runs > runList.txt
+#   MergeMuonsFileList $dataDir runList.txt HadScan_4
+  runs='382 383 384 385'              #E scan 
+  echo $runs > runList.txt
+  MergeMuonsFileList $dataDir runList.txt EScan
+  
 elif [ $2 = "electrons" ]; then 
 	mkdir -p $dataRaw
 # default mapping 44 V
 # 	runs='165 166 167 168 169 170 191 192 193 194 195'
-#   runs='191 192 193 194'
-  runs='195'
+# #   runs='191 192 193 194'
+# #   runs='195'
+# 	for runNr in $runs; do 
+# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+# 	done
+# default mapping 45 V
+	runs='189 190 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236'
 	for runNr in $runs; do 
 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
 	done
-# # default mapping 45 V
-# 	runs='189 190 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236'
-# 	for runNr in $runs; do 
-# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-# 	done
 	
-# 	# electron set 42.5V
-# 	runs='386 387 388 389 390'
-# 	for runNr in $runs; do 
-# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-# 	done
+	# electron set 42.5V
+	runs='386 387 388 389 390'
+	for runNr in $runs; do 
+		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+	done
 	
 	
 elif [ $2 = "positrons" ]; then 
@@ -158,18 +193,18 @@ elif [ $2 = "hadrons" ]; then
 # 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
 # 	done
 
-#   # default mapping 44 V, h- & h+
-#   runs='176 177 178 179 180 181 182 183 184 184 185 186 187 188'
-# #   runs='188'
-# 	for runNr in $runs; do 
-# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-# 	done
+  # default mapping 44 V, h- & h+
+  runs='176 177 178 179 180 181 182 183 184 184 185 186 187 188'
+#   runs='188'
+	for runNr in $runs; do 
+		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+	done
 	
-# 	# default mapping 45 V, h- & h+
-#   runs='237 238 239 240 241 242 243 244 245 246 247 248 249 250 251'
-# 	for runNr in $runs; do 
-# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-# 	done
+	# default mapping 45 V, h- & h+
+  runs='237 238 239 240 241 242 243 244 245 246 247 248 249 250 251'
+	for runNr in $runs; do 
+		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+	done
 
 	# Hadron set 1 
 #   runs='277 278 279 280 281 282 283 284 285 286 287 288'
@@ -180,10 +215,9 @@ elif [ $2 = "hadrons" ]; then
 # 
 # 	# Hadron set 2 
 #   runs='301 302 303 304 305 306 307 308 309 310 311 312 313'
-  runs='308 309 310 311 312 313'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-	done
+# 	for runNr in $runs; do 
+# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+# 	done
 # 
 	# Hadron set 3 
 #   runs='331 332 333 334 335 336 337 339 340 341 342 343 344'

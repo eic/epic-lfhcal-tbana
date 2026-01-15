@@ -106,10 +106,12 @@ class TileSpectra: public TObject{
         hspectraTOA.SetDirectory(0);
         hspectraTOT    = TH1D(Form("hspectra%sTOTCellID%d",name.Data(),id),Form("TOT spectrumCellID %d; TOT (arb. units); counts",id),4096,0,4096);
         hspectraTOT.SetDirectory(0);
-        hADCTOT  = TProfile(Form("h%sTOTADCCellID%d",name.Data(),id),Form("TOT-ADC correlation CellID %d; ADC (arb. units); TOT  (arb. units)",id),1124,-100,1024);
+        hADCTOT  = TProfile(Form("h%sTOTADCCellID%d",name.Data(),id),Form("TOT-ADC correlation CellID %d; ADC (arb. units); TOT  (arb. units)",id),1128/8,-100,1028);
         hADCTOT.SetDirectory(0);
         hcorr         = TH2D(Form("wafeform%sCellID%d",name.Data(),id),Form("2D wafeform CellID %d; sample ; ADC (arb. units)",id),20,0,20, 1034, -10, 1024);
         hcorr.SetDirectory(0);
+        hcorrADCTOT   = TH2D(Form("hCorr2DTOTADC%sCellID%d",name.Data(),id),Form("2D TOT-ADC CellID %d;  ADC (arb. units); TOT  (arb. units)",id),1128/8,-100,1028,4096/8,0,4096);
+        hcorrADCTOT.SetDirectory(0);
       }
     // Waveform analysis
     } else if (extend == 3){
@@ -193,6 +195,7 @@ class TileSpectra: public TObject{
   TProfile* GetADCTOT();
   TH2D* GetCorrTOAADC();
   TH2D* GetCorrTOASample();
+  TH2D* GetCorrADCTOT();
   
   TF1* GetBackModel(int);
   TF1* GetSignalModel(int);
@@ -241,6 +244,7 @@ class TileSpectra: public TObject{
   TH2D hcorr; 
   TH2D hcorrTOAADC;     // only in HGCROC case
   TH2D hcorrTOASample;  // only in HGCROC case
+  TH2D hcorrADCTOT;     // only in HGCROC case
   static double langaufun(double */*x*/, double */*par*/);
   static int langaupro(double */*params*/, double &/*maxx*/, double &/*FWHM*/);
 
