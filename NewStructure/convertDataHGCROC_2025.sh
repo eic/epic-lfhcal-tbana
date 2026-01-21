@@ -31,7 +31,7 @@ mapCon4=../configs/TB2025/mapping_HGCROC_PSTB2025_config4.txt     # layers 0-16,
 
 if [ $1 = "fbockTB" ]; then 
 	dataRaw=/media/fbock/Lennard4TB/202511_PST09/raw/TBMain2025/      # source directory for output files from DAQ system
-	dataDir=/media/fbock/Lennard4TB/202511_PST09/HGCROCDataAlt           # base directory for root trees
+	dataDir=/media/fbock/Lennard4TB/202511_PST09/HGCROCData           # base directory for root trees
 fi
   
 # global run list for 2025 TB
@@ -41,13 +41,13 @@ runList=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
 if [ $2 = "pedestals" ]; then 
 	mkdir -p $dataDir/
 	# pedestals with different Nr of asics
-	runs='122 123 124 125 126 128 129'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
-	done
+# 	runs='122 123 124 125 126 128 129'
+# 	for runNr in $runs; do 
+# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+# 	done
 # 	# pedestals with different Nr of asics
-	runs='036 055 056 058 059 068 130 141 156 161 207 208 209 210 259 269 270 291 292 293 295 314 315 316 317 318 321 322 323 351 381 391'
-#   runs='351'
+# 	runs='036 055 056 058 059 068 130 141 156 161 207 208 209 210 259 269 270 291 292 293 295 314 315 316 317 318 321 322 323 351 381 391'
+  runs='207'
 	for runNr in $runs; do 
 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
 	done

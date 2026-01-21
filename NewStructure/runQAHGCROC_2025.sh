@@ -22,9 +22,6 @@ PlotBaseDir=..
 if [ $1 = "fbockTB" ]; then 
 	dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
 	PlotBaseDir=/media/fbock/Lennard4TB/202511_PST09/
-elif [ $1 = "fbockTBAlt" ]; then 
-	dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCDataAlt
-	PlotBaseDir=/media/fbock/Lennard4TB/202511_PST09/AltPlots
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -36,7 +33,7 @@ if [ $2 == "FullScanA" ]; then
 # 		runs='FullSetA_1' 
 # 	runs='165 166 167 168 169 170 FullSetA_1' 
 # 	runs='175 FullSetA_2 168_169'
-	runs='177'
+	runs='183'
 	for runNr in $runs; do 
 		QARun $3 $dataDirOut $runNr $PlotBaseDir
 	done;

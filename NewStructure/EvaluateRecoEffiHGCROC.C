@@ -209,6 +209,285 @@ TString PrintRunRecData( runRecData info, bool simple = false){
       return -1;
   }
 
+  //********************************************************************************************************************************
+  //********************** Returns default labeling strings  ***********************************************************************
+  //********************************************************************************************************************************    
+  TString GetStringFromRunInfo(RunInfo currRunInfo, Int_t option = 1){
+      if (option == 1){
+          if (currRunInfo.species.Contains("cosmics")){
+              return  Form("cosmics, Run %d, #it{V}_{#it{op}} = %1.1f V", currRunInfo.runNr, currRunInfo.vop  );
+          } else if (currRunInfo.species.CompareTo("g") == 0){
+              return  Form("LED, Run %d, #it{V}_{#it{op}} = %1.1f V", currRunInfo.runNr, currRunInfo.vop  );
+          } else {
+              TString beam = currRunInfo.species.Data();
+              if (beam.CompareTo("Muon +") == 0) beam = "#mu^{+}";
+              if (beam.CompareTo("Electron") == 0) beam = "e^{-}";              
+              if (beam.CompareTo("Positron") == 0) beam = "e^{+}";              
+              if (beam.CompareTo("Pion -") == 0) beam = "#pi^{-}";              
+              if (beam.CompareTo("Hadron +") == 0) beam = "h^{+}";              
+              return  Form("%s-beam, #it{E}_{#it{b}}= %.0f GeV, Run %d, #it{V}_{#it{op}} = %1.1f V", beam.Data(), currRunInfo.energy, currRunInfo.runNr, currRunInfo.vop  );
+          }
+      } else if (option == 2){
+          if (currRunInfo.species.CompareTo("cosmics") == 0){
+              return  "cosmics";
+          } else if (currRunInfo.species.CompareTo("g") == 0){
+              return  "LED";
+          } else {
+              TString beam = currRunInfo.species.Data();
+              if (beam.CompareTo("Muon +") == 0) beam = "#mu^{+}";
+              if (beam.CompareTo("Electron") == 0) beam = "e^{-}";              
+              if (beam.CompareTo("Positron") == 0) beam = "e^{+}";              
+              if (beam.CompareTo("Pion -") == 0) beam = "#pi^{-}";              
+              if (beam.CompareTo("Hadron +") == 0) beam = "h^{+}";              
+              return  Form("%s-beam, #it{E}_{#it{b}}= %.0f GeV", beam.Data(), currRunInfo.energy);
+          }
+      } else if (option == 3){
+          return Form("Run %d, #it{V}_{#it{op}} = %1.1f V", currRunInfo.runNr, currRunInfo.vop  )   ;
+      } else if (option == 4){
+          if (currRunInfo.species.CompareTo("cosmics") == 0){
+              return Form("cosmics, Run %d, #it{V}_{#it{op}} = %1.1f V, HG = %1d, LG = %1d", currRunInfo.runNr, currRunInfo.vop, currRunInfo.hgSet, currRunInfo.lgSet);
+          } else if (currRunInfo.species.CompareTo("g") == 0){
+              return Form("LED, Run %d, #it{V}_{#it{op}} = %1.1f V, HG = %1d, LG = %1d", currRunInfo.runNr, currRunInfo.vop, currRunInfo.hgSet, currRunInfo.lgSet);
+          } else{
+              TString beam = currRunInfo.species.Data();
+              if (beam.CompareTo("Muon +") == 0) beam = "#mu^{+}";
+              if (beam.CompareTo("Electron") == 0) beam = "e^{-}";              
+              if (beam.CompareTo("Positron") == 0) beam = "e^{+}";              
+              if (beam.CompareTo("Pion -") == 0) beam = "#pi^{-}";              
+              if (beam.CompareTo("Hadron +") == 0) beam = "h^{+}";                            
+              return Form("%s-beam, #it{E}_{#it{b}}= %.0f GeV, Run %d, #it{V}_{#it{op}} = %1.1f V, HG = %1d, LG = %1d", beam.Data(), currRunInfo.energy, currRunInfo.runNr, currRunInfo.vop, currRunInfo.hgSet, currRunInfo.lgSet);
+          }
+      } else if (option == 5){
+          return Form("pedestal, Run %d, #it{V}_{#it{op}} = %1.1f V", currRunInfo.runNr, currRunInfo.vop  )   ;
+      } else if (option == 6){
+          if (currRunInfo.facility.CompareTo("")!=0 && currRunInfo.beamline.CompareTo("")!=0 && currRunInfo.year != -1 && currRunInfo.month != -1 && currRunInfo.readout.CompareTo("")!=0)
+          return Form("%s-%s, %02d-%d, %s read-out", currRunInfo.facility.Data(), currRunInfo.beamline.Data(),   currRunInfo.month, currRunInfo.year, currRunInfo.readout.Data());
+          else if (currRunInfo.facility.CompareTo("")!=0 && currRunInfo.beamline.CompareTo("")!=0 && currRunInfo.year != -1 && currRunInfo.month != -1 )
+          return Form("%s-%s, %02d-%d", currRunInfo.facility.Data(), currRunInfo.beamline.Data(),   currRunInfo.month, currRunInfo.year);
+      } else if (option == 7){
+          if (currRunInfo.facility.CompareTo("")!=0 && currRunInfo.beamline.CompareTo("")!=0 && currRunInfo.year != -1 && currRunInfo.month != -1 )
+          return Form("%s-%s, %02d-%d", currRunInfo.facility.Data(), currRunInfo.beamline.Data(), currRunInfo.month, currRunInfo.year);
+      } else if (option == 8){
+          if ( currRunInfo.readout.CompareTo("")!=0)
+          return Form("%s read-out",  currRunInfo.readout.Data());
+      } else if (option == 9){
+          if (currRunInfo.facility.CompareTo("")!=0 && currRunInfo.beamline.CompareTo("")!=0 )
+          return Form("%s-%s", currRunInfo.facility.Data(), currRunInfo.beamline.Data());
+      } else if (option == 10){
+          if ( currRunInfo.year != -1 && currRunInfo.month != -1 )
+          return Form("%02d-%d", currRunInfo.month, currRunInfo.year);
+      }
+      
+      return "";
+  }
+  
+  // ---------------------------- Function definiton --------------------------------------------------------------------------------------------
+  // StyleSettingsBasics will make some standard settings for gStyle
+  
+  void StyleSettingsBasics( TString format = ""){
+      //gStyle->SetOptTitle(kFALSE);
+      gStyle->SetOptDate(0);   //show day and time
+      gStyle->SetOptStat(0);  //show statistic
+      gStyle->SetPalette(1,0);
+      gStyle->SetFrameBorderMode(0);
+      gStyle->SetFrameFillColor(0);
+      gStyle->SetTitleFillColor(0);
+      gStyle->SetTextSize(0.5);
+      gStyle->SetLabelSize(0.03,"xyz");
+      gStyle->SetLabelOffset(0.006,"xyz");
+      gStyle->SetTitleFontSize(0.04);
+      gStyle->SetTitleOffset(1,"y");
+      gStyle->SetTitleOffset(0.7,"x");
+      gStyle->SetCanvasColor(0);
+      gStyle->SetPadTickX(1);
+      gStyle->SetPadTickY(1);
+      // gStyle->SetPadTickZ(1);
+      gStyle->SetLineWidth(1);
+      gStyle->SetPaintTextFormat(".3f");
+      
+      gStyle->SetPadTopMargin(0.03);
+      gStyle->SetPadBottomMargin(0.09);
+      gStyle->SetPadRightMargin(0.03);
+      gStyle->SetPadLeftMargin(0.13);
+
+
+      TGaxis::SetMaxDigits(4);
+      gErrorIgnoreLevel=kError;
+
+      if (format.CompareTo("eps") == 0 ||format.CompareTo("pdf") == 0  ) gStyle->SetLineScalePS(1);
+  }
+
+  //__________________________________________________________________________________________________________
+  void DrawCanvasSettings( TCanvas* c1,
+                          Double_t leftMargin,
+                          Double_t rightMargin,
+                          Double_t topMargin,
+                          Double_t bottomMargin){
+
+      c1->SetTickx();
+      c1->SetTicky();
+      c1->SetGridx(0);
+      c1->SetGridy(0);
+      c1->SetLogy(0);
+      c1->SetLeftMargin(leftMargin);
+      c1->SetRightMargin(rightMargin);
+      c1->SetTopMargin(topMargin);
+      c1->SetBottomMargin(bottomMargin);
+      c1->SetFillColor(0);
+  }
+  
+  
+  //__________________________________________________________________________________________________________
+  void DrawLatex(const double  PosX = 0.5, const double  PosY = 0.5, TString text = "", const bool alignRight = false, const double TextSize = 0.044, const int font = 42, const double dDist = 0.05, const int color = 1){
+
+      std::vector<TString> Latex;
+      
+      TObjArray *textStr = text.Tokenize(";");
+      for(Int_t i = 0; i<textStr->GetEntries() ; i++){
+          TObjString* tempObj     = (TObjString*) textStr->At(i);
+          Latex.push_back( tempObj->GetString());
+      }
+      for(unsigned int i = 0; i < Latex.size(); ++i){
+          TLatex l(PosX, PosY - i*dDist, Latex[i]);
+          l.SetNDC();
+          l.SetTextFont(font);
+          l.SetTextColor(color);
+          l.SetTextSize(TextSize);
+          if(alignRight) l.SetTextAlign(31);
+          l.DrawClone("same");
+      }
+  }
+
+  //__________________________________________________________________________________________________________
+  void SetMarkerDefaultsTGraphErr(   TGraphErrors* graph,
+                                      Style_t markerStyle,
+                                      Size_t markerSize,
+                                      Color_t markerColor,
+                                      Color_t lineColor,
+                                      Width_t lineWidth       = 1,
+                                      Bool_t boxes            = kFALSE,
+                                      Color_t fillColor       = 0,
+                                      Bool_t isHollow         = kFALSE) {
+      graph->SetMarkerStyle(markerStyle);
+      graph->SetMarkerSize(markerSize);
+      graph->SetMarkerColor(markerColor);
+      graph->SetLineColor(lineColor);
+      graph->SetLineWidth(lineWidth);
+      if (boxes){
+          graph->SetFillColor(fillColor);
+          if (fillColor!=0){
+              if (!isHollow){
+                  graph->SetFillStyle(1001);
+              } else {
+                  graph->SetFillStyle(0);
+              }
+          } else {
+              graph->SetFillStyle(0);
+          }
+      }
+  }  
+
+    //__________________________________________________________________________________________________________
+  void SetMarkerDefaultsTGraph(  TGraph* graph,
+                                  Style_t markerStyle,
+                                  Size_t markerSize,
+                                  Color_t markerColor,
+                                  Color_t lineColor,
+                                  Width_t lineWidth       = 1,
+                                  Style_t lineStyle       = 1,
+                                  Bool_t boxes            = kFALSE,
+                                  Color_t fillColor       = 0,
+                                  Bool_t isHollow         = kFALSE
+                                ) {
+      graph->SetMarkerStyle(markerStyle);
+      graph->SetMarkerSize(markerSize);
+      graph->SetMarkerColor(markerColor);
+      graph->SetLineColor(lineColor);
+      graph->SetLineWidth(lineWidth);
+      graph->SetLineWidth(lineStyle);
+      if (boxes){
+          graph->SetFillColor(fillColor);
+          if (fillColor!=0){
+              if (!isHollow){
+                  graph->SetFillStyle(1001);
+              } else {
+                  graph->SetFillStyle(0);
+              }
+          } else {
+              graph->SetFillStyle(0);
+          }
+      }
+  }
+
+  //__________________________________________________________________________________________________________
+  void SetStyleHistoTH1ForGraphs( TH1* histo,
+                                  TString XTitle,
+                                  TString YTitle,
+                                  Size_t xLableSize,
+                                  Size_t xTitleSize,
+                                  Size_t yLableSize,
+                                  Size_t yTitleSize,
+                                  Float_t xTitleOffset    = 1,
+                                  Float_t yTitleOffset    = 1,
+                                  Int_t xNDivisions       = 510,
+                                  Int_t yNDivisions       = 510,
+                                  Font_t textFontLabel    = 42,
+                                  Font_t textFontTitle    = 62
+                                ){
+      histo->SetXTitle(XTitle);
+      histo->SetYTitle(YTitle);
+      histo->SetTitle("");
+
+      histo->GetYaxis()->SetLabelFont(textFontLabel);
+      histo->GetXaxis()->SetLabelFont(textFontLabel);
+      histo->GetYaxis()->SetTitleFont(textFontTitle);
+      histo->GetXaxis()->SetTitleFont(textFontTitle);
+
+      histo->GetXaxis()->SetLabelSize(xLableSize);
+      histo->GetXaxis()->SetTitleSize(xTitleSize);
+      histo->GetXaxis()->SetTitleOffset(xTitleOffset);
+      histo->GetXaxis()->SetNdivisions(xNDivisions,kTRUE);
+
+      histo->GetYaxis()->SetDecimals();
+      histo->GetYaxis()->SetLabelSize(yLableSize);
+      histo->GetYaxis()->SetTitleSize(yTitleSize);
+      histo->GetYaxis()->SetTitleOffset(yTitleOffset);
+      histo->GetYaxis()->SetNdivisions(yNDivisions,kTRUE);
+  }
+  
+  //__________________________________________________________________________________________________________
+  // Plot Corr with Fits for Full layer
+  //__________________________________________________________________________________________________________
+  void PlotTrending (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
+                              TGraph* graph, Double_t xPMin, Double_t xPMax, TString nameOutput){
+                              //, RunInfo currRunInfo){
+                                  
+    Double_t minY = 0;
+    Double_t maxY = 1.05;
+    
+    canvas2Panel->cd();
+    if (!graph) return;;
+    TH1D* dummyhist = new TH1D("dummyhist", "", 100, xPMin, xPMax);
+    SetStyleHistoTH1ForGraphs( dummyhist, graph->GetXaxis()->GetTitle(), graph->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.02, 510, 510, 43, 63);  
+    // if (optionTrend == 6)std::cout << "\t" << graph->GetXaxis()->GetTitle() << "\t" << graph->GetYaxis()->GetTitle() << std::endl;
+    SetMarkerDefaultsTGraph(graph, 20, 1, kBlue+1, kBlue+1);   
+    dummyhist->GetYaxis()->SetRangeUser(minY,maxY);
+    dummyhist->Draw("axis");
+    graph->Draw("pe, same");
+                
+//     TString lab1 = Form("#it{#bf{LFHCal TB:}} %s", GetStringFromRunInfo(currRunInfo, 9).Data());
+//     TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
+//     TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
+//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-1*0.85*relSizeP, lab1, true, 0.85*textSizePixel, 43);
+//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-2*0.85*relSizeP, lab2, true, 0.85*textSizePixel, 43);
+//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-3*0.85*relSizeP, lab3, true, 0.85*textSizePixel, 43);
+//   
+    canvas2Panel->SaveAs(nameOutput.Data());
+  }
+//   
+//   //  
+  
+  
 //__________________________________________________________________________________________________________
 //_____________________MAIN function !!! ___________________________________________________________________
 //__________________________________________________________________________________________________________
@@ -217,7 +496,8 @@ void EvaluateRecoEffiHGCROC( TString configFileName     = "",
                              TString runListFileName    = "configs/SPS_RunNumbers.txt",
                              Int_t verbosity            = 0
                           ){
-                              
+      
+    StyleSettingsBasics();
     // ********************************************************************************************************
     // read run list and corresponding settings
     // ********************************************************************************************************
@@ -235,6 +515,9 @@ void EvaluateRecoEffiHGCROC( TString configFileName     = "",
         return;
     }
 
+    TGraph* graphRecEffi = new TGraph();
+    std::map<int,RunInfo>::iterator it;
+    
     for( TString tempLine; tempLine.ReadLine(in, kTRUE); ) {
       // check if line should be considered
       if (tempLine.BeginsWith("%") || tempLine.BeginsWith("#")){
@@ -279,7 +562,7 @@ void EvaluateRecoEffiHGCROC( TString configFileName     = "",
           delete tempFile;
           continue;
       }
-      std::map<int,RunInfo>::iterator it=ri.find(temprun);
+      it=ri.find(temprun);
       
       TH1D* histEvents = nullptr;
       TH1D* histEventPerFPGA[10]; // currently setting list to maximum 10 FPGAs
@@ -321,6 +604,9 @@ void EvaluateRecoEffiHGCROC( TString configFileName     = "",
         tempRunRec.inProgEventsPerFPGA[f]   = histEventPerFPGA[f]->GetBinContent(4);
       }
       
+      if(tempRunRec.triggers!= 0)graphRecEffi->AddPoint(temprun,tempRunRec.recEffi);
+
+      
       std::cout << (TString)(PrintRunRecData(tempRunRec, false)).Data() << std::endl;
       rED[temprun] = tempRunRec;
     } 
@@ -329,6 +615,15 @@ void EvaluateRecoEffiHGCROC( TString configFileName     = "",
       std::cout << (TString)(PrintRunRecData(run.second, true)).Data();
     }
   
+    graphRecEffi->Sort();
+    graphRecEffi->GetXaxis()->SetTitle("Run Nr.");
+    graphRecEffi->GetYaxis()->SetTitle("#varepsilon_{rec}");
+    
+    TCanvas* canvas = new TCanvas("canvas","",0,0,800,600);
+    DrawCanvasSettings( canvas,0.08, 0.01, 0.01, 0.1);
+
+    PlotTrending (canvas, 0.95,  0.95, 0.035, 30, 
+                  graphRecEffi, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, Form("%s/RecEffi.pdf",outputDir.Data()) );
   
   
 //     std::cout<<"=============================================================="<<std::endl;

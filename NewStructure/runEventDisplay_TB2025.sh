@@ -5,8 +5,8 @@ if [ $1 = "eglimos" ]; then
     dataDirOut=/home/ewa/EIC/DATA/testBeam_Nov2025/2025_12_10_DataFromFredi/convertedData
     plotDir=/home/ewa/EIC/DATA/testBeam_Nov2025/2025_12_10_DataFromFredi/Output/EventDisplay
 elif [ $1 = "fbockTB" ]; then 
-    dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCDataAlt
-    plotDir=/media/fbock/Lennard4TB/202511_PST09/AltPlots/EventDisplay
+    dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
+    plotDir=/media/fbock/Lennard4TB/202511_PST09/EventDisplay
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit

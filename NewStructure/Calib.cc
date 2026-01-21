@@ -720,6 +720,7 @@ void Calib::PrintGlobalInfo(){
             << "\n\t RunNr ped: " << GetRunNumberPed() << "\t start time:" << GetBeginRunTimePed() 
             << "\n\t RunNr mip: " << GetRunNumberMip() << "\t start time:" << GetBeginRunTimeMip() 
             << "\n\t Vop: " << GetVop() << "\t Vov: "<< GetVov() << "\t BC calib set: " << GetBCCalib() << std::endl;  
+  std::cout << "\n\t mean Scale: " <<     GetAverageScaleHigh() << std::endl;      
   std::cout << "********************************************************************************************************" << std::endl;
 }
 

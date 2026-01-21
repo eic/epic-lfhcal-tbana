@@ -28,10 +28,10 @@ function Calib()
 
 dataDirCal=""
 if [ $1 = "fbockTB" ]; then 
-	dataDirCal=/media/fbock/Lennard4TB/202511_PST09/HGCROCDataAlt
-	dataDirIn=/media/fbock/Lennard4TB/202511_PST09/HGCROCDataAlt
-	dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCDataAlt
-	PlotBaseDir=/media/fbock/Lennard4TB/202511_PST09/AltPlots
+	dataDirCal=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
+	dataDirIn=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
+	dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
+	PlotBaseDir=/media/fbock/Lennard4TB/202511_PST09/
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -65,9 +65,10 @@ if [ $2 == "FullScanA" ]; then
 # 	done;
 # 
 # 	#hadron runs
-# #   runs='176 177 178 179 180 181 182 183 184 184 185 186 187 188'
+# #   runs='176 177 178 179 180 181 182 183 184 185 186 187 188'
 #   runs='177 184'
-  runs='177'
+  runs='184'
+#   runs='183 184 185 186 187 188'
 	for runNr in $runs; do 
 		Calib $3 $calibFile1 $dataDirIn $dataDirOut $runNr $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap
 	done;

@@ -65,9 +65,9 @@ dataDirRaw=""
 dataDirOut=""
 
 if [ $1 = "fbockTB" ]; then 
-	dataDirRaw=/media/fbock/Lennard4TB/202511_PST09/HGCROCDataAlt
-	dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCDataAlt
-	PlotBaseDir=/media/fbock/Lennard4TB/202511_PST09/AltPlots
+	dataDirRaw=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
+	dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
+	PlotBaseDir=/media/fbock/Lennard4TB/202511_PST09/
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -86,7 +86,8 @@ if [ $2 = "pedestalRef" ]; then
 #   runs='208' #ped muons FullSet A, 2nd
 #   runs='210' #ped muons FullSet B, 1st
 #   runs='259' #ped muons FullSet B, 2nd
-  runs='68 208 210 259' #ped muons
+#   runs='68 208 210 259' #ped muons
+  runs='207' #ped muons
   for runNr in $runs; do 
     printf -v runNrPed "%03d" "$runNr"
     ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNrPed.root -f -o $dataDirOut/rawHGCROC_wPed_$runNrPed.root -O $PlotBaseDir/PlotsPedestal/Run$runNrPed -r $runNrFile
@@ -128,7 +129,8 @@ fi
 
 
 if [ $2 = "elewave" ]; then
-  runs='165 166 167 168 169 170'
+#   runs='165 166 167 168 169 170'
+  runs='170'
 #   runs='165'
   runPed='68'
 	badChannelMap="../configs/TB2025/badChannel_HGCROC_PSTB2025_layer0.txt"
@@ -158,12 +160,12 @@ fi
 if [ $2 == "calibMuon2" ]; then
 #   runPed='68'
 # 	runs='FullSetA_1'
-  runPed='208'
-	runs='FullSetA_2'
+#   runPed='208'
+# 	runs='FullSetA_2'
 #   runPed='210'
 # 	runs='FullSetB_1'
-#   runPed='259'
-# 	runs='FullSetB_2'
+  runPed='259'
+	runs='FullSetB_2'
 	badChannelMap=../configs/TB2025/badChannel_HGCROC_PSTB2025_default.txt
 	runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
 	for runNr in $runs; do 

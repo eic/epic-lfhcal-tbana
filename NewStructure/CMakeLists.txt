@@ -142,6 +142,10 @@ if(H2G_DECODE_FOUND)
 endif()
 
 # DataPrep executable
+add_executable(HGCROCStudy HGCROCStudy.cc HGCROC_Waveform_Analysis.cc)
+target_link_libraries(HGCROCStudy LFHCAL WaveformFitting ${ROOT_LIBRARIES})
+
+# DataPrep executable
 add_executable(DataPrep DataPrep.cc)
 target_link_libraries(DataPrep LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES})
 if(H2G_DECODE_FOUND)

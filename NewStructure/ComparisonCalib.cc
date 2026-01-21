@@ -269,6 +269,7 @@ bool ComparisonCalib::ProcessCalib(void){
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // Initialize calib summary
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    calib.PrintGlobalInfo();
     CalibSummary aSum = CalibSummary(nRun, runNumber,calib.GetVop());
     
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -295,11 +296,21 @@ bool ComparisonCalib::ProcessCalib(void){
           hHG_LMPV2D    = (TH2D*)tempFile->Get("hspectraHGLMPVVsLayer");
           hHG_LSigma2D  = (TH2D*)tempFile->Get("hspectraHGLSigmaVsLayer");
           hHG_GSigma2D  = (TH2D*)tempFile->Get("hspectraHGGSigmaVsLayer");
-          hLG_LMPV2D    = (TH2D*)tempFile->Get("hspectraLGLMPVVsLayer");
-          hLG_LSigma2D  = (TH2D*)tempFile->Get("hspectraLGLSigmaVsLayer");
-          hLG_GSigma2D  = (TH2D*)tempFile->Get("hspectraLGGSigmaVsLayer");
+          if (!isHGCROC){
+            hLG_LMPV2D    = (TH2D*)tempFile->Get("hspectraLGLMPVVsLayer");
+            hLG_LSigma2D  = (TH2D*)tempFile->Get("hspectraLGLSigmaVsLayer");
+            hLG_GSigma2D  = (TH2D*)tempFile->Get("hspectraLGGSigmaVsLayer");
+          }
           hSB_Noise2D   = (TH2D*)tempFile->Get("hSuppresionNoise");
           hSB_Signal2D  = (TH2D*)tempFile->Get("hSuppresionSignal");
+          std::cout << "***********************************************************" << std::endl;
+          if(hTrigger2D) std::cout << "found hmipTriggers hist" << std::endl;
+          if(hHG_LMPV2D) std::cout << "found hspectraHGLMPVVsLayer hist" << std::endl;
+          if(hHG_LSigma2D) std::cout << "found hspectraHGLSigmaVsLayer hist" << std::endl;
+          if(hHG_GSigma2D) std::cout << "found hspectraHGGSigmaVsLayer hist" << std::endl;
+          if(hSB_Noise2D) std::cout << "found hSuppresionNoise hist" << std::endl;
+          if(hSB_Signal2D) std::cout << "found hSuppresionSignal hist" << std::endl;
+          std::cout << "***********************************************************" << std::endl;
         } else if (expandedList == 2){
           hTrigger2D    = (TH2D*)tempFile->Get("hmipTriggers");
           hSB_Noise2D   = (TH2D*)tempFile->Get("hSuppresionNoise");
@@ -345,8 +356,10 @@ bool ComparisonCalib::ProcessCalib(void){
       if (expandedList == 1){
         if (ExtPlot > 1){
           histCellHG      = (TH1D*)tempFile->Get(Form("IndividualCellsTrigg/hspectramipTriggHGCellID%i",itcalib->first));
-          histCellLG      = (TH1D*)tempFile->Get(Form("IndividualCellsTrigg/hspectramipTriggLGCellID%i",itcalib->first));
-          profCellLGHG    = (TProfile*)tempFile->Get(Form("IndividualCellsTrigg/hCoorspectramipTriggLGHGCellID%i",itcalib->first));
+          if (!isHGCROC){
+            histCellLG      = (TH1D*)tempFile->Get(Form("IndividualCellsTrigg/hspectramipTriggLGCellID%i",itcalib->first));
+            profCellLGHG    = (TProfile*)tempFile->Get(Form("IndividualCellsTrigg/hCoorspectramipTriggLGHGCellID%i",itcalib->first));
+          }
         }
         int layer     = setup->GetLayer(itcalib->first);
         int chInLayer = setup->GetChannelInLayer(itcalib->first);
@@ -357,12 +370,14 @@ bool ComparisonCalib::ProcessCalib(void){
         hgLSigma_E    = hHG_LSigma2D->GetBinError(hHG_LSigma2D->FindBin(layer,chInLayer));
         hgGSigma      = hHG_GSigma2D->GetBinContent(hHG_GSigma2D->FindBin(layer,chInLayer));
         hgGSigma_E    = hHG_GSigma2D->GetBinError(hHG_GSigma2D->FindBin(layer,chInLayer));
-        lgLMPV        = hLG_LMPV2D->GetBinContent(hLG_LMPV2D->FindBin(layer,chInLayer));
-        lgLMPV_E      = hLG_LMPV2D->GetBinError(hLG_LMPV2D->FindBin(layer,chInLayer));
-        lgLSigma      = hLG_LSigma2D->GetBinContent(hLG_LSigma2D->FindBin(layer,chInLayer));
-        lgLSigma_E    = hLG_LSigma2D->GetBinError(hLG_LSigma2D->FindBin(layer,chInLayer));
-        lgGSigma      = hLG_GSigma2D->GetBinContent(hLG_GSigma2D->FindBin(layer,chInLayer));
-        lgGSigma_E    = hLG_GSigma2D->GetBinError(hLG_GSigma2D->FindBin(layer,chInLayer));
+        if (!isHGCROC){
+          lgLMPV        = hLG_LMPV2D->GetBinContent(hLG_LMPV2D->FindBin(layer,chInLayer));
+          lgLMPV_E      = hLG_LMPV2D->GetBinError(hLG_LMPV2D->FindBin(layer,chInLayer));
+          lgLSigma      = hLG_LSigma2D->GetBinContent(hLG_LSigma2D->FindBin(layer,chInLayer));
+          lgLSigma_E    = hLG_LSigma2D->GetBinError(hLG_LSigma2D->FindBin(layer,chInLayer));
+          lgGSigma      = hLG_GSigma2D->GetBinContent(hLG_GSigma2D->FindBin(layer,chInLayer));
+          lgGSigma_E    = hLG_GSigma2D->GetBinError(hLG_GSigma2D->FindBin(layer,chInLayer));
+        }
         sbNoise       = hSB_Noise2D->GetBinError(hSB_Noise2D->FindBin(layer,chInLayer));
         sbSignal      = hSB_Signal2D->GetBinError(hSB_Signal2D->FindBin(layer,chInLayer));
       } else if (expandedList == 2){
@@ -398,6 +413,8 @@ bool ComparisonCalib::ProcessCalib(void){
           profCellLGHG    = (TProfile*)tempFile->Get(Form("IndividualCells/wafeform1DfullCellID%i",itcalib->first));
           std::cout << histCellHG << "\t" << profCellLGHG << std::endl;
         }
+      } else if (expandedList == 5){
+          std::cout<<"Nothing to do in this case" <<std::endl;
       }
       
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -524,21 +541,22 @@ bool ComparisonCalib::ProcessCalib(void){
                       Form("%s/HGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);
   PlotCalibRunOverlay( canvas1DRunsOverlay, 5, sumCalibs, textSizeRel, 
                       Form("%s/HGScaleWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);
-  PlotCalibRunOverlay( canvas1DRunsOverlay, 6, sumCalibs, textSizeRel, 
-                      Form("%s/LGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
-  PlotCalibRunOverlay( canvas1DRunsOverlay, 7, sumCalibs, textSizeRel, 
-                      Form("%s/LGScaleWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
-  PlotCalibRunOverlay( canvas1DRunsOverlay, 8, sumCalibs, textSizeRel, 
-                      Form("%s/LGHGCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
-  PlotCalibRunOverlay( canvas1DRunsOverlay, 9, sumCalibs, textSizeRel, 
-                      Form("%s/HGLGCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
-  PlotCalibRunOverlay( canvas1DRunsOverlay, 10, sumCalibs, textSizeRel, 
-                      Form("%s/LGScaleCalcSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);  
-  PlotCalibRunOverlay( canvas1DRunsOverlay, 11, sumCalibs, textSizeRel, 
-                      Form("%s/LGHGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
-  PlotCalibRunOverlay( canvas1DRunsOverlay, 12, sumCalibs, textSizeRel, 
-                      Form("%s/HGLGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
-
+  if (!isHGCROC){
+    PlotCalibRunOverlay( canvas1DRunsOverlay, 6, sumCalibs, textSizeRel, 
+                        Form("%s/LGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+    PlotCalibRunOverlay( canvas1DRunsOverlay, 7, sumCalibs, textSizeRel, 
+                        Form("%s/LGScaleWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+    PlotCalibRunOverlay( canvas1DRunsOverlay, 8, sumCalibs, textSizeRel, 
+                        Form("%s/LGHGCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+    PlotCalibRunOverlay( canvas1DRunsOverlay, 9, sumCalibs, textSizeRel, 
+                        Form("%s/HGLGCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+    PlotCalibRunOverlay( canvas1DRunsOverlay, 10, sumCalibs, textSizeRel, 
+                        Form("%s/LGScaleCalcSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);  
+    PlotCalibRunOverlay( canvas1DRunsOverlay, 11, sumCalibs, textSizeRel, 
+                        Form("%s/LGHGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+    PlotCalibRunOverlay( canvas1DRunsOverlay, 12, sumCalibs, textSizeRel, 
+                        Form("%s/HGLGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+  }
   
   std::cout << "row max: " << setup->GetNMaxRow() << "\t column max: "  << setup->GetNMaxColumn() << std::endl;
   
@@ -595,38 +613,44 @@ bool ComparisonCalib::ProcessCalib(void){
         PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   trend, 3, Xmin,Xmax, l, 0,
                                   Form("%s/SingleLayer/LGScale_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGScale",OutputNameDirPlots.Data()), it->second,ExtPlot);        
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 4, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/LGHGCorr_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGHGCorr",OutputNameDirPlots.Data()), it->second,ExtPlot);        
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 5, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/HGLGCorr_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGLGCorr",OutputNameDirPlots.Data()), it->second,ExtPlot);        
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 17, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/LGHG_Offset_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGHGOffet",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 18, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/HGLG_Offset_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGLGOffet",OutputNameDirPlots.Data()), it->second,ExtPlot);      
+        if (!isHGCROC){
+          PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                    trend, 4, Xmin,Xmax, l, 0,
+                                    Form("%s/SingleLayer/LGHGCorr_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGHGCorr",OutputNameDirPlots.Data()), it->second,ExtPlot);        
+          PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                    trend, 5, Xmin,Xmax, l, 0,
+                                    Form("%s/SingleLayer/HGLGCorr_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGLGCorr",OutputNameDirPlots.Data()), it->second,ExtPlot);        
+          PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                    trend, 17, Xmin,Xmax, l, 0,
+                                    Form("%s/SingleLayer/LGHG_Offset_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGHGOffet",OutputNameDirPlots.Data()), it->second,ExtPlot);      
+          PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                    trend, 18, Xmin,Xmax, l, 0,
+                                    Form("%s/SingleLayer/HGLG_Offset_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGLGOffet",OutputNameDirPlots.Data()), it->second,ExtPlot);
+        }
       }
       if (expandedList == 1){
         PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   trend, 9, Xmin,Xmax, l, 0,
                                   Form("%s/SingleLayer/HG_LandMPV_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGLandMPV",OutputNameDirPlots.Data()), it->second,ExtPlot);      
         PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 10, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/LG_LandMPV_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGLandMPV",OutputNameDirPlots.Data()), it->second,ExtPlot);            
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   trend, 11, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/HG_LandSigma_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGLandSigma",OutputNameDirPlots.Data()), it->second,ExtPlot);            
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 12, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/LG_LandSigma_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGLandSigma",OutputNameDirPlots.Data()), it->second,ExtPlot);                  
+                                  Form("%s/SingleLayer/HG_LandSigma_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGLandSigma",OutputNameDirPlots.Data()), it->second,ExtPlot);
         PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   trend, 13, Xmin,Xmax, l, 0,
                                   Form("%s/SingleLayer/HG_GaussSigma_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGGaussSigma",OutputNameDirPlots.Data()), it->second,ExtPlot);            
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 14, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/LG_GaussSigma_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGGaussSigma",OutputNameDirPlots.Data()), it->second,ExtPlot);      
+
+        if (!isHGCROC){
+          PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                    trend, 10, Xmin,Xmax, l, 0,
+                                    Form("%s/SingleLayer/LG_LandMPV_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGLandMPV",OutputNameDirPlots.Data()), it->second,ExtPlot);            
+
+          PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                    trend, 12, Xmin,Xmax, l, 0,
+                                    Form("%s/SingleLayer/LG_LandSigma_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGLandSigma",OutputNameDirPlots.Data()), it->second,ExtPlot);                  
+          PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                    trend, 14, Xmin,Xmax, l, 0,
+                                    Form("%s/SingleLayer/LG_GaussSigma_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGGaussSigma",OutputNameDirPlots.Data()), it->second,ExtPlot);      
+        }
       }
       if (expandedList == 1 || expandedList == 2 ){
         PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
@@ -650,11 +674,13 @@ bool ComparisonCalib::ProcessCalib(void){
           PlotRunOverlay8MLayer (  canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                     trend, nRun, 0, -15,850, l, 0,
                                     Form("%s/SingleLayer/MuonTriggers_HGDist_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonHGDist",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-          PlotRunOverlay8MLayer (  canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+          if (!isHGCROC){
+            PlotRunOverlay8MLayer (  canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                     trend, nRun, 1, -10,210, l, 0,
                                     Form("%s/SingleLayer/MuonTriggers_LGDist_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonLGDist",OutputNameDirPlots.Data()), it->second,ExtPlot);      
+          }
         }
-        if (expandedList > 0 ){
+        if (expandedList > 0 && !isHGCROC){
           PlotRunOverlayProfile8MLayer (canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
                                         trend, nRun,-20, 340, -20, 3900, l, 0,
                                         Form("%s/SingleLayer/MuonTriggers_LGHGCorr_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonLGHGCorr",OutputNameDirPlots.Data()), it->second,ExtPlot);      
