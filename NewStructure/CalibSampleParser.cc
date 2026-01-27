@@ -29,7 +29,14 @@ bool CalibSampleParser::CheckAndOpenIO(void){
     return false;
   } 
   if( inputFilePath.Contains(".csv") ){
-    std::cout << "Reading in .csv file with calibration output, and parsing it into .root file" << std::endl;
+    if( optTOA ) {
+      std::cout << "Reading in .csv file with TOA calibration output" << std::endl;
+      if( doPlotting ){
+        std::cout << "Plotting not implemented yet" << std::endl;
+      }
+    } else {
+      std::cout << "Reading in .csv file with calibration output, and parsing it into .root file" << std::endl;
+    }
   } else if( inputFilePath.Contains(".txt") ){
     std::cout << "Reading in config file with list of dead channels, and .json files with respective KCUs. " << std::endl;
     std::cout << "Additional .root file with calib object is required to run in this mode." << std::endl;
@@ -39,18 +46,20 @@ bool CalibSampleParser::CheckAndOpenIO(void){
     }
   }
 
-  if( !MapInputName.IsNull() ){
+  if( !MapInputName.IsNull() && !optTOA){
     MapInput.open( MapInputName.Data(), std::ios::in);
     if( !MapInput.is_open() ){
       std::cout << "Could not open mapping file: " << MapInputName << std::endl;
       return false;
     }
+  } else if( optTOA ){
+    std::cout << "Mapping file not required" << std::endl;
   } else {
     std::cout << "A mapping file is required, aborting" << std::endl;
     return false;
   }
 
-  if(!OutputFilename.IsNull() ){
+  if( !OutputFilename.IsNull()){
     std::cout << "Output root filename set to " << OutputFilename << std::endl;
   } else {
     if( optParse == 1 ){  
@@ -63,42 +72,44 @@ bool CalibSampleParser::CheckAndOpenIO(void){
     std::cout << "Output root filename set by default to " << OutputFilename << std::endl;
   }
 
-  OutputHistFilename = OutputFilename;
-  OutputHistFilename = OutputHistFilename.ReplaceAll(".root","_hist.root");
+  if( !optTOA ){
+    OutputHistFilename = OutputFilename;
+    OutputHistFilename = OutputHistFilename.ReplaceAll(".root","_hist.root");
 
-  RootOutput    = new TFile(OutputFilename.Data(), "RECREATE");
+    RootOutput    = new TFile(OutputFilename.Data(), "RECREATE");
 
-  if( optParse == 0 ){
-    tOutTree      = new TTree("CalibSample","CalibSample");
-    tOutTree->Branch("event",&event);
-    tOutTree->SetDirectory(RootOutput);
-  } else if ( optParse == 1 ){
-      std::cout << "Reading a calib object from the file " << calibInputFile.Data() << std::endl;
-      RootCalibInput = new TFile( calibInputFile.Data(), "READ" );
-      if( RootCalibInput->IsZombie() ){
-        std::cout << "Error opening " << calibInputFile.Data() <<", does the file exist?" << std::endl;
-        return false;
-      }
-      TcalibIn  = (TTree*) RootCalibInput->Get("Calib");
-      if( !TcalibIn ){
-        std::cout << "Could not retrieve Calib, aborting" <<std::endl;
-        return false;
-      } else {
-        int matchingbranch = TcalibIn->SetBranchAddress("calib",&calibptr);
-        if( matchingbranch < 0 ){
-          std::cout<<"Error retrieving calibration info form the tree"<<std::endl;
+    if( optParse == 0 ){
+      tOutTree      = new TTree("CalibSample","CalibSample");
+      tOutTree->Branch("event",&event);
+      tOutTree->SetDirectory(RootOutput);
+    } else if ( optParse == 1 ){
+        std::cout << "Reading a calib object from the file " << calibInputFile.Data() << std::endl;
+        RootCalibInput = new TFile( calibInputFile.Data(), "READ" );
+        if( RootCalibInput->IsZombie() ){
+          std::cout << "Error opening " << calibInputFile.Data() <<", does the file exist?" << std::endl;
           return false;
         }
-      }
-  }
+        TcalibIn  = (TTree*) RootCalibInput->Get("Calib");
+        if( !TcalibIn ){
+          std::cout << "Could not retrieve Calib, aborting" <<std::endl;
+          return false;
+        } else {
+          int matchingbranch = TcalibIn->SetBranchAddress("calib",&calibptr);
+          if( matchingbranch < 0 ){
+            std::cout<<"Error retrieving calibration info form the tree"<<std::endl;
+            return false;
+          }
+        }
+    }
 
-  TsetupOut     = new TTree("Setup","Setup");
-  setup=Setup::GetInstance();
-  TsetupOut->Branch("setup",&rsw);
-  TsetupOut->SetDirectory( RootOutput );
-  TcalibOut     = new TTree("Calib","Calib");
-  TcalibOut->Branch("calib",&calib);
-  TcalibOut->SetDirectory( RootOutput );
+    TsetupOut     = new TTree("Setup","Setup");
+    setup=Setup::GetInstance();
+    TsetupOut->Branch("setup",&rsw);
+    TsetupOut->SetDirectory( RootOutput );
+    TcalibOut     = new TTree("Calib","Calib");
+    TcalibOut->Branch("calib",&calib);
+    TcalibOut->SetDirectory( RootOutput );
+  }
 
   std::cout <<"=============================================================" << std::endl;
   std::cout <<" Basic setup complete" << std::endl;
@@ -112,11 +123,15 @@ bool CalibSampleParser::CheckAndOpenIO(void){
 // ****************************************************************************
 bool CalibSampleParser::Process(void){
     bool status;
-    if( optParse == 0 ){
-      status = Parse();
-      if( doPlotting ) status = ProcessAndPlotWaveforms();
-    } else if ( optParse == 1 ) {
-      status = ParsePedestalCalib();
+    if( optTOA ){
+      status = ParseTOA();
+    } else {
+      if( optParse == 0 ){
+        status = Parse();
+        if( doPlotting ) status = ProcessAndPlotWaveforms();
+      } else if ( optParse == 1 ) {
+        status = ParsePedestalCalib();
+      }
     }
     return status;
 }
@@ -169,6 +184,7 @@ bool CalibSampleParser::Parse(){
     
     std::ifstream   calibSampleCsv( inputFilePath.Data() );
     std::string line;
+    std::getline( calibSampleCsv, line ); // skip first line with dac value...
     std::getline( calibSampleCsv, line ); // skip header
     while (std::getline( calibSampleCsv, line )){
       std::stringstream ss(line);
@@ -261,7 +277,8 @@ bool CalibSampleParser::Parse(){
       // TOT - the first non-zero value
       int tempTOT   = *(std::find_if(temp_tot.begin(), temp_tot.end(), [](int n){ return n!=0; }) );
       tmpTile.SetTOT( tempTOT );        // need to process waveform to set this - the first value that comes up 
-      // SetIntegratedADC as max ADC 
+      
+    // SetIntegratedADC as max ADC 
       int tempIntADC    = *(std::max_element( temp_adc.begin(), temp_adc.end() ));
       tmpTile.SetIntegratedADC( tempIntADC );
       tmpTile.SetADCWaveform( temp_adc );
@@ -546,5 +563,63 @@ bool CalibSampleParser::ParsePedestalCalib(){
   std::cout <<" Output saved to " << OutputFilename.Data() << std::endl;
   std::cout <<"=============================================================" << std::endl;
 
+  return true;
+}
+
+
+bool CalibSampleParser::ParseTOA(){
+
+  // std::vector<int>  toa_values;
+  // toa_values.clear();
+
+  std::ifstream calibSampleCsv(   inputFilePath.Data() );
+  std::string line;
+
+  if( lines <= 0 ){
+    std::cout << "Number of lines not valid... returning" << std::endl;
+    return false;
+  }
+
+  while( lines-1 ){
+    std::getline( calibSampleCsv,line);
+    lines--;
+  }
+
+  std::getline( calibSampleCsv, line);      // should be just the last line?
+  std::stringstream ss(line);
+  std::string token;
+  std::vector<int> toa_values;
+  while(std::getline(ss,token,',')){
+    toa_values.push_back( std::atoi(token.c_str()) );
+    if(debug > 5) std::cout << token << "\t";
+  }
+  std::cout << std::endl;
+
+  int     mod  = 0; 
+  int     n_elem  = 0;
+  double  sum     = 0; 
+  for(int i = 0; i < (int)toa_values.size(); i++){
+    if( i/38 == mod ){
+      sum+= toa_values.at(i);
+      n_elem = (toa_values.at(i)==0) ? n_elem : ++n_elem;
+    } else {
+      std::cout << "Average TOA from sector " << mod << ": " << 1.*sum/n_elem << std::endl;
+      if(debug > 1) std::cout << "Sum " << sum << "\t n_elem " << n_elem << std::endl;
+      n_elem=0; sum=0; 
+      mod++; 
+      sum+= toa_values.at(i);
+      n_elem = (toa_values.at(i)==0) ? n_elem : ++n_elem;
+    }
+  }
+  std::cout << "Average TOA from sector " << mod << ": " << 1.*sum/n_elem << std::endl;
+  if(debug > 1) std::cout << "Sum " << sum << "\t n_elem " << n_elem << std::endl;
+  std::cout << std::endl;
+
+
+  std::cout <<"=============================================================" << std::endl;
+  std::cout <<" Parsing of TOA calib complete" << std::endl;
+  std::cout <<"=============================================================" << std::endl;
+
+  
   return true;
 }

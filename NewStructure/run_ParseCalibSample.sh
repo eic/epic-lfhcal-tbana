@@ -19,10 +19,9 @@ elif [ $1 = "eglimos_csv" ]; then
 
     ./ParseCalibSamples -i $InputFile -m $InputMapping -o $OutputPath -p $OutputPlots -r $RunListFile -n $RunNumber
 elif [ $1 = "eglimos_inj" ]; then
-    # inj='20 30 40 50 60 70 80 100 125 150 175 200 225 250 275 300 400 500 600 700 800 900 1000 1200'
-    # inj_full='0020 0030 0040 0050 0060 0070 0080 0100 0125 0150 0175 0200 0225 0250 0275 0300 0400 0500 0600 0700 0800 0900 1000 1200'
+    inj='20 30 40 50 60 70 80 100 125 150 175 200 225 250 275 300 400 500 600 700 800 900 1000 1200'
     # inj='20 30 40 50 60 70 80'
-    inj='20'
+    # inj='20'
     RunListFile=/home/ewa/EIC/epic-lfhcal-tbana/configs/InjectionTest_ORNL_Dec25.csv
     InputMapping=/home/ewa/EIC/epic-lfhcal-tbana/configs/mapping_HGCROC_ORNL_Cosmics_202512.txt
 
@@ -35,11 +34,32 @@ elif [ $1 = "eglimos_inj" ]; then
 
         mkdir -p $OutputPlots
 
-        # ./ParseCalibSamples -i $InputFile -m $InputMapping -o $OutputPath -p $OutputPlots -r $RunListFile -n $nr -d 5
-        ./ParseCalibSamples -i $InputFile -m $InputMapping -o $OutputPath -r $RunListFile -n $nr -d 0
+        ./ParseCalibSamples -i $InputFile -m $InputMapping -o $OutputPath -p $OutputPlots -r $RunListFile -n $nr -d 5
+        # ./ParseCalibSamples -i $InputFile -m $InputMapping -o $OutputPath -r $RunListFile -n $nr -d 0
     done
 
-    # ./CompareHGCROCCalib -i /home/ewa/EIC/DATA/INJECTION/compareFileList.txt -p /home/ewa/EIC/DATA/INJECTION/Output/Plots/ComparePlots -d 5
+    ./CompareHGCROCCalib -i /home/ewa/EIC/DATA/INJECTION/compareFileList.txt -p /home/ewa/EIC/DATA/INJECTION/Output/Plots/ComparePlots -d 5
+elif [ $1 = "eglimos_injJan26" ]; then
+    inj='10 25 40 55 70 85 100 115 130 145 160 175 190 205 220 235 250 265 280 295 310 325 340 355 370 385 400 415 430 445 460 475 490 505 520 535 550 565 580 595 610 625 640 655 670 685 700 715 730 745 760 775 790 815 830 845 860 875 890 905 920 935 950 965 980 995'
+    RunListFile=/home/ewa/EIC/epic-lfhcal-tbana/configs/InjectionTest_ORNL_Jan26.csv
+    InputMapping=/home/ewa/EIC/epic-lfhcal-tbana/configs/LocalTesting/mapping_HGCROC_ORNL_Cosmics_LB_Config7_Injection.txt
+
+    # for nr in $inj; do
+    #     nr_full=$(printf %04d $nr)
+    #     # echo $nr_full
+    #     InputFile=/home/ewa/EIC/DATA/InjectionTests_January/Input/inj_adc_samples_208_8_$nr.csv
+    #     OutputPath=/home/ewa/EIC/DATA/InjectionTests_January/Output/InjectionTest_$nr.root
+    #     OutputPlots=/home/ewa/EIC/DATA/InjectionTests_January/Output/Plots/$nr_full
+
+    #     mkdir -p $OutputPlots
+
+    #     ./ParseCalibSamples -i $InputFile -m $InputMapping -o $OutputPath -p $OutputPlots -r $RunListFile -n $nr -d 0
+    #     # ./ParseCalibSamples -i $InputFile -m $InputMapping -o $OutputPath -r $RunListFile -n $nr -d 0
+    # done
+
+    mkdir -p /home/ewa/EIC/DATA/InjectionTests_January/Output/Plots/ComparePlots
+
+    ./CompareHGCROCCalib -i /home/ewa/EIC/DATA/InjectionTests_January/compareFileList.txt -p /home/ewa/EIC/DATA/InjectionTests_January/Output/Plots/ComparePlots -d 5
 else 
     echo "Please select a known user name, otherwise I don't know where the data is."
     exit

@@ -37,6 +37,8 @@ class CalibSampleParser{
         inline void SetRunNumber(int i)                 {RunNr=i;};
         inline void EnablePlotting()                    {doPlotting=true;};
         inline void SwitchPedestalCalib()               {optParse=1;};
+        inline void SwitchTOACalib()                    {optTOA=1;}
+        inline void SetTOALines(int i)                  {lines=i;}
         inline void SetInputCalibFile(TString name)     {calibInputFile=name;};
 
 
@@ -59,6 +61,8 @@ class CalibSampleParser{
         TFile*          RootOutputHist  = nullptr;      // root file output for histos
         int             debug           = 0;            // debug level
         int             optParse        = 0;            // 0 - default .csv file from H2GCalib, 1 - pedestal extracted with .py script
+        int             optTOA          = 0;            // 0 - default, 1 - .csv file read as TOA calib file
+        int             lines           = 0;            // tell us how many lines to skip to get to the last line
 
         Event       event;                          // basically the tree branch
         RootSetupWrapper rsw;                       // Wrapper singleton class for setup
@@ -83,6 +87,7 @@ class CalibSampleParser{
         bool Parse();
         bool ProcessAndPlotWaveforms();
         bool ParsePedestalCalib();
+        bool ParseTOA();
 
         bool IsCalibChannel(int channel){
             for(int i=0; i < calibChannelsSet.size(); i++){

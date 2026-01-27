@@ -30,6 +30,7 @@ void PrintHelp(char* exe){
   std::cout<<"Options:"<<std::endl;
   std::cout<<"-d [0-n]  switch on debug info with debug level 0 to n"<<std::endl;
   std::cout<<"-i uuu    path to the input file: either .csv or config file with .json files for pedestal calib (mandatory)"<<std::endl;
+  std::cout<<"-t        switch on the ToA calib file parser (required .csv file)" <<std::endl;
   std::cout<<"-m        path to the mapping file (mandatory)"<<std::endl;
   std::cout<<"-r        path to the run list file (mandatory)"<<std::endl;
   std::cout<<"-n        run number to analyze (mandatory)"<<std::endl;
@@ -60,7 +61,7 @@ int main(int argc, char* argv[]){
 
     CalibSampleParser calibParser;
     int c;
-    while( (c=getopt(argc,argv,"d:i:m:r:n:p:o:c:h:"))!=-1){
+    while( (c=getopt(argc,argv,"d:i:t:m:r:n:p:o:c:h:"))!=-1){
         switch(c){
             case 'd':
                 std::cout << "Enable debug " << optarg << std::endl;
@@ -69,6 +70,12 @@ int main(int argc, char* argv[]){
             case 'i':
                 std::cout << "Input file set to: " << optarg << std::endl;
                 calibParser.SetInputFile( Form("%s",optarg) );
+                break;
+            case 't':
+                std::cout << "Switching on ToA parser" << std::endl;
+                std::cout << optarg << " lines in the .csv file " << std::endl;
+                calibParser.SwitchTOACalib();
+                calibParser.SetTOALines( atoi(optarg) );
                 break;
             case 'm':
                 std::cout << "Mapping file set to " << optarg << std::endl;
