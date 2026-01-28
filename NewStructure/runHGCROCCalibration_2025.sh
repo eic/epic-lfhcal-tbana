@@ -52,6 +52,12 @@ function MuonCalibHGCROC()
 		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_ImpR_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp2R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved2nd_Red/$6 -r $runNrFile
 	elif [ $1 == "imp3rd_red" ]; then 
 		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp2R_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp3R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved3rd_Red/$6 -r $runNrFile
+	elif [ $1 == "imp4th_red" ]; then 
+		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp3R_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved4th_Red/$6 -r $runNrFile
+	elif [ $1 == "imp5th_red" ]; then 
+		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved5th_Red/$6 -r $runNrFile
+	elif [ $1 == "imp6th_red" ]; then 
+		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp6R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved6th_Red/$6 -r $runNrFile
   elif [ $1 == "wave_red" ]; then 
      ./DataPrep -d 1 -E 2 -f -w $4/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNrMuon.root -i $4/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNrMuon.root -o $4/rawHGCROC_miptrigg_wPedwMuon_wBC_wave_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibWaveMuons/$6 -r $runNrFile 
 	fi
@@ -83,14 +89,15 @@ fi
 
 if [ $2 = "pedestalRef" ]; then
 #   runs='68' #ped muons FullSet A, 1st
-#   runs='208' #ped muons FullSet A, 2nd
+  runs='208' #ped muons FullSet A, 2nd
 #   runs='210' #ped muons FullSet B, 1st
 #   runs='259' #ped muons FullSet B, 2nd
+#   runs='381' #ped muons Electron Set C
 #   runs='68 208 210 259' #ped muons
-  runs='207' #ped muons
+#   runs='207' #ped muons
   for runNr in $runs; do 
     printf -v runNrPed "%03d" "$runNr"
-    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNrPed.root -f -o $dataDirOut/rawHGCROC_wPed_$runNrPed.root -O $PlotBaseDir/PlotsPedestal/Run$runNrPed -r $runNrFile
+    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNrPed.root -f -o $dataDirOut/rawHGCROC_wPed_$runNrPed.root -O $PlotBaseDir/PlotsPedestal/Run$runNrPed -r $runNrFile -F png
   done
 fi
 
@@ -142,14 +149,16 @@ fi
 
 
 if [ $2 == "calibMuon" ]; then
-  runPed='68'
-	runs='FullSetA_1'
+#   runPed='68'
+# 	runs='FullSetA_1'
 #   runPed='208'
 # 	runs='FullSetA_2'
 #   runPed='210'
 # 	runs='FullSetB_1'
 #   runPed='259'
 # 	runs='FullSetB_2'
+  runPed='381'
+	runs='EScan'
 	badChannelMap=../configs/TB2025/badChannel_HGCROC_PSTB2025_default.txt
 	runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
 	for runNr in $runs; do 

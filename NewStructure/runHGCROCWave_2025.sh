@@ -12,9 +12,10 @@ function HGCInv()
 	echo "dataRawDir: $3"
 	echo "dataOutDir: $4"
 	echo "OutNameRun:" $5
-	if [ $1 == "BC" ]; then 
-		echo "badchannelMap:" $6
-	fi
+	echo "fixedSample" $6
+# 	if [ $1 == "BC" ]; then 
+# 		echo "badchannelMap:" $7
+# 	fi
 	printf -v runNr "%03d" "$2"
 # 	printf -v runNrMuon "%03d" "$3"
 # 	runNr=$2
@@ -27,7 +28,10 @@ function HGCInv()
 #     else 
       ./HGCROCStudy -d 1 -E 2 -f -w -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWave/$5 -r $runNrFile 
 #     fi
+  elif [ $1 == "waveNToA" ]; then 
+    ./HGCROCStudy -d 1 -E 2 -f -w -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWave/$5 -r $runNrFile -s $6
 	fi
+	
 }
 
 # running example:
@@ -51,6 +55,6 @@ if [ $2 = "FullScanA" ]; then
   runs='166' #electrons
 #   runs='166 167 168 169 170' #electrons
 	for runNr in $runs; do 
-		HGCInv $3 $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap
+		HGCInv $3 $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $4
 	done
 fi

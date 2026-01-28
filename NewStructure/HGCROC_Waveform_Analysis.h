@@ -46,6 +46,7 @@ class HGCROC_Waveform_Analysis{
   inline short GetExtPlotting(void)             const {return ExtPlot;};
   inline bool GetOverWriteCalib(void)           const {return OverWriteCalib;};
   inline int GetMaxEvents(void)                 const {return maxEvents;};
+  inline int GetFixedTOASample(void)            const {return fixedTOASample;};
   
   //setter methods
   //Overload method for boolean...or is it too dangerous?
@@ -67,6 +68,7 @@ class HGCROC_Waveform_Analysis{
   inline void SetExternalBadChannelMap(TString name)     {ExternalBadChannelMap =name;};
   inline void SetExternalCalibFile(TString name)     {ExternalCalibFile =name;};
   inline void SetMaxEvents(int n)                 {maxEvents = n;};
+  inline void SetFixedTOASample(int s)            {fixedTOASample = s;};
   
   //General methods
   bool CreateOutputRootFile(void);
@@ -104,6 +106,7 @@ class HGCROC_Waveform_Analysis{
   Event event;
   Event* eventptr;
   int maxEvents               = -1;
+  int fixedTOASample          = -1;
   
   TTree* TsetupIn=nullptr;
   TTree* TsetupOut=nullptr;

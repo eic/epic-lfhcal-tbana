@@ -352,15 +352,20 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
         if (debug > 3){
           aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(cellID), calib.GetPedestalMeanL(cellID), calib.GetPedestalSigL(cellID));
         }
+        bool fillToACorr = false;
+        if(fixedTOASample > -1 && fixedTOASample == nSampTOA)
+          fillToACorr = true;
+        else if(fixedTOASample == -1 )
+          fillToACorr = true;
         // fill spectra histos
         if(ithSpectra!=hSpectra.end()){
-          ithSpectra->second.FillExtHGCROC(adc,toa,tot,nADCFirst);
-          ithSpectra->second.FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
+          ithSpectra->second.FillExtHGCROC(adc,toa,tot,nSampTOA,fixedTOASample);
+          if(fillToACorr) ithSpectra->second.FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
         } else {
           RootOutputHist->cd("IndividualCells");
           hSpectra[cellID]=TileSpectra("full",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
-          hSpectra[cellID].FillExtHGCROC(adc,toa,tot,nADCFirst);
-          hSpectra[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
+          hSpectra[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA, fixedTOASample);
+          if(fillToACorr) hSpectra[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
           RootOutput->cd();
         }
         // fill spectra histos for signals with ToA
@@ -369,13 +374,13 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
           // aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(cellID), calib.GetPedestalMeanL(cellID), calib.GetPedestalSigL(cellID));
           hHighestADCAbovePedVsLayer->Fill(layer,chInLayer, adc);
           if(ithSpectraTrigg!=hSpectraTrigg.end()){
-            ithSpectraTrigg->second.FillExtHGCROC(adc,toa,tot,nADCFirst);
-            ithSpectraTrigg->second.FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
+            ithSpectraTrigg->second.FillExtHGCROC(adc,toa,tot,nSampTOA,fixedTOASample);
+            if(fillToACorr) ithSpectraTrigg->second.FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
           } else {
             RootOutputHist->cd("IndividualCellsTrigg");
             hSpectraTrigg[cellID]=TileSpectra("signal",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
-            hSpectraTrigg[cellID].FillExtHGCROC(adc,toa,tot,nADCFirst);
-            hSpectraTrigg[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
+            hSpectraTrigg[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,fixedTOASample);
+            if(fillToACorr) hSpectraTrigg[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
             RootOutput->cd();
           }
         }
@@ -434,6 +439,14 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   // set pixel text size
   Int_t textSizePixel = 30;
 
+  TString toaSampleAdd  = "";
+  TString outputDirPlotsMore = outputDirPlots;
+  if (fixedTOASample != -1){
+    ExtPlot             = 1;
+    toaSampleAdd        = Form("/nTOA_%02d",fixedTOASample);
+    outputDirPlotsMore  = Form("%s%s", outputDirPlots.Data(),toaSampleAdd.Data());
+    gSystem->Exec("mkdir -p "+outputDirPlotsMore);
+  }
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
   //Single Module Plotting 
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
@@ -455,7 +468,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
     std::cout << "plotting single  8M layers" << std::endl;
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
-        if (l%10 == 0 && l > 0 && debug > 0)
+        if (l%5 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         if (!setup->IsLayerOn(l,m)){
           std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
@@ -463,22 +476,22 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
         }
         PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
                             textSizePixel, hSpectra, 1, -25000, (it->second.samples)*25000, 300, l, m,
-                            Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(),m,  l, plotSuffix.Data()), it->second);
+                            Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),  m,  l, plotSuffix.Data()), it->second);
         PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
                             textSizePixel, hSpectra, 2, 0, 1024, 300, l, m,
-                            Form("%s/TOA_ADC_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(),m,  l, plotSuffix.Data()), it->second);
+                            Form("%s/TOA_ADC_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(), m,  l, plotSuffix.Data()), it->second);
         PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
                             textSizePixel, hSpectra, 3, 0, 1024, it->second.samples, l, m,
-                            Form("%s/TOA_Sample_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(),m,  l, plotSuffix.Data()), it->second);
+                            Form("%s/TOA_Sample_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m,  l, plotSuffix.Data()), it->second);
         PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
                           textSizePixel, hSpectraTrigg, 1, -25000, (it->second.samples)*25000, 300, l, m,
-                          Form("%s/WaveformSignal_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);            
+                          Form("%s/WaveformSignal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m, l, plotSuffix.Data()), it->second);            
         PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
                             textSizePixel, hSpectraTrigg, 2, 0, 1024, 300, l, m,
-                            Form("%s/TOA_ADC_Signal_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(),m,  l, plotSuffix.Data()), it->second);
+                            Form("%s/TOA_ADC_Signal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m,  l, plotSuffix.Data()), it->second);
         PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
                             textSizePixel, hSpectraTrigg, 3, 0, 1024, it->second.samples, l, m,
-                            Form("%s/TOA_Sample_Signal_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(),m,  l, plotSuffix.Data()), it->second);
+                            Form("%s/TOA_Sample_Signal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m,  l,plotSuffix.Data()), it->second);
         if (ExtPlot > 1){
           PlotSpectra8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                               hSpectra, 0, -100, 1024, 1.2, l, m,
@@ -518,10 +531,10 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         PlotCorr2D2MLayer(canvas2PanelProf,pad2PanelProf, topRCornerXProf, topRCornerYProf, relSizePProf,
                             textSizePixel, hSpectra, -25000, (it->second.samples)*25000, 1000, l, m,
-                            Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(),m,  l, plotSuffix.Data()), it->second);
+                            Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m,  l, plotSuffix.Data()), it->second);
         PlotCorr2D2MLayer(canvas2PanelProf,pad2PanelProf, topRCornerXProf, topRCornerYProf, relSizePProf,
                           textSizePixel, hSpectraTrigg, -25000, (it->second.samples)*25000, 1000, l, 0,
-                          Form("%s/WaveformSignal_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);            
+                          Form("%s/WaveformSignal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(), m, l, plotSuffix.Data()), it->second);            
         if (ExtPlot > 1){
           PlotSpectra2MLayer (canvas2Panel,pad2Panel, topRCornerX, topRCornerY, relSizeP, textSizePixel, 
                               hSpectra, 0, -100, 1024, 1.2, l, m,
@@ -555,22 +568,22 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
                             textSizePixel, hSpectra, 1, -25000, (it->second.samples)*25000, 300, l, m,
-                            Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(),m,  l, plotSuffix.Data()), it->second);
+                            Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m,  l, plotSuffix.Data()), it->second);
         PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
                           textSizePixel, hSpectra, 2, 0, 1024, 300, l, 0,
-                          Form("%s/TOA_ADC_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);            
+                          Form("%s/TOA_ADC_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(), m, l, plotSuffix.Data()), it->second);            
         PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
                           textSizePixel, hSpectra, 3,0, 1024, it->second.samples, l, 0,
-                          Form("%s/TOA_Sample_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);            
+                          Form("%s/TOA_Sample_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m, l, plotSuffix.Data()), it->second);            
         PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
                           textSizePixel, hSpectraTrigg, 1, -25000, (it->second.samples)*25000, 300, l, 0,
-                          Form("%s/WaveformSignal_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);            
+                          Form("%s/WaveformSignal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(), m, l, plotSuffix.Data()), it->second);            
         PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
                           textSizePixel, hSpectraTrigg, 2, 0, 1024, 300, l, 0,
-                          Form("%s/TOA_ADC_Signal_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);            
+                          Form("%s/TOA_ADC_Signal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(), m, l, plotSuffix.Data()), it->second);            
         PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
                           textSizePixel, hSpectraTrigg, 3,0, 1024, it->second.samples, l, 0,
-                          Form("%s/TOA_Sample_Signal_Mod_%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);            
+                          Form("%s/TOA_Sample_Signal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m, l, plotSuffix.Data()), it->second);            
         if (ExtPlot > 1){
           PlotSpectra1MLayer (canvasLayer, topRCornerX, topRCornerY, relSizeP, textSizePixel, 
                               hSpectra, 0, -100, 1024, 1.2, l, m,
@@ -612,23 +625,28 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
         std::cout << "====> layer " << l << " not enabled" << std::endl;
         continue;
       }
+      if (!calib.IsLayerEnabled(l,-1)){
+        std::cout << "====> layer " << l << " all channels masked" << std::endl;
+        continue;
+      }
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
                           textSizePixel, hSpectra, 1, -25000, (it->second.samples)*25000, 300, l, 
-                          Form("%s/Waveform_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                          Form("%s/Waveform_Layer%02d.%s" ,outputDirPlotsMore.Data(), l, plotSuffix.Data()), it->second);
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
                           textSizePixel, hSpectra, 2, 0, 1024, 300, l, 
-                          Form("%s/TOA_ADC_Layer%02d.%s" ,outputDirPlots.Data(),l, plotSuffix.Data()), it->second);
+                          Form("%s/TOA_ADC_Layer%02d.%s" ,outputDirPlotsMore.Data(),l, plotSuffix.Data()), it->second);
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
                           textSizePixel, hSpectra, 3, 0, 1024, it->second.samples, l,
-                          Form("%s/TOA_Sample_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                          Form("%s/TOA_Sample_Layer%02d.%s" ,outputDirPlotsMore.Data(), l, plotSuffix.Data()), it->second);
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
                           textSizePixel, hSpectraTrigg, 1, -25000, (it->second.samples)*25000, 300, l, 
-                          Form("%s/WaveformSignal_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);            
+                          Form("%s/WaveformSignal_Layer%02d.%s" ,outputDirPlotsMore.Data(),l, plotSuffix.Data()), it->second);            
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
                           textSizePixel, hSpectraTrigg, 2, 0, 1024, 300, l,
-                          Form("%s/TOA_ADC_Signal_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                          Form("%s/TOA_ADC_Signal_Layer%02d.%s" ,outputDirPlotsMore.Data(), l, plotSuffix.Data()), it->second);
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectraTrigg, 3, 0, 1024, it->second.samples, l,                          Form("%s/TOA_Sample_Signal_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                          textSizePixel, hSpectraTrigg, 3, 0, 1024, it->second.samples, l,                        
+                          Form("%s/TOA_Sample_Signal_Layer%02d.%s" ,outputDirPlotsMore.Data(), l, plotSuffix.Data()), it->second);
       if (ExtPlot > 1){
         PlotSpectra2ModLayer (canvas2ModPanel,pad2ModPanel, topRCornerX2Mod, topRCornerY2Mod, relSize2ModP, textSizePixel, 
                               hSpectra, 0, -100, 1024, 1.2, l,

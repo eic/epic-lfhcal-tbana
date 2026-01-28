@@ -50,7 +50,6 @@ if [ $2 == "FullScanA" ]; then
 
   badChannelMap="../configs/TB2025/badChannel_HGCROC_PSTB2025_layer0.txt"
 	# electron runs
-# 	runs='170' 
 # 	runs='165 166 167 168 169 170' 
 # 	runs='191 192 193 194 195' 
 # 	for runNr in $runs; do 
@@ -58,18 +57,39 @@ if [ $2 == "FullScanA" ]; then
 # 	done;
 
 	# positron runs
+# 	runs='171 172 173 174 196 200 199 198 197'
 # runs='171 172 173 174 175 196 200 199 198 197'
-#   runs='175'
 # 	for runNr in $runs; do 
 # 		Calib $3 $calibFile1 $dataDirIn $dataDirOut $runNr $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap
 # 	done;
 # 
 # 	#hadron runs
-# #   runs='176 177 178 179 180 181 182 183 184 185 186 187 188'
-#   runs='177 184'
-  runs='184'
-#   runs='183 184 185 186 187 188'
+  runs='176 178 179 180 181 182 187 188'
+#   runs='176 177 178 179 180 181 182 183 184 185 186 187 188'
 	for runNr in $runs; do 
+		Calib $3 $calibFile1 $dataDirIn $dataDirOut $runNr $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap
+	done;
+elif [ $2 == "FullScanB" ]; then
+	calibFile1=$dataDirCal/calib_FullSetB1.root
+	calibFile2=$dataDirCal/calib_FullSetB2.root
+	echo "running calibrate for 45V runs, campaign B"
+  badChannelMap="../configs/TB2025/badChannel_HGCROC_PSTB2025_default.txt"
+	
+	#muon runs
+# 	Calib $3 $calibFile1 $dataDirIn $dataDirOut FullSetB_1 $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap
+# 	Calib $3 $calibFile2 $dataDirIn $dataDirOut FullSetB_2 $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap
+
+  badChannelMap="../configs/TB2025/badChannel_HGCROC_PSTB2025_layer0.txt"
+	# electron runs
+# 	189 190 
+  runs='218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236'
+	for runNr in $runs; do 
+		Calib $3 $calibFile1 $dataDirIn $dataDirOut $runNr $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap
+	done;
+
+# 	#hadron runs
+  runs='237 238 239 240 241 242 243 244 245 246 247 248 249 250 251'
+  for runNr in $runs; do 
 		Calib $3 $calibFile1 $dataDirIn $dataDirOut $runNr $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap
 	done;
 # elif [ $2 == "MuonHVScan" ]; then

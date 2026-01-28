@@ -122,8 +122,9 @@ fi
 if [ $2 = "pedestalSumming" ]; then
 #   runs="100 101"
   runs="100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115"
+#   runs="107"
   for runNr in $runs; do 
-    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestalUnSkimmed/Run$runNr -r ../configs/LocalTesting/DataTakingDB_ORNL_Summing_HGCROC_202508.txt		
+    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestalUnSkimmed/Run$runNr -r ../configs/LocalTesting/DataTakingDB_ORNL_Summing_HGCROC_202508.csv	#-F png
   done
 fi
 

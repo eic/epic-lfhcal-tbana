@@ -38,6 +38,7 @@ void PrintHelp(char* exe){
   std::cout<<"-o vvv   Output file name (mandatory)"<<std::endl;
   std::cout<<"-O kkk   Output directory name for plots (mandatory)"<<std::endl;
   std::cout<<"-w       Analyse waveform of HGCROC data"<<std::endl;
+  std::cout<<"-s sss   Plot correlation plots TOA only for TOA sample sss "<<std::endl;
   std::cout<<"-h       this help"<<std::endl<<std::endl;
   std::cout<<"Examples:"<<std::endl;
 }
@@ -50,59 +51,63 @@ int main(int argc, char* argv[]){
   }
   HGCROC_Waveform_Analysis AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"B:d:E:fF:i:hk:L:o:O:r:w"))!=-1){
+  while((c=getopt(argc,argv,"B:d:E:fF:i:hk:L:o:O:r:s:w"))!=-1){
     switch(c){
     case 'B':
-      std::cout<<"DataPrep: read bad channel map from external file: "<<optarg<<std::endl;
+      std::cout<<"HGCROCStudy: read bad channel map from external file: "<<optarg<<std::endl;
       AnAnalysis.SetExternalBadChannelMap(Form("%s",optarg));
       break;
     case 'd':
-      std::cout<<"DataPrep: enable debug " << optarg <<std::endl;
+      std::cout<<"HGCROCStudy: enable debug " << optarg <<std::endl;
       AnAnalysis.EnableDebug(atoi(optarg));
       break;
     case 'E':
-      std::cout<<"DataPrep: enabling more extended plotting: "<< optarg<<std::endl;
+      std::cout<<"HGCROCStudy: enabling more extended plotting: "<< optarg<<std::endl;
       AnAnalysis.SetExtPlotting(atoi(optarg));
       break;
     case 'f':
-      std::cout<<"DataPrep: If output already exists it will be overwritten"<<std::endl;
+      std::cout<<"HGCROCStudy: If output already exists it will be overwritten"<<std::endl;
       AnAnalysis.CanOverWrite(true);
       break;
     case 'F':
-      std::cout<<"DataPrep: Set Plot extension to: "<< optarg<<std::endl;
+      std::cout<<"HGCROCStudy: Set Plot extension to: "<< optarg<<std::endl;
       AnAnalysis.SetPlotExtension(optarg);
       break;
     case 'i':
-      std::cout<<"DataPrep: Root input file is: "<<optarg<<std::endl;
+      std::cout<<"HGCROCStudy: Root input file is: "<<optarg<<std::endl;
       AnAnalysis.SetRootInput(Form("%s",optarg));
       break;
     case 'k':
-      std::cout<<"DataPrep: enable overwrite from external text file: "<< optarg <<std::endl;
+      std::cout<<"HGCROCStudy: enable overwrite from external text file: "<< optarg <<std::endl;
       AnAnalysis.SetExternalCalibFile(optarg);
       AnAnalysis.SetOverWriteCalib(true);
       break;
     case 'L':
-      std::cout<<"DataPrep: SetMaxEvents processed:"<<optarg<<std::endl;
+      std::cout<<"HGCROCStudy: SetMaxEvents processed:"<<optarg<<std::endl;
       AnAnalysis.SetMaxEvents(atoi(optarg));
       break;
     case 'o':
-      std::cout<<"DataPrep: Output to be saved in: "<<optarg<<std::endl;
+      std::cout<<"HGCROCStudy: Output to be saved in: "<<optarg<<std::endl;
       AnAnalysis.SetRootOutput(Form("%s",optarg));
       break;
     case 'O':
-      std::cout<<"DataPrep: Outputdir plots to be saved in: "<<optarg<<std::endl;
+      std::cout<<"HGCROCStudy: Outputdir plots to be saved in: "<<optarg<<std::endl;
       AnAnalysis.SetPlotOutputDir(Form("%s",optarg));
       break;
     case 'r':
-      std::cout<<"DataPrep: run list file from: "<<optarg<<std::endl;
+      std::cout<<"HGCROCStudy: run list file from: "<<optarg<<std::endl;
       AnAnalysis.SetRunListInput(Form("%s",optarg));
       break;
+    case 's':
+      std::cout<<"HGCROCStudy: sample number: "<<optarg<<std::endl;
+      AnAnalysis.SetFixedTOASample(atoi(optarg));
+      break;
     case 'w':
-      std::cout<<"DataPrep: analyse HGCROC waveform"<<std::endl;
+      std::cout<<"HGCROCStudy: analyse HGCROC waveform"<<std::endl;
       AnAnalysis.IsToAnalysisWaveForm(true);
       break;
     case '?':
-      std::cout<<"DataPrep: Option "<<optarg <<" not supported, will be ignored "<<std::endl;
+      std::cout<<"HGCROCStudy: Option "<<optarg <<" not supported, will be ignored "<<std::endl;
       break;
     case 'h':
       PrintHelp(argv[0]);

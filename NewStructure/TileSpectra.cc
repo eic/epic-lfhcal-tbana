@@ -61,7 +61,7 @@ bool TileSpectra::FillExtCAEN(double l, double h, double e, double lheq){
   return true;
 }
 
-bool TileSpectra::FillExtHGCROC(double adc = 0., double toa= 0., double tot= 0., int sample = 0){
+bool TileSpectra::FillExtHGCROC(double adc = 0., double toa= 0., double tot= 0., int sample = 0, int fixedTOA = -1){
   if (ROType != ReadOut::Type::Hgcroc){
     std::cout << "\n\n ******************************************************** \n\n" << std::endl;
     std::cout << "ERROR:: You are using a HGCROC filling function to fill CAEN hists! Aborting!" << std::endl;
@@ -79,6 +79,7 @@ bool TileSpectra::FillExtHGCROC(double adc = 0., double toa= 0., double tot= 0.,
     }
   }
   if (extend == 3){
+    if (fixedTOA > -1 && fixedTOA != sample ) return true;
     hcorrTOAADC.Fill(toa,adc);
     hTOAADC.Fill(toa,adc);
     hcorrTOASample.Fill(toa,sample);

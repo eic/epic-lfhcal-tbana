@@ -128,6 +128,8 @@ class Calib{
   void ReadCalibFromTextFile( TString, int);
   void ReadExternalBadChannelMap(TString, int);
   
+  bool IsLayerEnabled(int, int) const;
+  
   inline std::map<int, TileCalib>::const_iterator begin() {return CaloCalib.cbegin();};
   inline std::map<int, TileCalib>::const_iterator end()   {return CaloCalib.cend();};
   

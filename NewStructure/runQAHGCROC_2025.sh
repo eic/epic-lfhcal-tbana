@@ -28,12 +28,26 @@ else
 fi
 
 if [ $2 == "FullScanA" ]; then
-	# 192K events
-	echo "running calibrate for 45V runs, campaing A1"
-# 		runs='FullSetA_1' 
+	echo "running calibrate for 44V runs, campaing A1"
+		runs='FullSetA_1' 
 # 	runs='165 166 167 168 169 170 FullSetA_1' 
 # 	runs='175 FullSetA_2 168_169'
-	runs='183'
+# 	runs='183'
+	for runNr in $runs; do 
+		QARun $3 $dataDirOut $runNr $PlotBaseDir
+	done;
+# 	runs='261 264 265 269 270 272 274 275 ' 
+# 	for runNr in $runs; do 
+# 		QARun $3 $dataDirOutH $runNr $PlotBaseDir $dataDirOutH/calibrated_Run_$runNr.root
+# 	done;
+# 	QARun $3 $dataDirOut muonScanA1_45V $PlotBaseDir $dataDirOut/calibratedMuon_muonScanA1_45V.root
+# 	QARun $3 $dataDirOut muonScanA2_45V $PlotBaseDir $dataDirOut/calibratedMuon_muonScanA2_45V.root	
+elif [ $2 == "FullScanB" ]; then
+	echo "running calibrate for 45V runs, campaing B"
+		runs='FullSetB_1' 
+# 	runs='165 166 167 168 169 170 FullSetA_1' 
+# 	runs='175 FullSetA_2 168_169'
+# 	runs='183'
 	for runNr in $runs; do 
 		QARun $3 $dataDirOut $runNr $PlotBaseDir
 	done;

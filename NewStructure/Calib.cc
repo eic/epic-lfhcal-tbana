@@ -634,6 +634,31 @@ void Calib::SetBadChannel(short s, int row, int col, int lay, int mod=0){
   SetBadChannel(s,key);
 }
 
+bool Calib::IsLayerEnabled(int layer, int mod) const{
+  Setup* setup = Setup::GetInstance();
+  bool isEnabled = false;
+  if (!BCcalc) return true;
+  for (int r = 0; r< setup->GetNMaxRow(); r++){
+      for (int c = 0; c < setup->GetNMaxColumn(); c++){
+        if (mod == -1){
+          for (int m = 0; m < setup->GetNMaxModule(); m++){
+            int bc = GetBadChannel(r, c, layer, m);
+            if (bc == 3 ){
+              isEnabled = true;
+              break;
+            }
+          }
+        } else {
+          int bc = GetBadChannel(r, c, layer, mod);
+          if (bc == 3){
+            isEnabled = true;
+            break;
+          }
+        }
+      }
+  }
+  return isEnabled;
+}
 
 //*****************************************************************************************
 // CALIBRATION Getters for global properties

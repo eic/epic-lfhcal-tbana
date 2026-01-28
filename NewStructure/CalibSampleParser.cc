@@ -375,12 +375,12 @@ bool CalibSampleParser::ProcessAndPlotWaveforms(){
     aTile->SetPedestal(waveform_builder->get_pedestal());
     
     if(ithSpectra!=hSpectra.end()){
-      ithSpectra->second.FillExtHGCROC(adc, 0., tot, 0);
+      ithSpectra->second.FillExtHGCROC(adc, 0., tot, 0,-1);
       ithSpectra->second.FillWaveformVsTimeParser(aTile->GetADCWaveform(),ped);
     } else {
       RootOutputHist->cd("IndividualCells");
       hSpectra[aTile->GetCellID()]=TileSpectra("ped",3,aTile->GetCellID(),nullptr,event.GetROtype(),debug);
-      hSpectra[aTile->GetCellID()].FillExtHGCROC(adc, 0., tot, 0);
+      hSpectra[aTile->GetCellID()].FillExtHGCROC(adc, 0., tot, 0,-1);
       hSpectra[aTile->GetCellID()].FillWaveformVsTimeParser(aTile->GetADCWaveform(),ped);
       hSpectra[aTile->GetCellID()].WriteExt(false);
       RootOutput->cd();
