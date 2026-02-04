@@ -118,7 +118,7 @@
   // Plot Noise with Fits for Full layer
   //__________________________________________________________________________________________________________
   void PlotNoiseWithFits2MLayer (TCanvas* canvas2Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSizeP, Int_t textSizePixel, 
-                                  std::map<int,TileSpectra> spectra, bool option, 
+                                  std::map<int,TileSpectra> spectra, int option, 
                                   Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
                                   
     Double_t maxY = 0;

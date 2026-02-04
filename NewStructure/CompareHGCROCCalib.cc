@@ -156,9 +156,9 @@ bool CompareHGCROCCalib::CompareTOT(void){
     }
 
     // we have all the values "flattened", so we will need to detangle it into n_channels TGraphs - separated based on cellID
-    TGraph* graphTOT[n_channels];
-    TGraph* graphADC[n_channels];
-    int    cellID[n_channels];
+    TGraph* graphTOT[1000];
+    TGraph* graphADC[1000];
+    int    cellID[1000];
     
     for(int i=0; i<n_channels; i++){
         graphTOT[i] = new TGraph( pointCounter / n_channels );
