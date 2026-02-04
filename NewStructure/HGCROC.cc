@@ -55,11 +55,35 @@ int Hgcroc::GetNsample(void) const{
   return Nsample;
 }
 
-double Hgcroc::GetTOT(void) const{
+double Hgcroc::GetCorrectedTOT(void) const{
   return TOT;
 }
 
-double Hgcroc::GetTOA(void) const{
+// Gets first TOT fired for the waveform 
+double Hgcroc::GetRawTOT(void) const{
+  double tot = 0;
+  for (int k = 0; k < (int)tot_waveform.size(); k++ ){
+    if (tot_waveform.at(k) > 0){
+      tot = tot_waveform.at(k);
+      break;
+    }
+  }
+  return tot;
+}
+
+// Gets first TOA fired for the waveform 
+double Hgcroc::GetRawTOA(void) const{
+  double toa = 0;
+  for (int k = 0; k < (int)toa_waveform.size(); k++ ){
+    if (toa_waveform.at(k) > 0){
+      toa = toa_waveform.at(k);
+      break;
+    }
+  }
+  return toa;
+}
+
+double Hgcroc::GetCorrectedTOA(void) const{
   return TOA;
 }
 
@@ -110,12 +134,36 @@ void Hgcroc::SetNsample(int n){
   Nsample=n;
 }
 
-void Hgcroc::SetTOT(double tot){
+void Hgcroc::SetCorrectedTOT(double tot){
   TOT=tot;
 }
 
-void Hgcroc::SetTOA(double toa){
-  TOA=toa;
+int Hgcroc::SetCorrectedTOA(int offset){
+  int rawTOA    = (int)GetRawTOA();
+  // only calculate if the waveform actually had an intrinsic TOA
+  if (rawTOA > 1){
+    int toacorr   = (rawTOA-offset)%1024;
+    int nSampTOA  = (int)GetFirstTOASample();
+    if (rawTOA-offset < 0)
+      nSampTOA++;
+    double toacorrf  = double((-1)*nSampTOA*1024-toacorr);
+    TOA=toacorrf;
+    return nSampTOA;
+  // otherwise return default values
+  } else {
+    TOA = -10e5;
+    return 0;
+  }
+  return 0;
+}
+
+int Hgcroc::GetLinearizedRawTOA(){
+  int rawTOA    = (int)GetRawTOA();
+  if (rawTOA == 0)
+    return -10e5;
+  int nSampTOA  = (int)GetFirstTOASample();
+  
+  return (-1)*nSampTOA*1024-rawTOA;
 }
 
 void Hgcroc::SetPedestal(int ped){
@@ -143,6 +191,6 @@ void Hgcroc::PrintWaveFormDebugInfo( double pedMeanH, double pedMeanL, double pe
   std::cout <<"\n\t\t\t";
   for (int k = 0; k < (int)toa_waveform.size(); k++ )
     std::cout <<"\t";  
-  std::cout << " integ: "<<GetIntegratedADC() <<"\t"<< GetTOT() << "\t" << GetTOA() << "\t nTOA = " << GetFirstTOASample() << "\t nTh = " << GetFirstSampleAboveTh() << "\t nMax = " << GetMaxSampleADC()  << std::endl;
+  std::cout << " integ: "<<GetIntegratedADC() <<"\t"<< GetRawTOT() << "\t" << GetRawTOA() << "\t nTOA = " << GetFirstTOASample() << "\t nTh = " << GetFirstSampleAboveTh() << "\t nMax = " << GetMaxSampleADC()  << std::endl;
 
 }

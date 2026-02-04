@@ -87,7 +87,7 @@ bool Analyses::CheckAndOpenIO(void){
       return false;
     }
     
-    //Do I really want this?
+    // Read calib object directly from input data file default!
     TcalibIn = (TTree*) RootInput->Get("Calib");
     if(!TcalibIn){
       std::cout<<"Could not retrieve Calib tree, leaving"<<std::endl;
@@ -99,24 +99,9 @@ bool Analyses::CheckAndOpenIO(void){
         std::cout<<"Error retrieving calibration info from the tree"<<std::endl;
         TcalibIn=nullptr;
       }
+      std::cout << "Retrieved calib object from input root file" << std::endl;
     }
-    //End of do I really want this?
     
-    //We want to retrieve also calibration if do not specify ApplyTransferCalib from external file
-    //In other words, the pedestal was potentially already done and we have an existing calib object
-    if((!ApplyTransferCalib && ExtractScaling) || (!ApplyTransferCalib && ExtractScalingImproved) || (!ApplyTransferCalib && ReextractNoise)){
-      TcalibIn = (TTree*) RootInput->Get("Calib");
-      if(!TcalibIn){
-        std::cout<<"Could not retrieve Calib tree, leaving"<<std::endl;
-        return false;
-      }
-      //calib=Calib::GetInstance();
-      matchingbranch=TcalibIn->SetBranchAddress("calib",&calibptr);
-      if(matchingbranch<0){
-        std::cout<<"Error retrieving calibration info from the tree"<<std::endl;
-        return false;
-      }
-    }
     //All good
   }
   else if(!Convert){
@@ -133,17 +118,20 @@ bool Analyses::CheckAndOpenIO(void){
       // std::cout << "creating additional histo file: " << RootOutputNameHist.Data() << " tree in : "<< RootOutputName.Data() << std::endl;
     }
     
-    bool sCOF = CreateOutputRootFile();
-    if (!sCOF) return false;
-    
-    TsetupOut = new TTree("Setup","Setup");
-    setup=Setup::GetInstance();
-    //TsetupOut->Branch("setup",&setup);
-    TsetupOut->Branch("setup",&rsw);
-    TdataOut = new TTree("Data","Data");
-    TdataOut->Branch("event",&event);
-    TcalibOut = new TTree("Calib","Calib");
-    TcalibOut->Branch("calib",&calib);
+    if (!ExtractToAPhase) {
+      bool sCOF = CreateOutputRootFile();
+      if (!sCOF) return false;
+      TsetupOut = new TTree("Setup","Setup");
+      setup=Setup::GetInstance();
+      //TsetupOut->Branch("setup",&setup);
+      TsetupOut->Branch("setup",&rsw);
+      TdataOut = new TTree("Data","Data");
+      TdataOut->Branch("event",&event);
+      TcalibOut = new TTree("Calib","Calib");
+      TcalibOut->Branch("calib",&calib);
+    } else {
+      std::cout << "No tree output needed, not creating file" << std::endl;
+    }
   }
   else if (!SaveCalibOnly){
     std::cout<<"Output option mandatory except when converting"<<std::endl;
@@ -162,7 +150,7 @@ bool Analyses::CheckAndOpenIO(void){
       std::cout<<"Could not retrieve Calib tree, leaving"<<std::endl;
       return false;
     } else {
-      std::cout<<"Retrieved calib object from external input!"<<std::endl;
+      std::cout<<"Retrieved calib object from external input! " << RootCalibInputName <<std::endl;
     }
     matchingbranch=TcalibIn->SetBranchAddress("calib",&calibptr);
     if(matchingbranch<0){
@@ -289,6 +277,11 @@ bool Analyses::Process(void){
   // extract pedestal from pure pedestal runs (internal triggers)
   if(ExtractPedestal){
     status=GetPedestal();
+  }
+  
+  // extract pedestal from pure pedestal runs (internal triggers)
+  if(ExtractToAPhase){
+    status=EvaluateHGCROCToAPhases();
   }
   
   // copy existing calibration to other file
@@ -956,14 +949,8 @@ bool Analyses::GetPedestal(void){
   std::map<int,TileSpectra> hSpectra;
   std::map<int, TileSpectra>::iterator ithSpectra;
 
-  std::cout << "Additional Output with histos being created: " << RootOutputNameHist.Data() << std::endl;
-  if(Overwrite){
-    std::cout << "recreating file with hists" << std::endl;
-    RootOutputHist = new TFile(RootOutputNameHist.Data(),"RECREATE");
-  } else{
-    std::cout << "newly creating file with hists" << std::endl;
-    RootOutputHist = new TFile(RootOutputNameHist.Data(),"CREATE");
-  }
+  // create output file for histos
+  CreateOutputRootHistFile();
   // entering histoOutput file
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->cd("IndividualCells");
@@ -1364,6 +1351,338 @@ bool Analyses::GetPedestal(void){
 }
 
 // ****************************************************************************
+// extract toA offset from data runs
+// ideally a run with lots of amplitude should be used (i.e. hadrons)
+// ****************************************************************************
+bool Analyses::EvaluateHGCROCToAPhases(void){
+  
+  std::cout<<"Evaluate HGCROC ToA Phases"<<std::endl;
+  int evts=TdataIn->GetEntries();
+
+  // initialize calib
+  TcalibIn->GetEntry(0);        // use first calib object in list (there might be more)
+  
+  // initialize lookup-table run list
+  std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
+  
+  // intialize run infos & reset calib object to correct run number
+  TdataIn->GetEntry(0);     // use first event to get infos
+  Int_t runNr = event.GetRunNumber();
+  ReadOut::Type typeRO  = event.GetROtype();
+  std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+  calib.SetRunNumber(runNr);
+  calib.SetBeginRunTime(event.GetBeginRunTimeAlt());
+  std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+  
+  // Get run info object
+  std::map<int,RunInfo>::iterator it=ri.find(runNr);
+  
+  // No need to event attempt to run on CAEN data
+  if (typeRO == ReadOut::Type::Caen){
+    std::cout <<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+    std::cout << "ATTENTION this function isn't meant to run on data collected with the CAEN DT5202!\n ABORTING!" << std::endl;
+    std::cout <<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+    return false; 
+  }
+  
+  // check whether calib should be overwritten based on external text file
+  if (OverWriteCalib){
+    calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
+  }  
+  
+  Int_t minNSampleToA = 2;
+  //==================================================================================
+  // create additional output hist
+  //==================================================================================
+  CreateOutputRootHistFile();
+  RootOutputHist->cd();
+
+  TH2D* hSampleTOAVsCellID       = new TH2D( "hSampleTOAvsCellID","#sample ToA; cell ID; #sample TOA",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, it->second.samples,0,it->second.samples);
+  hSampleTOAVsCellID->SetDirectory(0);
+
+  TH2D* hTOAPsVsCellID       = new TH2D( "hTOAPsVsCellID","ToA (ns); cell ID; ToA (ps)",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 500,-250,0);
+  hTOAPsVsCellID->SetDirectory(0);
+  TH2D* hSampleMaxADCVsCellID       = new TH2D( "hSampleMaxADCvsCellID","#sample ToA; cell ID; #sample Max ADC",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, it->second.samples,0,it->second.samples);
+  hSampleMaxADCVsCellID->SetDirectory(0);
+
+  TH1D* hSampleTOA               = new TH1D( "hSampleTOA","#sample ToA; #sample TOA",
+                                              it->second.samples,0,it->second.samples);
+  TH1D* hSampleMaxADC            = new TH1D( "hSampleMaxADC","#sample ToA; #sample maxADC",
+                                              it->second.samples,0,it->second.samples);
+  TH1D* hSampleAboveTh           = new TH1D( "hSampleAboveTh","#sample ToA; #sample above th",
+                                              it->second.samples,0,it->second.samples);
+  TH1D* hSampleDiff              = new TH1D( "hSampleDiff","#sample ToA-#sample Max ADC; #sample maxADC-#sampleMax ADC",
+                                              8,-0.5,7.5);
+  TH1D* hSampleDiffMin           = new TH1D( "hSampleDiffMin","#sample ToA-#sample above th; #sample maxADC-#sample  above th",
+                                              8,-0.5,7.5);
+  
+  TH2D* h2DToAvsADC[setup->GetNMaxROUnit()+1][2][5];
+  TProfile* hToAvsADC[setup->GetNMaxROUnit()+1][2][5];
+  TH2D* h2DWaveFormHalfAsic[setup->GetNMaxROUnit()+1][2][5];
+  TProfile* hWaveFormHalfAsic[setup->GetNMaxROUnit()+1][2][5];
+  TH2D* h2DToAvsnSample[setup->GetNMaxROUnit()+1][2];
+
+  TH2D* h2DWaveFormHalfAsicAll[setup->GetNMaxROUnit()+1][2];
+  TProfile* hWaveFormHalfAsicAll[setup->GetNMaxROUnit()+1][2];
+  
+  for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+    for (int h = 0; h< 2; h++){
+      h2DToAvsnSample[ro][h]    = new TH2D(Form("h2DTOASample_Asic_%d_Half_%d",ro,h),
+                                             Form("Sample vs TOA %d %d; TOA (arb. units); #sample",ro,h), 1024/8,0,1024,it->second.samples,0,it->second.samples);
+        hWaveFormHalfAsicAll[ro][h]    = new TProfile(Form("WaveForm_Asic_%d_Half_%d",ro,h),
+                                          Form("ADC-TOA correlation %d %d;  t (ns) ; ADC (arb. units)",ro,h),550,-50,500);
+        h2DWaveFormHalfAsicAll[ro][h]  = new TH2D(Form("h2DWaveForm_Asic_%d_Half_%d",ro,h),
+                                          Form("2D ADC vs TOA %d %d;  t (ns) ; ADC (arb. units)",ro,h), 
+                                          550,-50,500, 1044/4, -20, 1024);
+      
+      for (int p = 0; p< 5; p++){
+        hToAvsADC[ro][h][p]    = new TProfile(Form("ADCTOA_Asic_%d_Half_%d_NToASample_%d",ro,h,minNSampleToA+p),
+                                          Form("ADC-TOA correlation %d %d %d; TOA (arb. units); ADC (arb. units)",ro,h,minNSampleToA+p),1024/4,0,1024, "");
+        h2DToAvsADC[ro][h][p]  = new TH2D(Form("h2DADCTOA_Asic_%d_Half_%d_NToASample_%d",ro,h,minNSampleToA+p),
+                                      Form("2D ADC vs TOA %d %d %d; TOA (arb. units); ADC (arb. units)",ro,h, minNSampleToA+p), 1024/4,0,1024,1124/4,-100,1024);
+        
+        hWaveFormHalfAsic[ro][h][p]    = new TProfile(Form("WaveForm_Asic_%d_Half_%d_NToASample_%d",ro,h,minNSampleToA+p),
+                                          Form("ADC-TOA correlation %d %d %d;  t (ns) ; ADC (arb. units)",ro,h,minNSampleToA+p),550,-50,500);
+        h2DWaveFormHalfAsic[ro][h][p]  = new TH2D(Form("h2DWaveForm_Asic_%d_Half_%d_NToASample_%d",ro,h,minNSampleToA+p),
+                                          Form("2D ADC vs TOA %d %d %d;  t (ns) ; ADC (arb. units)",ro,h,minNSampleToA+p), 
+                                          550,-50,500, 1044/4, -20, 1024);
+      }
+    }
+  }
+  
+  ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2", "Migrad");  
+  if (maxEvents == -1){
+    maxEvents = evts;
+  } else {
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+    std::cout << "ATTENTION: YOU ARE RESETTING THE MAXIMUM NUMBER OF EVENTS TO BE PROCESSED TO: " << maxEvents << ". THIS SHOULD ONLY BE USED FOR TESTING!" << std::endl;
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+  }
+  
+  //==================================================================================
+  // setup waveform builder for HGCROC data
+  //==================================================================================
+  waveform_fit_base *waveform_builder = nullptr;
+  waveform_builder = new max_sample_fit();
+  //==================================================================================
+  // process events from tree
+  //==================================================================================
+  for(int i=0; i<evts && i < maxEvents ; i++){
+    if (i%5000 == 0&& i > 0 && debug > 0) std::cout << "Reading " <<  i << "/" << evts << " events"<< std::endl;
+    TdataIn->GetEntry(i); 
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // process tiles in event
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
+    for(int j=0; j<event.GetNTiles(); j++){
+      //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+      // histo filling for HGCROC specific things & resetting of ped
+      //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
+      Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
+      int cellID = aTile->GetCellID();
+      
+      // get pedestal values from calib object
+      double ped    = calib.GetPedestalMeanL(cellID);
+      double pedErr = calib.GetPedestalSigL(cellID);
+      if (ped == -1000){
+        ped     = calib.GetPedestalMeanH(cellID);
+        pedErr  = calib.GetPedestalSigH(cellID);
+        if (ped == -1000){
+          ped     = aTile->GetPedestal();
+          pedErr  = 5;
+        }
+      }
+      // reevaluate waveform
+      waveform_builder->set_waveform(aTile->GetADCWaveform());
+      waveform_builder->fit_with_average_ped(ped);
+      aTile->SetIntegratedADC(waveform_builder->get_E());
+      aTile->SetPedestal(waveform_builder->get_pedestal());
+      
+      // obtain integrated tile quantities for histo filling
+      double adc      = aTile->GetIntegratedADC();
+      double toa      = aTile->GetRawTOA();
+      bool hasTOA     = false;
+      // check if we have a toa
+      if (toa > 0)
+        hasTOA        = true;
+
+      Int_t nSampTOA  = aTile->GetFirstTOASample();        
+      double timeRes    = 25./1024;               // time resolution in ns
+      double toaNs      = (double)aTile->GetLinearizedRawTOA()*timeRes;
+      
+      Int_t nMaxADC   = aTile->GetMaxSampleADC();
+      Int_t nADCFirst = aTile->GetFirstSampleAboveTh();
+      Int_t nDiffFirstT= nSampTOA-nADCFirst;
+      Int_t nDiffFirstM= nMaxADC-nADCFirst;
+      Int_t nDiffMaxT  = nMaxADC-nSampTOA;
+      Int_t nOffEmpty  = 2;
+      
+      if (hasTOA){
+        hSampleTOA->Fill(nSampTOA);
+        hSampleTOAVsCellID->Fill(cellID,nSampTOA);
+      }
+      if (adc > ped+2*pedErr){
+        hSampleMaxADC->Fill(nMaxADC);
+        hSampleMaxADCVsCellID->Fill(cellID,nMaxADC);
+        hSampleAboveTh->Fill(nADCFirst);
+      }
+      
+      if (hasTOA && adc > ped+2*pedErr){
+        hSampleDiff->Fill(nSampTOA-nMaxADC);
+        hSampleDiffMin->Fill(nSampTOA-nADCFirst);
+      }
+      
+      Int_t asic      = setup->GetROunit(cellID);
+      Int_t roCh      = setup->GetROchannel(cellID);
+
+      if (hasTOA){
+        hTOAPsVsCellID->Fill(cellID,toaNs);
+        
+        // fill overview hists for half asics
+        h2DToAvsnSample[asic][int(roCh/36)]->Fill(toa, nSampTOA);
+        for (int k = 0; k < (int)(aTile->GetADCWaveform()).size(); k++ ){
+          double timetemp = ((k+nOffEmpty)*1024 + (double)aTile->GetLinearizedRawTOA())*timeRes ;
+          hWaveFormHalfAsicAll[asic][int(roCh/36)]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
+          h2DWaveFormHalfAsicAll[asic][int(roCh/36)]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
+        }          
+        
+        int binSample = nSampTOA-minNSampleToA;
+        if (!(nSampTOA > minNSampleToA-1 && nSampTOA < minNSampleToA+5)) continue;
+        hToAvsADC[asic][int(roCh/36)][binSample]->Fill(toa, adc);
+        h2DToAvsADC[asic][int(roCh/36)][binSample]->Fill(toa, adc);
+        for (int k = 0; k < (int)(aTile->GetADCWaveform()).size(); k++ ){
+          double timetemp = ((k+nOffEmpty)*1024 + (double)aTile->GetLinearizedRawTOA())*timeRes ;
+          hWaveFormHalfAsic[asic][int(roCh/36)][binSample]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
+          h2DWaveFormHalfAsic[asic][int(roCh/36)][binSample]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
+        }          
+      }        
+    }
+  }
+  RootInput->Close();
+  //==================================================================================
+  // Setup general plotting infos
+  //==================================================================================    
+  TString outputDirPlots = GetPlotOutputDir();
+  Double_t textSizeRel = 0.035;
+
+  gSystem->Exec("mkdir -p "+outputDirPlots);
+  StyleSettingsBasics("pdf");
+  SetPlotStyle();  
+  
+  //==================================================================================
+  // Create Summary plots
+  //==================================================================================    
+  TCanvas* canvas2DSigQA = new TCanvas("canvas2DSigQA","",0,0,1450,1300);  // gives the page size
+  DefaultCanvasSettings( canvas2DSigQA, 0.08, 0.13, 0.045, 0.07);
+
+  PlotSimple2D( canvas2DSigQA, hSampleTOAVsCellID, (double)it->second.samples,setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleTOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DSigQA, hSampleMaxADCVsCellID, (double)it->second.samples, setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleMaxADCvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+
+  PlotSimple2D( canvas2DSigQA, hTOAPsVsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOAPsvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  
+  canvas2DSigQA->SetLogz(1);
+  
+  Int_t diffBins = 4;
+    
+  for (int p = 0; p< 5; p++){
+    std::cout << "************************************************" << std::endl;
+    std::cout << "TOA offset estimate: " << std::endl; 
+    std::cout << "nSample ToA: " << p+minNSampleToA << std::endl; 
+    std::cout << "nCells in sample: " << hSampleTOA->GetBinContent(hSampleTOA->FindBin(p+minNSampleToA+0.001)) << std::endl;
+    std::cout << "************************************************" << std::endl;
+    std::cout << "# ASIC\tHalf\tOffset" << std::endl;
+    TString outputDirNameToa=Form("%s/nToA_%d",outputDirPlots.Data(), p+minNSampleToA);
+    gSystem->Exec("mkdir -p "+outputDirNameToa);
+    for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+      for (int h = 0; h< 2; h++){ 
+        
+        Double_t largestDiff = 0.;
+        Int_t bin         = 1;
+        for (Int_t b = 1; b < hToAvsADC[ro][h][p]->GetNbinsX(); b++){
+          Int_t maxBin  = (b+diffBins);
+          if (maxBin > hToAvsADC[ro][h][p]->GetNbinsX()){
+            maxBin      = maxBin-hToAvsADC[ro][h][p]->GetNbinsX();
+          }
+          Double_t diff = hToAvsADC[ro][h][p]->GetBinContent(maxBin) - hToAvsADC[ro][h][p]->GetBinContent(b);
+          if (largestDiff < diff){
+            largestDiff = diff;
+            bin         = b;
+          }
+        }
+        Int_t centerbin = bin+Int_t(diffBins/2);
+        if (centerbin > (hToAvsADC[ro][h][p]->GetNbinsX()-diffBins/2))
+          centerbin     = centerbin-(hToAvsADC[ro][h][p]->GetNbinsX()-diffBins/2);
+        
+        Int_t offset = (Int_t)(hToAvsADC[ro][h][p]->GetBinCenter(centerbin));
+        std::cout << ro <<"\t" <<h << "\t" << offset << std::endl;
+        
+        Plot2DWithProfile( canvas2DSigQA, h2DToAvsADC[ro][h][p], hToAvsADC[ro][h][p], -10000, -10000, textSizeRel,
+                          Form("%s/ToAvsADC_Asic_%d_Half_%d_NToASample_%d.%s", outputDirNameToa.Data(), ro, h,p+minNSampleToA, plotSuffix.Data()), 
+                          it->second, 1, kFALSE, "colz",true, Form("Asic %d, Half %d,  nSample ToA: %d",ro,h, p+minNSampleToA), offset);
+        
+        h2DWaveFormHalfAsic[ro][h][p]->GetXaxis()->SetRangeUser(-25, (it->second.samples)*25);
+        Plot2DWithProfile( canvas2DSigQA, h2DWaveFormHalfAsic[ro][h][p], hWaveFormHalfAsic[ro][h][p], -10000, -10000, textSizeRel,
+                          Form("%s/Waveform_Asic_%d_Half_%d_NToASample_%d.%s", outputDirNameToa.Data(), ro, h, p+minNSampleToA, plotSuffix.Data()), 
+                          it->second, 1, kFALSE, "colz",true, Form("Asic %d, Half %d, nSample ToA: %d",ro,h, p+minNSampleToA), -1);
+      }
+    }
+  }
+  
+  for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+    for (int h = 0; h< 2; h++){      
+        PlotSimple2D( canvas2DSigQA, h2DToAvsnSample[ro][h],(double)it->second.samples, -10000, textSizeRel,
+                          Form("%s/ToaVsNSample_Asic_%d_Half_%d.%s", outputDirPlots.Data(), ro, h, plotSuffix.Data()), 
+                          it->second, 1, kFALSE, "colz",true, Form("Asic %d, Half %d",ro,h));
+        h2DWaveFormHalfAsicAll[ro][h]->GetXaxis()->SetRangeUser(-25, (it->second.samples)*25);
+        Plot2DWithProfile( canvas2DSigQA, h2DWaveFormHalfAsicAll[ro][h], hWaveFormHalfAsicAll[ro][h], -10000, -10000, textSizeRel,
+                          Form("%s/Waveform_Asic_%d_Half_%d.%s", outputDirPlots.Data(), ro, h, plotSuffix.Data()), 
+                          it->second, 1, kFALSE, "colz",true, Form("Asic %d, Half %d",ro,h), -1);
+    }
+  }
+
+  TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
+  DefaultCanvasSettings( canvas1DSimple, 0.08, 0.03, 0.03, 0.07);
+
+  PlotSimple1D(canvas1DSimple, hSampleTOA, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleToA.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+  PlotSimple1D(canvas1DSimple, hSampleMaxADC, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleMaxADC.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+  PlotSimple1D(canvas1DSimple, hSampleAboveTh, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleAboveTh.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+  PlotSimple1D(canvas1DSimple, hSampleDiff, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleDiff.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+  PlotSimple1D(canvas1DSimple, hSampleDiffMin, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleDiffMin.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+  
+  //=====================================================================
+  // Write output histograms
+  //=====================================================================
+  RootOutputHist->cd();
+    hSampleTOA->Write();
+    hSampleMaxADC->Write();
+    hSampleAboveTh->Write();
+    hSampleDiff->Write();
+    hSampleDiffMin->Write();
+    hSampleTOAVsCellID->Write();
+    hSampleMaxADCVsCellID->Write();
+
+    for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+      for (int h = 0; h< 2; h++){
+        h2DToAvsnSample[ro][h]->Write();
+        h2DWaveFormHalfAsicAll[ro][h]->Write();
+        hWaveFormHalfAsicAll[ro][h]->Write();
+        for (int p = 0; p< 5; p++){
+          hToAvsADC[ro][h][p]->Write();
+          h2DToAvsADC[ro][h][p]->Write();
+          h2DWaveFormHalfAsic[ro][h][p]->Write();
+          hWaveFormHalfAsic[ro][h][p]->Write();
+        }
+      }
+    }
+  RootOutputHist->Close();
+  
+  return true;
+}
+
+
+// ****************************************************************************
 // extract pedestral from dedicated data run, no other data in run 
 // ****************************************************************************
 bool Analyses::TransferCalib(void){
@@ -1393,14 +1712,8 @@ bool Analyses::TransferCalib(void){
   //==================================================================================
   // create additional output hist 
   //==================================================================================
-  std::cout << "Additional Output with histos being created: " << RootOutputNameHist.Data() << std::endl;
-  if(Overwrite){
-    std::cout << "recreating file with hists" << std::endl;
-    RootOutputHist = new TFile(RootOutputNameHist.Data(),"RECREATE");
-  } else{
-    std::cout << "newly creating file with hists" << std::endl;
-    RootOutputHist = new TFile(RootOutputNameHist.Data(),"CREATE");
-  }
+  CreateOutputRootHistFile();
+
   TH2D* hspectraADCvsCellID      = new TH2D( "hspectraADCvsCellID","ADC spectrums CellID; cell ID; ADC (arb. units) ",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
   hspectraADCvsCellID->SetDirectory(0);
@@ -1531,8 +1844,8 @@ bool Analyses::TransferCalib(void){
         int layer     = setup->GetLayer(cellID);
         int chInLayer = setup->GetChannelInLayerFull(cellID);
         double adc = aTile->GetIntegratedADC();
-        double tot = aTile->GetTOT();
-        double toa = aTile->GetTOA();
+        double tot = aTile->GetRawTOT();
+        double toa = aTile->GetRawTOA();
         totADCs         = totADCs+adc;
         if (adc > 10)
           nCellsAboveMADC++; 
@@ -1929,13 +2242,7 @@ bool Analyses::AnalyseWaveForm(void){
   // create additional output hist
   //==================================================================================
   std::cout << "Additional Output with histos being created: " << RootOutputNameHist.Data() << std::endl;
-  if(Overwrite){
-    std::cout << "recreating file with hists" << std::endl;
-    RootOutputHist = new TFile(RootOutputNameHist.Data(),"RECREATE");
-  } else{
-    std::cout << "newly creating file with hists" << std::endl;
-    RootOutputHist = new TFile(RootOutputNameHist.Data(),"CREATE");
-  }
+  CreateOutputRootHistFile();
 
   int maxChannelPerLayer             = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
   int maxChannelPerLayerSingleMod    = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
@@ -2059,8 +2366,8 @@ bool Analyses::AnalyseWaveForm(void){
         
         // obtain integrated tile quantities for histo filling
         double adc = aTile->GetIntegratedADC();
-        double tot = aTile->GetTOT();
-        double toa = aTile->GetTOA();
+        double tot = aTile->GetRawTOT();
+        double toa = aTile->GetRawTOA();
         totADCs         = totADCs+adc;
         // obtain samples in which TOA, TOT, maximum ADC are firing
         Int_t nSampTOA  = aTile->GetFirstTOASample();        
@@ -2446,15 +2753,7 @@ bool Analyses::GetScaling(void){
   std::map<int, TileSpectra>::iterator ithSpectraTrigg;
   
   ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2", "Migrad");  
-  
-  std::cout << "Additional Output with histos being created: " << RootOutputNameHist.Data() << std::endl;
-  if(Overwrite){
-    std::cout << "recreating file with hists" << std::endl;
-    RootOutputHist = new TFile(RootOutputNameHist.Data(),"RECREATE");
-  } else{
-    std::cout << "newly creating file with hists" << std::endl;
-    RootOutputHist = new TFile(RootOutputNameHist.Data(),"CREATE");
-  }
+  CreateOutputRootHistFile();
     
   //==================================================================================
   // first pass over tree to extract spectra 
@@ -2535,8 +2834,8 @@ bool Analyses::GetScaling(void){
         
         ithSpectra=hSpectra.find(aTile->GetCellID());
         double adc = aTile->GetIntegratedADC();        
-        double tot = aTile->GetTOT();
-        double toa = aTile->GetTOA();
+        double tot = aTile->GetRawTOT();
+        double toa = aTile->GetRawTOA();
         
         // fill spectra histos    
         if(ithSpectra!=hSpectra.end()){
@@ -2794,8 +3093,8 @@ bool Analyses::GetScaling(void){
         ithSpectraTrigg=hSpectraTrigg.find(aTile->GetCellID());
         // double adc = aTile->GetPedestal()+aTile->GetIntegratedADC();
         double adc = aTile->GetIntegratedADC();
-        double tot = aTile->GetTOT();
-        double toa = aTile->GetTOA();
+        double tot = aTile->GetRawTOT();
+        double toa = aTile->GetRawTOA();
 
         aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, currCellID, localTriggerTiles, 0));
         // estimate local muon trigger
@@ -3258,14 +3557,8 @@ bool Analyses::GetImprovedScaling(void){
   std::map<int, TileSpectra>::iterator ithSpectra;
   std::map<int, TileSpectra>::iterator ithSpectraTrigg;
   
-  std::cout << "Additional Output with histos being created: " << RootOutputNameHist.Data() << std::endl;
-  if(Overwrite){
-    std::cout << "recreating file with hists" << std::endl;
-    RootOutputHist = new TFile(RootOutputNameHist.Data(),"RECREATE");
-  } else{
-    std::cout << "newly creating file with hists" << std::endl;
-    RootOutputHist = new TFile(RootOutputNameHist.Data(),"CREATE");
-  }
+  // create output file for histos
+  CreateOutputRootHistFile();
    
   // setup general fitting options 
   ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2", "Migrad");
@@ -3393,8 +3686,8 @@ bool Analyses::GetImprovedScaling(void){
         ithSpectraTrigg=hSpectraTrigg.find(currCellID);
         // double adc = aTile->GetPedestal()+aTile->GetIntegratedADC();
         double adc = aTile->GetIntegratedADC();
-        double tot = aTile->GetTOT();
-        double toa = aTile->GetTOA();
+        double tot = aTile->GetRawTOT();
+        double toa = aTile->GetRawTOA();
         
         // estimate local muon trigger
         bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScale, factorMinTrigg, factorMaxTrigg);
@@ -3826,15 +4119,9 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
   std::map<int, TileSpectra>::iterator ithSpectra;
   std::map<int, TileSpectra>::iterator ithSpectraTrigg;
   
-  std::cout << "Additional Output with histos being created: " << RootOutputNameHist.Data() << std::endl;
-  if(Overwrite){
-    std::cout << "recreating file with hists" << std::endl;
-    RootOutputHist = new TFile(RootOutputNameHist.Data(),"RECREATE");
-  } else{
-    std::cout << "newly creating file with hists" << std::endl;
-    RootOutputHist = new TFile(RootOutputNameHist.Data(),"CREATE");
-  }
-    
+  // create output file for histos
+  CreateOutputRootHistFile();
+
   // setup trigger sel
   double factorMinTrigg   = 0.5;
   if(yearData == 2023)
@@ -4215,14 +4502,7 @@ bool Analyses::Calibrate(void){
   //=============================================================================================
   // Create output histos
   //=============================================================================================
-  std::cout << "Additional Output with histos being created: " << RootOutputNameHist.Data() << std::endl;
-  if(Overwrite){
-    std::cout << "recreating file with hists" << std::endl;
-    RootOutputHist = new TFile(RootOutputNameHist.Data(),"RECREATE");
-  } else{
-    std::cout << "newly creating file with hists" << std::endl;
-    RootOutputHist = new TFile(RootOutputNameHist.Data(),"CREATE");
-  }
+  CreateOutputRootHistFile();
   
   TH2D* hspectraHGvsCellID          = nullptr;
   TH2D* hspectraHGCorrvsCellID      = nullptr;
@@ -4452,8 +4732,8 @@ bool Analyses::Calibrate(void){
         aTile->SetPedestal(waveform_builder->get_pedestal());
 
         double adc = aTile->GetIntegratedADC();
-        double tot = aTile->GetTOT();
-        double toa = aTile->GetTOA();
+        double tot = aTile->GetRawTOT();
+        double toa = aTile->GetRawTOA();
         // temporarily only calibrate with adc & average Scale
         // double tempE = adc/averageScale; 
         double tempE = adc/calib.GetScaleHigh(aTile->GetCellID());
@@ -4885,7 +5165,7 @@ bool Analyses::SkimHGCROCData(void){
         aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(aTile->GetCellID()), calib.GetPedestalMeanL(aTile->GetCellID()), calib.GetPedestalSigL(aTile->GetCellID()));
       }
       
-      if (aTile->GetTOA() > 0) triggered= true;
+      if (aTile->GetRawTOA() > 0) triggered= true;
       if (aTile->GetLocalTriggerBit()== (char)1) triggered= true;
       if( !triggered){
         event.RemoveTile(aTile);
@@ -4939,6 +5219,25 @@ bool Analyses::CreateOutputRootFile(void){
   }
   if(RootOutput->IsZombie()){
     std::cout<<"Error opening '"<<RootOutput<<"'no reachable path? Exist without force mode to overwrite?..."<<std::endl;
+    return false;
+  }
+  return true;
+}
+
+//***********************************************************************************************
+//*********************** Create output files ***************************************************
+//***********************************************************************************************
+bool Analyses::CreateOutputRootHistFile(void){
+  std::cout << "Additional Output with histos being created: " << RootOutputNameHist.Data() << std::endl;
+  if(Overwrite){
+    std::cout << "overwriting exisiting output file" << std::endl;
+    RootOutputHist=new TFile(RootOutputNameHist.Data(),"RECREATE");
+  } else{
+    std::cout << "creating output file" << std::endl;
+    RootOutputHist = new TFile(RootOutputNameHist.Data(),"CREATE");
+  }
+  if(RootOutputHist->IsZombie()){
+    std::cout<<"Error opening '"<<RootOutputHist<<"'no reachable path? Exist without force mode to overwrite?..."<<std::endl;
     return false;
   }
   return true;

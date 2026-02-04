@@ -2,6 +2,7 @@
 
 PlotBaseDir=..
 runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
+toAOffSetCalib=../configs/TB2025/ToAOffsets_TB2025_HadRun.csv
 
 function HGCInv()
 {
@@ -16,20 +17,19 @@ function HGCInv()
 # 	if [ $1 == "BC" ]; then 
 # 		echo "badchannelMap:" $7
 # 	fi
-	printf -v runNr "%03d" "$2"
+# 	printf -v runNr "%03d" "$2"
 # 	printf -v runNrMuon "%03d" "$3"
-# 	runNr=$2
+	runNr=$2
   echo 
 	echo "=================================================================================="
 	if [ $1 == "wave" ]; then 
-#     if [ -f "$4/rawHGCROC_wPed_$runNr_calib_mod.txt" ]; then
-#       echo "overwriting original calib file with manually modified $4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt"
-#       ./HGCROCStudy -d 1 -E 2 -f -w -i $3/calibratedHGCROC_$runNr.root -o $3/calibratedHGCROC_wave_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWave/$5 -r $runNrFile -k $3/rawHGCROC_wPed_$runNrMuon_calib_mod.txt     
-#     else 
       ./HGCROCStudy -d 1 -E 2 -f -w -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWave/$5 -r $runNrFile 
-#     fi
+	elif [ $1 == "waveWOff" ]; then 
+      ./HGCROCStudy -d 2 -E 2 -f -w -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWaveOffSetCorr/$5 -r $runNrFile -t $toAOffSetCalib
   elif [ $1 == "waveNToA" ]; then 
     ./HGCROCStudy -d 1 -E 2 -f -w -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWave/$5 -r $runNrFile -s $6
+  elif [ $1 == "waveNToAWOff" ]; then 
+    ./HGCROCStudy -d 1 -E 2 -f -w -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWaveOffSetCorr/$5 -r $runNrFile -s $6 -t $toAOffSetCalib
 	fi
 	
 }
@@ -51,10 +51,21 @@ else
 fi
 
 
-if [ $2 = "FullScanA" ]; then 
+if [ $2 = "ElectronsA" ]; then 
   runs='166' #electrons
 #   runs='166 167 168 169 170' #electrons
 	for runNr in $runs; do 
 		HGCInv $3 $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $4
 	done
+elif [ $2 = "MuonsA" ]; then 
+  runs='FullSetA_2' 
+#   runs='166 167 168 169 170' #electrons
+	for runNr in $runs; do 
+		HGCInv $3 $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $4
+	done
+elif [ $2 = "HadronsA" ]; then 
+  runs='184' 
+	for runNr in $runs; do 
+		HGCInv $3 $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $4
+	done	
 fi

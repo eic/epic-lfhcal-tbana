@@ -79,61 +79,54 @@ else
 	exit
 fi
 
-
-if [ $2 = "pedestalTestRuns" ]; then
-  runs='122 123 124 125 126 128 129'
-  for runNr in $runs; do 
-    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestal/Run$runNr -r $runNrFile
-  done
-fi
-
-if [ $2 = "pedestalRef" ]; then
-#   runs='68' #ped muons FullSet A, 1st
-  runs='208' #ped muons FullSet A, 2nd
-#   runs='210' #ped muons FullSet B, 1st
-#   runs='259' #ped muons FullSet B, 2nd
-#   runs='381' #ped muons Electron Set C
-#   runs='68 208 210 259' #ped muons
-#   runs='207' #ped muons
-  for runNr in $runs; do 
-    printf -v runNrPed "%03d" "$runNr"
-    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNrPed.root -f -o $dataDirOut/rawHGCROC_wPed_$runNrPed.root -O $PlotBaseDir/PlotsPedestal/Run$runNrPed -r $runNrFile -F png
-  done
-fi
-
-if [ $2 = "pedestalMuon" ]; then
-#   runs='69 70 71 72 73 74 75 76 164' # Full Set A - muon set 1
+# run pedest extraction for different run numbers
+if [ $2 = "pedestal" ]; then
+  runs='';
+  # different number of KCUs & asics
+  if [ $3 = "Test" ]; then
+      runs='122 123 124 125 126 128 129'  
+  # reference pedestal runs for various campaigns
+  elif [ $3 = "Ref" ]; then
+    runs='68 208 210 259 381'
+  # muon runs
+  elif [ $3 = "Muon" ]; then
+  #   runs='69 70 71 72 73 74 75 76 164' # Full Set A - muon set 1
   #   runs='201 202 203 204 205 206' # Full Set A - muon set 2
   #   runs='211 212 213 214 215 216 217' #Full set B - muon set 1
   #   runs='252 253 254 255 256 257 258 260' #Full set B - muon set 2
   #   runs='273 274 275 276 289'          #Hadron scan 1
   #   runs='296 297 298 299 300'          #Hadron scan 2
   #   runs='319 320 324 325 326 327 328 329 330'          #Hadron scan 3
-#     runs='352 353 354 355 356'          #Hadron scan 4
-#     runs='382 383 384 385'              #E scan 
-#   runs='33 28 29 30 31 32'                           #1st HV scan
-  runs='260 261 262 263 264 265 266 267 268 271 272' #2nd HV scan 
+  #     runs='352 353 354 355 356'          #Hadron scan 4
+  #     runs='382 383 384 385'              #E scan 
+  #   runs='33 28 29 30 31 32'                           #1st HV scan
+    runs='260 261 262 263 264 265 266 267 268 271 272' #2nd HV scan 
+  # electron runs
+  elif [ $3 = "Electron" ]; then
+    runs='166 167 168 169 170'
+  fi
   for runNr in $runs; do 
     printf -v runNrPed "%03d" "$runNr"
     ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNrPed.root -f -o $dataDirOut/rawHGCROC_wPed_$runNrPed.root -O $PlotBaseDir/PlotsPedestal/Run$runNrPed -r $runNrFile
   done
 fi
 
+if [ $2 = "toaPhase" ]; then 
+  runNrPed='208'
+  if [ $3 = "Hadron" ]; then 
+    runs='184'
+    for rn in $runs; do 
+      printf -v runNr "%03d" "$rn"
+      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirOut/rawHGCROC_wPed_$runNrPed.root #-F png
+    done
+  elif [ $3 = "Muon" ]; then 
+    runs='FullSetA_2'
+    for runNr in $runs; do 
+      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -F png
+    done
+  fi
 
-if [ $2 = "pedestalE" ]; then
-#   runs='165'
-  runs='166 167 168 169 170'
-  for runNr in $runs; do 
-    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestal/Run$runNr -r $runNrFile
-  done
 fi
-if [ $2 = "pedestalM" ]; then
-  runs='211'
-  for runNr in $runs; do 
-    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNr.root -f -o $dataDirOut/rawHGCROC_wPed_$runNr.root -O $PlotBaseDir/PlotsPedestal/Run$runNr -r $runNrFile
-  done
-fi
-
 
 if [ $2 = "elewave" ]; then
 #   runs='165 166 167 168 169 170'

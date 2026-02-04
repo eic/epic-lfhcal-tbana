@@ -61,7 +61,7 @@ bool TileSpectra::FillExtCAEN(double l, double h, double e, double lheq){
   return true;
 }
 
-bool TileSpectra::FillExtHGCROC(double adc = 0., double toa= 0., double tot= 0., int sample = 0, int fixedTOA = -1){
+bool TileSpectra::FillExtHGCROC(double adc = 0., double toa= 0., double tot= 0., int sample = -1, int fixedTOA = -1){
   if (ROType != ReadOut::Type::Hgcroc){
     std::cout << "\n\n ******************************************************** \n\n" << std::endl;
     std::cout << "ERROR:: You are using a HGCROC filling function to fill CAEN hists! Aborting!" << std::endl;
@@ -69,6 +69,12 @@ bool TileSpectra::FillExtHGCROC(double adc = 0., double toa= 0., double tot= 0.,
     return false; 
   }
 
+//   // attempt to correct for ToA offset
+//   if (toa < 0 && sample != -1){
+//     toa = toa+1024;
+//     sample--;
+//   }
+//   
   hspectraHG.Fill(adc);
   hspectraTOA.Fill(toa);  
   hspectraTOT.Fill(tot);  
@@ -110,11 +116,13 @@ bool TileSpectra::FillWaveform(std::vector<int> samples, double ped = 0){
  return true;
 }
 
-bool TileSpectra::FillWaveformVsTime(std::vector<int> samples, double toa = 0, double ped = 0, int offset = 0){
+bool TileSpectra::FillWaveformVsTime(std::vector<int> samples, double toalincorr = 0, double ped = 0, int offset = 0){
   // more infos
+  double timeRes = 25./1024;
   for (int k = 0; k < (int)samples.size(); k++ ){
-    hcorr.Fill((k-offset+1)*25000-toa*25,samples.at(k)-ped);
-    if (extend == 3) hWaveForm.Fill((k-offset+1)*25000-toa*25,samples.at(k)-ped);
+    double tempt = ((k+offset)*1024+toalincorr)*timeRes;
+    hcorr.Fill(tempt,samples.at(k)-ped);
+    if (extend == 3) hWaveForm.Fill(tempt,samples.at(k)-ped);
   }
   return true;
 }

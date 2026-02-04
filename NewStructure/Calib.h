@@ -54,6 +54,8 @@ class Calib{
   double GetHGLGCorr (int /**/, int /**/, int /**/, int /**/) const;
   double GetHGLGCorrOff (int /**/) const;
   double GetHGLGCorrOff (int /**/, int /**/, int /**/, int /**/) const;
+  double GetToAOff (int /**/) const;
+  double GetToAOff (int /**/, int /**/, int /**/, int /**/) const;
   
   double GetAveragePedestalMeanHigh() const;
   double GetAveragePedestalSigHigh() const;
@@ -102,6 +104,8 @@ class Calib{
   void   SetHGLGCorrOff (double, int, int, int, int);
   void   SetBadChannel (short, int);
   void   SetBadChannel (short, int, int, int, int);
+  void   SetToAOff (double, int);
+  void   SetToAOff (double, int, int, int, int);
   
   int GetRunNumber(void);
   int GetRunNumberPed(void);
@@ -127,6 +131,7 @@ class Calib{
   void PrintCalibToFile( TString );
   void ReadCalibFromTextFile( TString, int);
   void ReadExternalBadChannelMap(TString, int);
+  void ReadExternalToAOffsets(TString, int);
   
   bool IsLayerEnabled(int, int) const;
   

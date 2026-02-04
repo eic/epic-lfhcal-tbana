@@ -16,8 +16,10 @@ class Hgcroc: public Tile {
   int GetFirstSampleAboveTh(void);
   int GetMaxSampleADC (void);
   int GetNsample(void) const ;
-  double GetTOT(void) const;
-  double GetTOA(void) const;
+  double GetRawTOT(void) const;
+  double GetCorrectedTOT(void) const;
+  double GetRawTOA(void) const;
+  double GetCorrectedTOA(void) const;
   int GetPedestal(void) const;
 
   void SetADCWaveform(std::vector<int>);
@@ -32,12 +34,13 @@ class Hgcroc: public Tile {
   void AppendWaveformTOT(int);
   void ResetTOTWaveformPoint(int, int);
 
-  
   void SetNsample(int);
-  void SetTOT(double);
-  void SetTOA(double);
+  void SetCorrectedTOT(double);
+  int SetCorrectedTOA(int);
   void SetPedestal(int);
 
+  int GetLinearizedRawTOA();
+  
   double GetIntegratedADC() {return integrated_adc;};  // Value from just ADC
   double GetIntegratedTOT() {return integrated_tot;};  // Value from just TOT
   double GetIntegratedValue() {return integrated_value;};  // Combined ADC and TOT
@@ -52,9 +55,9 @@ class Hgcroc: public Tile {
   std::vector<int> adc_waveform;
   std::vector<int> toa_waveform;
   std::vector<int> tot_waveform;
-  int TOA;
-  int TOT;
-  int pedestal;
+  int TOA     = -10e5;              // linearized and corrected TOA (has to be set externally)
+  int TOT     = -10e5;
+  int pedestal = 0;
 
   // "finalized" values
   double integrated_adc = 0.;
@@ -63,7 +66,7 @@ class Hgcroc: public Tile {
   
  private:
 
-  ClassDef(Hgcroc,1)
+  ClassDef(Hgcroc,2)
 };
 
 

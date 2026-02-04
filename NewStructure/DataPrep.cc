@@ -38,6 +38,7 @@ void PrintHelp(char* exe){
   std::cout<<"-E [1-3] extended plotting set to whatever value you specify"<<std::endl;
   std::cout<<"-f       Force to write output if already exist"<<std::endl;
   std::cout<<"-F fff   set explicit plot extension explicitly, default is pdf "<<std::endl;
+  std::cout<<"-g ggg   extract toA offset with pedestal calib taken from ggg file "<<std::endl;
   std::cout<<"-i uuu   Input file in root format"<<std::endl;
   std::cout<<"-k kkk   enabling overwriting of calib file using external calib txt file"<<std::endl;
   std::cout<<"-L LLL   enable testing with only limited number of events"<<std::endl;
@@ -75,7 +76,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"aA:bB:c:C:d:eE:fF:hi:k:L:m:MnNo:O:pP:r:sStT:uw:Xy:"))!=-1){
+  while((c=getopt(argc,argv,"aA:bB:c:C:d:eE:fF:g:hi:k:L:m:MnNo:O:pP:r:sStT:uw:Xy:"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"DataPrep: printing calib object to file"<<std::endl;
@@ -119,6 +120,11 @@ int main(int argc, char* argv[]){
     case 'F':
       std::cout<<"DataPrep: Set Plot extension to: "<< optarg<<std::endl;
       AnAnalysis.SetPlotExtension(optarg);
+      break;
+    case 'g':
+      std::cout<<"DataPrep: Run ToA phase extraction, use pedestal file: "<< optarg<<std::endl;
+      AnAnalysis.SetRootCalibInput(optarg);
+      AnAnalysis.IsToExtractToAPhase(true);
       break;
     case 'i':
       std::cout<<"DataPrep: Root input file is: "<<optarg<<std::endl;

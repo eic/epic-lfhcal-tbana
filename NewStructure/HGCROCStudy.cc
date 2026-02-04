@@ -39,6 +39,7 @@ void PrintHelp(char* exe){
   std::cout<<"-O kkk   Output directory name for plots (mandatory)"<<std::endl;
   std::cout<<"-w       Analyse waveform of HGCROC data"<<std::endl;
   std::cout<<"-s sss   Plot correlation plots TOA only for TOA sample sss "<<std::endl;
+  std::cout<<"-t ttt   Use external ToA offset calib-file "<<std::endl;
   std::cout<<"-h       this help"<<std::endl<<std::endl;
   std::cout<<"Examples:"<<std::endl;
 }
@@ -51,7 +52,7 @@ int main(int argc, char* argv[]){
   }
   HGCROC_Waveform_Analysis AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"B:d:E:fF:i:hk:L:o:O:r:s:w"))!=-1){
+  while((c=getopt(argc,argv,"B:d:E:fF:i:hk:L:o:O:r:s:t:w"))!=-1){
     switch(c){
     case 'B':
       std::cout<<"HGCROCStudy: read bad channel map from external file: "<<optarg<<std::endl;
@@ -101,6 +102,10 @@ int main(int argc, char* argv[]){
     case 's':
       std::cout<<"HGCROCStudy: sample number: "<<optarg<<std::endl;
       AnAnalysis.SetFixedTOASample(atoi(optarg));
+      break;
+    case 't':
+      std::cout<<"HGCROCStudy: toa offset filename: "<<optarg<<std::endl;
+      AnAnalysis.SetExternalToACalibOffSetFile(Form("%s",optarg));
       break;
     case 'w':
       std::cout<<"HGCROCStudy: analyse HGCROC waveform"<<std::endl;

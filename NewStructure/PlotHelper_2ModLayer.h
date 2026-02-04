@@ -804,7 +804,7 @@
             temp2D          = ithSpectra->second.GetCorr();          
           // HGCROC TOA-ADC correlation
           } else if (option == 2){
-            // tempProfile     = ithSpectra->second.GetTOAADC();
+            tempProfile     = ithSpectra->second.GetTOAADC();
             temp2D          = ithSpectra->second.GetCorrTOAADC();                    
           } else if (option == 3){
             temp2D          = ithSpectra->second.GetCorrTOASample();
@@ -839,7 +839,10 @@
           }
           
           if (tempProfile ){
-            SetMarkerDefaultsProfile(tempProfile, 24, 0.7, kRed+2, kRed+2);           
+            if (option == 2)
+              SetMarkerDefaultsProfile(tempProfile, 24, 0.7, kBlue+1, kBlue+1);           
+            else 
+              SetMarkerDefaultsProfile(tempProfile, 24, 0.7, kRed+2, kRed+2);           
             tempProfile->Draw("pe, same");
           }
             
@@ -847,6 +850,7 @@
           if (p == 15){
             label = Form("r:%d c:%d m:%d layer:%d", r, c, m, layer);
           }
+          if(option == 1) label = Form("%s, entries=%d",label.Data(),(Int_t)(temp2D->GetEntries()/11) ) ;
           TLatex *labelChannel    = new TLatex(topRCornerX[p]-0.04,topRCornerY[p]-1.2*relSize8P[p],label);
           SetStyleTLatex( labelChannel, 0.85*textSizePixel,4,1,43,kTRUE,31);
 
@@ -854,6 +858,12 @@
           if (rotype == ReadOut::Type::Hgcroc && option != 4)
             fit            = ithSpectra->second.GetCorrModel(2);
           int nlinesTot = 1;
+          if(option == 2 || option == 3){ 
+            if (ithSpectra->second.GetCalib()->HGLGCorrOff != -1000.){
+              DrawLines(ithSpectra->second.GetCalib()->HGLGCorrOff, ithSpectra->second.GetCalib()->HGLGCorrOff,0, 0.7*maxY, 1, 1, 7);
+            }
+            
+          }
           if (fit){
             Double_t rangeFit[2] = {0,0};
             fit->GetRange(rangeFit[0], rangeFit[1]);

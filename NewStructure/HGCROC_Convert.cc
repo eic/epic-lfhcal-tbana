@@ -15,28 +15,28 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     std::cout << "Setting up event parameters for HGCROC data" << std::endl;
     // Make sure we actually have a waveform builder
     if (waveform_builder == nullptr) {
-        std::cout << "No waveform builder specified" << std::endl;
-        return 1;
+      std::cout << "No waveform builder specified" << std::endl;
+      return 1;
     }
 
     // Check mapping file
     if (analysis->MapInputName.IsNull()) {
-        std::cout << "No mapping file specified" << std::endl;
-        // return 1;
+      std::cout << "No mapping file specified" << std::endl;
+      // return 1;
     }
     analysis->setup->Initialize(analysis->MapInputName.Data(), analysis->debug);
     
     // Check run list file - Used to get run parameters automatically
     if (analysis->RunListInputName.IsNull()) {
-        std::cout << "No run list file specified" << std::endl;
-        // return 1;
+      std::cout << "No run list file specified" << std::endl;
+      // return 1;
     }
     std::map<int, RunInfo> ri = readRunInfosFromFile(analysis->RunListInputName.Data(), analysis->debug, 0);
 
     // Set up the file to convert
     if (analysis->ASCIIinputName.IsNull()) {
-        std::cout << "No input file specified" << std::endl;
-        // return 1;
+      std::cout << "No input file specified" << std::endl;
+      // return 1;
     }
 
     
@@ -86,7 +86,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
         // convert from the aligned_events datatype to the Event datatype
     int event_number = 0;
     if (analysis->maxEvents != -1){
-        std::cout << "Event conversion will be stopped at " << analysis->maxEvents << std::endl;
+      std::cout << "Event conversion will be stopped at " << analysis->maxEvents << std::endl;
     }
     
     auto start = std::chrono::steady_clock::now();
@@ -97,116 +97,85 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
                                     3,                                        // debug level
                                     analysis->GetHGCROCTrunctation());        // switch to enable artificial truncation to 8 bit, disregarding 2 least significant bits
     for (auto ae : *decoder) {
-        if (analysis->maxEvents != -1 && event_number > analysis->maxEvents ){
-          break;  
+      if (analysis->maxEvents != -1 && event_number > analysis->maxEvents ){
+        break;  
+      }
+      // aligned_event *ae = *it;
+      analysis->event.SetEventID(event_number);
+      event_number++;
+      if (event_number % 500 == 0){
+        auto end = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+        std::cout << "\nEvent: " << event_number << "\t"<< decoder->get_num_proc_events() << " duration: " << duration.count() << " seconds"<< std::endl;
+        for (int i = 0; i < (int)it->second.nFPGA; i++) {
+            std::cout << "\t KCU: " << i << "\t att: " << decoder->get_attempted_waveforms(i) << "\t rec: " << decoder->get_completed_waveforms(i) << "\t in progress: " << decoder->get_inprogress_waveforms(i) << "\t aborted: " << decoder->get_discarded_waveforms(i) << std::endl;
         }
-        // aligned_event *ae = *it;
-        analysis->event.SetEventID(event_number);
-        event_number++;
-        if (event_number % 500 == 0){
-          auto end = std::chrono::steady_clock::now();
-          auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
-          std::cout << "\nEvent: " << event_number << "\t"<< decoder->get_num_proc_events() << " duration: " << duration.count() << " seconds"<< std::endl;
-          for (int i = 0; i < (int)it->second.nFPGA; i++) {
-              std::cout << "\t KCU: " << i << "\t att: " << decoder->get_attempted_waveforms(i) << "\t rec: " << decoder->get_completed_waveforms(i) << "\t in progress: " << decoder->get_inprogress_waveforms(i) << "\t aborted: " << decoder->get_discarded_waveforms(i) << std::endl;
+      }
+      
+      // Loop over each tile
+      for (int i = 0; i < ae->get_num_fpga(); i++) {
+        // std::cout << "\nFPGA: " << i << std::endl;
+        auto single_kcu = ae->get_event(i);
+        // std::cout << "Number of samples: " << single_kcu->get_n_samples() << std::endl;
+        for (int j = 0; j < ae->get_channels_per_fpga(); j++) {
+          // std::cout << "\nChannel: " << j << std::endl;
+          int channel_number = i * ae->get_channels_per_fpga() + j;
+          // std::cout << "Channel number: " << channel_number << std::endl;
+          int asic = i * it->second.nASIC + (j / 72);
+          
+          auto cell_id = analysis->setup->GetCellID(asic, j % 72);
+          if (analysis->debug > 0 && event_number == 1) {
+            std::cout << Form("KCU: %d, asic: %d , channel %d,  %s", i, int(j / 72),  j % 72, (analysis->setup->DecodeCellID(cell_id)).Data()) << std::endl;
           }
-        }
-        
-        // Loop over each tile
-        for (int i = 0; i < ae->get_num_fpga(); i++) {
-            // std::cout << "\nFPGA: " << i << std::endl;
-            auto single_kcu = ae->get_event(i);
-            // std::cout << "Number of samples: " << single_kcu->get_n_samples() << std::endl;
-            for (int j = 0; j < ae->get_channels_per_fpga(); j++) {
-                // std::cout << "\nChannel: " << j << std::endl;
-                int channel_number = i * ae->get_channels_per_fpga() + j;
-                // std::cout << "Channel number: " << channel_number << std::endl;
-                int asic = i * it->second.nASIC + (j / 72);
-                
-                auto cell_id = analysis->setup->GetCellID(asic, j % 72);
-                if (analysis->debug > 0 && event_number == 1) {
-                    std::cout << Form("KCU: %d, asic: %d , channel %d,  %s", i, int(j / 72),  j % 72, (analysis->setup->DecodeCellID(cell_id)).Data()) << std::endl;
-                }
-                
-                if (cell_id != -1) {
-                // std::cout << "Channel number: " << channel_number << std::endl;
-                int asic = i * it->second.nASIC + (j / 72);
-                
-                auto cell_id = analysis->setup->GetCellID(asic, j % 72);
-                if (analysis->debug > 0 && event_number == 1) {
-                    std::cout << Form("KCU: %d, asic: %d , channel %d,  %s", i, int(j / 72),  j % 72, (analysis->setup->DecodeCellID(cell_id)).Data()) << std::endl;
-                }
-                
-                if (cell_id != -1) {
-                    Hgcroc *tile = new Hgcroc();
-                    tile->SetCellID(cell_id);        
-                    tile->SetROtype(ReadOut::Type::Hgcroc);
-                    tile->SetLocalTriggerBit(0);            
-                    tile->SetLocalTriggerPrimitive(0);
-                    tile->SetE(0);                          // Need to process waveform to get this
-                    tile->SetTOA(0);                        // Need to process waveform to get this
-                    tile->SetTOT(0);                        // Need to process waveform to get this
-
-                    tile->SetNsample(single_kcu->get_n_samples());
-                    for (int sample = 0; sample < single_kcu->get_n_samples(); sample++) {
-                        // std::cout << "Sample: " << sample;
-                        // std::cout << " ADC: " << single_kcu->get_sample_adc(j, sample);
-                        // std::cout << " TOA: " << single_kcu->get_sample_toa(j, sample);
-                        // std::cout << " TOT: " << single_kcu->get_sample_tot(j, sample) << std::endl;
-                        // std::cout << "Sample: " << sample;
-                        // std::cout << " ADC: " << single_kcu->get_sample_adc(j, sample);
-                        // std::cout << " TOA: " << single_kcu->get_sample_toa(j, sample);
-                        // std::cout << " TOT: " << single_kcu->get_sample_tot(j, sample) << std::endl;
-                        tile->AppendWaveformADC(single_kcu->get_sample_adc(j, sample));
-                        tile->AppendWaveformTOA(single_kcu->get_sample_toa(j, sample));
-                        tile->AppendWaveformTOT(single_kcu->get_sample_tot(j, sample));
-                        if (single_kcu->get_sample_toa(j, sample) > 0) { // 
-                            tile->SetTOA(single_kcu->get_sample_toa(j, sample));
-                        }
-                        if (single_kcu->get_sample_tot(j, sample) > 0) { // 
-                            tile->SetTOT(single_kcu->get_sample_tot(j, sample));
-                        }
-                    }
-
-                    // process tile waveform
-                    waveform_builder->set_waveform(tile->GetADCWaveform());
-                    waveform_builder->fit();
-                    tile->SetIntegratedADC(waveform_builder->get_E());
-                    if (tile->GetTOT() != 1)
-                        tile->SetIntegratedTOT(tile->GetTOT());   // TODO: Placeholder
-                    else 
-                        tile->SetIntegratedTOT(0.);
-                    if (waveform_builder->is_saturated()) {
-                        tile->SetIntegratedValue(tile->GetIntegratedTOT()); // TODO: Placeholder
-                    } else {
-                        tile->SetIntegratedValue(tile->GetIntegratedADC()); // TODO: Placeholder
-                    }
-                    tile->SetIntegratedADC(waveform_builder->get_E());
-                    if (tile->GetTOT() != 1)
-                        tile->SetIntegratedTOT(tile->GetTOT());   // TODO: Placeholder
-                    else 
-                        tile->SetIntegratedTOT(0.);
-                    if (waveform_builder->is_saturated()) {
-                        tile->SetIntegratedValue(tile->GetIntegratedTOT()); // TODO: Placeholder
-                    } else {
-                        tile->SetIntegratedValue(tile->GetIntegratedADC()); // TODO: Placeholder
-                    }
-                    tile->SetPedestal(waveform_builder->get_pedestal());
-
-                    analysis->event.AddTile(tile);
-                }
+            
+          if (cell_id != -1) {
+            // std::cout << "Channel number: " << channel_number << std::endl;
+            int asic = i * it->second.nASIC + (j / 72);
+            
+            auto cell_id = analysis->setup->GetCellID(asic, j % 72);
+            if (analysis->debug > 0 && event_number == 1) {
+              std::cout << Form("KCU: %d, asic: %d , channel %d,  %s", i, int(j / 72),  j % 72, (analysis->setup->DecodeCellID(cell_id)).Data()) << std::endl;
             }
-        // Fill the event
+            
+            if (cell_id != -1) {
+              Hgcroc *tile = new Hgcroc();
+              tile->SetCellID(cell_id);        
+              tile->SetROtype(ReadOut::Type::Hgcroc);
+              tile->SetLocalTriggerBit(0);            
+              tile->SetLocalTriggerPrimitive(0);
+              tile->SetE(0);                              // Initialize to defaults
+              tile->SetCorrectedTOA(-10e5);               // Initilaize to defaults
+              tile->SetCorrectedTOT(-10e5);               // Initialize to defaults
+              tile->SetIntegratedTOT(-10e5);              // Initialize to defaults
+              tile->SetIntegratedADC(-10e5);              // Initialize to defaults
+              tile->SetIntegratedValue(-10e5);            // Initialize to defaults
+              
+              tile->SetNsample(single_kcu->get_n_samples());
+              for (int sample = 0; sample < single_kcu->get_n_samples(); sample++) {
+                  tile->AppendWaveformADC(single_kcu->get_sample_adc(j, sample));
+                  tile->AppendWaveformTOA(single_kcu->get_sample_toa(j, sample));
+                  tile->AppendWaveformTOT(single_kcu->get_sample_tot(j, sample));
+              }
+
+              // process tile waveform basics
+              waveform_builder->set_waveform(tile->GetADCWaveform());
+              waveform_builder->fit();
+              tile->SetIntegratedADC(waveform_builder->get_E());
+              tile->SetPedestal(waveform_builder->get_pedestal());
+              analysis->event.AddTile(tile);
+            }
+          }
+      // Fill the event
         }
-        }
-        analysis->TdataOut->Fill();
-        analysis->event.ClearTiles();
+      }
+      analysis->TdataOut->Fill();
+      analysis->event.ClearTiles();
     }
     
     std::cout << "\nFinished converting events\n" << std::endl;
     std::cout << "\nTotal Events: " << decoder->get_num_proc_events() << std::endl;
     for (int i = 0; i < (int)it->second.nFPGA; i++) {
-        std::cout << "\t KCU: " << i << "\t att: " << decoder->get_attempted_waveforms(i) << "\t rec: " << decoder->get_completed_waveforms(i) << "\t in progress: " << decoder->get_inprogress_waveforms(i) << std::endl;
+      std::cout << "\t KCU: " << i << "\t att: " << decoder->get_attempted_waveforms(i) << "\t rec: " << decoder->get_completed_waveforms(i) << "\t in progress: " << decoder->get_inprogress_waveforms(i) << std::endl;
     }
     analysis->RootOutput->cd();
     

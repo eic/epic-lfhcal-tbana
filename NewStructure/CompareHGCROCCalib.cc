@@ -134,7 +134,7 @@ bool CompareHGCROCCalib::CompareTOT(void){
             Hgcroc*     aTile = (Hgcroc*)event.GetTile(i);
             int tmpTileID   = i;
             int tmpInjVal   = event.GetRunNumber();
-            int tmpTOT      = aTile->GetTOT();
+            int tmpTOT      = aTile->GetRawTOT();
             int tmpADC      = aTile->GetIntegratedADC();
             int tmpCellID   = aTile->GetCellID();
             

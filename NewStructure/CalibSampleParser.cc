@@ -233,10 +233,10 @@ bool CalibSampleParser::Parse(){
         tmpTile.SetNsample(sample_counter);
         tmpTile.SetCellID(cell_id);
         tmpTile.SetE(0);          // need to process waveform to set this
-        tmpTile.SetTOA(0);        // need to process waveform to set this
+        tmpTile.SetCorrectedTOA(0);        // need to process waveform to set this
         // TOT - the first non-zero value
         int tempTOT   = *(std::find_if(temp_tot.begin(), temp_tot.end(), [](int n){ return n!=0; }) );
-        tmpTile.SetTOT( tempTOT );        // need to process waveform to set this - the first value that comes up 
+        tmpTile.SetCorrectedTOT( tempTOT );        // need to process waveform to set this - the first value that comes up 
         // SetIntegratedADC as max ADC 
         int tempIntADC    = *(std::max_element( temp_adc.begin(), temp_adc.end() ));
         tmpTile.SetIntegratedADC( tempIntADC );
@@ -273,10 +273,10 @@ bool CalibSampleParser::Parse(){
       tmpTile.SetNsample(sample_counter);
       tmpTile.SetCellID(cell_id);
       tmpTile.SetE(0);
-      tmpTile.SetTOA(0);
+      tmpTile.SetCorrectedTOA(0);
       // TOT - the first non-zero value
       int tempTOT   = *(std::find_if(temp_tot.begin(), temp_tot.end(), [](int n){ return n!=0; }) );
-      tmpTile.SetTOT( tempTOT );        // need to process waveform to set this - the first value that comes up 
+      tmpTile.SetCorrectedTOT( tempTOT );        // need to process waveform to set this - the first value that comes up 
       
     // SetIntegratedADC as max ADC 
       int tempIntADC    = *(std::max_element( temp_adc.begin(), temp_adc.end() ));
@@ -572,54 +572,69 @@ bool CalibSampleParser::ParseTOA(){
   // std::vector<int>  toa_values;
   // toa_values.clear();
 
-  std::ifstream calibSampleCsv(   inputFilePath.Data() );
-  std::string line;
+  std::ifstream calibSampleList(   inputFilePath.Data() );
+  TString fileline;
 
+  int templines = lines;
   if( lines <= 0 ){
     std::cout << "Number of lines not valid... returning" << std::endl;
     return false;
   }
 
-  while( lines-1 ){
-    std::getline( calibSampleCsv,line);
-    lines--;
-  }
-
-  std::getline( calibSampleCsv, line);      // should be just the last line?
-  std::stringstream ss(line);
-  std::string token;
-  std::vector<int> toa_values;
-  while(std::getline(ss,token,',')){
-    toa_values.push_back( std::atoi(token.c_str()) );
-    if(debug > 5) std::cout << token << "\t";
-  }
-  std::cout << std::endl;
-
-  int     mod  = 0; 
-  int     n_elem  = 0;
-  double  sum     = 0; 
-  for(int i = 0; i < (int)toa_values.size(); i++){
-    if( i/38 == mod ){
-      sum+= toa_values.at(i);
-      n_elem = (toa_values.at(i)==0) ? n_elem : ++n_elem;
-    } else {
-      std::cout << "Average TOA from sector " << mod << ": " << 1.*sum/n_elem << std::endl;
-      if(debug > 1) std::cout << "Sum " << sum << "\t n_elem " << n_elem << std::endl;
-      n_elem=0; sum=0; 
-      mod++; 
-      sum+= toa_values.at(i);
-      n_elem = (toa_values.at(i)==0) ? n_elem : ++n_elem;
+  int     asic    = 0;
+  int     half    = 0;  
+  std::cout << "# Asic nr\t half id \t ToA offset" << std::endl;
+  while(!calibSampleList.eof()){                                                     // run till end of file is reached and read line by line
+    fileline.ReadLine(calibSampleList);
+    if(!calibSampleList.good()) break;
+  
+    std::ifstream calibSampleCsv(   fileline.Data() );
+    std::string line;
+    lines = templines;
+    while( lines-1 ){
+      std::getline( calibSampleCsv,line);
+      lines--;
     }
+
+    std::getline( calibSampleCsv, line);      // should be just the last line?
+    std::stringstream ss(line);
+    std::string token;
+    std::vector<int> toa_values;
+    while(std::getline(ss,token,',')){
+      toa_values.push_back( std::atoi(token.c_str()) );
+      if(debug > 5) std::cout << token << "\t";
+    }
+    if(debug > 1) std::cout << std::endl;
+
+    int     mod  = 0; 
+    int     n_elem  = 0;
+    double  sum     = 0; 
+    for(int i = 0; i < (int)toa_values.size(); i++){
+      if( i/38 == mod ){
+        sum+= toa_values.at(i);
+        n_elem = (toa_values.at(i)==0) ? n_elem : ++n_elem;
+      } else {
+        std::cout << asic << "\t" << half <<  "\t" << TMath::CeilNint(1.*sum/n_elem) << std::endl;
+        if(debug > 1) std::cout << "Sum " << sum << "\t n_elem " << n_elem << std::endl;
+        n_elem=0; sum=0; 
+        mod++; 
+        if (half == 1){
+          asic++;
+          half = 0;
+        } else {
+          half++;
+        }
+        sum+= toa_values.at(i);
+        n_elem = (toa_values.at(i)==0) ? n_elem : ++n_elem;
+      }
+    }
+    std::cout << asic << "\t" << half <<  "\t" <<  TMath::CeilNint(1.*sum/n_elem) << std::endl;
+    if(debug > 1) std::cout << "Sum " << sum << "\t n_elem " << n_elem << std::endl;
   }
-  std::cout << "Average TOA from sector " << mod << ": " << 1.*sum/n_elem << std::endl;
-  if(debug > 1) std::cout << "Sum " << sum << "\t n_elem " << n_elem << std::endl;
   std::cout << std::endl;
-
-
   std::cout <<"=============================================================" << std::endl;
   std::cout <<" Parsing of TOA calib complete" << std::endl;
   std::cout <<"=============================================================" << std::endl;
-
-  
+    
   return true;
 }

@@ -52,6 +52,7 @@ class Analyses{
   inline bool IsToAnalysisWaveForm(void)        const {return IsAnalyseWaveForm;};
   inline bool IsToConvert(void)                 const {return Convert;};
   inline bool IsToExtractPedestal(void)         const {return ExtractPedestal;};
+  inline bool IsToExtractToAPhase(void)         const {return ExtractToAPhase;};
   inline bool IsToExtractScaling(void)          const {return ExtractScaling;};
   inline bool IsToExtractScalingImproved(void)  const {return ExtractScalingImproved;};
   inline bool IsHGCROC(void)                    const {return HGCROC;};
@@ -79,6 +80,7 @@ class Analyses{
   inline void IsToApplyCalibration(bool b)       {ApplyCalibration=b;};
   inline void IsToConvert(bool b)                {Convert=b;};
   inline void IsToExtractPedestal(bool b)        {ExtractPedestal=b;};
+  inline void IsToExtractToAPhase(bool b)        {ExtractToAPhase=b;};
   inline void IsToExtractScaling(bool b)         {ExtractScaling=b;};
   inline void IsToExtractScalingImproved(bool b) {ExtractScalingImproved=b;};
   inline void IsHGCROC(bool b)                   {HGCROC=b;};
@@ -115,6 +117,7 @@ class Analyses{
   
   //General methods
   bool CreateOutputRootFile(void);
+  bool CreateOutputRootHistFile(void);
   bool CheckAndOpenIO(void);
   bool Process(void);
 
@@ -146,6 +149,7 @@ class Analyses{
   bool ExtractScaling         =false;     // Flag for mip scaling extraction
   bool ExtractScalingImproved =false;     // Flag for mip scaling extraction 2nd pass
   bool ReextractNoise         =false;     // Flag to enable noise trigger extraction and alternative pass for pedestals
+  bool ExtractToAPhase        =false;     // Flag to enable the ToA Phase extraction
   bool ApplyTransferCalib     =false;     // Flag for application of pedestals
   bool IsAnalyseWaveForm      =false;     // Flag for routine with waveform analysis
   bool ApplyCalibration       =false;     // Flag for aplication of calibration
@@ -187,6 +191,7 @@ class Analyses{
   bool ConvertASCII2Root(void);
   bool ConvertOldRootFile2Root(void);
   bool GetPedestal(void);
+  bool EvaluateHGCROCToAPhases(void);
   bool TransferCalib(void);
   bool AnalyseWaveForm(void);
   bool GetScaling(void);

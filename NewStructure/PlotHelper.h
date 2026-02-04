@@ -28,7 +28,7 @@
 #include "PlotHelper_1MLayer.h"
 #include "PlotHelper_2ModLayer.h"
 
-//__________________________________________________________________________________________________________
+  //__________________________________________________________________________________________________________
   // Plot 2D fit variables overview
   //__________________________________________________________________________________________________________  
   void PlotSimple2D( TCanvas* canvas2D, 
@@ -196,6 +196,70 @@
     canvas2D->SaveAs(nameOutput.Data());
   }  
   
+  //__________________________________________________________________________________________________________
+  // Plot 2D distribution with profile on top
+  //__________________________________________________________________________________________________________  
+  void Plot2DWithProfile( TCanvas* canvas2D, 
+                     TH2* hist, TProfile* profile, double maxy, double maxx, 
+                     Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
+                     int labelOpt = 1, Bool_t hasNeg = kFALSE, TString drwOpt ="colz", 
+                     bool blegAbove = false, TString additionalLabel = "", int vLine = -1
+                    ){
+      canvas2D->cd();
+      
+      SetStyleHistoTH2ForGraphs( hist, hist->GetXaxis()->GetTitle(), hist->GetYaxis()->GetTitle(), 0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.9, 1.05);  
+      hist->GetZaxis()->SetLabelSize(0.85*textSizeRel);
+      hist->GetZaxis()->SetTitleOffset(1.06);
+      hist->GetZaxis()->SetTitleSize(textSizeRel);
+      // if (hist->GetYaxis()->GetTitle().CompareTo("") != 0)
+      
+      if (canvas2D->GetLogy() == 1){
+        if (maxy > -10000)hist->GetYaxis()->SetRangeUser(0.05,maxy+0.1);
+      } else {
+        if (maxy > -10000)hist->GetYaxis()->SetRangeUser(hist->GetYaxis()->GetBinCenter(1)-0.1,maxy+0.1);
+      }
+      if (maxx > -10000)hist->GetXaxis()->SetRangeUser(hist->GetXaxis()->GetBinCenter(1)-0.1,maxx+0.1);
+      if (!hasNeg)
+        hist->GetZaxis()->SetRangeUser(hist->GetMinimum(0),hist->GetMaximum());
+      else 
+        hist->GetZaxis()->SetRangeUser(hist->GetMinimum(),hist->GetMaximum());
+    
+      if (((TString)hist->GetZaxis()->GetTitle()).Contains("counts")){
+        gStyle->SetPaintTextFormat(".0f");
+        std::cout << "entered counts case" << std::endl;
+      } else {
+        gStyle->SetPaintTextFormat(".3f");
+      }
+      hist->DrawCopy(drwOpt.Data());
+      
+      if (profile){
+        SetMarkerDefaultsProfile(  profile, 24, 2, kBlue+1,kBlue+1);
+        profile->Draw("same,pe");
+        if (vLine != -1)
+          DrawLines(vLine, vLine, 0, 500., 5, kGray+1, 10);  
+      }
+      if (!blegAbove){
+        DrawLatex(0.835, 0.935, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(currRunInfo,7).Data()), true, textSizeRel, 42);
+        DrawLatex(0.835, 0.90, GetStringFromRunInfo(currRunInfo,labelOpt), true, 0.85*textSizeRel, 42);
+        DrawLatex(0.835, 0.865, Form("%s",GetStringFromRunInfo(currRunInfo,8).Data()), true, 0.85*textSizeRel, 42);
+      }
+      else 
+        DrawLatex(0.92, 0.97, GetStringFromRunInfo(currRunInfo,labelOpt), true, 0.85*textSizeRel, 42);
+
+      if (additionalLabel.CompareTo("") != 0){
+        if (!blegAbove)
+          DrawLatex(0.11, 0.92, additionalLabel, false, 0.85*textSizeRel, 42);
+        else 
+          DrawLatex(0.08, 0.97, additionalLabel, false, 0.85*textSizeRel, 42);
+      }
+      if (((TString)hist->GetXaxis()->GetTitle()).Contains("cell ID")){
+        if (maxx > -10000)
+          DrawLines(hist->GetXaxis()->GetBinCenter(1)-0.1, maxx+0.1,0., 0., 5, kGray+1, 10);  
+        else
+          DrawLines(hist->GetXaxis()->GetBinCenter(1)-0.1,hist->GetXaxis()->GetBinCenter(hist->GetNbinsX()-1)+0.1,0., 0., 5, kGray+1, 10);  
+      }
+    canvas2D->SaveAs(nameOutput.Data());
+  }    
   //__________________________________________________________________________________________________________
   // Plot 1D distribution
   //__________________________________________________________________________________________________________  

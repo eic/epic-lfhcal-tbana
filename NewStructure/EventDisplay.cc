@@ -224,8 +224,8 @@ bool EventDisplay::Plot(){
             if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << aTile->GetIntegratedADC() << "\t pedestal (calib) " << calib.GetPedestalMeanH( aTile->GetCellID() ) << "\t pedestal (aTile) " << aTile->GetPedestal() << "\t energy " << energy << std::endl;
             break;
           case 2:
-            energy = aTile->GetTOT(); 
-            if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t TOT: " << aTile->GetTOT() << "\t energy " << energy << std::endl;
+            energy = aTile->GetRawTOT(); 
+            if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t TOT: " << aTile->GetRawTOT() << "\t energy " << energy << std::endl;
             break;
           case 3:
             energy = aTile->GetIntegratedADC()/ calib.GetScaleHigh(aTile->GetCellID()); 
@@ -309,7 +309,7 @@ bool EventDisplay::Plot(){
               energy = aTile->GetIntegratedADC()- calib.GetPedestalMeanL(aTile->GetCellID());
               break;
             case 2:
-              energy = aTile->GetTOT();
+              energy = aTile->GetRawTOT();
               break;
             case 3:
               energy = aTile->GetIntegratedADC()/calib.GetScaleHigh(aTile->GetCellID());

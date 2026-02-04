@@ -409,8 +409,8 @@ bool DataAnalysis::QAData(void){
       } else if (typeRO == ReadOut::Type::Hgcroc){
         Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
         double adc = aTile->GetIntegratedADC();
-        double tot = aTile->GetTOT();
-        double toa = aTile->GetTOA();
+        double tot = aTile->GetRawTOT();
+        double toa = aTile->GetRawTOA();
         hspectraHGvsCellID->Fill(aTile->GetCellID(), adc);
         hspectraTOTvsCellID->Fill(aTile->GetCellID(), tot);
         if(aTile->GetE() > minESave ){ 

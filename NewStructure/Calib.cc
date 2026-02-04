@@ -119,6 +119,13 @@ short Calib::GetBadChannel(int cellID) const {
   else return -1.;
 }
 
+double Calib::GetToAOff(int cellID) const {
+  std::map<int, TileCalib>::const_iterator it= CaloCalib.find(cellID);
+  if(it!=CaloCalib.end()) return it->second.HGLGCorrOff;
+  else return -1.;
+}
+
+
 //*****************************************************************************************
 // CALIBRATION Getters by cell row, col, layer and module
 //*****************************************************************************************
@@ -205,6 +212,13 @@ short Calib::GetBadChannel(int row, int col, int lay, int mod=0)const{
   int key=setup->GetCellID(row, col, lay, mod);
   return GetBadChannel(key);
 }
+
+double Calib::GetToAOff(int row, int col, int lay, int mod=0)const{
+  Setup* setup = Setup::GetInstance();
+  int key=setup->GetCellID(row, col, lay, mod);
+  return GetToAOff(key);
+}
+
 
 //*****************************************************************************************
 // CALIBRATION Average calculators
@@ -401,6 +415,7 @@ int Calib::GetNumberOfChannelsWithBCflag( short bcflag )const{
 }
 
 
+
 //*****************************************************************************************
 // Getters for full calib objects
 //*****************************************************************************************
@@ -555,6 +570,18 @@ void Calib::SetBadChannel(short s, int cellID){
   else it->second.BadChannel=s;
 }
 
+void Calib::SetToAOff(double s, int cellID){
+  std::map<int, TileCalib>::iterator it= CaloCalib.find(cellID);
+  if(it!=CaloCalib.end()){
+    TileCalib acal;
+    acal.HGLGCorrOff=s;
+    CaloCalib[cellID]=acal;
+  }
+  else it->second.HGLGCorrOff=s;
+}
+
+
+
 
 //*****************************************************************************************
 // CALIBRATION Setters by cell row, col, layer and module
@@ -634,28 +661,35 @@ void Calib::SetBadChannel(short s, int row, int col, int lay, int mod=0){
   SetBadChannel(s,key);
 }
 
+void Calib::SetToAOff(double s, int row, int col, int lay, int mod=0){
+  Setup* setup = Setup::GetInstance();
+  int key=setup->GetCellID(row,col,lay,mod);
+  SetToAOff(s,key);
+}
+
+
 bool Calib::IsLayerEnabled(int layer, int mod) const{
   Setup* setup = Setup::GetInstance();
   bool isEnabled = false;
   if (!BCcalc) return true;
   for (int r = 0; r< setup->GetNMaxRow(); r++){
-      for (int c = 0; c < setup->GetNMaxColumn(); c++){
-        if (mod == -1){
-          for (int m = 0; m < setup->GetNMaxModule(); m++){
-            int bc = GetBadChannel(r, c, layer, m);
-            if (bc == 3 ){
-              isEnabled = true;
-              break;
-            }
-          }
-        } else {
-          int bc = GetBadChannel(r, c, layer, mod);
-          if (bc == 3){
+    for (int c = 0; c < setup->GetNMaxColumn(); c++){
+      if (mod == -1){
+        for (int m = 0; m < setup->GetNMaxModule(); m++){
+          int bc = GetBadChannel(r, c, layer, m);
+          if (bc == 3 ){
             isEnabled = true;
             break;
           }
         }
+      } else {
+        int bc = GetBadChannel(r, c, layer, mod);
+        if (bc == 3){
+          isEnabled = true;
+          break;
+        }
       }
+    }
   }
   return isEnabled;
 }
@@ -1048,3 +1082,69 @@ void Calib::ReadExternalBadChannelMap(TString filename, int debug){
   }
   return;
 }
+
+//***********************************************************************************************
+//***************** Reading of external file to set the toA offsets for each half-asic **********
+//***********************************************************************************************
+void Calib::ReadExternalToAOffsets(TString filename, int debug){
+  
+  std::cout << "Reading in ToA offset file" << std::endl;
+  Setup* setup = Setup::GetInstance();
+  
+  std::ifstream toaOffSetFile;
+  toaOffSetFile.open(filename,std::ios_base::in);
+  if (!toaOffSetFile) {
+    std::cout << "ERROR: file " << filename.Data() << " not found!" << std::endl;
+    return;
+  }
+
+  int nToAOffsets = 0;
+  for( TString tempLine; tempLine.ReadLine(toaOffSetFile, kTRUE); ) {
+    // check if line should be considered
+    if (tempLine.BeginsWith("%") || tempLine.BeginsWith("#")){
+      continue;
+    }
+    if (debug > 1) std::cout << tempLine.Data() << std::endl;
+
+    // Separate the string according to tabulators
+    TObjArray *tempArr  = tempLine.Tokenize("\t");
+    // TObjArray *tempArr  = tempLine.Tokenize(" ");
+    if(tempArr->GetEntries()<2){
+      if (debug > 1) std::cout << "nothing to be done" << std::endl;
+      if (debug > 1) std::cout << tempArr->At(0) << std::endl;
+      delete tempArr;
+      continue;
+    } 
+    
+    int asic    = ((TString)((TObjString*)tempArr->At(0))->GetString()).Atoi();
+    int half    = ((TString)((TObjString*)tempArr->At(1))->GetString()).Atoi();
+    int toaOff  = ((TString)((TObjString*)tempArr->At(2))->GetString()).Atoi();
+    
+    if (half == 0){
+      for (Int_t c = 0; c< 36; c++){
+        int cellID  = setup->GetCellID( asic, c); 
+        if (cellID != -1){
+          TileCalib* tileCal = GetTileCalib(cellID);
+          tileCal->HGLGCorrOff = double(toaOff);
+          if (debug > 2) std::cout << "cellID " << cellID << "\t ToA offset: " << toaOff<< std::endl;
+        }
+      }
+    } else if  (half == 1){
+      for (Int_t c = 36; c< 72; c++){
+        int cellID  = setup->GetCellID( asic, c); 
+        if (cellID != -1){
+          TileCalib* tileCal = GetTileCalib(cellID);
+          tileCal->HGLGCorrOff = double(toaOff);
+          if (debug > 2) std::cout << "cellID " << cellID << "\t ToA offset: " << toaOff<< std::endl;
+        }
+      }    
+    }
+    nToAOffsets++;
+
+  }
+  std::cout << "registered " << nToAOffsets << " different offsets!" << std::endl;
+
+  std::map<int, TileCalib>::const_iterator it;
+  return;
+}
+

@@ -173,6 +173,9 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
     calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
   }  
   int runNr = -1;
+  if (ExternalToACalibOffSetFile.CompareTo("") != 0 ){
+    calib.ReadExternalToAOffsets(ExternalToACalibOffSetFile,debug);
+  }
 
   //==================================================================================
   // create additional output hist
@@ -204,6 +207,14 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   TH2D* hSampleTOAVsCellID       = new TH2D( "hSampleTOAvsCellID","#sample ToA; cell ID; #sample TOA",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 20,0,20);
   hSampleTOAVsCellID->SetDirectory(0);
+
+  TH2D* hTOAPsVsCellID       = new TH2D( "hTOAPsVsCellID","ToA (ns); cell ID; ToA (ps)",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 500,-250,0);
+  hTOAPsVsCellID->SetDirectory(0);
+  TH2D* hTOACorrPsVsCellID       = new TH2D( "hTOACorrPsVsCellID","ToA (ns); cell ID; ToA (ps)",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 500,-250,0);
+  hTOACorrPsVsCellID->SetDirectory(0);
+
   TH2D* hSampleMaxADCVsCellID       = new TH2D( "hSampleMaxADCvsCellID","#sample ToA; cell ID; #sample Max ADC",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 20,0,20);
   hSampleMaxADCVsCellID->SetDirectory(0);
@@ -225,6 +236,26 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->mkdir("IndividualCellsTrigg");
   RootOutputHist->cd("IndividualCells");
+  
+  TH2D* h2DToAvsADC[setup->GetNMaxROUnit()+1][2];
+  TProfile* hToAvsADC[setup->GetNMaxROUnit()+1][2];
+  TH2D* h2DWaveFormHalfAsic[setup->GetNMaxROUnit()+1][2];
+  TProfile* hWaveFormHalfAsic[setup->GetNMaxROUnit()+1][2];
+  for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+    for (int h = 0; h< 2; h++){
+      hToAvsADC[ro][h]    = new TProfile(Form("ADCTOA_Asic_%d_Half_%d",ro,h),
+                                         Form("ADC-TOA correlation %d %d; TOA (arb. units); ADC (arb. units)",ro,h),1024/4,0,1024, "");
+      h2DToAvsADC[ro][h]  = new TH2D(Form("h2DADCTOA_Asic_%d_Half_%d",ro,h),
+                                     Form("2D ADC vs TOA %d %d; TOA (arb. units); ADC (arb. units)",ro,h), 1024/4,0,1024,1124,-100,1024);
+      
+      hWaveFormHalfAsic[ro][h]    = new TProfile(Form("WaveForm_Asic_%d_Half_%d",ro,h),
+                                         Form("ADC-TOA correlation %d %d;  t (ns) ; ADC (arb. units)",ro,h),2200,-50,500);
+      h2DWaveFormHalfAsic[ro][h]  = new TH2D(Form("h2DWaveForm_Asic_%d_Half_%d",ro,h),
+                                        Form("2D ADC vs TOA %d %d;  t (ns) ; ADC (arb. units)",ro,h), 
+                                        2200,-50,500, 1034, -10, 1024);
+      
+    }
+  }
   
   ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2", "Migrad");  
   if (maxEvents == -1){
@@ -307,23 +338,42 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
         aTile->SetPedestal(waveform_builder->get_pedestal());
         
         // obtain integrated tile quantities for histo filling
-        double adc = aTile->GetIntegratedADC();
-        double tot = aTile->GetTOT();
-        double toa = aTile->GetTOA();
+        double adc      = aTile->GetIntegratedADC();
+        double tot      = aTile->GetRawTOT();
+        double toa      = aTile->GetRawTOA();
+        bool hasTOA     = false;
+        bool hasTOT     = false;
+        
+        // check if we have a toa
+        if (toa > 0)
+          hasTOA        = true;
+        // check if we have a tot
+        if (tot > 0)
+          hasTOT        = true;
+        Int_t nSampTOA  = aTile->GetFirstTOASample();        
+        double timeRes    = 25./1024;               // time resolution in ns
+        double toaNs      = (double)aTile->GetLinearizedRawTOA()*timeRes;
+        double toaCorrNs  = toaNs;
+        if (calib.GetToAOff(cellID) != -1000.){
+          // correct ToA sample and return correct nSampleTOA
+          nSampTOA      = aTile->SetCorrectedTOA(calib.GetToAOff(cellID)); 
+          toaCorrNs     = (double)(aTile->GetCorrectedTOA())*timeRes;;
+        }
         totADCs         = totADCs+adc;
         // obtain samples in which TOA, TOT, maximum ADC are firing
-        Int_t nSampTOA  = aTile->GetFirstTOASample();        
+        
         Int_t nMaxADC   = aTile->GetMaxSampleADC();
         Int_t nADCFirst = aTile->GetFirstSampleAboveTh();
         Int_t nDiffFirstT= nSampTOA-nADCFirst;
         Int_t nDiffFirstM= nMaxADC-nADCFirst;
         Int_t nDiffMaxT  = nMaxADC-nSampTOA;
+        Int_t nOffEmpty  = 2;
+        
         if (adc > 10)
           nCellsAboveMADC++; 
-        if (toa > 0)
+        
+        if (hasTOA){
           nCellsAboveTOA++;
-                  
-        if (toa > 0){
           hSampleTOA->Fill(nSampTOA);
           hSampleTOAVsCellID->Fill(cellID,nSampTOA);
         }
@@ -333,54 +383,67 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
           hSampleAboveTh->Fill(nADCFirst);
         }
         
-        if (toa > 0 && adc > ped+2*pedErr){
+        if (hasTOA && adc > ped+2*pedErr){
           hSampleDiff->Fill(nSampTOA-nMaxADC);
           hSampleDiffvsCellID->Fill(cellID,nSampTOA-nMaxADC);
           hSampleDiffMin->Fill(nSampTOA-nADCFirst);
         }
         
-        hspectraTOAvsCellID->Fill(cellID,toa);
-        hspectraTOTvsCellID->Fill(cellID,tot);
-        
-        int layer     = setup->GetLayer(cellID);
-        int chInLayer = setup->GetChannelInLayerFull(cellID);
-        // int offset    = nSampTOA-(nSampTOA-nADCFirst);
-        int offset    = nADCFirst+nDiffFirstM;
-        if (nDiffMaxT == 0 )
-          offset--;
-        // Detailed debug info with print of waveform
-        if (debug > 3){
-          aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(cellID), calib.GetPedestalMeanL(cellID), calib.GetPedestalSigL(cellID));
-        }
+        if(hasTOA)  hspectraTOAvsCellID->Fill(cellID,toa);
+        if(hasTOT)  hspectraTOTvsCellID->Fill(cellID,tot);
+
+        Int_t asic      = setup->GetROunit(cellID);
+        Int_t roCh      = setup->GetROchannel(cellID);
         bool fillToACorr = false;
         if(fixedTOASample > -1 && fixedTOASample == nSampTOA)
           fillToACorr = true;
         else if(fixedTOASample == -1 )
           fillToACorr = true;
+        
+        if (hasTOA){
+          hTOAPsVsCellID->Fill(cellID,toaNs);
+          hTOACorrPsVsCellID->Fill(cellID,toaCorrNs);
+          // fill overview hists for half asics
+          if( fillToACorr ){   
+            hToAvsADC[asic][int(roCh/36)]->Fill(toa, adc);
+            h2DToAvsADC[asic][int(roCh/36)]->Fill(toa, adc);
+            for (int k = 0; k < (int)(aTile->GetADCWaveform()).size(); k++ ){
+              double timetemp = ((k+nOffEmpty)*1024 + aTile->GetCorrectedTOA())*timeRes ;
+              hWaveFormHalfAsic[asic][int(roCh/36)]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
+              h2DWaveFormHalfAsic[asic][int(roCh/36)]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
+            }
+          }
+        }
+        
+        int layer     = setup->GetLayer(cellID);
+        int chInLayer = setup->GetChannelInLayerFull(cellID);
+        // Detailed debug info with print of waveform
+        if (debug > 3){
+          aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(cellID), calib.GetPedestalMeanL(cellID), calib.GetPedestalSigL(cellID));
+        }
+      
         // fill spectra histos
         if(ithSpectra!=hSpectra.end()){
           ithSpectra->second.FillExtHGCROC(adc,toa,tot,nSampTOA,fixedTOASample);
-          if(fillToACorr) ithSpectra->second.FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
+          if(fillToACorr) ithSpectra->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
         } else {
           RootOutputHist->cd("IndividualCells");
           hSpectra[cellID]=TileSpectra("full",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
           hSpectra[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA, fixedTOASample);
-          if(fillToACorr) hSpectra[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
+          if(fillToACorr) hSpectra[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
           RootOutput->cd();
         }
         // fill spectra histos for signals with ToA
-        if (toa > 0 ){      // needed for summing tests
-        // if (toa > 0 && nADCFirst == 4 && nDiffFirstM ==1 && nDiffMaxT == 0){      // needed for summing tests
-          // aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(cellID), calib.GetPedestalMeanL(cellID), calib.GetPedestalSigL(cellID));
+        if (hasTOA){      // needed for summing tests
           hHighestADCAbovePedVsLayer->Fill(layer,chInLayer, adc);
           if(ithSpectraTrigg!=hSpectraTrigg.end()){
             ithSpectraTrigg->second.FillExtHGCROC(adc,toa,tot,nSampTOA,fixedTOASample);
-            if(fillToACorr) ithSpectraTrigg->second.FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
+            if(fillToACorr) ithSpectraTrigg->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
           } else {
             RootOutputHist->cd("IndividualCellsTrigg");
             hSpectraTrigg[cellID]=TileSpectra("signal",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
             hSpectraTrigg[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,fixedTOASample);
-            if(fillToACorr) hSpectraTrigg[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
+            if(fillToACorr) hSpectraTrigg[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
             RootOutput->cd();
           }
         }
@@ -401,6 +464,16 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   Double_t textSizeRel = 0.035;
 
   gSystem->Exec("mkdir -p "+outputDirPlots);
+  TString toaSampleAdd  = "";
+  TString outputDirPlotsMore = outputDirPlots;
+  if (fixedTOASample != -1){
+    ExtPlot             = 1;
+    toaSampleAdd        = Form("/nTOA_%02d",fixedTOASample);
+    outputDirPlotsMore  = Form("%s%s", outputDirPlots.Data(),toaSampleAdd.Data());
+    gSystem->Exec("mkdir -p "+outputDirPlotsMore);
+  }
+
+  
   StyleSettingsBasics("pdf");
   SetPlotStyle();  
   
@@ -415,9 +488,46 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   PlotSimple2D( canvas2DSigQA, hSampleDiffvsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleDiffvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DSigQA, hspectraTOAvsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DSigQA, hspectraTOTvsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOTvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+
+  PlotSimple2D( canvas2DSigQA, hTOAPsVsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOAPsvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DSigQA, hTOACorrPsVsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOACorrPsvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   
   canvas2DSigQA->SetLogz(1);
   PlotSimple2D( canvas2DSigQA, hHighestADCAbovePedVsLayer, -10000, -10000, textSizeRel, Form("%s/MaxADCAboveNoise_vsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);    
+  
+  Int_t diffBins = 4;
+  for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+    for (int h = 0; h< 2; h++){
+      Double_t largestDiff = 0.;
+      Int_t bin         = 1;
+      for (Int_t b = 1; b < hToAvsADC[ro][h]->GetNbinsX(); b++){
+        Int_t maxBin  = (b+diffBins);
+        if (maxBin > hToAvsADC[ro][h]->GetNbinsX()){
+          maxBin      = maxBin-hToAvsADC[ro][h]->GetNbinsX();
+        }
+        Double_t diff = hToAvsADC[ro][h]->GetBinContent(maxBin) - hToAvsADC[ro][h]->GetBinContent(b);
+        if (largestDiff < diff){
+          largestDiff = diff;
+          bin         = b;
+        }
+      }
+      Int_t centerbin = bin+Int_t(diffBins/2);
+      if (centerbin > (hToAvsADC[ro][h]->GetNbinsX()-diffBins/2))
+        centerbin     = centerbin-(hToAvsADC[ro][h]->GetNbinsX()-diffBins/2);
+      
+      Int_t offset = (Int_t)(hToAvsADC[ro][h]->GetBinCenter(centerbin));
+      std::cout << ro <<"\t" <<h << "\t" << offset << std::endl;
+      
+      Plot2DWithProfile( canvas2DSigQA, h2DToAvsADC[ro][h], hToAvsADC[ro][h], -10000, -10000, textSizeRel,
+                        Form("%s/ToAvsADC_Asic_%d_Half_%d.%s", outputDirPlotsMore.Data(), ro, h, plotSuffix.Data()), 
+                        it->second, 1, kFALSE, "colz",true, Form("Asic %d, Half %d",ro,h), offset);
+      
+      h2DWaveFormHalfAsic[ro][h]->GetXaxis()->SetRangeUser(-25, (it->second.samples)*25);
+      Plot2DWithProfile( canvas2DSigQA, h2DWaveFormHalfAsic[ro][h], hWaveFormHalfAsic[ro][h], -10000, -10000, textSizeRel,
+                        Form("%s/Waveform_Asic_%d_Half_%d.%s", outputDirPlotsMore.Data(), ro, h, plotSuffix.Data()), 
+                        it->second, 1, kFALSE, "colz",true, Form("Asic %d, Half %d",ro,h), -1);
+    }
+  }
   
   TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
   DefaultCanvasSettings( canvas1DSimple, 0.08, 0.03, 0.03, 0.07);
@@ -438,15 +548,6 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   
   // set pixel text size
   Int_t textSizePixel = 30;
-
-  TString toaSampleAdd  = "";
-  TString outputDirPlotsMore = outputDirPlots;
-  if (fixedTOASample != -1){
-    ExtPlot             = 1;
-    toaSampleAdd        = Form("/nTOA_%02d",fixedTOASample);
-    outputDirPlotsMore  = Form("%s%s", outputDirPlots.Data(),toaSampleAdd.Data());
-    gSystem->Exec("mkdir -p "+outputDirPlotsMore);
-  }
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
   //Single Module Plotting 
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
@@ -475,7 +576,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
           continue;
         }
         PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
-                            textSizePixel, hSpectra, 1, -25000, (it->second.samples)*25000, 300, l, m,
+                            textSizePixel, hSpectra, 1, -25, (it->second.samples)*25, 300, l, m,
                             Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),  m,  l, plotSuffix.Data()), it->second);
         PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
                             textSizePixel, hSpectra, 2, 0, 1024, 300, l, m,
@@ -484,7 +585,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
                             textSizePixel, hSpectra, 3, 0, 1024, it->second.samples, l, m,
                             Form("%s/TOA_Sample_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m,  l, plotSuffix.Data()), it->second);
         PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
-                          textSizePixel, hSpectraTrigg, 1, -25000, (it->second.samples)*25000, 300, l, m,
+                          textSizePixel, hSpectraTrigg, 1, -25, (it->second.samples)*25, 300, l, m,
                           Form("%s/WaveformSignal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m, l, plotSuffix.Data()), it->second);            
         PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
                             textSizePixel, hSpectraTrigg, 2, 0, 1024, 300, l, m,
@@ -530,10 +631,10 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
         if (l%10 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         PlotCorr2D2MLayer(canvas2PanelProf,pad2PanelProf, topRCornerXProf, topRCornerYProf, relSizePProf,
-                            textSizePixel, hSpectra, -25000, (it->second.samples)*25000, 1000, l, m,
+                            textSizePixel, hSpectra, -25, (it->second.samples)*25, 1000, l, m,
                             Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m,  l, plotSuffix.Data()), it->second);
         PlotCorr2D2MLayer(canvas2PanelProf,pad2PanelProf, topRCornerXProf, topRCornerYProf, relSizePProf,
-                          textSizePixel, hSpectraTrigg, -25000, (it->second.samples)*25000, 1000, l, 0,
+                          textSizePixel, hSpectraTrigg, -25, (it->second.samples)*25, 1000, l, 0,
                           Form("%s/WaveformSignal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(), m, l, plotSuffix.Data()), it->second);            
         if (ExtPlot > 1){
           PlotSpectra2MLayer (canvas2Panel,pad2Panel, topRCornerX, topRCornerY, relSizeP, textSizePixel, 
@@ -542,9 +643,6 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
         }          
       }
     }   
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-  //Single tile Plotting 
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
   //Single Tile Plotting 
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
@@ -567,7 +665,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
         if (l%10 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
-                            textSizePixel, hSpectra, 1, -25000, (it->second.samples)*25000, 300, l, m,
+                            textSizePixel, hSpectra, 1, -25, (it->second.samples)*25, 300, l, m,
                             Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m,  l, plotSuffix.Data()), it->second);
         PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
                           textSizePixel, hSpectra, 2, 0, 1024, 300, l, 0,
@@ -576,7 +674,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
                           textSizePixel, hSpectra, 3,0, 1024, it->second.samples, l, 0,
                           Form("%s/TOA_Sample_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m, l, plotSuffix.Data()), it->second);            
         PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
-                          textSizePixel, hSpectraTrigg, 1, -25000, (it->second.samples)*25000, 300, l, 0,
+                          textSizePixel, hSpectraTrigg, 1, -25, (it->second.samples)*25, 300, l, 0,
                           Form("%s/WaveformSignal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(), m, l, plotSuffix.Data()), it->second);            
         PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
                           textSizePixel, hSpectraTrigg, 2, 0, 1024, 300, l, 0,
@@ -602,7 +700,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
   //Dual module plotting 
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
-  if (detConf == DetConf::Type::Dual8M){
+  if (detConf == DetConf::Type::Dual8M ){
     TCanvas* canvas2ModPanel;
     TPad* pad2ModPanel[16];
     Double_t topRCornerX2Mod[16];
@@ -621,6 +719,10 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
       if (l%10 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (l%4 != 1 ){
+        std::cout << "====> layer " << l << " skipping" << std::endl;
+        continue;
+      }
       if (!setup->IsLayerOn(l,-1)){
         std::cout << "====> layer " << l << " not enabled" << std::endl;
         continue;
@@ -630,16 +732,16 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
         continue;
       }
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectra, 1, -25000, (it->second.samples)*25000, 300, l, 
+                          textSizePixel, hSpectra, 1, -50, (it->second.samples)*25, 300, l, 
                           Form("%s/Waveform_Layer%02d.%s" ,outputDirPlotsMore.Data(), l, plotSuffix.Data()), it->second);
+      // PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
+      //                     textSizePixel, hSpectra, 2, 0, 1024, 300, l, 
+      //                     Form("%s/TOA_ADC_Layer%02d.%s" ,outputDirPlotsMore.Data(),l, plotSuffix.Data()), it->second);
+      // PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
+      //                     textSizePixel, hSpectra, 3, 0, 1024, it->second.samples, l,
+      //                     Form("%s/TOA_Sample_Layer%02d.%s" ,outputDirPlotsMore.Data(), l, plotSuffix.Data()), it->second);
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectra, 2, 0, 1024, 300, l, 
-                          Form("%s/TOA_ADC_Layer%02d.%s" ,outputDirPlotsMore.Data(),l, plotSuffix.Data()), it->second);
-      PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectra, 3, 0, 1024, it->second.samples, l,
-                          Form("%s/TOA_Sample_Layer%02d.%s" ,outputDirPlotsMore.Data(), l, plotSuffix.Data()), it->second);
-      PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectraTrigg, 1, -25000, (it->second.samples)*25000, 300, l, 
+                          textSizePixel, hSpectraTrigg, 1, -50, (it->second.samples)*25, 300, l, 
                           Form("%s/WaveformSignal_Layer%02d.%s" ,outputDirPlotsMore.Data(),l, plotSuffix.Data()), it->second);            
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
                           textSizePixel, hSpectraTrigg, 2, 0, 1024, 300, l,
@@ -681,6 +783,14 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
     hspectraTOAvsCellID->Write();
     hspectraTOTvsCellID->Write();
   }
+
+  for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+    for (int h = 0; h< 2; h++){
+      hToAvsADC[ro][h]->Write();
+      h2DToAvsADC[ro][h]->Write();
+    }
+  }
+  
   RootOutputHist->cd("IndividualCells");
   for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
     ithSpectra->second.WriteExt(true);
@@ -692,6 +802,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
     }
   }
 
+  
   
   RootInput->Close();
   return true;

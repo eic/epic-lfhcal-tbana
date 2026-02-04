@@ -121,15 +121,15 @@ class TileSpectra: public TObject{
         hspectraTOA    = TH1D(Form("hspectra%sTOACellID%d",name.Data(),id),Form("TOA spectrumCellID %d; TOA (arb. units); counts",id),1024,0,1024);
         hspectraTOA.SetDirectory(0);
         hspectraTOT    = TH1D(Form("hspectra%sTOTCellID%d",name.Data(),id),Form("TOT spectrumCellID %d; TOT (arb. units); counts",id),4096,0,4096);
-        hWaveForm     = TProfile(Form("wafeform1D%sCellID%d",name.Data(),id),Form("1D wafeform CellID %d;  t (ps) ; ADC (arb. units)",id),525,-25000,500000);
+        hWaveForm     = TProfile(Form("wafeform1D%sCellID%d",name.Data(),id),Form("1D wafeform CellID %d;  t (ns) ; ADC (arb. units)",id),550,-50,500);
         hWaveForm.SetDirectory(0);
-        hcorr         = TH2D(Form("wafeform%sCellID%d",name.Data(),id),Form("2D wafeform CellID %d; t (ps) ; ADC (arb. units)",id),525,-25000,500000, 1034, -10, 1024);
+        hcorr         = TH2D(Form("wafeform%sCellID%d",name.Data(),id),Form("2D wafeform CellID %d; t (ns) ; ADC (arb. units)",id),550,-50,500, 1034, -10, 1024);
         hcorr.SetDirectory(0);
         hcorrTOAADC   = TH2D(Form("h2DADCTOACellID%sCellID%d",name.Data(),id),Form("2D ADC vs TOA CellID %d; TOA (arb. units); ADC (arb. units)",id), 1024/8,0,1024,1124,-100,1024);
         hcorrTOAADC.SetDirectory(0);
         hcorrTOASample = TH2D(Form("h2DTOASampleCellID%sCellID%d",name.Data(),id),Form("2D Sample vs TOA CellID %d; TOA (arb. units); #sample",id), 1024/8,0,1024,20,0,20);
         hcorrTOASample.SetDirectory(0);
-        hTOAADC       = TProfile(Form("h%sADCTOACellID%d",name.Data(),id),Form("ADC-TOA correlation CellID %d; TOA (arb. units); ADC (arb. units)",id),1024/8,0,1024);
+        hTOAADC       = TProfile(Form("h%sADCTOACellID%d",name.Data(),id),Form("ADC-TOA correlation CellID %d; TOA (arb. units); ADC (arb. units)",id),1024/8,0,1024, "");
         hTOAADC.SetDirectory(0);
       }
     // extended pedestal output
