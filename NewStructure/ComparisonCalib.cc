@@ -413,8 +413,10 @@ bool ComparisonCalib::ProcessCalib(void){
           profCellLGHG    = (TProfile*)tempFile->Get(Form("IndividualCells/wafeform1DfullCellID%i",itcalib->first));
           std::cout << histCellHG << "\t" << profCellLGHG << std::endl;
         }
-      } else if (expandedList == 5){
-          std::cout<<"Nothing to do in this case" <<std::endl;
+      
+      // Ped case  
+      } else if (expandedList == 5){      
+          if (debug > 1)std::cout<<"Nothing to do in this case" <<std::endl;
       }
       
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -488,14 +490,20 @@ bool ComparisonCalib::ProcessCalib(void){
   
   // ******************************************************************************************
   // Print summary of calib runs
-  // ******************************************************************************************  
-  if (debug > 0){
-    std::cout << "Calibs summary: "<< sumCalibs.size() << std::endl;
-    for(isumCalibs=sumCalibs.begin(); isumCalibs!=sumCalibs.end(); ++isumCalibs){
-      isumCalibs->second.Analyse();
-    }
+  // ******************************************************************************************    
+  std::cout << "Calibs summary: "<< sumCalibs.size() << std::endl;
+  int globalStatus = 0;
+  for(isumCalibs=sumCalibs.begin(); isumCalibs!=sumCalibs.end(); ++isumCalibs){
+    int calibstatus = isumCalibs->second.Analyse(debug);
+    if (globalStatus < calibstatus) globalStatus = calibstatus;
   }
-
+  std::cout << "Global calib status: " << globalStatus << std::endl;
+  
+  if (globalStatus == 0){
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!  ATTENTION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+    std::cout << "Aborting plotting: none of the files has either ped or mip scales filled" << std::endl; 
+  }
+  
   // ******************************************************************************************
   // Set X axis title and ranges 
   // ******************************************************************************************
@@ -537,27 +545,28 @@ bool ComparisonCalib::ProcessCalib(void){
                       Form("%s/LGPedSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);
   PlotCalibRunOverlay( canvas1DRunsOverlay, 3, sumCalibs, textSizeRel, 
                       Form("%s/LGPedWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);
-  PlotCalibRunOverlay( canvas1DRunsOverlay, 4, sumCalibs, textSizeRel, 
+  if (globalStatus > 1){
+    PlotCalibRunOverlay( canvas1DRunsOverlay, 4, sumCalibs, textSizeRel, 
                       Form("%s/HGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);
-  PlotCalibRunOverlay( canvas1DRunsOverlay, 5, sumCalibs, textSizeRel, 
+    PlotCalibRunOverlay( canvas1DRunsOverlay, 5, sumCalibs, textSizeRel, 
                       Form("%s/HGScaleWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);
-  if (!isHGCROC){
-    PlotCalibRunOverlay( canvas1DRunsOverlay, 6, sumCalibs, textSizeRel, 
-                        Form("%s/LGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
-    PlotCalibRunOverlay( canvas1DRunsOverlay, 7, sumCalibs, textSizeRel, 
-                        Form("%s/LGScaleWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
-    PlotCalibRunOverlay( canvas1DRunsOverlay, 8, sumCalibs, textSizeRel, 
-                        Form("%s/LGHGCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
-    PlotCalibRunOverlay( canvas1DRunsOverlay, 9, sumCalibs, textSizeRel, 
-                        Form("%s/HGLGCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
-    PlotCalibRunOverlay( canvas1DRunsOverlay, 10, sumCalibs, textSizeRel, 
-                        Form("%s/LGScaleCalcSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);  
-    PlotCalibRunOverlay( canvas1DRunsOverlay, 11, sumCalibs, textSizeRel, 
-                        Form("%s/LGHGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
-    PlotCalibRunOverlay( canvas1DRunsOverlay, 12, sumCalibs, textSizeRel, 
-                        Form("%s/HGLGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+    if (!isHGCROC){
+      PlotCalibRunOverlay( canvas1DRunsOverlay, 6, sumCalibs, textSizeRel, 
+                          Form("%s/LGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+      PlotCalibRunOverlay( canvas1DRunsOverlay, 7, sumCalibs, textSizeRel, 
+                          Form("%s/LGScaleWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+      PlotCalibRunOverlay( canvas1DRunsOverlay, 8, sumCalibs, textSizeRel, 
+                          Form("%s/LGHGCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+      PlotCalibRunOverlay( canvas1DRunsOverlay, 9, sumCalibs, textSizeRel, 
+                          Form("%s/HGLGCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+      PlotCalibRunOverlay( canvas1DRunsOverlay, 10, sumCalibs, textSizeRel, 
+                          Form("%s/LGScaleCalcSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);  
+      PlotCalibRunOverlay( canvas1DRunsOverlay, 11, sumCalibs, textSizeRel, 
+                          Form("%s/LGHGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+      PlotCalibRunOverlay( canvas1DRunsOverlay, 12, sumCalibs, textSizeRel, 
+                          Form("%s/HGLGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+    }
   }
-  
   std::cout << "row max: " << setup->GetNMaxRow() << "\t column max: "  << setup->GetNMaxColumn() << std::endl;
   
   if (setup->GetNMaxRow()+1 == 2 && setup->GetNMaxColumn()+1 == 4){
@@ -606,7 +615,8 @@ bool ComparisonCalib::ProcessCalib(void){
                                   Form("%s/SingleLayer/LGped_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGPedestal",OutputNameDirPlots.Data()), it->second,ExtPlot);        
         PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   trend, 16, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/LGpedwidth_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGPedestalWidth",OutputNameDirPlots.Data()), it->second,ExtPlot);        
+                                  Form("%s/SingleLayer/LGpedwidth_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGPedestalWidth",OutputNameDirPlots.Data()), it->second,ExtPlot);    
+        if (globalStatus < 2) continue;
         PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   trend, 2, Xmin,Xmax, l, 0,
                                   Form("%s/SingleLayer/HGScale_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGScale",OutputNameDirPlots.Data()), it->second,ExtPlot);        
@@ -629,6 +639,7 @@ bool ComparisonCalib::ProcessCalib(void){
         }
       }
       if (expandedList == 1){
+        if (globalStatus < 2) continue;
         PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   trend, 9, Xmin,Xmax, l, 0,
                                   Form("%s/SingleLayer/HG_LandMPV_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGLandMPV",OutputNameDirPlots.Data()), it->second,ExtPlot);      
@@ -653,6 +664,7 @@ bool ComparisonCalib::ProcessCalib(void){
         }
       }
       if (expandedList == 1 || expandedList == 2 ){
+        if (globalStatus < 2) continue;
         PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   trend, 6, Xmin,Xmax, l, 0,
                                   Form("%s/SingleLayer/MuonTriggers_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendMuonTriggers",OutputNameDirPlots.Data()), it->second,ExtPlot);      
@@ -681,6 +693,7 @@ bool ComparisonCalib::ProcessCalib(void){
           }
         }
         if (expandedList > 0 && !isHGCROC){
+          if (globalStatus < 2) continue;
           PlotRunOverlayProfile8MLayer (canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
                                         trend, nRun,-20, 340, -20, 3900, l, 0,
                                         Form("%s/SingleLayer/MuonTriggers_LGHGCorr_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonLGHGCorr",OutputNameDirPlots.Data()), it->second,ExtPlot);      
@@ -738,6 +751,7 @@ bool ComparisonCalib::ProcessCalib(void){
             maxComp = 1048;
             maxX = 500000;
           }
+          if (globalStatus < 2) continue;
           PlotRunOverlayProfile2MLayer (canvas2PanelProf,pad2PanelProf, topRCornerXProf, topRCornerYProf, relSizePProf, textSizePixel, 
                                         trend, nRun,-20, 340, -20, maxComp, l, 0,
                                         Form("%s/SingleLayer/MuonTriggers_LGHGCorr_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonLGHGCorr",OutputNameDirPlots.Data()), it->second,ExtPlot);      

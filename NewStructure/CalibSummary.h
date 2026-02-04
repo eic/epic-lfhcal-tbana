@@ -38,7 +38,7 @@ class CalibSummary: public TObject{
   }
   ~CalibSummary(){}
 
-  bool Analyse();
+  int Analyse(int );
   bool Fill(const TileCalib&);
   bool Write(TFile*);
   bool SetDeltaTimeHist(TH1D*);
