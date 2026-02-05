@@ -351,13 +351,12 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
         if (tot > 0)
           hasTOT        = true;
         Int_t nSampTOA  = aTile->GetFirstTOASample();        
-        double timeRes    = 25./1024;               // time resolution in ns
-        double toaNs      = (double)aTile->GetLinearizedRawTOA()*timeRes;
+        double toaNs      = (double)aTile->GetLinearizedRawTOA()*aTile->GetTOATimeResolution();
         double toaCorrNs  = toaNs;
         if (calib.GetToAOff(cellID) != -1000.){
           // correct ToA sample and return correct nSampleTOA
           nSampTOA      = aTile->SetCorrectedTOA(calib.GetToAOff(cellID)); 
-          toaCorrNs     = (double)(aTile->GetCorrectedTOA())*timeRes;;
+          toaCorrNs     = (double)(aTile->GetCorrectedTOA())*aTile->GetTOATimeResolution();;
         }
         totADCs         = totADCs+adc;
         // obtain samples in which TOA, TOT, maximum ADC are firing
@@ -408,7 +407,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
             hToAvsADC[asic][int(roCh/36)]->Fill(toa, adc);
             h2DToAvsADC[asic][int(roCh/36)]->Fill(toa, adc);
             for (int k = 0; k < (int)(aTile->GetADCWaveform()).size(); k++ ){
-              double timetemp = ((k+nOffEmpty)*1024 + aTile->GetCorrectedTOA())*timeRes ;
+              double timetemp = ((k+nOffEmpty)*1024 + aTile->GetCorrectedTOA())*aTile->GetTOATimeResolution() ;
               hWaveFormHalfAsic[asic][int(roCh/36)]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
               h2DWaveFormHalfAsic[asic][int(roCh/36)]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
             }

@@ -39,6 +39,7 @@ void PrintHelp(char* exe){
   std::cout<<"-f       Force to write output if already exist"<<std::endl;
   std::cout<<"-F fff   set explicit plot extension explicitly, default is pdf "<<std::endl;
   std::cout<<"-g ggg   extract toA offset with pedestal calib taken from ggg file "<<std::endl;
+  std::cout<<"-G GGG   use external ToA phase calib from GGG file "<<std::endl;
   std::cout<<"-i uuu   Input file in root format"<<std::endl;
   std::cout<<"-k kkk   enabling overwriting of calib file using external calib txt file"<<std::endl;
   std::cout<<"-L LLL   enable testing with only limited number of events"<<std::endl;
@@ -76,7 +77,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"aA:bB:c:C:d:eE:fF:g:hi:k:L:m:MnNo:O:pP:r:sStT:uw:Xy:"))!=-1){
+  while((c=getopt(argc,argv,"aA:bB:c:C:d:eE:fF:g:G:hi:k:L:m:MnNo:O:pP:r:sStT:uw:Xy:"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"DataPrep: printing calib object to file"<<std::endl;
@@ -125,6 +126,10 @@ int main(int argc, char* argv[]){
       std::cout<<"DataPrep: Run ToA phase extraction, use pedestal file: "<< optarg<<std::endl;
       AnAnalysis.SetRootCalibInput(optarg);
       AnAnalysis.IsToExtractToAPhase(true);
+      break;
+    case 'G':
+      std::cout<<"DataPrep: use external TOA phase calib file: "<< optarg<<std::endl;
+      AnAnalysis.SetExternalToACalibOffSetFile(optarg);
       break;
     case 'i':
       std::cout<<"DataPrep: Root input file is: "<<optarg<<std::endl;

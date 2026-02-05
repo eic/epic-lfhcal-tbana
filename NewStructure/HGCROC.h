@@ -20,6 +20,7 @@ class Hgcroc: public Tile {
   double GetCorrectedTOT(void) const;
   double GetRawTOA(void) const;
   double GetCorrectedTOA(void) const;
+  
   int GetPedestal(void) const;
 
   void SetADCWaveform(std::vector<int>);
@@ -44,6 +45,7 @@ class Hgcroc: public Tile {
   double GetIntegratedADC() {return integrated_adc;};  // Value from just ADC
   double GetIntegratedTOT() {return integrated_tot;};  // Value from just TOT
   double GetIntegratedValue() {return integrated_value;};  // Combined ADC and TOT
+  double GetTOATimeResolution(void) {return (double)(25./1024);}; // return approximate time resolution in ns
 
   void SetIntegratedADC(double val) { integrated_adc = val; }
   void SetIntegratedTOT(double val) { integrated_tot = val; }

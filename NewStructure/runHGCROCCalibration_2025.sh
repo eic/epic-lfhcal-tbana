@@ -15,17 +15,19 @@ function MuonCalibHGCROC()
 	echo "OutNameRun:" $6
 	if [ $1 == "BC" ]; then 
 		echo "badchannelMap:" $7
+		echo "ToAPhase-Offset:" $8
 	fi
 	printf -v runNrPed "%03d" "$2"
 # 	printf -v runNrMuon "%03d" "$3"
 	runNrMuon=$3
+	
 	echo "=================================================================================="
 	if [ $1 == "BC" ]; then 
     if [ -f "$4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt" ]; then
       echo "overwriting original calib file with manually modified $4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt"
-      ./DataPrep -d 1 -e -f -P $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wPed_wBC_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibTransfer/$6 -r $runNrFile -k $4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt -B $7    
+      ./DataPrep -d 1 -e -f -P $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wPed_wBC_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibTransfer/$6 -r $runNrFile -k $4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt -B $7 -G $8
     else 
-      ./DataPrep -d 2 -e -f -P $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wPed_wBC_$runNrMuon.root  -O $PlotBaseDir/HGCROC_PlotsCalibTransfer/$6 -r $runNrFile -B $7
+      ./DataPrep -d 2 -e -f -P $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wPed_wBC_$runNrMuon.root  -O $PlotBaseDir/HGCROC_PlotsCalibTransfer/$6 -r $runNrFile -B $7  -G $8 #-F png -L 50000
     fi
 	elif [ $1 == "wave" ]; then 
     if [ -f "$4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt" ]; then
@@ -122,21 +124,24 @@ if [ $2 = "toaPhase" ]; then
   elif [ $3 = "Muon" ]; then 
     runs='FullSetA_2'
     for runNr in $runs; do 
-      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -F png
+      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
     done
   fi
 
 fi
 
 if [ $2 = "elewave" ]; then
+  
 #   runs='165 166 167 168 169 170'
-  runs='170'
+#   runs='170'
 #   runs='165'
   runPed='68'
+  runs='184'
 	badChannelMap="../configs/TB2025/badChannel_HGCROC_PSTB2025_layer0.txt"
 	runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
+	toaPhaseOffset=../configs/TB2025/ToAOffsets_TB2025_HadRun.csv
 	for runNr in $runs; do 
-		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap
+		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
 	done
 fi
 
@@ -154,8 +159,9 @@ if [ $2 == "calibMuon" ]; then
 	runs='EScan'
 	badChannelMap=../configs/TB2025/badChannel_HGCROC_PSTB2025_default.txt
 	runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
+	toaPhaseOffset=../configs/TB2025/ToAOffsets_TB2025_HadRun.csv
 	for runNr in $runs; do 
-		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap
+		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
 	done
 fi
 
@@ -170,7 +176,8 @@ if [ $2 == "calibMuon2" ]; then
 	runs='FullSetB_2'
 	badChannelMap=../configs/TB2025/badChannel_HGCROC_PSTB2025_default.txt
 	runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
+	toaPhaseOffset=../configs/TB2025/ToAOffsets_TB2025_HadRun.csv
 	for runNr in $runs; do 
-		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap
+		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
 	done
 fi

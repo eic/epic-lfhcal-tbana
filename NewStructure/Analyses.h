@@ -37,6 +37,7 @@ class Analyses{
   inline TString GetPlotOutputDir()         const {return OutputNameDirPlots;};
   inline TString GetExternalBadChannelMap() const {return ExternalBadChannelMap;};
   inline TString GetExternalCalibFile()     const {return ExternalCalibFile;};
+  inline TString GetExternalToACalibOffSetFile()     const {return ExternalToACalibOffSetFile;};
   
   inline std::fstream* GetASCIIinput() {return &ASCIIinput;};
   inline std::fstream* GetMapInput()   {return &MapInput;};
@@ -113,6 +114,7 @@ class Analyses{
   inline void SetPlotExtension(TString name)     {plotSuffix = name;};
   inline void SetExternalBadChannelMap(TString name)     {ExternalBadChannelMap =name;};
   inline void SetExternalCalibFile(TString name)     {ExternalCalibFile =name;};
+  inline void SetExternalToACalibOffSetFile(TString name)     {ExternalToACalibOffSetFile =name;};  
   inline void SetMaxEvents(int n)                 {maxEvents = n;};
   
   //General methods
@@ -134,6 +136,7 @@ class Analyses{
   TString RunListInputName;               // file name run list 
   TString ExternalBadChannelMap;          // file name external bad channel map
   TString ExternalCalibFile;              // file name external calib file
+  TString ExternalToACalibOffSetFile =""; // file name external ToA calib offsets file  
   TString plotSuffix        = "pdf";      // plot extension
   TFile* RootOutput         =nullptr;     // root file output tree
   TFile* RootOutputHist     =nullptr;     // root file output histos

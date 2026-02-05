@@ -1401,9 +1401,9 @@ bool Analyses::EvaluateHGCROCToAPhases(void){
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, it->second.samples,0,it->second.samples);
   hSampleTOAVsCellID->SetDirectory(0);
 
-  TH2D* hTOAPsVsCellID       = new TH2D( "hTOAPsVsCellID","ToA (ns); cell ID; ToA (ps)",
+  TH2D* hTOANsVsCellID       = new TH2D( "hTOANsVsCellID","ToA (ns); cell ID; ToA (ns)",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 500,-250,0);
-  hTOAPsVsCellID->SetDirectory(0);
+  hTOANsVsCellID->SetDirectory(0);
   TH2D* hSampleMaxADCVsCellID       = new TH2D( "hSampleMaxADCvsCellID","#sample ToA; cell ID; #sample Max ADC",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, it->second.samples,0,it->second.samples);
   hSampleMaxADCVsCellID->SetDirectory(0);
@@ -1509,8 +1509,7 @@ bool Analyses::EvaluateHGCROCToAPhases(void){
         hasTOA        = true;
 
       Int_t nSampTOA  = aTile->GetFirstTOASample();        
-      double timeRes    = 25./1024;               // time resolution in ns
-      double toaNs      = (double)aTile->GetLinearizedRawTOA()*timeRes;
+      double toaNs      = (double)aTile->GetLinearizedRawTOA()*aTile->GetTOATimeResolution();
       
       Int_t nMaxADC   = aTile->GetMaxSampleADC();
       Int_t nADCFirst = aTile->GetFirstSampleAboveTh();
@@ -1538,12 +1537,12 @@ bool Analyses::EvaluateHGCROCToAPhases(void){
       Int_t roCh      = setup->GetROchannel(cellID);
 
       if (hasTOA){
-        hTOAPsVsCellID->Fill(cellID,toaNs);
+        hTOANsVsCellID->Fill(cellID,toaNs);
         
         // fill overview hists for half asics
         h2DToAvsnSample[asic][int(roCh/36)]->Fill(toa, nSampTOA);
         for (int k = 0; k < (int)(aTile->GetADCWaveform()).size(); k++ ){
-          double timetemp = ((k+nOffEmpty)*1024 + (double)aTile->GetLinearizedRawTOA())*timeRes ;
+          double timetemp = ((k+nOffEmpty)*1024 + (double)aTile->GetLinearizedRawTOA())*aTile->GetTOATimeResolution() ;
           hWaveFormHalfAsicAll[asic][int(roCh/36)]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
           h2DWaveFormHalfAsicAll[asic][int(roCh/36)]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
         }          
@@ -1553,7 +1552,7 @@ bool Analyses::EvaluateHGCROCToAPhases(void){
         hToAvsADC[asic][int(roCh/36)][binSample]->Fill(toa, adc);
         h2DToAvsADC[asic][int(roCh/36)][binSample]->Fill(toa, adc);
         for (int k = 0; k < (int)(aTile->GetADCWaveform()).size(); k++ ){
-          double timetemp = ((k+nOffEmpty)*1024 + (double)aTile->GetLinearizedRawTOA())*timeRes ;
+          double timetemp = ((k+nOffEmpty)*1024 + (double)aTile->GetLinearizedRawTOA())*aTile->GetTOATimeResolution() ;
           hWaveFormHalfAsic[asic][int(roCh/36)][binSample]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
           h2DWaveFormHalfAsic[asic][int(roCh/36)][binSample]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
         }          
@@ -1580,7 +1579,7 @@ bool Analyses::EvaluateHGCROCToAPhases(void){
   PlotSimple2D( canvas2DSigQA, hSampleTOAVsCellID, (double)it->second.samples,setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleTOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DSigQA, hSampleMaxADCVsCellID, (double)it->second.samples, setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleMaxADCvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
 
-  PlotSimple2D( canvas2DSigQA, hTOAPsVsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOAPsvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DSigQA, hTOANsVsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOANsvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   
   canvas2DSigQA->SetLogz(1);
   
@@ -1661,6 +1660,7 @@ bool Analyses::EvaluateHGCROCToAPhases(void){
     hSampleDiff->Write();
     hSampleDiffMin->Write();
     hSampleTOAVsCellID->Write();
+    hTOANsVsCellID->Write();
     hSampleMaxADCVsCellID->Write();
 
     for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
@@ -1689,58 +1689,116 @@ bool Analyses::TransferCalib(void){
   std::cout<<"Transfer calib"<<std::endl;
   int evts=TdataIn->GetEntries();
 
+  // initialize lookup-table run list
   std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
   
   std::map<int,TileSpectra> hSpectra;
   std::map<int, TileSpectra>::iterator ithSpectra;
   std::map<int,TileSpectra> hSpectraTrigg;
   std::map<int, TileSpectra>::iterator ithSpectraTrigg;
+  
+  // initialize calib
   TcalibIn->GetEntry(0);
   // check whether calib should be overwritten based on external text file
   if (OverWriteCalib){
     calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
   }
-  
-  int runNr = -1;
-
+  // add ToA offsets for half asics to calib objects if available
+  if (ExternalToACalibOffSetFile.CompareTo("") != 0 ){
+    calib.ReadExternalToAOffsets(ExternalToACalibOffSetFile,debug);
+  }
   std::map<int,short> bcmap;
   std::map<int,short>::iterator bcmapIte;
   if (CalcBadChannel == 1)
     bcmap = ReadExternalBadChannelMap();
-
   
+  // intialize run infos & reset calib object to correct run number
+  TdataIn->GetEntry(0);     // use first event to get infos
+  int runNr             = event.GetRunNumber();
+  ReadOut::Type typeRO  = event.GetROtype();
+  std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+  calib.SetRunNumber(runNr);
+  calib.SetBeginRunTime(event.GetBeginRunTimeAlt());
+  std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+  std::map<int,RunInfo>::iterator it=ri.find(runNr);
+
+    
   //==================================================================================
   // create additional output hist 
   //==================================================================================
   CreateOutputRootHistFile();
 
-  TH2D* hspectraADCvsCellID      = new TH2D( "hspectraADCvsCellID","ADC spectrums CellID; cell ID; ADC (arb. units) ",
-                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
-  hspectraADCvsCellID->SetDirectory(0);
-  TH2D* hspectraTOTvsCellID      = new TH2D( "hspectraTOTvsCellID","TOT spectrums CellID; cell ID; TOT (arb. units) ",
-                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4096,0,4096);
-  hspectraTOTvsCellID->SetDirectory(0);
-  TH2D* hspectraTOAvsCellID      = new TH2D( "hspectraTOAvsCellID","TOA spectrums CellID; cell ID; TOA (arb. units) ",
-                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
-  hspectraTOAvsCellID->SetDirectory(0);
-  
-  TH2D* hNCellsWTOAVsTotADC          = new TH2D( "hNCellsWTOAVsTotADC","NCells above TOA vs tot ADC; NCells above TOA; #Sigma(ADC) (arb. units) ",
-                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 5000,0,10000);
-  hNCellsWTOAVsTotADC->SetDirectory(0);
-  TH2D* hNCellsWmADCVsTotADC          = new TH2D( "hNCellsWmADCVsTotADC","NCells w. ADC > 10 vs tot ADC; NCells above min ADC; #Sigma(ADC) (arb. units) ",
-                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 5000,0,10000);
-  hNCellsWmADCVsTotADC->SetDirectory(0);
-  
-  TH2D* hspectraADCPedvsCellID      = new TH2D( "hspectraADCPedvsCellID","Pedestal ADC spectrums CellID; cell ID; ADC (arb. units) ",
-                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
-  hspectraADCPedvsCellID->SetDirectory(0);
-  
   int maxChannelPerLayer             = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
   int maxChannelPerLayerSingleMod    = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
-  TH2D* hHighestADCAbovePedVsLayer   = new TH2D( "hHighestEAbovePedVsLayer","Highest ADC above PED; layer; brd channel; #Sigma(ADC) (arb. units) ",
-                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
-  hHighestADCAbovePedVsLayer->SetDirectory(0);
-  hHighestADCAbovePedVsLayer->Sumw2();
+
+  // HGCROC specific histo creation
+  TH2D* hspectraADCvsCellID         = nullptr;
+  TH2D* hspectraADCPedvsCellID      = nullptr;
+  TH2D* hHighestADCAbovePedVsLayer  = nullptr;
+  TH2D* hspectraTOTvsCellID   =nullptr;
+  TH2D* hspectraTOAvsCellID   =nullptr;   
+  TH2D* hSampleTOAVsCellID    =nullptr;
+  TH1D* hSampleTOA            =nullptr;   
+  TH2D* hTOANsVsCellID        =nullptr;   
+  TH2D* hTOACorrNsVsCellID    =nullptr;   
+  TH2D* hNCellsWTOAVsTotADC   =nullptr;
+  TH2D* hNCellsWmADCVsTotADC  =nullptr;        
+  // plot setup per half asic for ToA 
+  TH2D* h2DToAvsnSample[setup->GetNMaxROUnit()+1][2];
+  TH2D* h2DWaveFormHalfAsicAll[setup->GetNMaxROUnit()+1][2];
+  TProfile* hWaveFormHalfAsicAll[setup->GetNMaxROUnit()+1][2];
+  
+  // only create these if we have an HGCROC data type as input
+  if (typeRO == ReadOut::Type::Hgcroc){
+    hspectraADCvsCellID      = new TH2D( "hspectraADCvsCellID","ADC spectrums CellID; cell ID; ADC (arb. units) ",
+                                              setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
+    hspectraADCvsCellID->SetDirectory(0);
+    
+    hspectraADCPedvsCellID      = new TH2D( "hspectraADCPedvsCellID","Pedestal ADC spectrums CellID; cell ID; ADC (arb. units) ",
+                                              setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
+    hspectraADCPedvsCellID->SetDirectory(0);
+    
+    hHighestADCAbovePedVsLayer   = new TH2D( "hHighestEAbovePedVsLayer","Highest ADC above PED; layer; brd channel; #Sigma(ADC) (arb. units) ",
+                                              setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
+    hHighestADCAbovePedVsLayer->SetDirectory(0);
+    hHighestADCAbovePedVsLayer->Sumw2();
+    hspectraTOTvsCellID      = new TH2D( "hspectraTOTvsCellID","TOT spectrums CellID; cell ID; TOT (arb. units) ",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4096,0,4096);
+    hspectraTOTvsCellID->SetDirectory(0);
+    hspectraTOAvsCellID      = new TH2D( "hspectraTOAvsCellID","TOA spectrums CellID; cell ID; TOA (arb. units) ",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
+    hspectraTOAvsCellID->SetDirectory(0);
+    hSampleTOAVsCellID       = new TH2D( "hSampleTOAvsCellID","#sample ToA; cell ID; #sample TOA",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, it->second.samples,0,it->second.samples);
+    hSampleTOAVsCellID->SetDirectory(0);
+    hSampleTOA                = new TH1D( "hSampleTOA","#sample ToA; #sample TOA",
+                                              it->second.samples,0,it->second.samples);
+
+    hTOANsVsCellID            = new TH2D( "hTOANsVsCellID","ToA (ns); cell ID; ToA (ns)",
+                                      setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 500,-250,0);
+    hTOACorrNsVsCellID        = new TH2D( "hTOACorrNsVsCellID","ToA (ns); cell ID; ToA (ns)",
+                                      setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 500,-250,0);
+
+    
+    hNCellsWTOAVsTotADC          = new TH2D( "hNCellsWTOAVsTotADC","NCells above TOA vs tot ADC; NCells above TOA; #Sigma(ADC) (arb. units) ",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 5000,0,10000);
+    hNCellsWTOAVsTotADC->SetDirectory(0);
+    hNCellsWmADCVsTotADC          = new TH2D( "hNCellsWmADCVsTotADC","NCells w. ADC > 10 vs tot ADC; NCells above min ADC; #Sigma(ADC) (arb. units) ",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 5000,0,10000);
+    hNCellsWmADCVsTotADC->SetDirectory(0);
+
+    for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+      for (int h = 0; h< 2; h++){
+        h2DToAvsnSample[ro][h]    = new TH2D(Form("h2DTOASample_Asic_%d_Half_%d",ro,h),
+                                              Form("Sample vs TOA %d %d; TOA (arb. units); #sample",ro,h), 1024/8,0,1024,it->second.samples,0,it->second.samples);
+        hWaveFormHalfAsicAll[ro][h]    = new TProfile(Form("WaveForm_Asic_%d_Half_%d",ro,h),
+                                          Form("ADC-TOA correlation %d %d;  t (ns) ; ADC (arb. units)",ro,h),550,-50,500);
+        h2DWaveFormHalfAsicAll[ro][h]  = new TH2D(Form("h2DWaveForm_Asic_%d_Half_%d",ro,h),
+                                          Form("2D ADC vs TOA %d %d;  t (ns) ; ADC (arb. units)",ro,h), 
+                                            550,-50,500, 1044/4, -20, 1024);      
+      }
+    }
+  }
   
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->mkdir("IndividualCellsTrigg");
@@ -1754,7 +1812,6 @@ bool Analyses::TransferCalib(void){
     std::cout << "ATTENTION: YOU ARE RESETTING THE MAXIMUM NUMBER OF EVENTS TO BE PROCESSED TO: " << maxEvents << ". THIS SHOULD ONLY BE USED FOR TESTING!" << std::endl;
     std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
   }
-  ReadOut::Type typeRO = ReadOut::Type::Caen;
   
   //==================================================================================
   // setup waveform builder for HGCROC data
@@ -1780,17 +1837,6 @@ bool Analyses::TransferCalib(void){
       std::cout << "************************************* NEW EVENT " << i << "  *********************************" << std::endl;
     }
     TdataIn->GetEntry(i);
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    // reset calib object info 
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    if (i == 0){
-      runNr   = event.GetRunNumber();
-      typeRO  = event.GetROtype();
-      std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
-      calib.SetRunNumber(runNr);
-      calib.SetBeginRunTime(event.GetBeginRunTimeAlt());
-      std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
-    }
    
     // initialize counters per event
     nCellsAboveTOA  = 0;
@@ -1846,6 +1892,25 @@ bool Analyses::TransferCalib(void){
         double adc = aTile->GetIntegratedADC();
         double tot = aTile->GetRawTOT();
         double toa = aTile->GetRawTOA();
+        bool hasTOA     = false;
+        bool hasTOT     = false;
+        
+        // check if we have a toa
+        if (toa > 0)
+          hasTOA        = true;
+        // check if we have a tot
+        if (tot > 0)
+          hasTOT        = true;
+        // obtain toa shift corrected values
+        Int_t nSampTOA  = aTile->GetFirstTOASample();        
+        double toaNs      = (double)aTile->GetLinearizedRawTOA()*aTile->GetTOATimeResolution();
+        double toaCorrNs  = toaNs;
+        Int_t nOffEmpty   = 2;
+        if (calib.GetToAOff(cellID) != -1000.){
+          // correct ToA sample and return correct nSampleTOA
+          nSampTOA      = aTile->SetCorrectedTOA(calib.GetToAOff(cellID)); 
+          toaCorrNs     = (double)(aTile->GetCorrectedTOA())*aTile->GetTOATimeResolution();;
+        }
         totADCs         = totADCs+adc;
         if (adc > 10)
           nCellsAboveMADC++; 
@@ -1854,8 +1919,24 @@ bool Analyses::TransferCalib(void){
         
         hspectraADCvsCellID->Fill(cellID,adc);
         hspectraADCPedvsCellID->Fill(cellID,aTile->GetPedestal());
-        hspectraTOTvsCellID->Fill(cellID,tot);
-        hspectraTOAvsCellID->Fill(cellID,toa);
+        if(hasTOT)  hspectraTOTvsCellID->Fill(cellID,tot);
+        
+        Int_t asic      = setup->GetROunit(cellID);
+        Int_t roCh      = setup->GetROchannel(cellID);
+        if (hasTOA){
+          hspectraTOAvsCellID->Fill(cellID,toa);
+          hSampleTOAVsCellID->Fill(cellID,nSampTOA);
+          hSampleTOA->Fill(nSampTOA);
+          hTOANsVsCellID->Fill(cellID,toaNs);
+          hTOACorrNsVsCellID->Fill(cellID,toaCorrNs);
+          // fill overview hists for half asics
+          h2DToAvsnSample[asic][int(roCh/36)]->Fill(toa, nSampTOA);
+          for (int k = 0; k < (int)(aTile->GetADCWaveform()).size(); k++ ){
+            double timetemp = ((k+nOffEmpty)*1024 + (double)aTile->GetCorrectedTOA())*aTile->GetTOATimeResolution() ;
+            hWaveFormHalfAsicAll[asic][int(roCh/36)]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
+            h2DWaveFormHalfAsicAll[asic][int(roCh/36)]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
+          }          
+        }        
         
         // single tile debug info print
         if (debug > 10 ){
@@ -1863,26 +1944,26 @@ bool Analyses::TransferCalib(void){
         }
         // fill spectra histos
         if(ithSpectra!=hSpectra.end()){
-          ithSpectra->second.FillExtHGCROC(adc,toa,tot,0,-1);
+          ithSpectra->second.FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
           ithSpectra->second.FillWaveform(aTile->GetADCWaveform(),0);
         } else {
           RootOutputHist->cd("IndividualCells");
           hSpectra[cellID]=TileSpectra("ped",2,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
-          hSpectra[cellID].FillExtHGCROC(adc,toa,tot,0,-1);
+          hSpectra[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
           hSpectra[cellID].FillWaveform(aTile->GetADCWaveform(),0);
           RootOutput->cd();
         }
         // Select only signals with a TOA (cleanup )      
-        if (toa > 0){      
+        if (hasTOA){      
             hHighestADCAbovePedVsLayer->Fill(layer,chInLayer, adc);
           
           if(ithSpectraTrigg!=hSpectraTrigg.end()){
-            ithSpectraTrigg->second.FillExtHGCROC(adc,toa,tot,0,-1);
+            ithSpectraTrigg->second.FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
             ithSpectraTrigg->second.FillWaveform(aTile->GetADCWaveform(),0);
           } else {
             RootOutputHist->cd("IndividualCellsTrigg");
             hSpectraTrigg[cellID]=TileSpectra("signal",2,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
-            hSpectraTrigg[cellID].FillExtHGCROC(adc,toa,tot,0,-1);
+            hSpectraTrigg[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
             hSpectraTrigg[cellID].FillWaveform(aTile->GetADCWaveform(),0);
             RootOutput->cd();
           }
@@ -1905,7 +1986,6 @@ bool Analyses::TransferCalib(void){
   //==================================================================================
   // Setup general plotting infos
   //==================================================================================  
-  std::map<int,RunInfo>::iterator it=ri.find(runNr);
   TString outputDirPlots = GetPlotOutputDir();
   Double_t textSizeRel = 0.035;
 
@@ -2004,9 +2084,31 @@ bool Analyses::TransferCalib(void){
     if (typeRO == ReadOut::Type::Hgcroc){
       TCanvas* canvas2DSigQA = new TCanvas("canvas2DSigQA","",0,0,1450,1300);  // gives the page size
       DefaultCanvasSettings( canvas2DSigQA, 0.08, 0.13, 0.045, 0.07);
+      
+      PlotSimple2D( canvas2DSigQA, hTOANsVsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOANsvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+      PlotSimple2D( canvas2DSigQA, hTOACorrNsVsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOACorrNsvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+      PlotSimple2D( canvas2DSigQA, hSampleTOAVsCellID, (double)it->second.samples,setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleTOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
 
+      
       canvas2DSigQA->SetLogz(1);
       PlotSimple2DZRange( canvas2DSigQA, hHighestADCAbovePedVsLayer, -10000, -10000, 0.1, 20000, textSizeRel, Form("%s/MaxADCAboveNoise_vsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, "colz", true);    
+      
+      for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+        for (int h = 0; h< 2; h++){      
+            PlotSimple2D( canvas2DSigQA, h2DToAvsnSample[ro][h],(double)it->second.samples, -10000, textSizeRel,
+                              Form("%s/ToaVsNSample_Asic_%d_Half_%d.%s", outputDirPlots.Data(), ro, h, plotSuffix.Data()), 
+                              it->second, 1, kFALSE, "colz",true, Form("Asic %d, Half %d",ro,h));
+            h2DWaveFormHalfAsicAll[ro][h]->GetXaxis()->SetRangeUser(-25, (it->second.samples)*25);
+            Plot2DWithProfile( canvas2DSigQA, h2DWaveFormHalfAsicAll[ro][h], hWaveFormHalfAsicAll[ro][h], -10000, -10000, textSizeRel,
+                              Form("%s/Waveform_Asic_%d_Half_%d.%s", outputDirPlots.Data(), ro, h, plotSuffix.Data()), 
+                              it->second, 1, kFALSE, "colz",true, Form("Asic %d, Half %d",ro,h), -1);
+        }
+      }
+
+      TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
+      DefaultCanvasSettings( canvas1DSimple, 0.08, 0.03, 0.03, 0.07);
+
+      PlotSimple1D(canvas1DSimple, hSampleTOA, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleToA.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);      
     }
 
     Double_t maxHG = 600;
@@ -2186,13 +2288,24 @@ bool Analyses::TransferCalib(void){
   //==================================================================================    
   RootOutputHist->cd();
   if (typeRO == ReadOut::Type::Hgcroc){
-     hspectraADCvsCellID->Write();
-     hspectraADCPedvsCellID->Write();
-     hspectraTOTvsCellID->Write();
-     hspectraTOAvsCellID->Write();
-     hHighestADCAbovePedVsLayer->Write();
-     hNCellsWmADCVsTotADC->Write();
-     hNCellsWTOAVsTotADC->Write();
+    hSampleTOA->Write();
+    hSampleTOAVsCellID->Write();
+    hTOANsVsCellID->Write();
+    hTOACorrNsVsCellID->Write();
+    hspectraADCvsCellID->Write();
+    hspectraADCPedvsCellID->Write();
+    hspectraTOTvsCellID->Write();
+    hspectraTOAvsCellID->Write();
+    hHighestADCAbovePedVsLayer->Write();
+    hNCellsWmADCVsTotADC->Write();
+    hNCellsWTOAVsTotADC->Write();
+    for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+      for (int h = 0; h< 2; h++){
+        h2DToAvsnSample[ro][h]->Write();
+        h2DWaveFormHalfAsicAll[ro][h]->Write();
+        hWaveFormHalfAsicAll[ro][h]->Write();
+      }
+    }
   }
   // save individual cell sprectra
   RootOutputHist->cd("IndividualCells");
@@ -4486,6 +4599,10 @@ bool Analyses::Calibrate(void){
   if (CalcBadChannel == 1){
     calib.ReadExternalBadChannelMap(ExternalBadChannelMap, debug);
   }
+  // add ToA offsets for half asics to calib objects if available
+  if (ExternalToACalibOffSetFile.CompareTo("") != 0 ){
+    calib.ReadExternalToAOffsets(ExternalToACalibOffSetFile,debug);
+  }
 
   // reading first event in tree to extract runnumber & RO-type
   TdataIn->GetEntry(0);
@@ -4508,14 +4625,23 @@ bool Analyses::Calibrate(void){
   TH2D* hspectraHGCorrvsCellID      = nullptr;
   TH2D* hspectraHGCorrvsCellIDNoise = nullptr;
   
+  // CAEN only
   TH2D* hspectraLGvsCellID          = nullptr;
   TH2D* hspectraLGCorrvsCellID      = nullptr;
   TH2D* hspectraLGCorrvsCellIDNoise = nullptr;
 
+  // HGCROC only
   TH2D* hspectraTotvsCellID         = nullptr;
   TH2D* hspectraTotvsCellIDNoise    = nullptr;
-
   TH1D* hSaturatedCellID            = nullptr;
+  TH2D* hspectraTOAvsCellID   =nullptr;   
+  TH2D* hSampleTOAVsCellID    =nullptr;
+  TH1D* hSampleTOA            =nullptr;   
+  TH2D* hTOANsVsCellID        =nullptr;   
+  TH2D* hTOACorrNsVsCellID    =nullptr;   
+  TH2D* h2DToAvsnSample[setup->GetNMaxROUnit()+1][2];
+  TH2D* h2DWaveFormHalfAsicAll[setup->GetNMaxROUnit()+1][2];
+  TProfile* hWaveFormHalfAsicAll[setup->GetNMaxROUnit()+1][2];  
   
   // create HG and LG histo's per channel
   if (typeRO == ReadOut::Type::Caen) {
@@ -4553,6 +4679,32 @@ bool Analyses::Calibrate(void){
     hSaturatedCellID              = new TH1D( "hSaturatedCellID","Saturared CellID; cell ID; Saturated cells  ",
                                                 setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5);
     hSaturatedCellID->SetDirectory(0);
+    
+    hspectraTOAvsCellID      = new TH2D( "hspectraTOAvsCellID","TOA spectrums CellID; cell ID; TOA (arb. units) ",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
+    hspectraTOAvsCellID->SetDirectory(0);
+    hSampleTOAVsCellID       = new TH2D( "hSampleTOAvsCellID","#sample ToA; cell ID; #sample TOA",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, it->second.samples,0,it->second.samples);
+    hSampleTOAVsCellID->SetDirectory(0);
+    hSampleTOA                = new TH1D( "hSampleTOA","#sample ToA; #sample TOA",
+                                              it->second.samples,0,it->second.samples);
+
+    hTOANsVsCellID            = new TH2D( "hTOANsVsCellID","ToA (ns); cell ID; ToA (ns)",
+                                      setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 500,-250,0);
+    hTOACorrNsVsCellID        = new TH2D( "hTOACorrNsVsCellID","ToA (ns); cell ID; ToA (ns)",
+                                      setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 500,-250,0);
+    
+    for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+      for (int h = 0; h< 2; h++){
+        h2DToAvsnSample[ro][h]    = new TH2D(Form("h2DTOASample_Asic_%d_Half_%d",ro,h),
+                                              Form("Sample vs TOA %d %d; TOA (arb. units); #sample",ro,h), 1024/8,0,1024,it->second.samples,0,it->second.samples);
+        hWaveFormHalfAsicAll[ro][h]    = new TProfile(Form("WaveForm_Asic_%d_Half_%d",ro,h),
+                                          Form("ADC-TOA correlation %d %d;  t (ns) ; ADC (arb. units)",ro,h),550,-50,500);
+        h2DWaveFormHalfAsicAll[ro][h]  = new TH2D(Form("h2DWaveForm_Asic_%d_Half_%d",ro,h),
+                                          Form("2D ADC vs TOA %d %d;  t (ns) ; ADC (arb. units)",ro,h), 
+                                            550,-50,500, 1044/4, -20, 1024);      
+      }
+    }
   }
   TH2D* hspectraEnergyvsCellID  = new TH2D( "hspectraEnergy_vsCellID","Energy vs CellID; cell ID; E (mip eq./tile); counts",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 6000,0,200);
@@ -4734,6 +4886,26 @@ bool Analyses::Calibrate(void){
         double adc = aTile->GetIntegratedADC();
         double tot = aTile->GetRawTOT();
         double toa = aTile->GetRawTOA();
+        bool hasTOA     = false;
+        bool hasTOT     = false;
+        
+        // check if we have a toa
+        if (toa > 0)
+          hasTOA        = true;
+        // check if we have a tot
+        if (tot > 0)
+          hasTOT        = true;
+        // obtain toa shift corrected values
+        Int_t nSampTOA  = aTile->GetFirstTOASample();        
+        double toaNs      = (double)aTile->GetLinearizedRawTOA()*aTile->GetTOATimeResolution();
+        double toaCorrNs  = toaNs;
+        Int_t nOffEmpty   = 2;
+        if (calib.GetToAOff(aTile->GetCellID()) != -1000.){
+          // correct ToA sample and return correct nSampleTOA
+          nSampTOA      = aTile->SetCorrectedTOA(calib.GetToAOff(aTile->GetCellID())); 
+          toaCorrNs     = (double)(aTile->GetCorrectedTOA())*aTile->GetTOATimeResolution();;
+        }
+
         // temporarily only calibrate with adc & average Scale
         // double tempE = adc/averageScale; 
         double tempE = adc/calib.GetScaleHigh(aTile->GetCellID());
@@ -4758,19 +4930,37 @@ bool Analyses::Calibrate(void){
         }
         
         hspectraHGvsCellID->Fill(aTile->GetCellID(), adc);
-        hspectraTotvsCellID->Fill(aTile->GetCellID(), tot);
+        if(hasTOT)  hspectraTotvsCellID->Fill(aTile->GetCellID(), tot);
         if(adc > 1024-avPedMean-20*avPedSig) hSaturatedCellID->Fill(aTile->GetCellID());
         if (localNoiseTrigg){
           hspectraHGCorrvsCellIDNoise->Fill(aTile->GetCellID(), adc);
-          hspectraTotvsCellIDNoise->Fill(aTile->GetCellID(), tot);        
+          if(hasTOT) hspectraTotvsCellIDNoise->Fill(aTile->GetCellID(), tot);        
         }
+        
+        Int_t asic      = setup->GetROunit(aTile->GetCellID());
+        Int_t roCh      = setup->GetROchannel(aTile->GetCellID());
+        if (hasTOA){
+          hspectraTOAvsCellID->Fill(aTile->GetCellID(),toa);
+          hSampleTOAVsCellID->Fill(aTile->GetCellID(),nSampTOA);
+          hSampleTOA->Fill(nSampTOA);
+          hTOANsVsCellID->Fill(aTile->GetCellID(),toaNs);
+          hTOACorrNsVsCellID->Fill(aTile->GetCellID(),toaCorrNs);
+          // fill overview hists for half asics
+          h2DToAvsnSample[asic][int(roCh/36)]->Fill(toa, nSampTOA);
+          for (int k = 0; k < (int)(aTile->GetADCWaveform()).size(); k++ ){
+            double timetemp = ((k+nOffEmpty)*1024 + (double)aTile->GetCorrectedTOA())*aTile->GetTOATimeResolution() ;
+            hWaveFormHalfAsicAll[asic][int(roCh/36)]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
+            h2DWaveFormHalfAsicAll[asic][int(roCh/36)]->Fill(timetemp,(aTile->GetADCWaveform()).at(k)-ped);
+          }          
+        }        
+
         ithSpectra=hSpectra.find(aTile->GetCellID());
         if(ithSpectra!=hSpectra.end()){
-          ithSpectra->second.FillExtHGCROC(adc,toa,tot,0,-1);
+          ithSpectra->second.FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
         } else {
           RootOutputHist->cd("IndividualCells");
           hSpectra[aTile->GetCellID()]=TileSpectra("Calibrated",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
-          hSpectra[aTile->GetCellID()].FillExtHGCROC(adc,toa,tot,0,-1);
+          hSpectra[aTile->GetCellID()].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
           RootOutput->cd();
         }
         if(energy!=0){ 
@@ -4817,6 +5007,19 @@ bool Analyses::Calibrate(void){
     hspectraTotvsCellID->Write();
     hspectraTotvsCellIDNoise->Write();
     hSaturatedCellID->Write();
+    
+    hSampleTOA->Write();
+    hSampleTOAVsCellID->Write();
+    hTOANsVsCellID->Write();
+    hTOACorrNsVsCellID->Write();
+    hspectraTOAvsCellID->Write();
+    for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+      for (int h = 0; h< 2; h++){
+        h2DToAvsnSample[ro][h]->Write();
+        h2DWaveFormHalfAsicAll[ro][h]->Write();
+        hWaveFormHalfAsicAll[ro][h]->Write();
+      }
+    }
   }
   hspectraEnergyvsCellID->Write();
   hspectraEnergyTotvsNCells->Write();
@@ -4871,6 +5074,22 @@ bool Analyses::Calibrate(void){
   } else if (typeRO == ReadOut::Type::Hgcroc){
     PlotSimple2D( canvas2DCorr, hspectraTotvsCellID, -10000, -10000, textSizeRel, Form("%s/Tot.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
     PlotSimple2D( canvas2DCorr, hspectraTotvsCellIDNoise, -50, 200, -10000, textSizeRel, Form("%s/Tot_Noise.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, "Local Noise triggered");
+    
+    PlotSimple2D( canvas2DCorr, hTOANsVsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOANsvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+    PlotSimple2D( canvas2DCorr, hTOACorrNsVsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOACorrNsvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+    PlotSimple2D( canvas2DCorr, hSampleTOAVsCellID, (double)it->second.samples,setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleTOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+    
+    for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+      for (int h = 0; h< 2; h++){      
+          PlotSimple2D( canvas2DCorr, h2DToAvsnSample[ro][h],(double)it->second.samples, -10000, textSizeRel,
+                            Form("%s/ToaVsNSample_Asic_%d_Half_%d.%s", outputDirPlots.Data(), ro, h, plotSuffix.Data()), 
+                            it->second, 1, kFALSE, "colz",true, Form("Asic %d, Half %d",ro,h));
+          h2DWaveFormHalfAsicAll[ro][h]->GetXaxis()->SetRangeUser(-25, (it->second.samples)*25);
+          Plot2DWithProfile( canvas2DCorr, h2DWaveFormHalfAsicAll[ro][h], hWaveFormHalfAsicAll[ro][h], -10000, -10000, textSizeRel,
+                            Form("%s/Waveform_Asic_%d_Half_%d.%s", outputDirPlots.Data(), ro, h, plotSuffix.Data()), 
+                            it->second, 1, kFALSE, "colz",true, Form("Asic %d, Half %d",ro,h), -1);
+      }
+    }
   }
 
   TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
@@ -4882,9 +5101,11 @@ bool Analyses::Calibrate(void){
   hspectraNCells->GetYaxis()->SetTitle("counts/event");
   PlotSimple1D(canvas1DSimple, hspectraNCells, -10000, -10000, textSizeRel, Form("%s/NCells.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT N_{Cells} #GT = %.1f",hspectraNCells->GetMean() ));
   if (typeRO == ReadOut::Type::Hgcroc){
-      hSaturatedCellID->Scale(1./evts);
-      hSaturatedCellID->GetYaxis()->SetTitle("counts/event");
-      PlotSimple1D(canvas1DSimple, hSaturatedCellID, -10000, -10000, textSizeRel, Form("%s/SaturatedCellsPerEvent.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+    hSaturatedCellID->Scale(1./evts);
+    hSaturatedCellID->GetYaxis()->SetTitle("counts/event");
+    PlotSimple1D(canvas1DSimple, hSaturatedCellID, -10000, -10000, textSizeRel, Form("%s/SaturatedCellsPerEvent.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+    
+    PlotSimple1D(canvas1DSimple, hSampleTOA, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleToA.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
   }
 
   if (ExtPlot > 0){
