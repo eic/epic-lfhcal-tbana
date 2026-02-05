@@ -1410,14 +1410,19 @@ bool Analyses::EvaluateHGCROCToAPhases(void){
 
   TH1D* hSampleTOA               = new TH1D( "hSampleTOA","#sample ToA; #sample TOA",
                                               it->second.samples,0,it->second.samples);
+  hSampleTOA->SetDirectory(0);
   TH1D* hSampleMaxADC            = new TH1D( "hSampleMaxADC","#sample ToA; #sample maxADC",
                                               it->second.samples,0,it->second.samples);
+  hSampleMaxADC->SetDirectory(0);
   TH1D* hSampleAboveTh           = new TH1D( "hSampleAboveTh","#sample ToA; #sample above th",
                                               it->second.samples,0,it->second.samples);
+  hSampleAboveTh->SetDirectory(0);
   TH1D* hSampleDiff              = new TH1D( "hSampleDiff","#sample ToA-#sample Max ADC; #sample maxADC-#sampleMax ADC",
                                               8,-0.5,7.5);
+  hSampleDiff->SetDirectory(0);
   TH1D* hSampleDiffMin           = new TH1D( "hSampleDiffMin","#sample ToA-#sample above th; #sample maxADC-#sample  above th",
                                               8,-0.5,7.5);
+  hSampleDiffMin->SetDirectory(0);
   
   TH2D* h2DToAvsADC[setup->GetNMaxROUnit()+1][2][5];
   TProfile* hToAvsADC[setup->GetNMaxROUnit()+1][2][5];
@@ -1431,12 +1436,15 @@ bool Analyses::EvaluateHGCROCToAPhases(void){
   for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
     for (int h = 0; h< 2; h++){
       h2DToAvsnSample[ro][h]    = new TH2D(Form("h2DTOASample_Asic_%d_Half_%d",ro,h),
-                                             Form("Sample vs TOA %d %d; TOA (arb. units); #sample",ro,h), 1024/8,0,1024,it->second.samples,0,it->second.samples);
-        hWaveFormHalfAsicAll[ro][h]    = new TProfile(Form("WaveForm_Asic_%d_Half_%d",ro,h),
-                                          Form("ADC-TOA correlation %d %d;  t (ns) ; ADC (arb. units)",ro,h),550,-50,500);
-        h2DWaveFormHalfAsicAll[ro][h]  = new TH2D(Form("h2DWaveForm_Asic_%d_Half_%d",ro,h),
-                                          Form("2D ADC vs TOA %d %d;  t (ns) ; ADC (arb. units)",ro,h), 
-                                          550,-50,500, 1044/4, -20, 1024);
+                                            Form("Sample vs TOA %d %d; TOA (arb. units); #sample",ro,h), 1024/8,0,1024,it->second.samples,0,it->second.samples);
+      hWaveFormHalfAsicAll[ro][h]    = new TProfile(Form("WaveForm_Asic_%d_Half_%d",ro,h),
+                                        Form("ADC-TOA correlation %d %d;  t (ns) ; ADC (arb. units)",ro,h),550,-50,500);
+      h2DWaveFormHalfAsicAll[ro][h]  = new TH2D(Form("h2DWaveForm_Asic_%d_Half_%d",ro,h),
+                                        Form("2D ADC vs TOA %d %d;  t (ns) ; ADC (arb. units)",ro,h), 
+                                        550,-50,500, 1044/4, -20, 1024);
+      h2DToAvsnSample[ro][h]->SetDirectory(0);
+      hWaveFormHalfAsicAll[ro][h]->SetDirectory(0);
+      h2DWaveFormHalfAsicAll[ro][h]->SetDirectory(0);
       
       for (int p = 0; p< 5; p++){
         hToAvsADC[ro][h][p]    = new TProfile(Form("ADCTOA_Asic_%d_Half_%d_NToASample_%d",ro,h,minNSampleToA+p),
@@ -1449,6 +1457,10 @@ bool Analyses::EvaluateHGCROCToAPhases(void){
         h2DWaveFormHalfAsic[ro][h][p]  = new TH2D(Form("h2DWaveForm_Asic_%d_Half_%d_NToASample_%d",ro,h,minNSampleToA+p),
                                           Form("2D ADC vs TOA %d %d %d;  t (ns) ; ADC (arb. units)",ro,h,minNSampleToA+p), 
                                           550,-50,500, 1044/4, -20, 1024);
+        hToAvsADC[ro][h][p]->SetDirectory(0);
+        h2DToAvsADC[ro][h][p]->SetDirectory(0);
+        hWaveFormHalfAsic[ro][h][p]->SetDirectory(0);
+        h2DWaveFormHalfAsic[ro][h][p]->SetDirectory(0);
       }
     }
   }
@@ -1776,9 +1788,10 @@ bool Analyses::TransferCalib(void){
 
     hTOANsVsCellID            = new TH2D( "hTOANsVsCellID","ToA (ns); cell ID; ToA (ns)",
                                       setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 500,-250,0);
+    hTOANsVsCellID->SetDirectory(0);
     hTOACorrNsVsCellID        = new TH2D( "hTOACorrNsVsCellID","ToA (ns); cell ID; ToA (ns)",
                                       setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 500,-250,0);
-
+    hTOACorrNsVsCellID->SetDirectory(0);
     
     hNCellsWTOAVsTotADC          = new TH2D( "hNCellsWTOAVsTotADC","NCells above TOA vs tot ADC; NCells above TOA; #Sigma(ADC) (arb. units) ",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 5000,0,10000);
@@ -1791,11 +1804,14 @@ bool Analyses::TransferCalib(void){
       for (int h = 0; h< 2; h++){
         h2DToAvsnSample[ro][h]    = new TH2D(Form("h2DTOASample_Asic_%d_Half_%d",ro,h),
                                               Form("Sample vs TOA %d %d; TOA (arb. units); #sample",ro,h), 1024/8,0,1024,it->second.samples,0,it->second.samples);
+        h2DToAvsnSample[ro][h]->SetDirectory(0);
         hWaveFormHalfAsicAll[ro][h]    = new TProfile(Form("WaveForm_Asic_%d_Half_%d",ro,h),
                                           Form("ADC-TOA correlation %d %d;  t (ns) ; ADC (arb. units)",ro,h),550,-50,500);
+        hWaveFormHalfAsicAll[ro][h]->SetDirectory(0);
         h2DWaveFormHalfAsicAll[ro][h]  = new TH2D(Form("h2DWaveForm_Asic_%d_Half_%d",ro,h),
                                           Form("2D ADC vs TOA %d %d;  t (ns) ; ADC (arb. units)",ro,h), 
                                             550,-50,500, 1044/4, -20, 1024);      
+        h2DWaveFormHalfAsicAll[ro][h]->SetDirectory(0);
       }
     }
   }
@@ -2384,14 +2400,19 @@ bool Analyses::AnalyseWaveForm(void){
   
   TH1D* hSampleTOA               = new TH1D( "hSampleTOA","#sample ToA; #sample TOA",
                                               20,0,20);
+  hSampleTOA->SetDirectory(0);
   TH1D* hSampleMaxADC            = new TH1D( "hSampleMaxADC","#sample ToA; #sample maxADC",
                                               20,0,20);
+  hSampleMaxADC->SetDirectory(0);
   TH1D* hSampleAboveTh           = new TH1D( "hSampleAboveTh","#sample ToA; #sample above th",
                                               20,0,20);
+  hSampleAboveTh->SetDirectory(0);
   TH1D* hSampleDiff              = new TH1D( "hSampleDiff","#sample ToA-#sample Max ADC; #sample maxADC-#sampleMax ADC",
                                               8,-0.5,7.5);
+  hSampleDiff->SetDirectory(0);
   TH1D* hSampleDiffMin           = new TH1D( "hSampleDiffMin","#sample ToA-#sample above th; #sample maxADC-#sample  above th",
                                               8,-0.5,7.5);
+  hSampleDiffMin->SetDirectory(0);
   
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->mkdir("IndividualCellsTrigg");
@@ -4688,21 +4709,25 @@ bool Analyses::Calibrate(void){
     hSampleTOAVsCellID->SetDirectory(0);
     hSampleTOA                = new TH1D( "hSampleTOA","#sample ToA; #sample TOA",
                                               it->second.samples,0,it->second.samples);
-
+    hSampleTOA->SetDirectory(0);  
     hTOANsVsCellID            = new TH2D( "hTOANsVsCellID","ToA (ns); cell ID; ToA (ns)",
                                       setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 500,-250,0);
+    hTOANsVsCellID->SetDirectory(0);
     hTOACorrNsVsCellID        = new TH2D( "hTOACorrNsVsCellID","ToA (ns); cell ID; ToA (ns)",
                                       setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 500,-250,0);
-    
+    hTOACorrNsVsCellID->SetDirectory(0);
     for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
       for (int h = 0; h< 2; h++){
         h2DToAvsnSample[ro][h]    = new TH2D(Form("h2DTOASample_Asic_%d_Half_%d",ro,h),
                                               Form("Sample vs TOA %d %d; TOA (arb. units); #sample",ro,h), 1024/8,0,1024,it->second.samples,0,it->second.samples);
+        h2DToAvsnSample[ro][h]->SetDirectory(0);
         hWaveFormHalfAsicAll[ro][h]    = new TProfile(Form("WaveForm_Asic_%d_Half_%d",ro,h),
                                           Form("ADC-TOA correlation %d %d;  t (ns) ; ADC (arb. units)",ro,h),550,-50,500);
+        hWaveFormHalfAsicAll[ro][h]->SetDirectory(0);
         h2DWaveFormHalfAsicAll[ro][h]  = new TH2D(Form("h2DWaveForm_Asic_%d_Half_%d",ro,h),
                                           Form("2D ADC vs TOA %d %d;  t (ns) ; ADC (arb. units)",ro,h), 
                                             550,-50,500, 1044/4, -20, 1024);      
+        h2DWaveFormHalfAsicAll[ro][h]->SetDirectory(0);
       }
     }
   }
@@ -5041,7 +5066,6 @@ bool Analyses::Calibrate(void){
   for(ithSpectraNoise=hSpectraNoise.begin(); ithSpectraNoise!=hSpectraNoise.end(); ++ithSpectraNoise){
     ithSpectraNoise->second.WriteExt(true);
   }
-  
   RootOutputHist->Close();
   //**********************************************************************
   //********************* Plotting ***************************************
