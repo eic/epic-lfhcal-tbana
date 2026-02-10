@@ -118,7 +118,7 @@ bool Analyses::CheckAndOpenIO(void){
       // std::cout << "creating additional histo file: " << RootOutputNameHist.Data() << " tree in : "<< RootOutputName.Data() << std::endl;
     }
     
-    if (!ExtractToAPhase) {
+    if (!ExtractToAPhase && !IsVisualizeWaveform) {
       bool sCOF = CreateOutputRootFile();
       if (!sCOF) return false;
       TsetupOut = new TTree("Setup","Setup");
@@ -285,12 +285,12 @@ bool Analyses::Process(void){
   }
   
   // copy existing calibration to other file
-  if(ApplyTransferCalib && !IsAnalyseWaveForm){
+  if(ApplyTransferCalib){
     status=TransferCalib();
   }
   
-  if (IsAnalyseWaveForm){
-    status=AnalyseWaveForm();
+  if (IsVisualizeWaveform){
+    status=VisualizeWaveform();
   }
   // extract mip calibration 
   if(ExtractScaling){
@@ -1337,7 +1337,7 @@ bool Analyses::GetPedestal(void){
                                   Form("%s/Noise_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
       if (typeRO == ReadOut::Type::Hgcroc){
         PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf, 
-                            textSizePixel, hSpectra, 1, 0, it->second.samples+1, 300, l,
+                            textSizePixel, hSpectra, 1, 0, it->second.samples+1, 0, 300, l,
                             Form("%s/Waveform_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
         PlotNoiseWithFits2ModLayer (canvas2ModPanel,pad2ModPanel, topRCornerX2Mod, topRCornerY2Mod, relSize2ModP, textSizePixel, 
                                     hSpectra, 1, minADCRange, maxADCRange, 1.2, l,
@@ -2261,16 +2261,19 @@ bool Analyses::TransferCalib(void){
       for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
         if (l%10 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
-          if (!setup->IsLayerOn(l,-1)){
-            std::cout << "====> layer " << l << " not enabled" << std::endl;
-            continue;
-          }
-        
+        if (!setup->IsLayerOn(l,-1)){
+          std::cout << "====> layer " << l << " not enabled" << std::endl;
+          continue;
+        }
+        if (!calib.IsLayerEnabled(l,-1)){
+          std::cout << "====> layer " << l << " all channels masked" << std::endl;
+          continue;
+        }        
         PlotCorr2D2ModLayer(canvas2ModPanelProf, pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                            textSizePixel, hSpectra, 1, 0, it->second.samples+1, 1000, l,
+                            textSizePixel, hSpectra, 1, 0, it->second.samples+1, 0, 1000, l,
                             Form("%s/Waveform_Layer%02d.%s" ,outputDirPlots.Data(),  l, plotSuffix.Data()), it->second);
         PlotCorr2D2ModLayer(canvas2ModPanelProf, pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectraTrigg, 1, 0, it->second.samples+1, 1000, l,
+                          textSizePixel, hSpectraTrigg, 1, 0, it->second.samples+1, 0, 1000, l,
                           Form("%s/WaveformSignal_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);            
         if (ExtPlot > 1){
           PlotNoiseWithFits2ModLayer (canvas2ModPanel, pad2ModPanel, topRCornerX2Mod, topRCornerY2Mod, relSize2ModP, textSizePixel, 
@@ -2344,8 +2347,8 @@ bool Analyses::TransferCalib(void){
 // ****************************************************************************
 // Analyse waveform
 // ****************************************************************************
-bool Analyses::AnalyseWaveForm(void){
-  std::cout<<"Analyse Waveform"<<std::endl;
+bool Analyses::VisualizeWaveform(void){
+  std::cout<<"Visualize Waveform"<<std::endl;
   int evts=TdataIn->GetEntries();
 
   std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
@@ -2355,64 +2358,27 @@ bool Analyses::AnalyseWaveForm(void){
   std::map<int,TileSpectra> hSpectraTrigg;
   std::map<int, TileSpectra>::iterator ithSpectraTrigg;
   TcalibIn->GetEntry(0);
-  // check whether calib should be overwritten based on external text file
-  if (OverWriteCalib){
-    calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
+  
+  // reading first event in tree to extract runnumber & RO-type
+  TdataIn->GetEntry(0);
+  Int_t runNr           = event.GetRunNumber();
+  ReadOut::Type typeRO  = event.GetROtype();
+  std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+  calib.SetRunNumber(runNr);
+  calib.SetBeginRunTime(event.GetBeginRunTimeAlt());
+  std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+
+  if (typeRO != ReadOut::Type::Hgcroc){
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+    std::cout << "This routine is not meant to run on CAEN data! Please check you are loading the correct inputs! \n ABORTING!!!" << std::endl;
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+    return false; 
   }
   
-  int runNr = -1;
-
-  std::map<int,short> bcmap;
-  std::map<int,short>::iterator bcmapIte;
-  if (CalcBadChannel == 1)
-    bcmap = ReadExternalBadChannelMap();
-
   //==================================================================================
   // create additional output hist
   //==================================================================================
-  std::cout << "Additional Output with histos being created: " << RootOutputNameHist.Data() << std::endl;
   CreateOutputRootHistFile();
-
-  int maxChannelPerLayer             = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
-  int maxChannelPerLayerSingleMod    = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
-  TH2D* hHighestADCAbovePedVsLayer   = new TH2D( "hHighestEAbovePedVsLayer","Highest ADC above PED; layer; brd channel; #Sigma(ADC) (arb. units) ",
-                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
-  hHighestADCAbovePedVsLayer->SetDirectory(0);
-  hHighestADCAbovePedVsLayer->Sumw2();
-
-
-  TH2D* hspectraTOTvsCellID      = new TH2D( "hspectraTOTvsCellID","TOT spectrums CellID; cell ID; TOT (arb. units) ",
-                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4096,0,4096);
-  hspectraTOTvsCellID->SetDirectory(0);
-  TH2D* hspectraTOAvsCellID      = new TH2D( "hspectraTOAvsCellID","TOA spectrums CellID; cell ID; TOA (arb. units) ",
-                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
-  hspectraTOAvsCellID->SetDirectory(0);
-
-  TH2D* hSampleTOAVsCellID       = new TH2D( "hSampleTOAvsCellID","#sample ToA; cell ID; #sample TOA",
-                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 20,0,20);
-  hSampleTOAVsCellID->SetDirectory(0);
-  TH2D* hSampleMaxADCVsCellID       = new TH2D( "hSampleMaxADCvsCellID","#sample ToA; cell ID; #sample Max ADC",
-                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 20,0,20);
-  hSampleMaxADCVsCellID->SetDirectory(0);
-  TH2D* hSampleDiffvsCellID       = new TH2D( "hSampleDiffvsCellID","#sample diff; cell ID; #sample ToA-#sample Max ADC",
-                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 8,-0.5,7.5);
-  hSampleDiffvsCellID->SetDirectory(0);
-  
-  TH1D* hSampleTOA               = new TH1D( "hSampleTOA","#sample ToA; #sample TOA",
-                                              20,0,20);
-  hSampleTOA->SetDirectory(0);
-  TH1D* hSampleMaxADC            = new TH1D( "hSampleMaxADC","#sample ToA; #sample maxADC",
-                                              20,0,20);
-  hSampleMaxADC->SetDirectory(0);
-  TH1D* hSampleAboveTh           = new TH1D( "hSampleAboveTh","#sample ToA; #sample above th",
-                                              20,0,20);
-  hSampleAboveTh->SetDirectory(0);
-  TH1D* hSampleDiff              = new TH1D( "hSampleDiff","#sample ToA-#sample Max ADC; #sample maxADC-#sampleMax ADC",
-                                              8,-0.5,7.5);
-  hSampleDiff->SetDirectory(0);
-  TH1D* hSampleDiffMin           = new TH1D( "hSampleDiffMin","#sample ToA-#sample above th; #sample maxADC-#sample  above th",
-                                              8,-0.5,7.5);
-  hSampleDiffMin->SetDirectory(0);
   
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->mkdir("IndividualCellsTrigg");
@@ -2426,159 +2392,60 @@ bool Analyses::AnalyseWaveForm(void){
     std::cout << "ATTENTION: YOU ARE RESETTING THE MAXIMUM NUMBER OF EVENTS TO BE PROCESSED TO: " << maxEvents << ". THIS SHOULD ONLY BE USED FOR TESTING!" << std::endl;
     std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
   }
-  ReadOut::Type typeRO = ReadOut::Type::Caen;
   
-  //==================================================================================
-  // setup waveform builder for HGCROC data
-  //==================================================================================
-  waveform_fit_base *waveform_builder = nullptr;
-  waveform_builder = new max_sample_fit();
-  double minNSigma = 5;
-  int nCellsAboveTOA  = 0;
-  int nCellsAboveMADC = 0;
-  double totADCs      = 0.;
   //==================================================================================
   // process events from tree
   //==================================================================================
   for(int i=0; i<evts && i < maxEvents ; i++){
     if (i%5000 == 0&& i > 0 && debug > 0) std::cout << "Reading " <<  i << "/" << evts << " events"<< std::endl;
-    if (debug > 2 && typeRO == ReadOut::Type::Hgcroc){
+    if (debug > 2 ){
       std::cout << "************************************* NEW EVENT " << i << "  *********************************" << std::endl;
     }
-    TdataIn->GetEntry(i);
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    // reset calib object info 
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    if (i == 0){
-      runNr   = event.GetRunNumber();
-      typeRO  = event.GetROtype();
-      std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
-      calib.SetRunNumber(runNr);
-      calib.SetBeginRunTime(event.GetBeginRunTimeAlt());
-      std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
-    }
-   
-    // initialize counters per event
-    nCellsAboveTOA  = 0;
-    nCellsAboveMADC = 0;
-    totADCs         = 0.;
+    TdataIn->GetEntry(i);   
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // process tiles in event
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
     for(int j=0; j<event.GetNTiles(); j++){
-      //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      // histo filling for CAEN specific things
-      //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++      
-      if (typeRO == ReadOut::Type::Caen) {
-        // nothing to be done
-        return false;
       //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-      // histo filling for HGCROC specific things & resetting of ped
+      // histo filling for HGCROC specific things 
       //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
-      } else if (typeRO == ReadOut::Type::Hgcroc) {
-        Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
-        int cellID = aTile->GetCellID();
-        ithSpectra=hSpectra.find(cellID);
-        ithSpectraTrigg=hSpectraTrigg.find(cellID);
-        
-        // get pedestal values from calib object
-        double ped    = calib.GetPedestalMeanL(cellID);
-        double pedErr = calib.GetPedestalSigL(cellID);
-        if (ped == -1000){
-          ped     = calib.GetPedestalMeanH(cellID);
-          pedErr  = calib.GetPedestalSigH(cellID);
-          if (ped == -1000){
-            ped     = aTile->GetPedestal();
-            pedErr  = 5;
-          }
-        }
-        // reevaluate waveform
-        waveform_builder->set_waveform(aTile->GetADCWaveform());
-        waveform_builder->fit_with_average_ped(ped);
-        aTile->SetIntegratedADC(waveform_builder->get_E());
-        aTile->SetPedestal(waveform_builder->get_pedestal());
-        
-        // obtain integrated tile quantities for histo filling
-        double adc = aTile->GetIntegratedADC();
-        double tot = aTile->GetRawTOT();
-        double toa = aTile->GetRawTOA();
-        totADCs         = totADCs+adc;
-        // obtain samples in which TOA, TOT, maximum ADC are firing
-        Int_t nSampTOA  = aTile->GetFirstTOASample();        
-        Int_t nMaxADC   = aTile->GetMaxSampleADC();
-        Int_t nADCFirst = aTile->GetFirstSampleAboveTh();
-        Int_t nDiffFirstT= nSampTOA-nADCFirst;
-        Int_t nDiffFirstM= nMaxADC-nADCFirst;
-        Int_t nDiffMaxT  = nMaxADC-nSampTOA;
-        if (adc > 10)
-          nCellsAboveMADC++; 
-        if (toa > 0)
-          nCellsAboveTOA++;
-                  
-        if (toa > 0){
-          hSampleTOA->Fill(nSampTOA);
-          hSampleTOAVsCellID->Fill(cellID,nSampTOA);
-        }
-        if (adc > ped+2*pedErr){
-          hSampleMaxADC->Fill(nMaxADC);
-          hSampleMaxADCVsCellID->Fill(cellID,nMaxADC);
-          hSampleAboveTh->Fill(nADCFirst);
-        }
-        
-        if (toa > 0 && adc > ped+2*pedErr){
-          hSampleDiff->Fill(nSampTOA-nMaxADC);
-          hSampleDiffvsCellID->Fill(cellID,nSampTOA-nMaxADC);
-          hSampleDiffMin->Fill(nSampTOA-nADCFirst);
-        }
-        
-        hspectraTOAvsCellID->Fill(cellID,toa);
-        hspectraTOTvsCellID->Fill(cellID,tot);
-        
-        int layer     = setup->GetLayer(cellID);
-        int chInLayer = setup->GetChannelInLayerFull(cellID);
-        // int offset    = nSampTOA-(nSampTOA-nADCFirst);
-        int offset    = nADCFirst+nDiffFirstM;
-        if (nDiffMaxT == 0 )
-          offset--;
-        // Detailed debug info with print of waveform
-        if (debug > 3){
-          aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(cellID), calib.GetPedestalMeanL(cellID), calib.GetPedestalSigL(cellID));
-        }
-        // fill spectra histos
-        if(ithSpectra!=hSpectra.end()){
-          ithSpectra->second.FillExtHGCROC(adc,toa,tot,nADCFirst,-1);
-          ithSpectra->second.FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
+      Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
+      int cellID = aTile->GetCellID();
+      ithSpectra=hSpectra.find(cellID);
+      ithSpectraTrigg=hSpectraTrigg.find(cellID);
+      
+      // obtain integrated tile quantities for histo filling
+      double adc = aTile->GetIntegratedADC();
+      double tot = aTile->GetRawTOT();
+      double toa = aTile->GetRawTOA();
+      // obtain samples in which TOA, TOT, maximum ADC are firing
+      Int_t nSampTOA    = aTile->GetCorrectedFirstTOASample(calib.GetToAOff(cellID));        
+      Int_t nOffEmpty   = 2;
+      
+      // fill spectra histos
+      if(ithSpectra!=hSpectra.end()){
+        ithSpectra->second.FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
+        ithSpectra->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
+      } else {
+        RootOutputHist->cd("IndividualCells");
+        hSpectra[cellID]=TileSpectra("full",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+        hSpectra[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
+        hSpectra[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
+      }
+      // fill spectra histos for signals with ToA
+      if (toa > 0 ){      // needed for summing tests
+        if(ithSpectraTrigg!=hSpectraTrigg.end()){
+          ithSpectraTrigg->second.FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
+          ithSpectraTrigg->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
         } else {
-          RootOutputHist->cd("IndividualCells");
-          hSpectra[cellID]=TileSpectra("full",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
-          hSpectra[cellID].FillExtHGCROC(adc,toa,tot,nADCFirst,-1);
-          hSpectra[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
-          RootOutput->cd();
-        }
-        // fill spectra histos for signals with ToA
-        if (toa > 0 ){      // needed for summing tests
-        // if (toa > 0 && nADCFirst == 4 && nDiffFirstM ==1 && nDiffMaxT == 0){      // needed for summing tests
-          // aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(cellID), calib.GetPedestalMeanL(cellID), calib.GetPedestalSigL(cellID));
-          hHighestADCAbovePedVsLayer->Fill(layer,chInLayer, adc);
-          if(ithSpectraTrigg!=hSpectraTrigg.end()){
-            ithSpectraTrigg->second.FillExtHGCROC(adc,toa,tot,nADCFirst,-1);
-            ithSpectraTrigg->second.FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
-          } else {
-            RootOutputHist->cd("IndividualCellsTrigg");
-            hSpectraTrigg[cellID]=TileSpectra("signal",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
-            hSpectraTrigg[cellID].FillExtHGCROC(adc,toa,tot,nADCFirst,-1);
-            hSpectraTrigg[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), toa, calib.GetPedestalMeanH(cellID),offset);
-            RootOutput->cd();
-          }
+          RootOutputHist->cd("IndividualCellsTrigg");
+          hSpectraTrigg[cellID]=TileSpectra("signal",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+          hSpectraTrigg[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
+          hSpectraTrigg[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
         }
       }
     }
-    RootOutput->cd();
-    TdataOut->Fill();
   }
-  //RootOutput->cd();
-  TdataOut->Write();
-  TsetupIn->CloneTree()->Write();
 
   //==================================================================================
   // Setup general plotting infos
@@ -2591,30 +2458,6 @@ bool Analyses::AnalyseWaveForm(void){
   StyleSettingsBasics("pdf");
   SetPlotStyle();  
   
-  //==================================================================================
-  // Create Summary plots
-  //==================================================================================    
-  TCanvas* canvas2DSigQA = new TCanvas("canvas2DSigQA","",0,0,1450,1300);  // gives the page size
-  DefaultCanvasSettings( canvas2DSigQA, 0.08, 0.13, 0.045, 0.07);
-
-  PlotSimple2D( canvas2DSigQA, hSampleTOAVsCellID, (double)it->second.samples,setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleTOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DSigQA, hSampleMaxADCVsCellID, (double)it->second.samples, setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleMaxADCvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DSigQA, hSampleDiffvsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleDiffvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DSigQA, hspectraTOAvsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  PlotSimple2D( canvas2DSigQA, hspectraTOTvsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOTvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-  
-  canvas2DSigQA->SetLogz(1);
-  PlotSimple2D( canvas2DSigQA, hHighestADCAbovePedVsLayer, -10000, -10000, textSizeRel, Form("%s/MaxADCAboveNoise_vsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);    
-  
-  TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
-  DefaultCanvasSettings( canvas1DSimple, 0.08, 0.03, 0.03, 0.07);
-
-  PlotSimple1D(canvas1DSimple, hSampleTOA, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleToA.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
-  PlotSimple1D(canvas1DSimple, hSampleMaxADC, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleMaxADC.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
-  PlotSimple1D(canvas1DSimple, hSampleAboveTh, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleAboveTh.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
-  PlotSimple1D(canvas1DSimple, hSampleDiff, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleDiff.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
-  PlotSimple1D(canvas1DSimple, hSampleDiffMin, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleDiffMin.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
-
   // print general calib info
   calib.PrintGlobalInfo();  
 
@@ -2795,29 +2638,33 @@ bool Analyses::AnalyseWaveForm(void){
     
     std::cout << "plotting dual module layers" << std::endl;
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      if (l%10 == 0 && l > 0 && debug > 0)
+      if (l%5 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
       if (!setup->IsLayerOn(l,-1)){
         std::cout << "====> layer " << l << " not enabled" << std::endl;
         continue;
       }
+      if (!calib.IsLayerEnabled(l,-1)){
+        std::cout << "====> layer " << l << " all channels masked" << std::endl;
+        continue;
+      }
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectra, 1, -25000, (it->second.samples)*25000, 300, l, 
+                          textSizePixel, hSpectra, 1, -50, (it->second.samples)*25, 0, 1023, l, 
                           Form("%s/Waveform_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectra, 2, 0, 1024, 300, l, 
+                          textSizePixel, hSpectra, 2, 0, 1024, 0, 1023, l, 
                           Form("%s/TOA_ADC_Layer%02d.%s" ,outputDirPlots.Data(),l, plotSuffix.Data()), it->second);
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectra, 3, 0, 1024, it->second.samples, l,
+                          textSizePixel, hSpectra, 3, 0, 1024, 0, it->second.samples, l,
                           Form("%s/TOA_Sample_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectraTrigg, 1, -25000, (it->second.samples)*25000, 300, l, 
+                          textSizePixel, hSpectraTrigg, 1, -50, (it->second.samples)*25, 0, 1023, l, 
                           Form("%s/WaveformSignal_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);            
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectraTrigg, 2, 0, 1024, 300, l,
+                          textSizePixel, hSpectraTrigg, 2, 0, 1024, 0, 1023, l,
                           Form("%s/TOA_ADC_Signal_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
       PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectraTrigg, 3, 0, 1024, it->second.samples, l,                          Form("%s/TOA_Sample_Signal_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
+                          textSizePixel, hSpectraTrigg, 3, 0, 1024, 0, it->second.samples, l,                          Form("%s/TOA_Sample_Signal_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
       if (ExtPlot > 1){
         PlotSpectra2ModLayer (canvas2ModPanel,pad2ModPanel, topRCornerX2Mod, topRCornerY2Mod, relSize2ModP, textSizePixel, 
                               hSpectra, 0, -100, 1024, 1.2, l,
@@ -2834,29 +2681,7 @@ bool Analyses::AnalyseWaveForm(void){
     
   }
   
-  RootOutput->cd();
-  
-  std::cout<<"What is the value? <ped mean high>: "<<calib.GetAveragePedestalMeanHigh() << "\t good channels: " << calib.GetNumberOfChannelsWithBCflag(3) <<std::endl;
-  if (IsCalibSaveToFile()){
-    TString fileCalibPrint = RootOutputName;
-    fileCalibPrint         = fileCalibPrint.ReplaceAll(".root","_calib.txt");
-    calib.PrintCalibToFile(fileCalibPrint);
-  }
-  
-  TcalibOut->Fill();
-  TcalibOut->Write();
-  
-  RootOutput->Close();
   RootOutputHist->cd();
-  if (typeRO == ReadOut::Type::Hgcroc){
-    hHighestADCAbovePedVsLayer->Write();
-    hSampleTOA->Write();
-    hSampleMaxADC->Write();
-    hSampleTOAVsCellID->Write();
-    hSampleMaxADCVsCellID->Write();
-    hspectraTOAvsCellID->Write();
-    hspectraTOTvsCellID->Write();
-  }
   RootOutputHist->cd("IndividualCells");
   for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
     ithSpectra->second.WriteExt(true);
@@ -2867,8 +2692,6 @@ bool Analyses::AnalyseWaveForm(void){
       ithSpectraTrigg->second.WriteExt(true);
     }
   }
-
-  
   RootInput->Close();
   return true;
 }
@@ -4956,7 +4779,7 @@ bool Analyses::Calibrate(void){
         
         hspectraHGvsCellID->Fill(aTile->GetCellID(), adc);
         if(hasTOT)  hspectraTotvsCellID->Fill(aTile->GetCellID(), tot);
-        if(adc > 1024-avPedMean-20*avPedSig) hSaturatedCellID->Fill(aTile->GetCellID());
+        if(aTile->IsSaturatedADC()) hSaturatedCellID->Fill(aTile->GetCellID());
         if (localNoiseTrigg){
           hspectraHGCorrvsCellIDNoise->Fill(aTile->GetCellID(), adc);
           if(hasTOT) hspectraTotvsCellIDNoise->Fill(aTile->GetCellID(), tot);        
@@ -5227,6 +5050,10 @@ bool Analyses::Calibrate(void){
           std::cout << "====> layer " << l << " not enabled" << std::endl;
           continue;
         }
+        if (!calib.IsLayerEnabled(l,-1)){
+          std::cout << "====> layer " << l << " all channels masked" << std::endl;
+          continue;
+        }
         // PlotNoiseAdvWithFits2ModLayer ( canvas2ModPanel,pad2ModPanel, topRCornerX2Mod, topRCornerY2Mod, relSize2ModP, textSizePixel, 
         //                                 hSpectra, hSpectraNoise, true, -50, 100, 1.2, l, 
         //                                 Form("%s/NoiseTrigg_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
@@ -5235,7 +5062,7 @@ bool Analyses::Calibrate(void){
                               Form("%s/Spectra_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
         if (typeRO == ReadOut::Type::Hgcroc) {
             PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf, textSizePixel, 
-                                hSpectra, 4, 0, 1024, 1800., l,
+                                hSpectra, 4, 0, 1024, 0, 1800., l,
                                 Form("%s/ADCTOT_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
             PlotSpectra2ModLayer (canvas2ModPanel,pad2ModPanel, topRCornerX2Mod, topRCornerY2Mod, relSize2ModP, textSizePixel, 
                                   hSpectra, 4, 0, 4096, 1.2, l,

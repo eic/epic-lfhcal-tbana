@@ -69,15 +69,11 @@ bool TileSpectra::FillExtHGCROC(double adc = 0., double toa= 0., double tot= 0.,
     return false; 
   }
 
-//   // attempt to correct for ToA offset
-//   if (toa < 0 && sample != -1){
-//     toa = toa+1024;
-//     sample--;
-//   }
-//   
-  hspectraHG.Fill(adc);
-  hspectraTOA.Fill(toa);  
-  hspectraTOT.Fill(tot);  
+  if (extend !=  5 ){
+    hspectraHG.Fill(adc);
+    hspectraTOA.Fill(toa);  
+    hspectraTOT.Fill(tot);
+  }
   if (extend ==  2 ){
     if (tot > 0 && toa > 0){
       hADCTOT.Fill(adc,tot);
@@ -89,6 +85,10 @@ bool TileSpectra::FillExtHGCROC(double adc = 0., double toa= 0., double tot= 0.,
     hcorrTOAADC.Fill(toa,adc);
     hTOAADC.Fill(toa,adc);
     hcorrTOASample.Fill(toa,sample);
+  }
+  if (extend == 5){
+    hcorrTOAADC.Fill(toa,adc);
+    hTOAADC.Fill(toa,adc);
   }
   return true;
 }
@@ -122,10 +122,20 @@ bool TileSpectra::FillWaveformVsTime(std::vector<int> samples, double toalincorr
   for (int k = 0; k < (int)samples.size(); k++ ){
     double tempt = ((k+offset)*1024+toalincorr)*timeRes;
     hcorr.Fill(tempt,samples.at(k)-ped);
-    if (extend == 3) hWaveForm.Fill(tempt,samples.at(k)-ped);
+    if (extend == 3 || extend == 5 || extend == 6 ) hWaveForm.Fill(tempt,samples.at(k)-ped);
   }
   return true;
 }
+
+bool TileSpectra::FillMaxVsTime(double adc, double toalincorr = 0, int offset = 0, int nSampleADCMax = 0){
+  // more infos
+  double timeRes = 25./1024;
+  double tempt = ((nSampleADCMax+offset)*1024+toalincorr)*timeRes;
+  hcorr.Fill(tempt,adc);
+  if (extend == 3 || extend == 5 || extend == 6) hWaveForm.Fill(tempt,adc);
+  return true;
+}
+
 
 bool TileSpectra::FillWaveformVsTimeParser(std::vector<int> samples, double ped = 0){
   for( int k = 0; k < (int)samples.size(); k++){

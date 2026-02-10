@@ -29,13 +29,6 @@ function MuonCalibHGCROC()
     else 
       ./DataPrep -d 2 -e -f -P $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wPed_wBC_$runNrMuon.root  -O $PlotBaseDir/HGCROC_PlotsCalibTransfer/$6 -r $runNrFile -B $7  -G $8 #-F png -L 50000
     fi
-	elif [ $1 == "wave" ]; then 
-    if [ -f "$4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt" ]; then
-      echo "overwriting original calib file with manually modified $4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt"
-      ./DataPrep -d 1 -E 2 -f -w $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wave_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsWave/$6 -r $runNrFile -k $4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt     
-    else 
-      ./DataPrep -d 1 -E 2 -f -w $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wave_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$6 -r $runNrFile 
-    fi
 	elif [ $1 == "default" ]; then 
 		time ./DataPrep -f -d 1 -e  -s -i $4/rawHGCROC_wPed_wBC_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuon/$6 -r $runNrFile
 	elif [ $1 == "imp" ]; then 
@@ -60,10 +53,22 @@ function MuonCalibHGCROC()
 		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved5th_Red/$6 -r $runNrFile
 	elif [ $1 == "imp6th_red" ]; then 
 		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp6R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved6th_Red/$6 -r $runNrFile
-  elif [ $1 == "wave_red" ]; then 
-     ./DataPrep -d 1 -E 2 -f -w $4/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNrMuon.root -i $4/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNrMuon.root -o $4/rawHGCROC_miptrigg_wPedwMuon_wBC_wave_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibWaveMuons/$6 -r $runNrFile 
+  fi
+}
+
+function WaveformHGCROC(){
+	echo "=================================================================================="
+	echo "option $1"
+	echo "run Nr: $2"
+	echo "dataDir: $3"
+	echo "OutNameRun:" $4
+  if [ $1 == "wavepdf" ]; then 
+    ./DataPrep -d 1 -E 2 -f -w -i $3/calibratedHGCROC_Run_$2.root -o $3/calibratedHGCROC_Wave_Run_$2.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$4 -r $runNrFile 
+  elif [ $1 == "wavepng" ]; then 
+    ./DataPrep -d 1 -E 2 -f -w -i $3/calibratedHGCROC_Run_$2.root -o $3/calibratedHGCROC_Wave_Run_$2.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$4 -r $runNrFile -F png
 	fi
 }
+
 
 # running example:
 # bash runCalibration_2024.sh fbockExt2 muoncalibA1 improvedWBC4th
@@ -122,7 +127,8 @@ if [ $2 = "toaPhase" ]; then
       ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirOut/rawHGCROC_wPed_$runNrPed.root #-F png
     done
   elif [ $3 = "Muon" ]; then 
-    runs='FullSetA_2'
+    runs='FullSetA_1'
+#     runs='FullSetA_2'
     for runNr in $runs; do 
       ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
     done
@@ -130,18 +136,15 @@ if [ $2 = "toaPhase" ]; then
 
 fi
 
-if [ $2 = "elewave" ]; then
-  
+if [ $2 = "wave" ]; then  
 #   runs='165 166 167 168 169 170'
 #   runs='170'
 #   runs='165'
-  runPed='68'
-  runs='184'
-	badChannelMap="../configs/TB2025/badChannel_HGCROC_PSTB2025_layer0.txt"
+#   runs='184'
+  runs='FullSetA_2'
 	runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
-	toaPhaseOffset=../configs/TB2025/ToAOffsets_TB2025_HadRun.csv
 	for runNr in $runs; do 
-		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
+		WaveformHGCROC $3 $runNr $dataDirRaw Run_$runNr
 	done
 fi
 

@@ -42,17 +42,22 @@ class HGCROC_Waveform_Analysis{
 
   inline bool CanOverWrite(void)                const {return Overwrite;};
   inline bool IsToAnalysisWaveForm(void)        const {return IsAnalyseWaveForm;};
+  inline bool IsToExtractTimeWalk(void)         const {return IsExtractTimeWalk;};
+  inline bool IsToInvCrossTalk(void)            const {return IsInvCrossTalk;};
   inline bool IsHGCROC(void)                    const {return HGCROC;};
   
   inline short GetExtPlotting(void)             const {return ExtPlot;};
   inline bool GetOverWriteCalib(void)           const {return OverWriteCalib;};
   inline int GetMaxEvents(void)                 const {return maxEvents;};
   inline int GetFixedTOASample(void)            const {return fixedTOASample;};
+  inline int GetFixedROChannel(void)            const {return fixedROCh;};
   
   //setter methods
   //Overload method for boolean...or is it too dangerous?
   inline void CanOverWrite(bool b)               {Overwrite=b;};
   inline void IsToAnalysisWaveForm(bool b)       {IsAnalyseWaveForm=b;};
+  inline void IsToExtractTimeWalk(bool b)        {IsExtractTimeWalk=b;};
+  inline void IsToInvCrossTalk(bool b)           {IsInvCrossTalk=b;};
   inline void SetOverWriteCalib(bool b)          {OverWriteCalib = b;};
   inline void SetExtPlotting(short b)            {ExtPlot = b;};
   inline void EnableDebug(int i)                 {debug=i;};  
@@ -71,9 +76,11 @@ class HGCROC_Waveform_Analysis{
   inline void SetExternalToACalibOffSetFile(TString name)     {ExternalToACalibOffSetFile =name;};
   inline void SetMaxEvents(int n)                 {maxEvents = n;};
   inline void SetFixedTOASample(int s)            {fixedTOASample = s;};
+  inline void SetFixedROChannel(int r)            {fixedROCh = r;};
   
   //General methods
   bool CreateOutputRootFile(void);
+  bool CreateOutputRootHistFile(void);
   bool CheckAndOpenIO(void);
   bool Process(void);
 
@@ -96,6 +103,8 @@ class HGCROC_Waveform_Analysis{
   TFile* RootCalibOutput    =nullptr;     // root file calib values (mip) output
   bool HGCROC                 =false;     // Flag for HGCROC data conversion
   bool IsAnalyseWaveForm      =false;     // Flag for routine with waveform analysis
+  bool IsExtractTimeWalk      =false;     // Flag for routine with time walk extraction
+  bool IsInvCrossTalk         =false;     // Flag for routine with investigate cross talk
   bool OverWriteCalib         =false;     // Flag to overwrite calib from text file
   short ExtPlot               =0;         // Enable extended plotting
   bool Overwrite              =false;     // Flag to overwrite outputs
@@ -110,6 +119,7 @@ class HGCROC_Waveform_Analysis{
   Event* eventptr;
   int maxEvents               = -1;
   int fixedTOASample          = -1;
+  int fixedROCh               = -1;
   
   TTree* TsetupIn=nullptr;
   TTree* TsetupOut=nullptr;
@@ -123,6 +133,8 @@ class HGCROC_Waveform_Analysis{
 
  private:
   bool AnalyseWaveForm(void);
+  bool ExtractTimeWalk(void);
+  bool InvestigateCrossTalk(void);
  };
 
 

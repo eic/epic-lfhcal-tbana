@@ -7,6 +7,23 @@ std::vector<int> Hgcroc::GetADCWaveform(void) const{
   return adc_waveform;
 }
 
+bool Hgcroc::IsSaturatedADC() const{
+  for (int k = 0; k < (int)adc_waveform.size(); k++ ){
+    if (adc_waveform.at(k) > 1022)
+      return true;
+  }
+  return false;
+}
+
+int Hgcroc::IsBelowPed(double pedSig) const{
+  for (int k = 0; k < (int)adc_waveform.size(); k++ ){
+    if ( adc_waveform.at(k) < (pedestal - pedSig))
+      return k;
+  }
+  return -1;
+}
+
+
 int Hgcroc::GetMaxSampleADC (void){
   Double_t maxADC = -1000;
   int nMaxADC   = 0;
@@ -86,6 +103,18 @@ double Hgcroc::GetRawTOA(void) const{
 double Hgcroc::GetCorrectedTOA(void) const{
   return TOA;
 }
+
+int Hgcroc::GetCorrectedFirstTOASample(double toAOffset) {
+  int nSampTOA  = GetFirstTOASample();
+  int rawTOA    = (int)GetRawTOA();
+  // only calculate if the waveform actually had an intrinsic TOA
+  if (rawTOA > 1 && toAOffset != -1000.){
+    if ((rawTOA-toAOffset) < 0)
+      nSampTOA++; 
+  }
+  return nSampTOA;
+}
+
 
 int Hgcroc::GetPedestal(void) const{
   return pedestal;

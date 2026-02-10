@@ -771,10 +771,10 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
   //********************************************************************************************************************************
   //********************************************************************************************************************************
   //********************************************************************************************************************************
-  TBox* CreateBox(Color_t colorBox, Double_t xStart, Double_t yStart, Double_t xEnd, Double_t yEnd, Style_t fillStyle = 1001 ) {
+  TBox* CreateBox(Color_t colorBox, Double_t xStart, Double_t yStart, Double_t xEnd, Double_t yEnd, Style_t fillStyle = 1001, Float_t opacity = 1.  ) {
       TBox* box = new TBox(xStart ,yStart , xEnd, yEnd);
       box->SetLineColor(colorBox);
-      box->SetFillColor(colorBox);
+      box->SetFillColorAlpha(colorBox,opacity);
       box->SetFillStyle(fillStyle);
       return box;
   }
@@ -792,6 +792,14 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
       TBox* badChannelArea =  CreateBox(boxCol, minX, minY, maxX,maxY, 1001 );
       badChannelArea->Draw();
     }
+  }
+  //********************************************************************************************************************************
+  //********************************************************************************************************************************
+  //********************************************************************************************************************************
+  void DrawHighlightTrigg (double minX, double minY, double maxX, double maxY){
+    Color_t boxCol = kOrange+6;
+    TBox* highChannelArea =  CreateBox(boxCol, minX, minY, maxX,maxY, 1001, 0.35 );
+    highChannelArea->Draw();
   }
   //********************************************************************************************************************************
   //********************** Returns default labeling strings  ***********************************************************************
@@ -1193,4 +1201,93 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
     }
     return;
   }    
+  
+  //********************************************************************************************************************************
+  //******** CreateCanvasAndPadsFor8PannelTBPlot ***********************************************************************************
+  //********************************************************************************************************************************
+  void CreateCanvasAndPadsForAsicLFHCalTBPlot(TCanvas* &canvas, TPad* pads[64],  Double_t* topRCornerX, Double_t* topRCornerY,  Double_t* relSize, 
+                                           Int_t textSizePixel = 30, Double_t marginLeft = 0.03, TString add = "", bool rightCorner = true, int debug = 0){
+    Double_t arrayBoundX[9];
+    Double_t arrayBoundY[9];
+    Double_t relativeMarginsX[3];
+    Double_t relativeMarginsY[3];
+    ReturnCorrectValuesForCanvasScaling(3300,3300, 8, 8,marginLeft, 0.005, 0.005,marginLeft,arrayBoundX,arrayBoundY,relativeMarginsX,relativeMarginsY, debug);
+
+    canvas = new TCanvas(Form("canvas8x8Panel%s", add.Data()),"",0,0,3300,3300);  // gives the page size
+    canvas->cd();
+
+    for (int k = 0; k< 8; k++){
+      pads[k+0*8]   = new TPad(Form("pad8x8Panel%s_%d", add.Data(),k+0*8), "", arrayBoundX[k], arrayBoundY[8], arrayBoundX[k+1], arrayBoundY[7],-1, -1, -2);
+      pads[k+1*8]   = new TPad(Form("pad8x8Panel%s_%d", add.Data(),k+8), "", arrayBoundX[k], arrayBoundY[7], arrayBoundX[k+1], arrayBoundY[6],-1, -1, -2);
+      pads[k+2*8]   = new TPad(Form("pad8x8Panel%s_%d", add.Data(),k+2*8), "", arrayBoundX[k], arrayBoundY[6], arrayBoundX[k+1], arrayBoundY[5],-1, -1, -2);
+      pads[k+3*8]   = new TPad(Form("pad8x8Panel%s_%d", add.Data(),k+3*8), "", arrayBoundX[k], arrayBoundY[5], arrayBoundX[k+1], arrayBoundY[4],-1, -1, -2);
+      pads[k+4*8]   = new TPad(Form("pad8x8Panel%s_%d", add.Data(),k+4*8), "", arrayBoundX[k], arrayBoundY[4], arrayBoundX[k+1], arrayBoundY[3],-1, -1, -2);
+      pads[k+5*8]   = new TPad(Form("pad8x8Panel%s_%d", add.Data(),k+5*8), "", arrayBoundX[k], arrayBoundY[3], arrayBoundX[k+1], arrayBoundY[2],-1, -1, -2);
+      pads[k+6*8]   = new TPad(Form("pad8x8Panel%s_%d", add.Data(),k+6*8), "", arrayBoundX[k], arrayBoundY[2], arrayBoundX[k+1], arrayBoundY[1],-1, -1, -2);
+      pads[k+7*8]   = new TPad(Form("pad8x8Panel%s_%d", add.Data(),k+7*8), "", arrayBoundX[k], arrayBoundY[1], arrayBoundX[k+1], arrayBoundY[0],-1, -1, -2);
+    }
+        
+    for (int k = 0; k < 64; k++){ 
+      // 0th column
+      if (k%8 ==0 && k > 7 && k < 56 )
+        DefaultPadSettings( pads[k], relativeMarginsX[0], relativeMarginsX[1], relativeMarginsY[1], relativeMarginsY[1]);
+      else if (k == 0)
+        DefaultPadSettings( pads[k], relativeMarginsX[0], relativeMarginsX[1], relativeMarginsY[1], relativeMarginsY[2]);
+      else if (k == 56)
+        DefaultPadSettings( pads[k], relativeMarginsX[0], relativeMarginsX[1], relativeMarginsY[0], relativeMarginsY[1]);
+      
+      //7th column
+      else if (k%8 ==7 && k > 7 && k < 56 )
+        DefaultPadSettings( pads[k], relativeMarginsX[1], relativeMarginsX[2], relativeMarginsY[1], relativeMarginsY[1]);
+      else if (k == 7)
+        DefaultPadSettings( pads[k], relativeMarginsX[1], relativeMarginsX[2], relativeMarginsY[1], relativeMarginsY[2]);
+      else if (k == 63)
+        DefaultPadSettings( pads[k], relativeMarginsX[1], relativeMarginsX[2], relativeMarginsY[0], relativeMarginsY[1]);
+      
+      // bottom row
+      else if (k > 0 && k < 7)
+        DefaultPadSettings( pads[k], relativeMarginsX[1], relativeMarginsX[1], relativeMarginsY[1], relativeMarginsY[2]);
+      // top row
+      else if (k > 56 && k < 63)
+        DefaultPadSettings( pads[k], relativeMarginsX[1], relativeMarginsX[1], relativeMarginsY[0], relativeMarginsY[1]);
+      // everything in the middle
+      else 
+        DefaultPadSettings( pads[k], relativeMarginsX[1], relativeMarginsX[1], relativeMarginsY[1], relativeMarginsY[1]);
+    }
+    
+    // everything except top row
+    for (int i = 0; i < 56; i++)
+      topRCornerY[i]  = 1-relativeMarginsY[1];
+    // top row
+    for (int i = 56; i < 64; i++)
+      topRCornerY[i]  = 1-relativeMarginsY[0];
+    
+    // right corner
+    if (rightCorner){
+      for (int i = 0; i < 64; i++){
+        if (i%8 == 7)
+          topRCornerX[i]  = 1-relativeMarginsX[2];
+        else 
+          topRCornerX[i]  = 1-relativeMarginsX[1];
+      }
+    // left corner
+    } else {
+      for (int i = 0; i < 64; i++){
+        if (i%8 == 0)
+          topRCornerX[i]  = relativeMarginsX[0];
+        else 
+          topRCornerX[i]  = relativeMarginsX[1];
+      }
+    }
+    
+    for (Int_t p = 0; p < 64; p++){
+      if (pads[p]->XtoPixel(pads[p]->GetX2()) < pads[p]->YtoPixel(pads[p]->GetY1())){
+        relSize[p]  = (Double_t)textSizePixel/pads[p]->XtoPixel(pads[p]->GetX2()) ;
+      } else {
+        relSize[p]  = (Double_t)textSizePixel/pads[p]->YtoPixel(pads[p]->GetY1());
+      }
+      if(debug > 1)std::cout << p << "\t" << topRCornerX[p]<< "\t" << topRCornerY[p] << "\t" << relSize[p] << std::endl;
+    }
+    return;
+  }      
 #endif

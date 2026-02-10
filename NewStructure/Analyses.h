@@ -50,7 +50,7 @@ class Analyses{
   inline bool CanOverWrite(void)                const {return Overwrite;};
   inline bool IsToTransferCalib(void)           const {return ApplyTransferCalib;};
   inline bool IsToApplyCalibration(void)        const {return ApplyCalibration;};
-  inline bool IsToAnalysisWaveForm(void)        const {return IsAnalyseWaveForm;};
+  inline bool IsToVisualizeWaveform(void)       const {return IsVisualizeWaveform;};
   inline bool IsToConvert(void)                 const {return Convert;};
   inline bool IsToExtractPedestal(void)         const {return ExtractPedestal;};
   inline bool IsToExtractToAPhase(void)         const {return ExtractToAPhase;};
@@ -77,7 +77,7 @@ class Analyses{
   inline void CanOverWrite(bool b)               {Overwrite=b;};
   inline void IsCalibSaveToFile(bool b)          {SaveCalibToFile=b;};
   inline void IsToTransferCalib(bool b)          {ApplyTransferCalib=b;};
-  inline void IsToAnalysisWaveForm(bool b)       {IsAnalyseWaveForm=b;};
+  inline void IsToVisualizeWaveform(bool b)      {IsVisualizeWaveform=b;};
   inline void IsToApplyCalibration(bool b)       {ApplyCalibration=b;};
   inline void IsToConvert(bool b)                {Convert=b;};
   inline void IsToExtractPedestal(bool b)        {ExtractPedestal=b;};
@@ -154,7 +154,7 @@ class Analyses{
   bool ReextractNoise         =false;     // Flag to enable noise trigger extraction and alternative pass for pedestals
   bool ExtractToAPhase        =false;     // Flag to enable the ToA Phase extraction
   bool ApplyTransferCalib     =false;     // Flag for application of pedestals
-  bool IsAnalyseWaveForm      =false;     // Flag for routine with waveform analysis
+  bool IsVisualizeWaveform    =false;     // Flag for routine with waveform visualization
   bool ApplyCalibration       =false;     // Flag for aplication of calibration
   bool SaveNoiseOnly          =false;     // Flag to reduce file to noise/pedestal only
   bool SaveMipsOnly           =false;     // Flag to reduce file to mips only
@@ -196,7 +196,7 @@ class Analyses{
   bool GetPedestal(void);
   bool EvaluateHGCROCToAPhases(void);
   bool TransferCalib(void);
-  bool AnalyseWaveForm(void);
+  bool VisualizeWaveform(void);
   bool GetScaling(void);
   bool GetImprovedScaling(void);
   bool GetNoiseSampleAndRefitPedestal(void);

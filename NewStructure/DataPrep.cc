@@ -57,7 +57,7 @@ void PrintHelp(char* exe){
   std::cout<<"-t       use local trigger eval from existing input, don't redo in calibrate"<<std::endl;
   std::cout<<"-T ttt   evaluate local triggers before calibrating, use external calib file ttt"<<std::endl;
   std::cout<<"-u       disable trigger primitive calc"<<std::endl;
-  std::cout<<"-w www   Analyse waveform of HGCROC data with www as pedestal file"<<std::endl;
+  std::cout<<"-w       Visualize waveform of HGCROC data"<<std::endl;
   std::cout<<"-X       skim HGCROC events to a new file where there is at least a signal in the TOA "<<std::endl;
   std::cout<<"-y yyyy  setting year externally to narrow parameters"<<std::endl;
   std::cout<<"-h       this help"<<std::endl<<std::endl;
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"aA:bB:c:C:d:eE:fF:g:G:hi:k:L:m:MnNo:O:pP:r:sStT:uw:Xy:"))!=-1){
+  while((c=getopt(argc,argv,"aA:bB:c:C:d:eE:fF:g:G:hi:k:L:m:MnNo:O:pP:r:sStT:uwXy:"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"DataPrep: printing calib object to file"<<std::endl;
@@ -203,10 +203,8 @@ int main(int argc, char* argv[]){
       AnAnalysis.DisableRecalcTriggPrimitives();
       break;
     case 'w':
-      std::cout<<"DataPrep: analyse HGCROC waveform and apply pedestal from: "<<optarg<<std::endl;
-      AnAnalysis.SetRootPedestalInput(Form("%s",optarg));
-      AnAnalysis.IsToTransferCalib(true);
-      AnAnalysis.IsToAnalysisWaveForm(true);
+      std::cout<<"DataPrep: visualize HGCROC waveform"<<std::endl;
+      AnAnalysis.IsToVisualizeWaveform(true);
       break;
     case 'X':
       std::cout<<"DataPrep: Skim HGCROC data: "<<std::endl;

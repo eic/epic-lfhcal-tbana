@@ -273,6 +273,15 @@ int Setup::GetChannelInLayerFull(int cellID) const{
   return absChL;
 }
 
+int Setup::GetAbsNMaxROChannel() const{
+  int max = -1;
+  std::map<int, int>::const_iterator it;
+  for(it=ROchannel.begin(); it!=ROchannel.end(); ++it){
+    if( it->second > max ) max = it->second;
+  }
+  return max; 
+}
+
 float Setup::GetMinX() const{
   float min = 1e6;
   std::map<int, TString>::const_iterator it;
@@ -404,6 +413,11 @@ DetConf::Type Setup::GetDetectorConfig() const{
       return DetConf::Type::SingleTile;
   } 
   return DetConf::Type::Undef;
-  
-  
 }
+
+bool Setup::ContainedInSetup(int cellID) const{
+  std::map<int, TString>::const_iterator it=assemblyID.find(cellID);
+  if(it!=assemblyID.end()) return true;
+  else return false;
+}
+

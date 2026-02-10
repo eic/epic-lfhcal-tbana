@@ -58,6 +58,7 @@ class Setup{
   int     GetNMaxModule (void) const;
   int     GetNMaxROUnit (void) const;
   int     GetNMaxKCUs   (void) const;
+  int     GetAbsNMaxROChannel(void) const;
   int     GetMaxCellID (void) const;
   TString DecodeCellID(int /**/) const;
   double  GetX         (int /**/) const;
@@ -77,6 +78,7 @@ class Setup{
   float     GetCellHeight (void) const;
   float     GetCellDepth  (void) const;
   DetConf::Type GetDetectorConfig(void) const;
+  bool ContainedInSetup(int /**/) const;
   friend class RootSetupWrapper;
   
  private:
