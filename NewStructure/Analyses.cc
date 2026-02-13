@@ -4598,7 +4598,6 @@ bool Analyses::Calibrate(void){
     factorMaxTrigg    = 2.;
   }
   
-  double minMipFrac = 0.3;
   int corrHGADCSwap = 3500;
   int outCount      = 5000;
   int evts=TdataIn->GetEntries();
@@ -4699,7 +4698,7 @@ bool Analyses::Calibrate(void){
             RootOutput->cd();
           }
         }
-        if(energy!=0){ 
+        if(energy > minMipFrac){ 
           aTile->SetE(energy);
           hspectraEnergyvsCellID->Fill(aTile->GetCellID(), energy);
           Etot=Etot+energy;
@@ -4811,7 +4810,8 @@ bool Analyses::Calibrate(void){
           hSpectra[aTile->GetCellID()].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
           RootOutput->cd();
         }
-        if(energy!=0){ 
+        // only save if energy is larger minMip fraction
+        if(energy > minMipFrac){ 
           aTile->SetE(energy);
           hspectraEnergyvsCellID->Fill(aTile->GetCellID(), energy);
           Etot=Etot+energy;

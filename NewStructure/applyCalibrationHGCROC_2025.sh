@@ -25,6 +25,10 @@ function Calib()
 	elif [ $1 == "calibNoTriggNLP" ]; then
     echo "no layer plotting" 
 		time ./DataPrep -t -f -d 1 -a -C $2 -i $3/rawHGCROCWithLocTrigg_$5.root -o $4/calibratedHGCROC_Run_$5.root -O $6/$7$5 -r $runNrFile -B $8 -G $9 -F png
+	elif [ $1 == "calibNoTriggZC" ]; then
+		time ./DataPrep -t -e -f -d 1 -a -C $2 -i $3/rawHGCROCWithLocTrigg_$5.root -o $4/calibratedNoCutOffHGCROC_Run_$5.root -O $6NoCutOff$7$5 -r $runNrFile -B $8 -G $9 -c -10.
+	elif [ $1 == "calibNoTriggZCMuon" ]; then
+		time ./DataPrep -t -e -f -d 1 -a -C $2 -i $3/rawHGCROC_wPedwMuon_wBC_$5.root -o $4/calibratedNoCutOffHGCROC_Run_$5.root -O $6NoCutOff$7$5 -r $runNrFile -B $8 -G $9 -c -10.
 	elif [ $1 == "full" ]; then
 		time ./DataPrep -e -f -d 1 -a -C $2 -i $3/rawHGCROC_$5.root -o $4/calibratedHGCROC_Run_$5.root -O $6/$7$5 -r $runNrFile -B $8 -G $9
 	fi
@@ -55,25 +59,26 @@ if [ $2 == "FullScanA" ]; then
 
   badChannelMap="../configs/TB2025/badChannel_HGCROC_PSTB2025_layer0.txt"
 	# electron runs
+# 	runs='166'	
 # 	runs='169'
 # 	runs='165 166 167 168 169 170' 
-	runs='191 192 193 194 195' 
-	for runNr in $runs; do 
-		Calib $3 $calibFile1 $dataDirIn $dataDirOut $runNr $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
-	done;
+# 	runs='191 192 193 194 195' 
+# 	for runNr in $runs; do 
+# 		Calib $3 $calibFile1 $dataDirIn $dataDirOut $runNr $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
+# 	done;
 # 
 # 	# positron runs
 # # 	runs='171 172 173 174 196 200 199 198 197'
-  runs='171 172 173 174 175 196 200 199 198 197'
-	for runNr in $runs; do 
-		Calib $3 $calibFile1 $dataDirIn $dataDirOut $runNr $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
-	done;
+#   runs='171 172 173 174 175 196 200 199 198 197'
+# 	for runNr in $runs; do 
+# 		Calib $3 $calibFile1 $dataDirIn $dataDirOut $runNr $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
+# 	done;
 # 
 # 	#hadron runs
 #   runs='176 178 179 180 181 182 187 188'
-#   runs='188'
+  runs='184 188'
 #   runs='176 177 178 179 180 181 182 183 184 185 186 187 188'
-  runs='176 177 178 179 180 181 182 183 185 186 187'
+#   runs='176 177 178 179 180 181 182 183 185 186 187'
 	for runNr in $runs; do 
 		Calib $3 $calibFile1 $dataDirIn $dataDirOut $runNr $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
 	done;

@@ -32,6 +32,7 @@ void PrintHelp(char* exe){
   std::cout<<"-A aaa   stripping only calib and setup object to external file"<<std::endl;
   std::cout<<"-b       calculate bad channel map internally"<<std::endl;
   std::cout<<"-B lll   apply external bad channel map during transfer of calibs"<<std::endl;
+  std::cout<<"-c ccc   overwriting min cut off for calibrated data filtering. Experts only!"<<std::endl;
   std::cout<<"-C yyy   Apply calibrations stored in yyy root file to the input uncalibrated file"<<std::endl;
   std::cout<<"-d [0-n] switch on debug info with debug level 0 to n"<<std::endl;
   std::cout<<"-e       extended plotting = 1"<<std::endl;
@@ -96,6 +97,10 @@ int main(int argc, char* argv[]){
       std::cout<<"DataPrep: read bad channel map from external file: "<<optarg<<std::endl;
       AnAnalysis.SetExternalBadChannelMap(Form("%s",optarg));
       AnAnalysis.SetCalcBadChannel(1);
+      break;
+    case 'c':
+      std::cout<<"DataPrep: overwrite mip min cutoff (only for experts): "<<optarg<<std::endl;
+      AnAnalysis.OverwriteMinMipFrac(atoi(optarg));
       break;
     case 'C':
       std::cout<<"DataPrep: Apply calibration (pedestal correction and scaling factor) from: "<<optarg<<std::endl;

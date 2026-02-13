@@ -161,6 +161,13 @@ class TileSpectra: public TObject{
         hcorr         = TH2D(Form("wafeform%sCellID%d",name.Data(),id),Form("2D wafeform CellID %d; t (ns) ; ADC (arb. units)",id),550,-50,500, 1124/4, -100, 1024);
         hcorr.SetDirectory(0);
       }
+    } else if (extend == 7){
+      if (type == ReadOut::Type::Hgcroc){
+        hWaveForm     = TProfile(Form("wafeform1D%sCellID%d",name.Data(),id),Form("1D wafeform CellID %d;  sample ; ADC (arb. units)",id),20,0,20);
+        hWaveForm.SetDirectory(0);
+        hcorr         = TH2D(Form("wafeform%sCellID%d",name.Data(),id),Form("2D wafeform CellID %d; sample ; ADC (arb. units)",id),20,0,20, 1124/4, -100, 1024);
+        hcorr.SetDirectory(0);
+      }
     }
   }
   ~TileSpectra(){}

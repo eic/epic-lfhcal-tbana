@@ -111,7 +111,7 @@ bool TileSpectra::FillExtHGCROCPed(std::vector<int> samples, double h){
 bool TileSpectra::FillWaveform(std::vector<int> samples, double ped = 0){
  for (int k = 0; k < (int)samples.size(); k++ ){
    hcorr.Fill(k,samples.at(k)-ped);
-   if (extend == 3) hWaveForm.Fill(k,samples.at(k)-ped);
+   if (extend == 3 || extend == 7) hWaveForm.Fill(k,samples.at(k)-ped);
  }
  return true;
 }

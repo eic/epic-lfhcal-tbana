@@ -1046,8 +1046,12 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
   
   std::map<int,TileSpectra> hSpectraXtalk;
   std::map<int, TileSpectra>::iterator ithSpectraXtalk;
+  std::map<int,TileSpectra> hSampleXtalk;
+  std::map<int, TileSpectra>::iterator ithSampleXtalk;
   std::map<int,TileSpectra> hSpectraSat;
   std::map<int, TileSpectra>::iterator ithSpectraSat;
+  std::map<int,TileSpectra> hSampleSat;
+  std::map<int, TileSpectra>::iterator ithSampleSat;
   // set calib entry pointer
   TcalibIn->GetEntry(0);
 
@@ -1102,7 +1106,45 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
                                             setup->GetNActiveCells(), -0.5, setup->GetNActiveCells()-0.5);
   h2DNSatCellsVsNegCells->SetDirectory(0);
   h2DNSatCellsVsNegCells->Sumw2();
+  TH2D* h2DNNegCellsVsNegCellsWToA = new TH2D( "h2DNNegCellsVsNegCellsWToA","# Neg ADC vs #Neg ADC w/ToA; #cells neg; #cells neg w/ ToA",
+                                            setup->GetNActiveCells(), -0.5, setup->GetNActiveCells()-0.5,
+                                            setup->GetNActiveCells(), -0.5, setup->GetNActiveCells()-0.5);
+  h2DNNegCellsVsNegCellsWToA->SetDirectory(0);
+  h2DNNegCellsVsNegCellsWToA->Sumw2();
   
+  TH2D* h2DNSatCellsVsNegCellsWToA = new TH2D( "h2DNSatCellsVsNegCellsWToA","#Sat ADC vs #Neg ADC w/ToA; #cells sat; #cells neg w/ ToA ",
+                                            100, -0.5, 100-0.5,
+                                            setup->GetNActiveCells(), -0.5, setup->GetNActiveCells()-0.5);
+  h2DNSatCellsVsNegCellsWToA->SetDirectory(0);
+  h2DNSatCellsVsNegCellsWToA->Sumw2();
+  
+  TH2D* h2DAsicSatCellVsNegCell[setup->GetNMaxROUnit()+1][2];
+  TH2D* h2DAsicSatCellVsNegCellWToA[setup->GetNMaxROUnit()+1][2];
+  TH2D* h2DAsicNegCellVsNegCellWToA[setup->GetNMaxROUnit()+1][2];
+  
+  for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+    for (int h = 0; h< 2; h++){
+      h2DAsicSatCellVsNegCell[ro][h]    = new TH2D( Form("h2DNSatCellsVsNegCells_%d_%d", ro, h),
+                                                    "# Saturated vs #Neg ADC; #cells sat; #cells neg ",
+                                                    32, -0.5, 32-0.5,
+                                                    32, -0.5, 32-0.5);
+      h2DAsicSatCellVsNegCell[ro][h]->SetDirectory(0);
+      h2DAsicSatCellVsNegCell[ro][h]->Sumw2();
+
+      h2DAsicSatCellVsNegCellWToA[ro][h]    = new TH2D( Form("h2DNSatCellsVsNegCellsWToA_%d_%d", ro, h),
+                                                    "# Saturated vs #Neg ADC w/ TOA; #cells sat; #cells neg w/ ToA ",
+                                                    32, -0.5, 32-0.5,
+                                                    32, -0.5, 32-0.5);
+      h2DAsicSatCellVsNegCellWToA[ro][h]->SetDirectory(0);
+      h2DAsicSatCellVsNegCellWToA[ro][h]->Sumw2();
+      h2DAsicNegCellVsNegCellWToA[ro][h]    = new TH2D( Form("h2DAsicNegCellVsNegCellWToA_%d_%d", ro, h),
+                                                    "# Neg ADC vs #Neg ADC w/ TOA; #cells neg; #cells neg w/ ToA ",
+                                                    32, -0.5, 32-0.5,
+                                                    32, -0.5, 32-0.5);
+      h2DAsicNegCellVsNegCellWToA[ro][h]->SetDirectory(0);
+      h2DAsicNegCellVsNegCellWToA[ro][h]->Sumw2();
+    }
+  }
   
   RootOutputHist->mkdir("IndividualCellsXtalk");
   RootOutputHist->mkdir("IndividualCellsSat");
@@ -1204,6 +1246,16 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
     }
     
     h2DNSatCellsVsNegCells->Fill(nSatTilesS,nNegTilesS);
+    h2DNSatCellsVsNegCellsWToA->Fill(nSatTilesS,nNegTilesSwT);
+    h2DNNegCellsVsNegCellsWToA->Fill(nNegTilesS,nNegTilesSwT);
+    
+    for (int l = 0; l < (setup->GetNMaxROUnit()+1)*2; l++ ){
+      int asic = int(l/2);
+      int half = int(l%2);
+      h2DAsicSatCellVsNegCell[asic][half]->Fill(nSatTiles[l],nNegTiles[l]);
+      h2DAsicSatCellVsNegCellWToA[asic][half]->Fill(nSatTiles[l],nNegTileswT[l]);
+      h2DAsicNegCellVsNegCellWToA[asic][half]->Fill(nNegTiles[l],nNegTileswT[l]);
+    }
     
     if (nSatTilesS == 0 &&  nNegTilesS == 0)
       continue;
@@ -1241,6 +1293,8 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
 
       ithSpectraSat   = hSpectraSat.find(cellID);
       ithSpectraXtalk = hSpectraXtalk.find(cellID);
+      ithSampleSat    = hSampleSat.find(cellID);
+      ithSampleXtalk  = hSampleXtalk.find(cellID);
       
       // get pedestal values from calib object
       double ped    = aTile->GetPedestal();
@@ -1254,15 +1308,67 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
       if (toaRaw > 0)
         hasTOA        = true;
 
+      int trigAsicH = 0;
+      if (GetFixedROChannel() > 31)
+        trigAsicH   = 1;
+      
       // Detailed debug info with print of waveform
       if (debug > 3){
         aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(cellID), calib.GetPedestalMeanL(cellID), calib.GetPedestalSigL(cellID));
       }
     
+      //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      // fill as function of sample, no TOA requirement
+      //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      if (!isSingleCh){
+        if (nSatTilesS > 0){
+          if(ithSampleSat!=hSampleSat.end()){
+            ithSampleSat->second.FillWaveform(aTile->GetADCWaveform(), ped);
+          } else {
+            RootOutputHist->cd("IndividualCellsSat");
+            hSampleSat[cellID]=TileSpectra("SatSample",7,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+            hSampleSat[cellID].FillWaveform(aTile->GetADCWaveform(), ped);
+          }
+        }
+        if (nNegTilesS > 0 ){
+          if(ithSampleXtalk!=hSampleXtalk.end()){
+            ithSampleXtalk->second.FillWaveform(aTile->GetADCWaveform(), ped);
+          } else {
+            RootOutputHist->cd("IndividualCellsXtalk");
+            hSampleXtalk[cellID]=TileSpectra("XtalkSample",7,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+            hSampleXtalk[cellID].FillWaveform(aTile->GetADCWaveform(), ped);
+          }
+        }
+      } else {
+        if (nSatTiles[asic*2 + trigAsicH] > 0 ){
+          if(ithSampleSat!=hSampleSat.end()){
+            ithSampleSat->second.FillWaveform(aTile->GetADCWaveform(), ped);
+          } else {
+            RootOutputHist->cd("IndividualCellsSat");
+            hSampleSat[cellID]=TileSpectra("SatSample",7,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+            hSampleSat[cellID].FillWaveform(aTile->GetADCWaveform(), ped);
+          }
+        }
+        
+        if (nNegTiles[asic*2 + trigAsicH] > 0 ){
+          if(ithSampleXtalk!=hSampleXtalk.end()){
+            ithSampleXtalk->second.FillWaveform(aTile->GetADCWaveform(), ped);
+          } else {
+            RootOutputHist->cd("IndividualCellsXtalk");
+            hSampleXtalk[cellID]=TileSpectra("XtalkSample",7,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+            hSampleXtalk[cellID].FillWaveform(aTile->GetADCWaveform(), ped);
+          }
+        }         
+      }
+      
+    
+      // check whether tile has TOA, don't continue if it doesn't
       if (!hasTOA) continue;
     
+      //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      // fill as function of time, needs TOA
+      //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       if (!isSingleCh){
-        // fill spectra histos
         if (nSatTilesS > 0){
           if(ithSpectraSat!=hSpectraSat.end()){
             ithSpectraSat->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped, nOffEmpty);
@@ -1271,9 +1377,9 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
             hSpectraSat[cellID]=TileSpectra("Saturated",6,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
             hSpectraSat[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped, nOffEmpty);
           }
+          
         }
-        
-        if (nNegTilesS > 0 && nNegTiles[3] == 0 && nNegTiles[4] == 0){
+        if (nNegTilesS > 0 ){
           if(ithSpectraXtalk!=hSpectraXtalk.end()){
             ithSpectraXtalk->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped, nOffEmpty);
           } else {
@@ -1283,10 +1389,6 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
           }
         }
       } else {
-        int trigAsicH = 0;
-        if (GetFixedROChannel() > 31)
-          trigAsicH   = 1;
-        // fill spectra histos
         if (nSatTiles[asic*2 + trigAsicH] > 0 ){
           if(ithSpectraSat!=hSpectraSat.end()){
             ithSpectraSat->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped, nOffEmpty);
@@ -1320,8 +1422,18 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
     h2DNNegCellsVsAsicHalfsWT->Write();
     h2DNSatCellsVsAsicHalfs->Write();
     h2DNSatCellsVsNegCells->Write();
+    h2DNSatCellsVsNegCellsWToA->Write();
+    h2DNNegCellsVsNegCellsWToA->Write();
     hSatADCVsLayer->Write();
     hNegCellVsLayer->Write();
+    
+    for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+      for (int h = 0; h< 2; h++){
+        h2DAsicSatCellVsNegCell[ro][h]->Write();
+        h2DAsicSatCellVsNegCellWToA[ro][h]->Write();
+        h2DAsicNegCellVsNegCellWToA[ro][h]->Write();
+      }
+    }
     hNEvts->Write();
 
 
@@ -1329,9 +1441,15 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
     for(ithSpectraXtalk=hSpectraXtalk.begin(); ithSpectraXtalk!=hSpectraXtalk.end(); ++ithSpectraXtalk){
       ithSpectraXtalk->second.WriteExt(true);
     }
+    for(ithSampleXtalk=hSampleXtalk.begin(); ithSampleXtalk!=hSampleXtalk.end(); ++ithSampleXtalk){
+      ithSampleXtalk->second.WriteExt(true);
+    }
   RootOutputHist->cd("IndividualCellsSat");
     for(ithSpectraSat=hSpectraSat.begin(); ithSpectraSat!=hSpectraSat.end(); ++ithSpectraSat){
       ithSpectraSat->second.WriteExt(true);
+    }
+    for(ithSampleSat=hSampleSat.begin(); ithSampleSat!=hSampleSat.end(); ++ithSampleSat){
+      ithSampleSat->second.WriteExt(true);
     }
   RootOutputHist->Close();
 
@@ -1341,12 +1459,20 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
     if (!setup->ContainedInSetup(id)) continue; 
     ithSpectraSat   = hSpectraSat.find(id);
     ithSpectraXtalk = hSpectraXtalk.find(id);
+    ithSampleSat    = hSampleSat.find(id);
+    ithSampleXtalk  = hSampleXtalk.find(id);
     
     if(ithSpectraXtalk==hSpectraXtalk.end()){
       hSpectraXtalk[id]=TileSpectra("Xtalk",6,id,calib.GetTileCalib(id),typeRO,debug);
     }
     if(ithSpectraSat==hSpectraSat.end()){
       hSpectraSat[id]=TileSpectra("Saturated",6,id,calib.GetTileCalib(id),typeRO,debug);
+    }
+    if(ithSampleXtalk==hSampleXtalk.end()){
+      hSampleXtalk[id]=TileSpectra("XtalkSample",7,id,calib.GetTileCalib(id),typeRO,debug);
+    }
+    if(ithSpectraSat==hSpectraSat.end()){
+      hSampleSat[id]=TileSpectra("SatSample",7,id,calib.GetTileCalib(id),typeRO,debug);
     }
   }
   
@@ -1381,12 +1507,34 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
   PlotSimple2D( canvas2DSigQA, h2DNSatCellsVsAsicHalfs, 20, -10000, textSizeRel, Form("%s/SatCellsvsAsicHalfs.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
 
   h2DNSatCellsVsNegCells->Scale(1./maxEvents);
-  PlotSimple2D( canvas2DSigQA, h2DNSatCellsVsNegCells, 100, 20, textSizeRel, Form("%s/SatCellsvsNegCells.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DSigQA, h2DNSatCellsVsNegCells, 200, 20, textSizeRel, Form("%s/SatCellsvsNegCells.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  h2DNSatCellsVsNegCellsWToA->Scale(1./maxEvents);
+  PlotSimple2D( canvas2DSigQA, h2DNSatCellsVsNegCellsWToA, 100, 20, textSizeRel, Form("%s/SatCellsvsNegCellsWToA.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  h2DNNegCellsVsNegCellsWToA->Scale(1./maxEvents);
+  PlotSimple2D( canvas2DSigQA, h2DNNegCellsVsNegCellsWToA, 20, 200, textSizeRel, Form("%s/NegCellsvsNegCellsWToA.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
  
   hSatADCVsLayer->Scale(1./maxEvents);
   PlotSimple2D( canvas2DSigQA, hSatADCVsLayer, -10000, -10000, textSizeRel, Form("%s/SatCellsvsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   hNegCellVsLayer->Scale(1./maxEvents);
   PlotSimple2D( canvas2DSigQA, hNegCellVsLayer, -10000, -10000, textSizeRel, Form("%s/NegCellsvsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);  
+  
+  for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+    for (int h = 0; h< 2; h++){
+      h2DAsicSatCellVsNegCell[ro][h]->Scale(1./maxEvents);
+      PlotSimple2D( canvas2DSigQA, h2DAsicSatCellVsNegCell[ro][h], -10000, 10,  textSizeRel,
+                        Form("%s/SatCellVsNegCell_Asic_%d_Half_%d.%s", outputDirPlots.Data(), ro, h, plotSuffix.Data()), 
+                        it->second, 1, kFALSE, "colz",true, Form("Asic %d, Half %d",ro,h));
+      h2DAsicSatCellVsNegCellWToA[ro][h]->Scale(1./maxEvents);
+      PlotSimple2D( canvas2DSigQA, h2DAsicSatCellVsNegCellWToA[ro][h], -10000, 10, textSizeRel,
+                        Form("%s/SatCellsvsNegCellsWToA_Asic_%d_Half_%d.%s", outputDirPlots.Data(), ro, h, plotSuffix.Data()), 
+                        it->second, 1, kFALSE, "colz",true, Form("Asic %d, Half %d",ro,h));
+      h2DAsicNegCellVsNegCellWToA[ro][h]->Scale(1./maxEvents);
+      PlotSimple2D( canvas2DSigQA, h2DAsicNegCellVsNegCellWToA[ro][h], -10000, -10000, textSizeRel,
+                        Form("%s/NegCellsvsNegCellsWToA_Asic_%d_Half_%d.%s", outputDirPlots.Data(), ro, h, plotSuffix.Data()), 
+                        it->second, 1, kFALSE, "colz",true, Form("Asic %d, Half %d",ro,h));
+    }
+  }
+
   
   
   TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
@@ -1457,6 +1605,12 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
     PlotCorr2DAsicLFHCal(canvasPanAsic,padAsic, topRCornerXAsic, topRCornerYAsic, relSizeAsic,
                         textSizePixel, hSpectraSat, 1, -50, (it->second.samples)*25, -80, 800, a, 
                         Form("%s/WaveformSat_Asic%02d.%s" ,outputDirPlots.Data(),a, plotSuffix.Data()), it->second, 0, GetFixedROChannel() );            
+    PlotCorr2DAsicLFHCal(canvasPanAsic,padAsic, topRCornerXAsic, topRCornerYAsic, relSizeAsic,
+                        textSizePixel, hSampleXtalk, 1, 0, (it->second.samples), -80, 800, a, 
+                        Form("%s/WaveformSampleNeg_Asic%02d.%s" ,outputDirPlots.Data(), a, plotSuffix.Data()), it->second, 0, GetFixedROChannel());
+    PlotCorr2DAsicLFHCal(canvasPanAsic,padAsic, topRCornerXAsic, topRCornerYAsic, relSizeAsic,
+                        textSizePixel, hSampleSat, 1, 0, (it->second.samples), -80, 800, a, 
+                        Form("%s/WaveformSampleSat_Asic%02d.%s" ,outputDirPlots.Data(),a, plotSuffix.Data()), it->second, 0, GetFixedROChannel() );            
   }
   std::cout << "ending plotting full asic" << std::endl;    
     

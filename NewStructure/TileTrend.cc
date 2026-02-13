@@ -318,6 +318,8 @@ bool TileTrend::DrawLGHGOffset(TString opt){
 bool TileTrend::SetLineColor(uint col){
   gTrendLGped    .SetLineColor(col);
   gTrendHGped    .SetLineColor(col);
+  gTrendLGpedwidth.SetLineColor(col);
+  gTrendHGpedwidth.SetLineColor(col);
   gTrendLGscale  .SetLineColor(col);
   gTrendHGscale  .SetLineColor(col);
   gTrendHGLGcorr .SetLineColor(col);
@@ -343,6 +345,8 @@ bool TileTrend::SetLineColor(uint col){
 bool TileTrend::SetMarkerColor(uint col){
   gTrendLGped    .SetMarkerColor(col);
   gTrendHGped    .SetMarkerColor(col);
+  gTrendLGpedwidth.SetMarkerColor(col);
+  gTrendHGpedwidth.SetMarkerColor(col);
   gTrendLGscale  .SetMarkerColor(col);
   gTrendHGscale  .SetMarkerColor(col);
   gTrendHGLGcorr .SetMarkerColor(col);
@@ -368,6 +372,8 @@ bool TileTrend::SetMarkerColor(uint col){
 bool TileTrend::SetMarkerStyle(uint col){
   gTrendLGped    .SetMarkerStyle(col);
   gTrendHGped    .SetMarkerStyle(col);
+  gTrendLGpedwidth.SetMarkerStyle(col);
+  gTrendHGpedwidth.SetMarkerStyle(col);
   gTrendLGscale  .SetMarkerStyle(col);
   gTrendHGscale  .SetMarkerStyle(col);
   gTrendHGLGcorr .SetMarkerStyle(col);
@@ -393,12 +399,14 @@ bool TileTrend::SetMarkerStyle(uint col){
 bool TileTrend::SetXAxisTitle(TString title){
   gTrendLGped    .GetXaxis()->SetTitle(title.Data());
   gTrendHGped    .GetXaxis()->SetTitle(title.Data());
+  gTrendLGpedwidth.GetXaxis()->SetTitle(title.Data());
+  gTrendHGpedwidth.GetXaxis()->SetTitle(title.Data());
   gTrendLGscale  .GetXaxis()->SetTitle(title.Data());
   gTrendHGscale  .GetXaxis()->SetTitle(title.Data());
   gTrendHGLGcorr .GetXaxis()->SetTitle(title.Data());
   gTrendLGHGcorr .GetXaxis()->SetTitle(title.Data());
-  gTrendHGLGOffset .GetXaxis()->SetTitle(title.Data());
-  gTrendLGHGOffset .GetXaxis()->SetTitle(title.Data());
+  gTrendHGLGOffset.GetXaxis()->SetTitle(title.Data());
+  gTrendLGHGOffset.GetXaxis()->SetTitle(title.Data());
   if (extended == 1 || extended == 2 ){
     gTrendTrigger .GetXaxis()->SetTitle(title.Data());
     gTrendSBNoise .GetXaxis()->SetTitle(title.Data());
@@ -421,6 +429,8 @@ bool TileTrend::SetXAxisTitle(TString title){
 void TileTrend::Sort(){
   gTrendLGped    .Sort();
   gTrendHGped    .Sort();
+  gTrendLGpedwidth.Sort();
+  gTrendHGpedwidth.Sort();
   gTrendLGscale  .Sort();
   gTrendHGscale  .Sort();
   gTrendHGLGcorr .Sort();
@@ -450,6 +460,8 @@ bool TileTrend::Write(TFile* f){
   f->cd();
   gTrendLGped    .Write();
   gTrendHGped    .Write();
+  gTrendLGpedwidth.Write();
+  gTrendHGpedwidth.Write();
   gTrendLGscale  .Write();
   gTrendHGscale  .Write();
   gTrendHGLGcorr .Write();
