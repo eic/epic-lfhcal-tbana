@@ -29,6 +29,7 @@ void PrintHelp(char* exe){
   std::cout<<"-d [0-n]  switch on debug info with debug level 0 to n"<<std::endl;
   std::cout<<"-i uuu    path to the input file: .txt with file list (mandatory)"<<std::endl;
   std::cout<<"-p        set the plotting directory (mandatory)"<<std::endl;
+  std::cout<<"-s        set plotting suffix (default saved as pdf)"<<std::endl;
   std::cout<<"-h        print help"<<std::endl;
   std::cout<<"Examples:"<<std::endl;
   std::cout<<exe<<"-i input.csv -o output/"<<std::endl;
@@ -42,7 +43,7 @@ int main(int argc, char* argv[]){
 
     CompareHGCROCCalib compSamples;
     int c;
-    while( (c=getopt(argc,argv,"d:i:p:h"))!=-1){
+    while( (c=getopt(argc,argv,"d:i:p:s:h"))!=-1){
         switch(c){
             case 'd':
                 std::cout << "Enable debug " << optarg << std::endl;
@@ -58,6 +59,10 @@ int main(int argc, char* argv[]){
             case 'p':
                 std::cout << "Plotting directory set to " << optarg << std::endl;
                 compSamples.SetPlotDirectory( Form("%s",optarg) );
+                break;
+            case 's':
+                std::cout << "Plots saved as " << optarg << std::endl;
+                compSamples.SetPlottingSuffix( Form("%s",optarg));
                 break;
         }
     }

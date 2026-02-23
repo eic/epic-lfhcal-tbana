@@ -36,6 +36,7 @@ class CompareHGCROCCalib{
         inline void EnableDebug(int i)                  {debug=i;};
         inline void SetInputFile(TString name)          {inputFileList=name;};
         inline void SetPlotDirectory(TString name)      {outputDirPlots=name;};
+        inline void SetPlottingSuffix(TString name)     {suffix=name;};
 
 
         // general methods
@@ -51,6 +52,7 @@ class CompareHGCROCCalib{
         TFile*          RootOutputHist  = nullptr;      // root file output for histos
         int             debug           = 0;            // debug level
         int             optParse        = 0;            // 0 - default .csv file from H2GCalib, 1 - pedestal extracted with .py script
+        TString         suffix          = "pdf";        // plotting format
 
         Event       event;                              // basically the tree branch
         Event*      eventptr;

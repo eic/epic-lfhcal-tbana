@@ -191,10 +191,19 @@ bool CalibSampleParser::Parse(){
       std::string token;
       std::vector<std::string> tokens;
       while(std::getline(ss,token,',')){
-        tokens.push_back(token); // tokens[0] - channel, tokens[3] - ADC, tokens[4] - TOA, tokens[5] - TOT || tokens[1] - time, tokens[2] - phase - skipping
+        tokens.push_back(token); // tokens[0] - channel, tokens[3] - ADC, tokens[4] - TOT, tokens[5] - TOA || tokens[1] - time, tokens[2] - phase - skipping
       }
       int channel = std::stoi(tokens[0]);
       int asic = 0; 
+
+      // TOT Decoder
+      // TOT is a 12 bit counter, but gets sent as a 10 bit number
+      // If the most significant bit is 1, then the lower two bits were dropped
+      int temp  = std::atoi(tokens[4].c_str());
+      if( temp & 0x200){
+          temp = temp & 0b0111111111;
+          temp = temp << 3;
+      }
 
       if(temp_channel == -1) {
         temp_channel = channel;
@@ -207,15 +216,16 @@ bool CalibSampleParser::Parse(){
         }
         asic    = (channel/72);
         cell_id  = setup->GetCellID(asic, channel % 72);
+
         temp_adc.push_back( std::atoi(tokens[3].c_str()) ); 
         temp_toa.push_back( std::atoi(tokens[5].c_str()) );
-        temp_tot.push_back( std::atoi(tokens[4].c_str()) );
+        temp_tot.push_back( temp );
       } else if( temp_channel == channel){
         sample_counter++;
         if( std::atof( tokens[1].c_str() ) == (sample_counter-1)*1.5625 ) {         // check the timing - some channels are missing entries from waveforms
           temp_adc.push_back( std::atoi(tokens[3].c_str()) ); 
           temp_toa.push_back( std::atoi(tokens[5].c_str()) );
-          temp_tot.push_back( std::atoi(tokens[4].c_str()) );
+          temp_tot.push_back( temp );
         } else {
           if( debug > 3){
             std::cout << "missing entry, channel: " << channel << "\t time " << std::atof( tokens[1].c_str() ) << "\t target value: " << (sample_counter-1)*1.5625 << std::endl;
@@ -226,7 +236,7 @@ bool CalibSampleParser::Parse(){
           sample_counter++;                                                         // incrementing the sample counter to account for the missing entry
           temp_adc.push_back( std::atoi(tokens[3].c_str()) );                       // and then the read values
           temp_toa.push_back( std::atoi(tokens[5].c_str()) );
-          temp_tot.push_back( std::atoi(tokens[4].c_str()) );
+          temp_tot.push_back( temp );
         }
       } else if( temp_channel != channel){
         // save the current tiles waveforms, and then push the tile to the samples vector
@@ -387,7 +397,7 @@ bool CalibSampleParser::ProcessAndPlotWaveforms(){
     }
   }
   
-  int t_max = ((Hgcroc*)event.GetTile(0))->GetNsample() * 1562.5;
+  int t_max = ((Hgcroc*)event.GetTile(0))->GetNsample();
 
   Int_t textSizePixel = 30;
 
@@ -404,7 +414,7 @@ bool CalibSampleParser::ProcessAndPlotWaveforms(){
         
           PlotCorr2D8MLayer(canvas8PanelProf, pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
                             hSpectra, 1, 0, t_max, 1024, l, m,
-                            Form("%s/Waveform_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, "pdf"), it->second, 1);
+                            Form("%s/Waveform_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, suffix.Data()), it->second, 1);
     }
   }
 

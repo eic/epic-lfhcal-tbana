@@ -35,6 +35,7 @@ void PrintHelp(char* exe){
   std::cout<<"-r        path to the run list file (mandatory)"<<std::endl;
   std::cout<<"-n        run number to analyze (mandatory)"<<std::endl;
   std::cout<<"-p        setting the plot directory (for .csv file) (mandatory for plotting)"<<std::endl;
+  std::cout<<"-s        setting the plots format (default .pdf)"<<std::endl;
   std::cout<<"-o        output root filename, default same as input file"<<std::endl;
   std::cout<<"-c        path to .root file with calib object (mandatory for pedestal calib)"<<std::endl;
   std::cout<<"-h        print help"<<std::endl;
@@ -61,7 +62,7 @@ int main(int argc, char* argv[]){
 
     CalibSampleParser calibParser;
     int c;
-    while( (c=getopt(argc,argv,"d:i:t:m:r:n:p:o:c:h:"))!=-1){
+    while( (c=getopt(argc,argv,"d:i:t:m:r:n:p:s:o:c:h:"))!=-1){
         switch(c){
             case 'd':
                 std::cout << "Enable debug " << optarg << std::endl;
@@ -93,6 +94,10 @@ int main(int argc, char* argv[]){
                 std::cout << "Plotting directory set to " << optarg << std::endl;
                 calibParser.EnablePlotting();
                 calibParser.SetPlotDirectory( Form("%s",optarg) );
+                break;
+            case 's':
+                std::cout<< "Plots will be saved as " << optarg << std::endl;
+                calibParser.SetPlottingSuffix( Form("%s",optarg));
                 break;
             case 'o':
                 std::cout << "Output root filename set to: " << optarg << std::endl;

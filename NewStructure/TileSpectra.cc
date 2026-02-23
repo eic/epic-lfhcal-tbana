@@ -139,8 +139,8 @@ bool TileSpectra::FillMaxVsTime(double adc, double toalincorr = 0, int offset = 
 
 bool TileSpectra::FillWaveformVsTimeParser(std::vector<int> samples, double ped = 0){
   for( int k = 0; k < (int)samples.size(); k++){
-    hcorr.Fill(k*1562.5, samples.at(k)-ped);
-    if( extend == 3) hspectraLGHG.Fill(k*1562.5,samples.at(k)-ped);
+    hcorr.Fill(k, samples.at(k)-ped);
+    if( extend == 3) hspectraLGHG.Fill(k,samples.at(k)-ped);
   }
   return true;
 }

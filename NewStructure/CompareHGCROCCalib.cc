@@ -201,7 +201,7 @@ bool CompareHGCROCCalib::CompareTOT(void){
         legend->Draw("same");
         
 
-        canvas->SaveAs( Form("%s/TOT_ADCvsInjVal_Cell%d.pdf", outputDirPlots.Data(), cellID[i] ) );
+        canvas->SaveAs( Form("%s/TOT_ADCvsInjVal_Cell%d.%s", outputDirPlots.Data(), cellID[i], suffix.Data() ) );
         delete canvas; delete hDummy;
     }
 
