@@ -389,9 +389,11 @@ bool CalibSampleParser::ProcessAndPlotWaveforms(){
       ithSpectra->second.FillWaveformVsTimeParser(aTile->GetADCWaveform(),ped);
     } else {
       RootOutputHist->cd("IndividualCells");
-      hSpectra[aTile->GetCellID()]=TileSpectra("ped",3,aTile->GetCellID(),nullptr,event.GetROtype(),debug);
+      hSpectra[aTile->GetCellID()]=TileSpectra("ped",8,aTile->GetCellID(),nullptr,event.GetROtype(),debug);
       hSpectra[aTile->GetCellID()].FillExtHGCROC(adc, 0., tot, 0,-1);
       hSpectra[aTile->GetCellID()].FillWaveformVsTimeParser(aTile->GetADCWaveform(),ped);
+      hSpectra[aTile->GetCellID()].FillTOTProfile(aTile->GetTOTWaveform());
+      hSpectra[aTile->GetCellID()].FillTOAProfile(aTile->GetTOAWaveform());
       hSpectra[aTile->GetCellID()].WriteExt(false);
       RootOutput->cd();
     }
@@ -415,6 +417,14 @@ bool CalibSampleParser::ProcessAndPlotWaveforms(){
           PlotCorr2D8MLayer(canvas8PanelProf, pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
                             hSpectra, 1, 0, t_max, 1024, l, m,
                             Form("%s/Waveform_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, suffix.Data()), it->second, 1);
+
+          PlotCorr2D8MLayer(canvas8PanelProf, pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
+                            hSpectra, 5, 0, t_max, 4099, l, m,
+                            Form("%s/TOT_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, suffix.Data()), it->second, 1);
+
+          PlotCorr2D8MLayer(canvas8PanelProf, pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
+                            hSpectra, 6, 0, t_max, 1024, l, m,
+                            Form("%s/TOA_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, suffix.Data()), it->second, 1);
     }
   }
 

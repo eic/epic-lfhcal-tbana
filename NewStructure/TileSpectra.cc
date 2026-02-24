@@ -80,7 +80,7 @@ bool TileSpectra::FillExtHGCROC(double adc = 0., double toa= 0., double tot= 0.,
       hcorrADCTOT.Fill(adc,tot);
     }
   }
-  if (extend == 3){
+  if (extend == 3 || extend == 8){
     if (fixedTOA > -1 && fixedTOA != sample ) return true;
     hcorrTOAADC.Fill(toa,adc);
     hTOAADC.Fill(toa,adc);
@@ -141,6 +141,21 @@ bool TileSpectra::FillWaveformVsTimeParser(std::vector<int> samples, double ped 
   for( int k = 0; k < (int)samples.size(); k++){
     hcorr.Fill(k, samples.at(k)-ped);
     if( extend == 3) hspectraLGHG.Fill(k,samples.at(k)-ped);
+  }
+  return true;
+}
+
+bool TileSpectra::FillTOTProfile(std::vector<int> samples){
+  for(int k = 0; k < (int)samples.size(); k++){
+    hProfileTOT.Fill(k, samples.at(k));
+    // std::cout << k << "\t" << samples.at(k) << std::endl;
+  }
+  return true;
+}
+
+bool TileSpectra::FillTOAProfile(std::vector<int> samples){
+  for(int k=0; k < (int)samples.size(); k++){
+    hProfileTOA.Fill(k, samples.at(k));
   }
   return true;
 }
@@ -839,6 +854,13 @@ TH2D* TileSpectra::GetCorrADCTOT(){
   return &hcorrADCTOT;
 }
 
+TProfile* TileSpectra::GetTOTProfile(){
+  return &hProfileTOT;
+}
+
+TProfile* TileSpectra::GetTOAProfile(){
+  return &hProfileTOA;
+}
 
 TF1* TileSpectra::GetBackModel(int lh){
   if(lh==0 && bpedLG){

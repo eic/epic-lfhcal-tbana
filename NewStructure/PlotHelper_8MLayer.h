@@ -786,9 +786,13 @@
           temp2D          = ithSpectra->second.GetCorrTOASample();
         } else if (option == 4){
           tempProfile     = ithSpectra->second.GetADCTOT();
+        } else if (option == 5){
+          tempProfile     = ithSpectra->second.GetTOTProfile();
+        } else if (option == 6){
+          tempProfile     = ithSpectra->second.GetTOAProfile();
         }
         
-        if (!temp2D && option != 4) continue;
+        if (!temp2D && option < 4) continue;
         
         if (temp2D){
           SetStyleHistoTH2ForGraphs( temp2D, temp2D->GetXaxis()->GetTitle(), temp2D->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
@@ -801,8 +805,9 @@
           }        
         } else {
           if (!tempProfile) continue;
-          TH1D* dummyhist = new TH1D("dummyhist", "", tempProfile->GetNbinsX(), tempProfile->GetXaxis()->GetXmin(), tempProfile->GetXaxis()->GetXmax());
+          TH1D* dummyhist = new TH1D(Form("dummyhist %d %d %d",layer,r,c), "", tempProfile->GetNbinsX(), tempProfile->GetXaxis()->GetXmin(), tempProfile->GetXaxis()->GetXmax());
           SetStyleHistoTH1ForGraphs( dummyhist, tempProfile->GetXaxis()->GetTitle(), tempProfile->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
+          dummyhist->SetStats(0);
           dummyhist->GetXaxis()->SetRangeUser(xPMin,xPMax);
           dummyhist->GetYaxis()->SetRangeUser(0,maxY);
           dummyhist->Draw("axis");
