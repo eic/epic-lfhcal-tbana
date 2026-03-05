@@ -888,8 +888,8 @@
       else if (nruns < 16) lineBottom = 3;
       else if (nruns < 21) lineBottom = 4;
       else if (nruns < 26) lineBottom = 5;
-      TLegend* legend = GetAndSetLegend2( 0.55, 0.88-lineBottom*textSizeRel, 0.95, 0.88,
-                                          0.85*textSizeRel, 5, "",42,0.35);;
+      TLegend* legend = GetAndSetLegend2( 0.60, 0.88-lineBottom*textSizeRel, 0.95, 0.88,
+                                          0.70*textSizeRel, 5, "",42,0.25);;
       int currRun = 0;
       for(itrun=sumRuns.begin(); (itrun!=sumRuns.end()) && (currRun < 30); ++itrun){
         histos[currRun] = nullptr;
@@ -915,7 +915,7 @@
         } else {
           histos[currRun]->Draw("same,hist");
         }
-        legend->AddEntry(histos[currRun],Form("%d",itrun->first),"l");
+        legend->AddEntry(histos[currRun],Form("%d",itrun->second.GetRunNumber()),"l");
         currRun++;  
       }  
       histos[0]->DrawCopy("axis,same");
