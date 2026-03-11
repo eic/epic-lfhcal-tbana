@@ -81,6 +81,10 @@ if [ $1 = "fbockTB" ]; then
 	dataDirRaw=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
 	dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
 	PlotBaseDir=/media/fbock/Lennard4TB/202511_PST09/
+elif [ $1 = "ehagen" ]; then 
+	dataDirRaw=/Users/hagen/Githubs/epic-lfhcal-tbana/TB_Data
+	dataDirOut=/Users/hagen/Githubs/epic-lfhcal-tbana/TB_Data
+	PlotBaseDir=/Users/hagen/Githubs/epic-lfhcal-tbana/plots
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -105,9 +109,9 @@ if [ $2 = "pedestal" ]; then
   #   runs='296 297 298 299 300'          #Hadron scan 2
   #   runs='319 320 324 325 326 327 328 329 330'          #Hadron scan 3
   #     runs='352 353 354 355 356'          #Hadron scan 4
-  #     runs='382 383 384 385'              #E scan 
+    runs='381 382 383 384 385 386 387 388 389 390 391 395'              #E scan 
   #   runs='33 28 29 30 31 32'                           #1st HV scan
-    runs='260 261 262 263 264 265 266 267 268 271 272' #2nd HV scan 
+  #  runs='260 261 262 263 264 265 266 267 268 271 272' #2nd HV scan 
   # electron runs
   elif [ $3 = "Electron" ]; then
     runs='166 167 168 169 170'
