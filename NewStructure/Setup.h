@@ -60,6 +60,10 @@ class Setup{
   int     GetNMaxKCUs   (void) const;
   int     GetAbsNMaxROChannel(void) const;
   int     GetMaxCellID (void) const;
+  int     GetLayersInSegmentFromLayer(int) const;
+  int     GetLayersInSegment(int) const;
+  double  GetSegmentDepth(int cellID) const;
+  
   TString DecodeCellID(int /**/) const;
   double  GetX         (int /**/) const;
   double  GetY         (int /**/) const;
@@ -97,16 +101,19 @@ class Setup{
   std::map<int, std::pair<float,float>> ModPos;
   //Inverse mapping
   std::map< std::pair<int, int>, int> CellIDfromRO;
+  // key is layerNr
+  std::map<int,int>     SegmentSum;
   int nMaxLayer;
   int nMaxRow;
   int nMaxColumn;
   int nMaxModule;
   int nMaxROUnit;
   int maxCellID;
-  float cellW=5.;/*cm, width*/
-  float cellH=5.;/*cm, height*/
-  float cellD=2.;/*cm, depth*/
-  ClassDef(Setup,2)
+  float cellW = 5.;/*cm, width*/
+  float cellH = 5.;/*cm, height*/
+  float cellD = 2.;/*cm, depth*/
+  int sumOpt  = 0;
+  ClassDef(Setup,3)
 };
 
 

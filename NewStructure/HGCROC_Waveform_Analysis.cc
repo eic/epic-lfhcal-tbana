@@ -1471,7 +1471,7 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
     if(ithSampleXtalk==hSampleXtalk.end()){
       hSampleXtalk[id]=TileSpectra("XtalkSample",7,id,calib.GetTileCalib(id),typeRO,debug);
     }
-    if(ithSpectraSat==hSpectraSat.end()){
+    if(ithSampleSat==hSampleSat.end()){
       hSampleSat[id]=TileSpectra("SatSample",7,id,calib.GetTileCalib(id),typeRO,debug);
     }
   }
