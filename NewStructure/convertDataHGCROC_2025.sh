@@ -32,6 +32,10 @@ mapCon4=../configs/TB2025/mapping_HGCROC_PSTB2025_config4.txt     # layers 0-16,
 if [ $1 = "fbockTB" ]; then 
 	dataRaw=/media/fbock/Lennard4TB/202511_PST09/raw/TBMain2025/      # source directory for output files from DAQ system
 	dataDir=/media/fbock/Lennard4TB/202511_PST09/HGCROCData           # base directory for root trees
+	elif [ $1 = "egpott" ]; then
+		dataRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/raw
+		dataDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
+
 fi
   
 # global run list for 2025 TB
@@ -152,9 +156,7 @@ elif [ $2 = "MergeMuons" ]; then
 #   runs='352 353 354 355 356'          #Hadron scan 4
 #   echo $runs > runList.txt
 #   MergeMuonsFileList $dataDir runList.txt HadScan_4
-  runs='382 383 384 385'              #E scan 
-  echo $runs > runList.txt
-  MergeMuonsFileList $dataDir runList.txt EScan
+ 
   
 elif [ $2 = "electrons" ]; then 
 	mkdir -p $dataRaw

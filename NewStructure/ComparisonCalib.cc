@@ -317,7 +317,7 @@ bool ComparisonCalib::ProcessCalib(void){
           hSB_Signal2D  = (TH2D*)tempFile->Get("hSuppresionSignal");          
         } 
       }
-    }
+    } // end if (expandedList > 0)
     
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // Loop over all cells in the calib object for trending plots
@@ -476,7 +476,7 @@ bool ComparisonCalib::ProcessCalib(void){
         // append TileTrend object to map
         trend[itcalib->first]=atrend;
       }
-    }
+    } // end loop over cells in the calib object
     
     // append CalibSummary object to map
     sumCalibs[nRun]=aSum;
@@ -486,7 +486,7 @@ bool ComparisonCalib::ProcessCalib(void){
     }
     // increase run-counter
     nRun++;
-  }
+  } // end loop over entries (runs) in calib tree
   
   // ******************************************************************************************
   // Print summary of calib runs

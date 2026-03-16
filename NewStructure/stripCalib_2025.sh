@@ -3,14 +3,22 @@
 if [ $1 = "fbockTB" ]; then 
 	dataDirIn=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
 	dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
-fi  
+	
+	elif [ $1 = "egpott" ]; then
+		dataDirIn=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
+		dataDirOut=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/calibrated
+fi
+
+
   
 
 if [ $2 == "BaseCalibs" ]; then
 # 	./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp3R_FullSetA_1.root -A $dataDirOut/calib_FullSetA1.root
 # 	./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp3R_FullSetA_2.root -A $dataDirOut/calib_FullSetA2.root
 # 	./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp3R_FullSetB_1.root -A $dataDirOut/calib_FullSetB1.root
-	./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_FullSetB_2.root -A $dataDirOut/calib_FullSetB2.root
+#	./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_FullSetB_2.root -A $dataDirOut/calib_FullSetB2.root
+	./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_030.root -A $dataDirOut/calib_030.root
+
 # elif [ $2 == "ScanA" ]; then
 # 	# 192K events
 # 	echo "running calibrate for 45V runs, campaing A1"

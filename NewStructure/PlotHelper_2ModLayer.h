@@ -510,7 +510,8 @@
               legend->AddEntry(fit, "Landau-Gauss fit", "l");  
             legend->AddEntry((TObject*)0, Form("#scale[0.8]{L MPV = %2.2f #pm %2.2f}",fit->GetParameter(1), fit->GetParError(1) ) , " ");
             legend->AddEntry((TObject*)0, Form("#scale[0.8]{Max = %2.2f}", maxFit ) , " ");
-            legend->Draw();
+            legend->AddEntry((TObject*)0, Form("#scale[0.8]{#chi^{2}/ndf = %2.2f}", fit->GetChisquare()/fit->GetNDF()), " ");
+						legend->Draw();
             DrawLines(maxFit, maxFit,0.7, scaleYMax*maxY/10, 5, kRed+3, 7);  
           } else {
             labelChannel->Draw();  

@@ -22,6 +22,24 @@ bool CalibSummary::Fill(const TileCalib& tc){
   return true;
 }
 
+bool CalibSummary::Fill(TileCalib* tc){
+  hLGped        .Fill(tc->PedestalMeanL);
+  hLGpedwidth   .Fill(tc->PedestalSigL);
+  hHGped        .Fill(tc->PedestalMeanH);
+  hHGpedwidth   .Fill(tc->PedestalSigH);
+  hLGscale      .Fill(tc->ScaleL);
+  if (tc->LGHGCorr != 0. ) hLGscaleCalc  .Fill(tc->ScaleH/tc->LGHGCorr);
+  else hLGscaleCalc  .Fill(-1000);
+  hLGscalewidth .Fill(tc->ScaleWidthL);
+  hHGscale      .Fill(tc->ScaleH);
+  hHGscalewidth .Fill(tc->ScaleWidthH);
+  hHGLGcorr     .Fill(tc->HGLGCorr);
+  hHGLGOffcorr  .Fill(tc->HGLGCorrOff);
+  hLGHGcorr     .Fill(tc->LGHGCorr);
+  hLGHGOffcorr  .Fill(tc->LGHGCorrOff);
+  return true;
+}
+
 bool CalibSummary::Write(TFile* f){
   f->cd();
   hLGped          .Write();
@@ -40,10 +58,12 @@ bool CalibSummary::Write(TFile* f){
   return true;
 }
 
+
+
 //****************************************************************
 // analyse the full calibrations overview object
 // return status:
-//      0 - neighter ped nor mip scale are filled
+//      0 - neither ped nor mip scale are filled
 //      1 - ped is filled
 //      2 - ped & mip scale are filled
 //****************************************************************
@@ -112,4 +132,4 @@ int CalibSummary::Analyse(int debug){
     std::cout << "***********************************************************************************************************************" << std::endl;
   }
   return calibStatus;
-}
+} // end CalibSummary::Analyse()

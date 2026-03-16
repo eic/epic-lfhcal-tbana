@@ -40,6 +40,7 @@ class CalibSummary: public TObject{
 
   int Analyse(int );
   bool Fill(const TileCalib&);
+	bool Fill(TileCalib*); // -EP
   bool Write(TFile*);
   bool SetDeltaTimeHist(TH1D*);
   
