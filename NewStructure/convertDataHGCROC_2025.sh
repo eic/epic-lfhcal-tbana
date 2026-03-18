@@ -32,9 +32,14 @@ mapCon4=../configs/TB2025/mapping_HGCROC_PSTB2025_config4.txt     # layers 0-16,
 if [ $1 = "fbockTB" ]; then 
 	dataRaw=/media/fbock/Lennard4TB/202511_PST09/raw/TBMain2025/      # source directory for output files from DAQ system
 	dataDir=/media/fbock/Lennard4TB/202511_PST09/HGCROCData           # base directory for root trees
-	elif [ $1 = "egpott" ]; then
-		dataRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/raw
-		dataDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
+
+elif [ $1 = "egpott" ]; then
+	dataRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/raw
+	dataDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
+
+elif [ $1 = "ehagen" ]; then 
+	dataRaw=/Volumes/UWU/25_TB_Data
+	dataDir=/Volumes/UWU/25_TB_Data
 
 fi
   

@@ -6,6 +6,8 @@ elif [ $1 = "vandrieu" ]; then
     LFHCALTBDIR=/home/vandrieu/Software/epiclfhcal
 elif [ $1 = "kmaret" ]; then
     LFHCALTBDIR=/mnt/d/work
+elif [ $1 = "ehagen" ]; then
+     LFHCALTBDIR=/Users/hagen/Githubs/epic-lfhcal-tbana/TB_Data
 else 
     echo "Please add your user name to the script and define the location of the TBAnalysisSoftware"
     exit
