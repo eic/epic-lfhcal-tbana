@@ -3143,12 +3143,16 @@ bool Analyses::GetScaling(void){
   hMaxLG2nd->SetDirectory(0);
 
 
-	TH2D* hHGscaleChi2VsLayer = new TH2D( "hHGscaleChi2VsLayer", "HG MiP fit #chi^{2}/NDF; layer; brd channel; #chi^{2} / ndf ",	
+	TH2D* hHGscaleChi2VsLayer = new TH2D( "hHGscaleChi2VsLayer", "HG MiP fit #chi^{2}/NDF; layer; brd channel; #chi^{2}/ndf ",	
 	setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5); // -EP
 	hHGscaleChi2VsLayer->SetDirectory(0); 
 
-	TH2D* hChi2VsNMipTrigg = new TH2D( "hChi2VsNMipTrigg", "HG MiP fit by stats; Number of MiP triggers; #chi^{2} / ndf; ", 50, 0, 10000, 80, 0, 20); // -EP
-	hChi2VsNMipTrigg->SetDirectory(0);
+	TH2D* hSNRTriggVsLayer = new TH2D( "hSNRTriggVsLayer", "HG Triggered S/N; layers; brd channel; SNR ",
+																setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5); // -EP
+	hSNRTriggVsLayer->SetDirectory(0);
+
+	//TH2D* hChi2VsNMipTrigg = new TH2D( "hChi2VsNMipTrigg", "HG MIP fit by stats; Number of MIP triggers; #chi^{2}/ndf; ", 50, 0, 10000, 80, 0, 20); // -EP
+	//hChi2VsNMipTrigg->SetDirectory(0);
 
 	// 2D beam profile -EP
 	int thisbinxmax = setup->GetNMaxColumn()+1;	
@@ -3164,8 +3168,8 @@ bool Analyses::GetScaling(void){
 	TH2D* hMPVvsNoisePeak = new TH2D( "hMPVvsNoisePeak", "Signal to noise peak ADC; noise peak (ADC); MiP MPV (ADC); ", 20, -5, 10, 20, 0, 50); // -EP
 	hMPVvsNoisePeak->SetDirectory(0);
 
-	TH1D* hPeakSeparation = new TH1D("hPeakSeparation", "Signal-noise peak separation; MPV - noise peak (ADC); counts", 35, 0, 35); // -EP
-	hPeakSeparation->SetDirectory(0);
+	//TH1D* hPeakSeparation = new TH1D("hPeakSeparation", "Signal-noise peak separation; MPV - noise peak (ADC); counts", 35, 0, 35); // -EP
+	//hPeakSeparation->SetDirectory(0);
 
 
   //==================================================================================
@@ -3226,25 +3230,29 @@ bool Analyses::GetScaling(void){
     double SB_NoiseR  = (B_NoiseR != 0.) ? S_NoiseR/B_NoiseR : 0;
     double SB_SigR    = (B_SigR != 0.) ? S_SigR/B_SigR : 0;
     
+		double SNR_trigg = (S_NoiseR != 0.) ? S_SigR/S_NoiseR : 0;
+
     hmipTriggers->SetBinContent(bin2D, ithSpectraTrigg->second.GetHG()->GetEntries());
     hSuppresionNoise->SetBinContent(bin2D, SB_NoiseR);
     hSuppresionSignal->SetBinContent(bin2D, SB_SigR);
+		hSNRTriggVsLayer->SetBinContent(bin2D, SNR_trigg);
 
 		// get 2D and 3D beam profiles -EP
-		// TODO: put this in PlotHelper or something
 		int thisbinx = col + 1; // the +1s are due to the 0th bin in root being underflow
 		int thisbiny = (mod*2) + row + 1;
 		int thisbinz = layer + 1;
 		int numMipTrig = ithSpectraTrigg->second.GetHG()->GetEntries();
 		hMipTriggXY->SetBinContent(thisbinx, thisbiny, hMipTriggXY->GetBinContent(thisbinx, thisbiny) + numMipTrig);
-		 hMipTriggXYZ->SetBinContent(thisbinx, thisbinz, thisbiny, numMipTrig);
+		hMipTriggXYZ->SetBinContent(thisbinx, thisbinz, thisbiny, numMipTrig);
 
+		// estimate separation between noise and mip peaks
+		//double peaksep = parameters[1]-ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG); 
 
     if (isGood){
 			hMPVvsNoisePeak->Fill(ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG), parameters[1]);
-			hPeakSeparation->Fill(parameters[1]-ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG));
+			//hPeakSeparation->Fill(peaksep);
 			hHGscaleChi2VsLayer->SetBinContent(bin2D, redChi2);
-			hChi2VsNMipTrigg->Fill(numMipTrig, redChi2);
+			//hChi2VsNMipTrigg->Fill(numMipTrig, redChi2);
       hspectraHGMaxVsLayer2nd->SetBinContent(bin2D, parameters[4]);
       hspectraHGFWHMVsLayer2nd->SetBinContent(bin2D, parameters[5]);
       hspectraHGLMPVVsLayer2nd->SetBinContent(bin2D, parameters[1]);
@@ -3348,9 +3356,10 @@ bool Analyses::GetScaling(void){
     hMaxHG2nd->Write();
 
 		hHGscaleChi2VsLayer->Write();
-		hChi2VsNMipTrigg->Write();
+		//hChi2VsNMipTrigg->Write();	
 		hMPVvsNoisePeak->Write();
-		hPeakSeparation->Write();
+		hSNRTriggVsLayer->Write();
+		//hPeakSeparation->Write();
 		hMipTriggXY->Write();
 		hMipTriggXYZ->Write();
     // CAEN specific histos
@@ -3808,12 +3817,19 @@ bool Analyses::GetImprovedScaling(void){
   hMaxLG->SetDirectory(0);
 
 	
-	TH2D* hHGscaleChi2VsLayer = new TH2D( "hHGscaleChi2VsLayer", "HG MiP fit #chi^{2}/NDF; layer; brd channel; #chi^{2} / ndf ", 
+	TH2D* hHGscaleChi2VsLayer = new TH2D( "hHGscaleChi2VsLayer", "HG MIP fit #chi^{2}/NDF; layer; brd channel; #chi^{2}/ndf ", 
 																		setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5); // -EP
-	hHGscaleChi2VsLayer->SetDirectory(0); // -EP
+	hHGscaleChi2VsLayer->SetDirectory(0); 
 
-	TH2D* hChi2VsNMipTrigg = new TH2D( "hChi2VsNMipTrigg", "HG MiP fit by stats; Number of MiP triggers; #chi^{2} / ndf; ", 50, 0, 10000, 80, 0, 20); // -EP
-	hChi2VsNMipTrigg->SetDirectory(0);
+	TH2D* hSNRTriggVsLayer = new TH2D( "hSNRTriggVsLayer", "HG Triggered S/N; layers; brd channel; SNR ", 
+																		setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5); // -EP
+	hSNRTriggVsLayer->SetDirectory(0);
+
+	//TH2D* hChi2VsNMipTrigg = new TH2D( "hChi2VsNMipTrigg", "HG MiP fit by stats; Number of MIP triggers; #chi^{2}/ndf; ", 50, 0, 10000, 80, 0, 20); // -EP
+	//hChi2VsNMipTrigg->SetDirectory(0);
+
+	//TH1D *hSNRTrigg = new TH1D("hSNRTrigg", "Signal to Noise Ratio; SNR; counts", 100, 0, 50); // -EP
+	//hSNRTrigg->SetDirectory(0);
 
 	// 2D beam profile -EP 
 	int thisbinxmax = setup->GetNMaxColumn()+1;
@@ -3826,11 +3842,11 @@ bool Analyses::GetImprovedScaling(void){
 	TH3D *hMipTriggXYZ = new TH3D( "hMipTriggXYZ", "MIP Triggers; X (col); Z (layer); Y (row); Num triggers", thisbinxmax, -0.5, thisbinxmax-0.5, thisbinzmax, -0.5, thisbinzmax-0.5, thisbinymax, -0.5, thisbinymax-0.5);
 	hMipTriggXYZ->SetDirectory(0);
 
-	TH2D* hMPVvsNoisePeak = new TH2D( "hMPVvsNoisePeak", "Signal to noise peak ADC; noise peak (ADC); MiP MPV (ADC); ", 20, -5, 10, 20, 0, 50); // -EP
+	TH2D* hMPVvsNoisePeak = new TH2D( "hMPVvsNoisePeak", "Signal to noise peak ADC; noise peak (ADC); MIP MPV (ADC); ", 20, -5, 10, 20, 0, 50); // -EP
 	hMPVvsNoisePeak->SetDirectory(0);
 
-	TH1D* hPeakSeparation = new TH1D("hPeakSeparation", "Signal-noise peak separation; MPV - noise peak (ADC); counts", 35, 0, 35); // -EP
-	hPeakSeparation->SetDirectory(0);
+	//TH1D* hPeakSeparation = new TH1D("hPeakSeparation", "Signal-noise peak separation; MPV - noise peak (ADC); counts", 35, 0, 35); // -EP
+	///hPeakSeparation->SetDirectory(0);
 
   //==================================================================================
   // mip fitting spectra for each cell
@@ -3905,12 +3921,19 @@ bool Analyses::GetImprovedScaling(void){
     double B_NoiseR = ithSpectra->second.GetHG()->Integral(binNLow , binNHigh);
     double B_SigR   = ithSpectra->second.GetHG()->Integral(binNHigh, binSHigh);
     
-    double SB_NoiseR  = (B_NoiseR != 0.) ? S_NoiseR/B_NoiseR : 0; // SNR for untriggered (all) data 
-    double SB_SigR    = (B_SigR != 0.) ? S_SigR/B_SigR : 0; // SNR for data after applying mip trigger
+    double SB_NoiseR  = (B_NoiseR != 0.) ? S_NoiseR/B_NoiseR : 0; // triggered noise / full noise (suppression of noise region from applying mip trigger) 
+    double SB_SigR    = (B_SigR != 0.) ? S_SigR/B_SigR : 0; // suppression of signal region from applying mip trigger
     
     meanSB_NoiseR += SB_NoiseR;
     meanSB_SigR += SB_SigR;
 
+		double SNR_trigg = (S_NoiseR != 0.) ? S_SigR/S_NoiseR : 0;
+
+    hmipTriggers->SetBinContent(bin2D, ithSpectraTrigg->second.GetHG()->GetEntries());
+    hSuppresionNoise->SetBinContent(bin2D, SB_NoiseR);
+    hSuppresionSignal->SetBinContent(bin2D, SB_SigR);
+		hSNRTriggVsLayer->SetBinContent(bin2D, SNR_trigg);
+	
 		// get 2D and 3D beam profiles -EP
 		// TODO: put this in PlotHelper or something
 		int thisbinx = col + 1; // the +1s are due to the 0th bin in root being underflow
@@ -3919,16 +3942,17 @@ bool Analyses::GetImprovedScaling(void){
 		int numMipTrig = ithSpectraTrigg->second.GetHG()->GetEntries();
 		hMipTriggXY->SetBinContent(thisbinx, thisbiny, hMipTriggXY->GetBinContent(thisbinx, thisbiny) + numMipTrig);
 		hMipTriggXYZ->SetBinContent(thisbinx, thisbinz, thisbiny, numMipTrig);
+	
+		// estimate separation between noise and mip peaks
+		//double peaksep = parameters[1]-ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG);
 
-    hmipTriggers->SetBinContent(bin2D, ithSpectraTrigg->second.GetHG()->GetEntries());
-    hSuppresionNoise->SetBinContent(bin2D, SB_NoiseR);
-    hSuppresionSignal->SetBinContent(bin2D, SB_SigR);
     if (isGood){
 			hMPVvsNoisePeak->Fill(ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG), parameters[1]);
-			hPeakSeparation->Fill(parameters[1]-ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG));
+			//hPeakSeparation->Fill(peaksep);
+			//hSNRTrigg->Fill(SNR_trigg);
 			hHGscaleChi2VsLayer->SetBinContent(bin2D, redChi2);
-			hChi2VsNMipTrigg->Fill(numMipTrig, redChi2);
-      hspectraHGMaxVsLayer->SetBinContent(bin2D, parameters[4]);
+			//hChi2VsNMipTrigg->Fill(numMipTrig, redChi2);     
+			hspectraHGMaxVsLayer->SetBinContent(bin2D, parameters[4]);
       hspectraHGFWHMVsLayer->SetBinContent(bin2D, parameters[5]);
       hspectraHGLMPVVsLayer->SetBinContent(bin2D, parameters[1]);
       hspectraHGLMPVVsLayer->SetBinError(bin2D, parErrAndRes[1]);
@@ -4009,9 +4033,11 @@ bool Analyses::GetImprovedScaling(void){
     hspectraHGGSigmaVsLayer->Write();
     hMaxHG->Write();
 		hHGscaleChi2VsLayer->Write();
-		hChi2VsNMipTrigg->Write();
+		//hChi2VsNMipTrigg->Write();
 		hMPVvsNoisePeak->Write();
-		hPeakSeparation->Write();
+		hSNRTriggVsLayer->Write();
+		//hPeakSeparation->Write();
+		//hSNRTrigg->Write();
 		hMipTriggXY->Write();
 		hMipTriggXYZ->Write();
     if (typeRO == ReadOut::Type::Caen){

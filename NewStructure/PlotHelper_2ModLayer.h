@@ -474,18 +474,35 @@
           TF1* fit            = nullptr;
           bool isTrigFit      = false;
           double maxFit       = 0;
-          if (isHG){
+					double SNR     			= 0; // signal to noise ratio -EP	
+          double maxBin       = 0; 
+					if (ithSpectra->second.GetROType() == ReadOut::Type::Caen) { // from Analyses.cc -EP
+						maxBin = 3800;
+					} else {
+						maxBin = 1024;
+					}
+					if (isHG){
+						Int_t binNLow = ithSpectra->second.GetHG()->FindBin(-1*noiseWidth); // for SNR -EP
+						Int_t binNHigh = ithSpectra->second.GetHG()->FindBin(3*noiseWidth); 
+						Int_t binSHigh = ithSpectra->second.GetHG()->FindBin(maxBin); 
             fit = ithSpectraTrigg->second.GetSignalModel(1);
             if (!fit){
                 fit = ithSpectra->second.GetSignalModel(1);
                 if (fit){
                   maxFit = ithSpectra->second.GetCalib()->ScaleH;
+									double noiseInt = ithSpectra->second.GetHG()->Integral(binNLow, binNHigh); 
+									double sigInt = ithSpectra->second.GetHG()->Integral(binNHigh, binSHigh);
+									SNR = (noiseInt != 0) ? sigInt/noiseInt : 0; // if noise = 0, SNR = 0 -EP
                 }
             } else {
                 isTrigFit = true;
                 maxFit = ithSpectraTrigg->second.GetCalib()->ScaleH;
+								double noiseInt = ithSpectraTrigg->second.GetHG()->Integral(binNLow, binNHigh); 
+								double sigInt = ithSpectraTrigg->second.GetHG()->Integral(binNHigh, binSHigh);
+								SNR = (noiseInt != 0) ? sigInt/noiseInt : 0; // if noise = 0, SNR = 0 -EP
             }
-          } else {
+          } // end if (isHG) 
+					else {
             fit = ithSpectraTrigg->second.GetSignalModel(0);
             if (!fit){
                 fit = ithSpectra->second.GetSignalModel(0);
@@ -503,14 +520,24 @@
             else 
               SetStyleFit(fit , 0, 2000, 7, 7, kBlue+3);  
             fit->Draw("same");
-            TLegend* legend = GetAndSetLegend2( topRCornerX[p]-10*relSize8P[p], topRCornerY[p]-4*0.85*relSize8P[p]-0.4*relSize8P[p], topRCornerX[p]-0.04, topRCornerY[p]-0.6*relSize8P[p],0.85*textSizePixel, 1, label, 43,0.1);
-            if (isTrigFit)
+//            TLegend* legend = GetAndSetLegend2( topRCornerX[p]-10*relSize8P[p], topRCornerY[p]-4*0.85*relSize8P[p]-0.4*relSize8P[p], topRCornerX[p]-0.04, topRCornerY[p]-0.6*relSize8P[p],0.85*textSizePixel, 1, label, 43,0.1);
+            TLegend* legend = GetAndSetLegend2( topRCornerX[p]-10*relSize8P[p], topRCornerY[p]-6*0.85*relSize8P[p]-0.4*relSize8P[p], topRCornerX[p]-0.04, topRCornerY[p]-0.6*relSize8P[p],0.85*textSizePixel, 1, label, 43,0.1);
+						if (isHG)
+            	legend->AddEntry((TObject*)0, Form("Total events: %i", (int)ithSpectra->second.GetHG()->Integral()), "");
+						if (isTrigFit)
               legend->AddEntry(fit, "Landau-Gauss fit, trigg.", "l");
             else 
               legend->AddEntry(fit, "Landau-Gauss fit", "l");  
             legend->AddEntry((TObject*)0, Form("#scale[0.8]{L MPV = %2.2f #pm %2.2f}",fit->GetParameter(1), fit->GetParError(1) ) , " ");
             legend->AddEntry((TObject*)0, Form("#scale[0.8]{Max = %2.2f}", maxFit ) , " ");
             legend->AddEntry((TObject*)0, Form("#scale[0.8]{#chi^{2}/ndf = %2.2f}", fit->GetChisquare()/fit->GetNDF()), " ");
+						// estimate noise peak separation and write value on plot
+						//double noisepeak = ithSpectraTrigg->second.GetMaxXInRangeHG(-1*noiseWidth, 3*noiseWidth);
+						//legend->AddEntry((TObject*)0, Form("#scale[0.8]{Peak sep = %2.1f}", fit->GetParameter(1)-noisepeak), " ");
+						// add SNR to legend
+						if (isHG){
+							legend->AddEntry((TObject*)0, Form("#scale[0.8]{SNR = %2.2f}", SNR), " ");
+						}
 						legend->Draw();
             DrawLines(maxFit, maxFit,0.7, scaleYMax*maxY/10, 5, kRed+3, 7);  
           } else {
@@ -521,8 +548,8 @@
           DrawLines(noiseWidth*5, noiseWidth*5,0.7, scaleYMax*maxY, 2, kGray+1, 6);  
         
           if (p == 15 ){
-            DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-4*0.85*relSize8P[p]-1.4*relSize8P[p], GetStringFromRunInfo(currRunInfo, 2), true, 0.85*relSize8P[p], 42);
-            DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-4*0.85*relSize8P[p]-2.2*relSize8P[p], GetStringFromRunInfo(currRunInfo, 3), true, 0.85*relSize8P[p], 42);
+            DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-6*0.85*relSize8P[p]-1.4*relSize8P[p], GetStringFromRunInfo(currRunInfo, 2), true, 0.85*relSize8P[p], 42);
+            DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-6*0.85*relSize8P[p]-2.2*relSize8P[p], GetStringFromRunInfo(currRunInfo, 3), true, 0.85*relSize8P[p], 42);
           }
         }
       }
