@@ -528,8 +528,11 @@
               legend->AddEntry(fit, "Landau-Gauss fit, trigg.", "l");
             else 
               legend->AddEntry(fit, "Landau-Gauss fit", "l");  
-            legend->AddEntry((TObject*)0, Form("#scale[0.8]{L MPV = %2.2f #pm %2.2f}",fit->GetParameter(1), fit->GetParError(1) ) , " ");
-            legend->AddEntry((TObject*)0, Form("#scale[0.8]{Max = %2.2f}", maxFit ) , " ");
+            // estimate uncertainty on max position
+						double rel_err_L_MPV = fit->GetParError(1)/fit->GetParameter(1); // relative uncertainty on MPV
+						double sigma_Max = rel_err_L_MPV * maxFit;
+						legend->AddEntry((TObject*)0, Form("#scale[0.8]{L MPV = %2.2f #pm %2.2f}",fit->GetParameter(1), fit->GetParError(1) ) , " ");
+            legend->AddEntry((TObject*)0, Form("#scale[0.8]{Max = %2.2f #pm %2.2f}", maxFit, sigma_Max ) , " ");
             legend->AddEntry((TObject*)0, Form("#scale[0.8]{#chi^{2}/ndf = %2.2f}", fit->GetChisquare()/fit->GetNDF()), " ");
 						// estimate noise peak separation and write value on plot
 						//double noisepeak = ithSpectraTrigg->second.GetMaxXInRangeHG(-1*noiseWidth, 3*noiseWidth);
