@@ -21,7 +21,19 @@ if [ $2 = "SumTests" ]; then
   mkdir -p $dataDir/
 	runs='206 207'
 # 	runs='207'
+# 	for runNr in $runs; do 
+# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon -r $runList
+# 	done
+  
+  mapCon=../configs/LocalTesting/mapping_HGCROC_ORNL_SummingTest_2026_v1_2.txt
+	runs='223 224 225 226 227'
+# 	for runNr in $runs; do 
+# 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon -r $runList
+# 	done
+
+  mapCon=../configs/LocalTesting/mapping_HGCROC_ORNL_SummingTest_2026_v2_2.txt
+	runs='228 229'
 	for runNr in $runs; do 
 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon -r $runList
-	done
+	done	
 fi

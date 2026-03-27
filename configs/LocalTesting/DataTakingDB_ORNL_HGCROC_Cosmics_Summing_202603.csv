@@ -4,7 +4,14 @@ readout HGCROC
 facility ORNL
 beam-line cosmics
 Run Number,beam species,pdg,beam energy (GeV),bias Voltage ,V_br,trigger delay,machine gun number,Table Position x,Table Position (y),dead time,phase,nrKCU,nrAsic,spare,comments
-204,cosmics,-13,5,45,38.3,4,10,0.,0.,10000,12,1,1,,08.03.2026 ORNL-[02-05] trigger OR
-205,cosmics,-13,5,45,38.3,4,10,0.,0.,10000,12,1,2,,08.03.2026 ORNL-[02-05] trigger OR
-206,cosmics,-13,5,45,38.3,4,10,0.,0.,10000,12,1,4,,08.03.2026 ORNL-[02/03] trigger OR
-207,cosmics,-13,5,45,38.3,4,10,0.,0.,10000,12,1,4,,08.03.2026 ORNL-[02-05] trigger AND
+204,cosmics,-13,5,45,38.3,4,10,0.,0.,10000,12,1,1,,08.03.2026 ORNL-[02-05] trigger OR v1 summing
+205,cosmics,-13,5,45,38.3,4,10,0.,0.,10000,12,1,2,,08.03.2026 ORNL-[02-05] trigger OR v1 summing
+206,cosmics,-13,5,45,38.3,4,10,0.,0.,10000,12,1,4,,08.03.2026 ORNL-[02/03] trigger OR v1 summing
+207,cosmics,-13,5,45,38.3,4,10,0.,0.,10000,12,1,4,,08.03.2026 ORNL-[02-05] trigger AND v1 summing
+223,pedestal,0,5,45,38.3,4,10,0.,0.,10000,12,1,4,,18.03.2026 ORNL-[02-05] v1 summing
+224,cosmics,-13,5,45,38.3,4,10,0.,0.,10000,12,1,4,,18.03.2026 ORNL-[02-05] trigger OR v1 summing
+225,cosmics,-13,5,45,38.3,4,10,0.,0.,10000,12,1,4,,18.03.2026 ORNL-[02-05] trigger AND v1 summing
+226,cosmics,-13,5,43,38.3,4,10,0.,0.,10000,12,1,4,,18.03.2026 ORNL-[02-05] trigger AND v1 summing
+227,cosmics,-13,5,43,38.3,4,10,0.,0.,10000,12,1,4,,18.03.2026 ORNL-[02-05] trigger AND v1 summing
+228,pedestal,0,5,43,38.3,4,10,0.,0.,10000,12,1,4,,18.03.2026 ORNL-[02-05] v2 summing
+229,cosmics,-13,5,43,38.3,4,10,0.,0.,10000,12,1,4,,18.03.2026 ORNL-[02-05] trigger AND v2 summing

@@ -123,3 +123,79 @@ function Calib()
 		time ./DataPrep -e -f -d 1 -a -C $2 -i $3/rawHGCROC_$5.root -o $4/calibratedHGCROC_Run_$5.root -O $6/$7$5 -r $runNrFile -B $8 -G $9
 	fi
 }
+
+
+function HGCInv()
+{
+	
+	echo "=================================================================================="
+	echo "option $1"
+  echo "runNr" $2
+	echo "dataRawDir: $3"
+	echo "dataOutDir: $4"
+	echo "OutNameRun:" $5
+	echo "fixedSample" $6
+	runNr=$2
+  echo 
+	echo "=================================================================================="
+	if [ $1 == "wave" ]; then 
+      ./HGCROCStudy -d 1 -E 1 -f -w -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWave/$5 -r $runNrFile 
+	elif [ $1 == "waveWOff" ]; then 
+      ./HGCROCStudy -d 2 -E 1 -f -w -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWaveOffSetCorr/$5 -r $runNrFile -t $toaPhaseOffset
+  elif [ $1 == "waveNToA" ]; then 
+    ./HGCROCStudy -d 1 -E 1 -f -w -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWave/$5 -r $runNrFile -s $6
+  elif [ $1 == "waveNToAWOff" ]; then 
+    ./HGCROCStudy -d 1 -E 1 -f -w -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWaveOffSetCorr/$5 -r $runNrFile -s $6 -t $toaPhaseOffset
+  elif [ $1 == "timeWalk" ]; then 
+    ./HGCROCStudy -d 1 -E 1 -f -T -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_timewalk_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsTimeWalk/$5 -r $runNrFile 
+  elif [ $1 == "xTalk" ]; then 
+    ./HGCROCStudy -d 1 -E 1 -f -x -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_xTalk_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsXTalk/$5 -r $runNrFile 
+    curDir=$PWD
+    cd $PlotBaseDir/HGCROC_PlotsXTalk/$5
+    pdfunite WaveformSat_A* summaryAsic_WaveSat.pdf
+    pdfunite WaveformSampleSat_A* summaryAsic_WaveSampleSat.pdf
+    pdfunite WaveformNeg_A* summaryAsic_WaveNeg.pdf
+    pdfunite WaveformSampleNeg_A* summaryAsic_WaveSampleNeg.pdf
+    pdfunite WaveformSat_L* summaryLayer_WaveSat.pdf
+    pdfunite WaveformNeg_L* summaryLayer_WaveNeg.pdf
+    pdfjam -q --nup 2x4 --outfile summaryCorrAsicTrigg.pdf SatCellVsNegCell_Asic_* SatCellsvsNegCellsWToA_Asic_* NegCellsvsNegCellsWToA_Asic_*
+    cd $curDir
+  elif [ $1 == "xTalkFCh" ]; then 
+    ./HGCROCStudy -d 1 -E 1 -f -x -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_xTalk$6_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsXTalk/$5 -r $runNrFile -c $6 
+    curDir=$PWD
+    cd $PlotBaseDir/HGCROC_PlotsXTalk/$5/Channel_$6
+    pdfunite WaveformSat_A* summaryAsic_WaveSat.pdf
+    pdfunite WaveformSampleSat_A* summaryAsic_WaveSampleSat.pdf
+    pdfunite WaveformNeg_A* summaryAsic_WaveNeg.pdf
+    pdfunite WaveformSampleNeg_A* summaryAsic_WaveSampleNeg.pdf
+    pdfunite WaveformSat_L* summaryLayer_WaveSat.pdf
+    pdfunite WaveformNeg_L* summaryLayer_WaveNeg.pdf
+    pdfjam -q --nup 2x4 --outfile summaryCorrAsicTrigg.pdf SatCellVsNegCell_Asic_* SatCellsvsNegCellsWToA_Asic_* NegCellsvsNegCellsWToA_Asic_*
+    cd $curDir
+  elif [ $1 == "xTalkwoMinE" ]; then 
+    ./HGCROCStudy -d 1 -E 1 -f -x -i $3/calibratedNoCutOffHGCROC_Run_$runNr.root -o $3/calibratedNoCutOffHGCROC_xTalk_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsXTalkNoCutOff/$5 -r $runNrFile 
+    curDir=$PWD
+    cd $PlotBaseDir/HGCROC_PlotsXTalkNoCutOff/$5
+    pdfunite WaveformSat_A* summaryAsic_WaveSat.pdf
+    pdfunite WaveformSampleSat_A* summaryAsic_WaveSampleSat.pdf
+    pdfunite WaveformNeg_A* summaryAsic_WaveNeg.pdf
+    pdfunite WaveformSampleNeg_A* summaryAsic_WaveSampleNeg.pdf
+    pdfunite WaveformSat_L* summaryLayer_WaveSat.pdf
+    pdfunite WaveformNeg_L* summaryLayer_WaveNeg.pdf
+    pdfjam -q --nup 2x4 --outfile summaryCorrAsicTrigg.pdf SatCellVsNegCell_Asic_* SatCellsvsNegCellsWToA_Asic_* NegCellsvsNegCellsWToA_Asic_*
+    cd $curDir
+  elif [ $1 == "xTalkwoMinEFCh" ]; then 
+    ./HGCROCStudy -d 1 -E 1 -f -x -i $3/calibratedNoCutOffHGCROC_Run_$runNr.root -o $3/calibratedNoCutOffHGCROC_xTalk$6_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsXTalkNoCutOff/$5 -r $runNrFile -c $6 
+    curDir=$PWD
+    cd $PlotBaseDir/HGCROC_PlotsXTalkNoCutOff/$5/Channel_$6
+    pdfunite WaveformSat_A* summaryAsic_WaveSat.pdf
+    pdfunite WaveformSampleSat_A* summaryAsic_WaveSampleSat.pdf
+    pdfunite WaveformNeg_A* summaryAsic_WaveNeg.pdf
+    pdfunite WaveformSampleNeg_A* summaryAsic_WaveSampleNeg.pdf
+    pdfunite WaveformSat_L* summaryLayer_WaveSat.pdf
+    pdfunite WaveformNeg_L* summaryLayer_WaveNeg.pdf
+    pdfjam -q --nup 2x4 --outfile summaryCorrAsicTrigg.pdf SatCellVsNegCell_Asic_* SatCellsvsNegCellsWToA_Asic_* NegCellsvsNegCellsWToA_Asic_*
+    cd $curDir
+	fi
+	
+}

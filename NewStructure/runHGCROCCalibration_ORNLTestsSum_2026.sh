@@ -25,13 +25,16 @@ fi
 
 if [ $2 = "pedestal" ]; then
   #pedestal from cosmics
-  runs='206 207'
+#   runs='206 207'
+#   runs='223'
+  runs='228 229'
   for runNr in $runs; do 
     Pedestal ped $runNr $dataDirRaw $dataDirOut Run_$runNr pdf
   done
 fi
 
 if [ $2 = "toaPhase" ]; then 
+#   runs='206 207'
   runs='206 207'
   for runNr in $runs; do 
     ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_mipTrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_mipTrigg_wPedwMuon_wBC_$runNr.root #-F png
@@ -48,11 +51,19 @@ if [ $2 == "calibMuon" ]; then
 # 	for runNr in $runs; do 
 # 		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
 # 	done
-  runPed='207'
-	runs='207' 
+#   runPed='207'
+# 	runs='207' 
+# 	for runNr in $runs; do 
+# 		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
+# 	done
+  toaPhaseOffset=../configs/LocalTesting/ToAOffsets_Cosmics_ST_ORNL02_22x.csv
+  runPed='223'
+# 	runs='224 225' 
+	runs='225 226_227'
 	for runNr in $runs; do 
 		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
 	done
+
 fi
 
 if [ $2 = "wave" ]; then  
@@ -63,9 +74,30 @@ if [ $2 = "wave" ]; then
 fi
 
 if [ $2 == "calib" ]; then
-	calibFile1=/media/fbock/Lennard4TB/SummingBoardTestFull/HGCROCData/rawHGCROC_wPedwMuon_wBC_Imp2_207.root
-  toaPhaseOffset=../configs/LocalTesting/ToAOffsets_Cosmics_ST_ORNL02.csv
+# 	calibFile1=/media/fbock/Lennard4TB/SummingBoardTestFull/HGCROCData/rawHGCROC_wPedwMuon_wBC_Imp2_207.root
+#   toaPhaseOffset=../configs/LocalTesting/ToAOffsets_Cosmics_ST_ORNL02.csv
+# 	badChannelMap="../configs/LocalTesting/badChannelMap_HGCROC_Cosmics_ST.txt"	
+	#muon runs
+# 	Calib $3 $calibFile1 $dataDirOut $dataDirOut 207 $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
+	calibFile1=/media/fbock/Lennard4TB/SummingBoardTestFull/HGCROCData/rawHGCROC_wPedwMuon_wBC_Imp2_225.root
+	toaPhaseOffset=../configs/LocalTesting/ToAOffsets_Cosmics_ST_ORNL02_22x.csv
 	badChannelMap="../configs/LocalTesting/badChannelMap_HGCROC_Cosmics_ST.txt"	
 	#muon runs
-	Calib $3 $calibFile1 $dataDirOut $dataDirOut 207 $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
+	Calib $3 $calibFile1 $dataDirOut $dataDirOut 225 $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
+	
+	calibFile1=/media/fbock/Lennard4TB/SummingBoardTestFull/HGCROCData/rawHGCROC_wPedwMuon_wBC_Imp2_226_227.root
+	toaPhaseOffset=../configs/LocalTesting/ToAOffsets_Cosmics_ST_ORNL02_22x.csv
+	badChannelMap="../configs/LocalTesting/badChannelMap_HGCROC_Cosmics_ST.txt"	
+	#muon runs
+	Calib $3 $calibFile1 $dataDirOut $dataDirOut 226_227 $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
+	
+fi
+
+if [ $2 = "waveDet" ]; then  
+  toaPhaseOffset=../configs/LocalTesting/ToAOffsets_Cosmics_ST_ORNL02_22x.csv
+  runs='225 226_227' 
+	for runNr in $runs; do 
+		HGCInv $3 $runNr $dataDirRaw $dataDirOut Run_$runNr $4
+	done
+
 fi
