@@ -55,26 +55,27 @@ bool Analyses::CheckAndOpenIO(void){
       return false;
     }
 
-    //Retrieve info, start with setup
-    TsetupIn = (TTree*) RootInput->Get("Setup");
-    if(!TsetupIn){
-      std::cout<<"Could not retrieve the Setup tree, leaving"<<std::endl;
-      return false;
+    //Retrieve info, start with setup, only if its not to be overwritten
+    if (!OverWriteSetup){
+      TsetupIn = (TTree*) RootInput->Get("Setup");
+      if(!TsetupIn){
+        std::cout<<"Could not retrieve the Setup tree, leaving"<<std::endl;
+        return false;
+      }
+      setup=Setup::GetInstance();
+      std::cout<<"Setup add "<<setup<<std::endl;
+      //matchingbranch=TsetupIn->SetBranchAddress("setup",&setup);
+      matchingbranch=TsetupIn->SetBranchAddress("setup",&rswptr);
+      if(matchingbranch<0){
+        std::cout<<"Error retrieving Setup info from the tree"<<std::endl;
+        return false;
+      }
+      std::cout<<"Entries "<<TsetupIn->GetEntries()<<std::endl;
+      TsetupIn->GetEntry(0);
+      setup->Initialize(*rswptr);
+      std::cout<<"Reading "<<RootInput->GetName()<<std::endl;
+      std::cout<<"Setup Info "<<setup->IsInit()<<"  and  "<<setup->GetCellID(0,0)<<std::endl;
     }
-    setup=Setup::GetInstance();
-    std::cout<<"Setup add "<<setup<<std::endl;
-    //matchingbranch=TsetupIn->SetBranchAddress("setup",&setup);
-    matchingbranch=TsetupIn->SetBranchAddress("setup",&rswptr);
-    if(matchingbranch<0){
-      std::cout<<"Error retrieving Setup info from the tree"<<std::endl;
-      return false;
-    }
-    std::cout<<"Entries "<<TsetupIn->GetEntries()<<std::endl;
-    TsetupIn->GetEntry(0);
-    setup->Initialize(*rswptr);
-    std::cout<<"Reading "<<RootInput->GetName()<<std::endl;
-    std::cout<<"Setup Info "<<setup->IsInit()<<"  and  "<<setup->GetCellID(0,0)<<std::endl;
-    //std::cout<<"Setup add now "<<setup<<std::endl;
 
     //Retrieve info, existing data?
     TdataIn = (TTree*) RootInput->Get("Data");
@@ -203,12 +204,13 @@ bool Analyses::CheckAndOpenIO(void){
     }
     //std::cout<<"Did the address changed? "<<&calib<<std::endl;
   }
+  
   if(!MapInputName.IsNull()){
     MapInput.open(MapInputName.Data(),std::ios::in);
     if(!MapInput.is_open()){
       std::cout<<"Could not open mapping file: "<<MapInputName<<std::endl;
       return false;
-    }	
+    }
   }
   std::cout <<"=============================================================" << std::endl;
   std::cout <<" Basic setup complete" << std::endl;
@@ -274,6 +276,11 @@ bool Analyses::Process(void){
       }
     }
   } // end if Convert
+  
+  if (OverWriteSetup){
+    status=OverWriteSetupTree();
+    return status;
+  }
   
   // extract pedestal from pure pedestal runs (internal triggers)
   if(ExtractPedestal){
@@ -5136,13 +5143,13 @@ bool Analyses::Calibrate(void){
             continue;
           }
   
-          PlotNoiseAdvWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                      hSpectra, hSpectraNoise, true, -50, 100, 1.2, l, m,
-                                      Form("%s/NoiseTrigg_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
           PlotSpectra8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                     hSpectra, 0, -100, 4000, 1.2, l, m,
                                     Form("%s/Spectra_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
           if (typeRO == ReadOut::Type::Caen) {
+            PlotNoiseAdvWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+                                      hSpectra, hSpectraNoise, true, -50, 100, 1.2, l, m,
+                                      Form("%s/NoiseTrigg_HG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
             PlotNoiseAdvWithFits8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                         hSpectra, hSpectraNoise, false, -50, 100, 1.2, l, m,
                                         Form("%s/NoiseTrigg_LG_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
@@ -5200,9 +5207,6 @@ bool Analyses::Calibrate(void){
           std::cout << "====> layer " << l << " all channels masked" << std::endl;
           continue;
         }
-        // PlotNoiseAdvWithFits2ModLayer ( canvas2ModPanel,pad2ModPanel, topRCornerX2Mod, topRCornerY2Mod, relSize2ModP, textSizePixel, 
-        //                                 hSpectra, hSpectraNoise, true, -50, 100, 1.2, l, 
-        //                                 Form("%s/NoiseTrigg_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
         PlotSpectra2ModLayer (canvas2ModPanel,pad2ModPanel, topRCornerX2Mod, topRCornerY2Mod, relSize2ModP, textSizePixel, 
                               hSpectra, 0, -100, 4000, 1.2, l, 
                               Form("%s/Spectra_HG_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
@@ -5291,6 +5295,49 @@ bool Analyses::SaveCalibToOutputOnly(void){
   
   return true;
 }
+
+//***********************************************************************************************
+//*********************** Save Noise triggers only ***************************************************
+//***********************************************************************************************
+bool Analyses::OverWriteSetupTree(void){
+  std::cout<<"Rewrite original file to new output file with updated setup tree: "<< GetRootOutputName().Data() <<std::endl;
+  RootOutput->cd();
+  
+  if (MapInputName.CompareTo("")== 0) {
+      std::cerr << "ERROR: No mapping file has been provided, please make sure you do so! Aborting!" << std::endl;
+      return false;
+  }
+  std::cout << "creating mapping " << std::endl;
+  setup->Initialize(MapInputName.Data(),debug);
+  
+  RootSetupWrapper rswtmp=RootSetupWrapper(setup);
+  rsw=rswtmp;
+  TsetupOut->Fill();  
+  TsetupOut->Write();
+  
+  // write Data tree to new output
+  TdataIn->CloneTree()->Write();
+  
+  
+  // check whether calib should be overwritten based on external text file
+  TcalibIn->GetEntry(0);  
+  if (OverWriteCalib){
+    calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
+  }
+  
+  if (IsCalibSaveToFile()){
+    TString fileCalibPrint = GetRootOutputName();
+    fileCalibPrint         = fileCalibPrint.ReplaceAll(".root","_calib.txt");
+    calib.PrintCalibToFile(fileCalibPrint);
+  }
+
+  TcalibOut->Fill();
+  TcalibOut->Write();
+  RootOutput->Close();
+  
+  return true;
+}
+
 
 //***********************************************************************************************
 //*********************** Save local muon triggers only ***************************************************

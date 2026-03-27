@@ -69,6 +69,7 @@ class Analyses{
   inline short GetCalcBadChannel(void)          const {return CalcBadChannel;};
   inline short GetExtPlotting(void)             const {return ExtPlot;};
   inline bool GetOverWriteCalib(void)           const {return OverWriteCalib;};
+  inline bool GetOverWriteSetup(void)           const {return OverWriteSetup;};
   inline int GetMaxEvents(void)                 const {return maxEvents;};
   inline bool GetHGCROCTrunctation(void)        const {return truncateHGCROC;};
   
@@ -95,6 +96,7 @@ class Analyses{
   inline void UseLocTriggFromFile(bool b)        {LocTriggFile = b;};
   inline void SetCalcBadChannel(short b)         {CalcBadChannel = b;};
   inline void SetOverWriteCalib(bool b)          {OverWriteCalib = b;};
+  inline void SetOverWriteSetup(bool b)          {OverWriteSetup = b;};
   inline void SetExtPlotting(short b)            {ExtPlot = b;};
   inline void EnableDebug(int i)                 {debug=i;};
   inline void SetHGCROCTruncation(bool b)        {truncateHGCROC = b;};
@@ -167,6 +169,7 @@ class Analyses{
   bool LocTriggFile           =false;     // Flag to use already evaluated triggeres
   short CalcBadChannel        =0;         // Flag to create bad channel map
   bool OverWriteCalib         =false;     // Flag to overwrite calib from text file
+  bool OverWriteSetup         =false;     // Flag to overwrite setup from new mapping file
   short ExtPlot               =0;         // Enable extended plotting
   bool Overwrite              =false;     // Flag to overwrite outputs
   int debug                   =0;         // debug level 
@@ -208,6 +211,8 @@ class Analyses{
   bool SaveMuonTriggersOnly(void);
   bool SaveCalibToOutputOnly(void);
   bool SkimHGCROCData(void);
+  bool OverWriteSetupTree(void);
+
   std::map<int,short> ReadExternalBadChannelMap(void);
  };
 

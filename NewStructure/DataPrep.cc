@@ -44,7 +44,7 @@ void PrintHelp(char* exe){
   std::cout<<"-i uuu   Input file in root format"<<std::endl;
   std::cout<<"-k kkk   enabling overwriting of calib file using external calib txt file"<<std::endl;
   std::cout<<"-L LLL   enable testing with only limited number of events"<<std::endl;
-  std::cout<<"-m www   Name of mapping file  2024 PS TB [../configs/mappingFile_202409_CAEN.txt] "<<std::endl;
+  std::cout<<"-m mmm   Name of mapping file  2024 PS TB [../configs/mappingFile_202409_CAEN.txt] "<<std::endl;
   std::cout<<"-M       save mip triggered cells only"<<std::endl;
   std::cout<<"-n       extract noise after first mip fits and reevaluate pedestals"<<std::endl;
   std::cout<<"-N       save noise triggered cells only"<<std::endl;
@@ -53,6 +53,7 @@ void PrintHelp(char* exe){
   std::cout<<"-p       Extract pedestal from input file and store it in output file"<<std::endl;
   std::cout<<"-P zzz   Correct pedestals stored in zzz root file and applied to input file"<<std::endl;
   std::cout<<"-r rrr   Name of run list file  2024 PS TB [../configs/DataTakingDB_202409_CAEN.csv] "<<std::endl;
+  std::cout<<"-R mmm   Replace setup with mapping file specified as argument "<<std::endl;
   std::cout<<"-s       extract scaling constant from input data"<<std::endl;
   std::cout<<"-S       extract scaling constant from input data in 2nd iteration based on pretriggered data"<<std::endl;
   std::cout<<"-t       use local trigger eval from existing input, don't redo in calibrate"<<std::endl;
@@ -78,7 +79,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"aA:bB:c:C:d:eE:fF:g:G:hi:k:L:m:MnNo:O:pP:r:sStT:uwXy:"))!=-1){
+  while((c=getopt(argc,argv,"aA:bB:c:C:d:eE:fF:g:G:hi:k:L:m:MnNo:O:pP:r:R:sStT:uwXy:"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"DataPrep: printing calib object to file"<<std::endl;
@@ -185,6 +186,12 @@ int main(int argc, char* argv[]){
     case 'r':
       std::cout<<"DataPrep: run list file from: "<<optarg<<std::endl;
       AnAnalysis.SetRunListInput(Form("%s",optarg));
+      break;
+    case 'R':
+      std::cout<<"DataPrep: overwrite mapping file from: "<<optarg<<std::endl;
+      std::cout<<"DataPrep: EXPERT USE ONLY!"<<std::endl;
+      AnAnalysis.SetMapInput(Form("%s",optarg));
+      AnAnalysis.SetOverWriteSetup(true);
       break;
     case 's':
       std::cout<<"DataPrep: Extract scaling constant from input data"<<std::endl;

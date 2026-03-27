@@ -30,9 +30,10 @@ bool Setup::Initialize(TString file, int debug){
   nMaxModule  = -1;
   nMaxROUnit  = -1;
   maxCellID   = -1;
-  int AROunit,AROchannel,Alayer,AROlayer,Arow,Acolumn,Amod;
+  int AROunit,AROchannel,Alayer,AROlayer,Arow,Acolumn,Amod,segSize;
   TString Anassembly;
   int Akey;
+  
   for( TString tempLine; tempLine.ReadLine(input, kTRUE); ) {
         // check if line should be considered
     if (tempLine.BeginsWith("%") || tempLine.BeginsWith("#")){
@@ -56,6 +57,13 @@ bool Setup::Initialize(TString file, int debug){
             continue;
         }
     }
+
+    if (tempLine.BeginsWith("sumOpt")){
+      sumOpt  = ((TString)((TObjString*)tempArr->At(1))->GetString()).Atoi();
+      delete tempArr;
+      continue;
+    }
+    
     if (tempArr->GetEntries()<10){
       if (debug > 1) std::cout << "line not conform with mapping format, skipping" << std::endl;
       delete tempArr;
@@ -70,14 +78,17 @@ bool Setup::Initialize(TString file, int debug){
     Arow        = ((TString)((TObjString*)tempArr->At(5))->GetString()).Atoi();
     Acolumn     = ((TString)((TObjString*)tempArr->At(6))->GetString()).Atoi();
     Amod        = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
-    float AmodX       = ((TString)((TObjString*)tempArr->At(8))->GetString()).Atof();
-    float AmodY       = ((TString)((TObjString*)tempArr->At(9))->GetString()).Atof(); 
+    float AmodX = ((TString)((TObjString*)tempArr->At(8))->GetString()).Atof();
+    float AmodY = ((TString)((TObjString*)tempArr->At(9))->GetString()).Atof(); 
+    segSize     = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atoi(); 
     
-
     // Try to set map for mod pos
     ModPos[Amod]=std::make_pair(AmodX,AmodY);
     //std::cerr<< "modnr: "<< Amod <<std::endl;
 
+    //set segment size per representative layer
+    SegmentSum[Alayer] = segSize;
+    
     Akey=(Amod<<9)+(Arow<<8)+(Acolumn<<6)+(Alayer);
     assemblyID[Akey] = Anassembly;
     ROunit    [Akey] = AROunit;
@@ -90,7 +101,7 @@ bool Setup::Initialize(TString file, int debug){
     if (nMaxModule < Amod)    nMaxModule  = Amod;
     if (nMaxROUnit < AROunit) nMaxROUnit  = AROunit;
     if (maxCellID < Akey)     maxCellID   = Akey;
-    if (debug > 10)std::cout <<AROunit<< "\t" << AROchannel << "\t"<< Alayer << "\t"<< Anassembly << "\t"<< AROlayer << "\t"<< Arow << "\t"<< Acolumn << "\t"<< Amod << std::endl;
+    if (debug > 10)std::cout <<AROunit<< "\t" << AROchannel << "\t"<< Alayer << "\t"<< Anassembly << "\t"<< AROlayer << "\t"<< Arow << "\t"<< Acolumn << "\t"<< Amod << segSize<< std::endl;
     if (debug > 1)std::cout << "registered cell: " << DecodeCellID(Akey).Data() << std::endl;
   }
   input.close();
@@ -113,6 +124,8 @@ bool Setup::Initialize(RootSetupWrapper& rsw){
   nMaxROUnit      =rsw.nMaxROUnit;
   maxCellID       =rsw.maxCellID;
   ModPos          =rsw.ModPos;
+  SegmentSum      =rsw.SegmentSum;
+  sumOpt          =rsw.sumOpt;
   return isInit;
 }
 
@@ -189,7 +202,7 @@ double Setup::GetModuleX(int mod)const {
 }
 
 double Setup::GetModuleY(int mod)const {
-    auto it = ModPos.find(mod);
+  auto it = ModPos.find(mod);
   if (it != ModPos.end()) {
       return static_cast<double>(it->second.second);
   }
@@ -215,8 +228,41 @@ double Setup::GetY(int cellID) const{
 
 double Setup::GetZ(int cellID) const{
   int lay=GetLayer(cellID);
-  return cellD/2 + lay*cellD/*cm*/;
+  if (sumOpt == 0){
+    return cellD/2 + lay*cellD/*cm*/;
+  } else {
+    double tempZ = 0;
+    for (int l = 0; l < lay; l++){
+      tempZ = tempZ+GetSegmentDepth(cellID);
+    }  
+    tempZ = tempZ+GetSegmentDepth(cellID)/2.;
+    return tempZ;
+  } 
 }
+
+int Setup::GetLayersInSegmentFromLayer(int layerNr) const{
+  auto it = SegmentSum.find(layerNr);
+  if (it != SegmentSum.end())
+    return it->second;
+  return 1;
+}
+
+int Setup::GetLayersInSegment(int cellID) const{
+  int lay=GetLayer(cellID);
+  auto it = SegmentSum.find(lay);
+  if (it != SegmentSum.end())
+    return it->second;
+  return 1;
+}
+
+double Setup::GetSegmentDepth(int cellID) const{
+  int lay=GetLayer(cellID);
+  auto it = SegmentSum.find(lay);
+  if (it != SegmentSum.end())
+    return it->second*cellD;
+  return cellD;
+}
+
 
 TString Setup::DecodeCellID(int cellID) const{
   TString out = Form("cell ID: %d ==> RO unit %d RO channel %d  module %d  layer %d  column %d row %d", cellID, GetROunit(cellID), GetROchannel(cellID), GetModule(cellID), GetLayer(cellID), GetColumn(cellID), GetRow(cellID));
@@ -327,9 +373,9 @@ float Setup::GetMinZ() const{
   std::map<int, TString>::const_iterator it;
   for(it=assemblyID.begin(); it!=assemblyID.end(); ++it){
     int cellID = it->first;
-    if( GetZ(cellID) < min ) min = GetZ(cellID);
+    if( GetZ(cellID) < min ) min = GetZ(cellID)-(GetSegmentDepth(cellID)/2);
   }
-  return min-(cellD/2);/*to get to the center of the tile*/
+  return min;/*to get to the beginning of tile*/
 }
 
 float Setup::GetMaxZ() const{
@@ -337,9 +383,9 @@ float Setup::GetMaxZ() const{
   std::map<int, TString>::const_iterator it;
   for(it=assemblyID.begin(); it!=assemblyID.end(); ++it){
     int cellID = it->first;
-    if( GetZ(cellID) > max ) max = GetZ(cellID);
+    if( GetZ(cellID) > max ) max = GetZ(cellID)+(GetSegmentDepth(cellID)/2);
   }
-  return max+(cellD/2);/*to get to the center of the tile*/
+  return max;/*to get to the end of tile*/
 }
 
 bool Setup::IsLayerOn(int layer, int mod) const{
