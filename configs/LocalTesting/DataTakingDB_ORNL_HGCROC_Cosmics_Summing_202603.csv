@@ -15,3 +15,8 @@ Run Number,beam species,pdg,beam energy (GeV),bias Voltage ,V_br,trigger delay,m
 227,cosmics,-13,5,43,38.3,4,10,0.,0.,10000,12,1,4,,18.03.2026 ORNL-[02-05] trigger AND v1 summing
 228,pedestal,0,5,43,38.3,4,10,0.,0.,10000,12,1,4,,18.03.2026 ORNL-[02-05] v2 summing
 229,cosmics,-13,5,43,38.3,4,10,0.,0.,10000,12,1,4,,18.03.2026 ORNL-[02-05] trigger AND v2 summing
+230,pedestal,0,5,43,38.3,4,10,0.,0.,10000,12,1,4,,24.03.2026 ORNL-[02-05] v2 summing rerun ped with same setting as 228
+231,pedestal,0,5,43,38.3,4,10,0.,0.,10000,12,1,4,,24.03.2026 ORNL-[02-05] v2 summing new calibs
+232,cosmics,-13,5,43,38.3,4,10,0.,0.,10000,12,1,4,,24.03.2026 ORNL-[02-05] trigger AND v2 summing new calibs
+233,cosmics,-13,5,43,38.3,4,10,0.,0.,10000,12,1,4,,24.03.2026 ORNL-[02-05] trigger AND v2 summing new calibs
+234,cosmics,-13,5,43,38.3,4,10,0.,0.,10000,12,1,4,,24.03.2026 ORNL-[02-05] trigger AND v2 summing new calibs

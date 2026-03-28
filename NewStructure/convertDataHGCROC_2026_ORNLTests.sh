@@ -25,15 +25,17 @@ if [ $2 = "SumTests" ]; then
 # 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon -r $runList
 # 	done
   
-  mapCon=../configs/LocalTesting/mapping_HGCROC_ORNL_SummingTest_2026_v1_2.txt
-	runs='223 224 225 226 227'
+#   mapCon=../configs/LocalTesting/mapping_HGCROC_ORNL_SummingTest_2026_v1.txt
+# 	runs='223 224 225 226 227'
 # 	for runNr in $runs; do 
 # 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon -r $runList
 # 	done
 
-  mapCon=../configs/LocalTesting/mapping_HGCROC_ORNL_SummingTest_2026_v2_2.txt
-	runs='228 229'
+  mapCon=../configs/LocalTesting/mapping_HGCROC_ORNL_SummingTest_2026_v2.txt
+	runs='228 229 230 231 232 233 234'
+# 	runs='234'
 	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon -r $runList
+		./Convert -d 5 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon -r $runList
 	done	
+	
 fi
