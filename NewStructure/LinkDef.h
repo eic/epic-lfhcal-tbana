@@ -24,4 +24,5 @@
 #pragma link C++ class TileTrend+;
 #pragma link C++ class CalibSummary+;
 #pragma link C++ class AnaSummary+;
+#pragma link C++ class MultiCanvas+;
 #endif

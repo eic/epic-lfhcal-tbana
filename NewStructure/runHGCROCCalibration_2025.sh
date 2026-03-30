@@ -35,10 +35,11 @@ if [ $2 = "pedestal" ]; then
   runs='';
   # different number of KCUs & asics
   if [ $3 = "Test" ]; then
-      runs='122 123 124 125 126 128 129'  
+    runs='122 123 124 125 126 128 129'  
   # reference pedestal runs for various campaigns
   elif [ $3 = "Ref" ]; then
-    runs='68 208 210 259 381'
+#     runs='68 208 210 259 381'
+    runs='208'
   # muon runs
   elif [ $3 = "Muon" ]; then
   #   runs='69 70 71 72 73 74 75 76 164' # Full Set A - muon set 1
