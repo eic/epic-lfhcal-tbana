@@ -15,6 +15,7 @@
 #include "CommonHelperFunctions.h"
 #include "TileSpectra.h"
 #include "PlotHelper.h"
+#include "MultiCanvas.h"
 #include "TRandom3.h"
 #include "TMath.h"
 #include "Math/Minimizer.h"
@@ -538,229 +539,41 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   calib.PrintGlobalInfo();  
 
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-  // Find detector config for plotting
+  // Plotting Single layers
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
   DetConf::Type detConf = setup->GetDetectorConfig();
   
   // set pixel text size
   Int_t textSizePixel = 30;
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-  //Single Module Plotting 
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
-  if (detConf == DetConf::Type::Single8M || (detConf == DetConf::Type::Dual8M && ExtPlot > 2) ){
-    TCanvas* canvas8Panel;
-    TPad* pad8Panel[8];
-    Double_t topRCornerX[8];
-    Double_t topRCornerY[8];
-    Double_t relSize8P[8];
-    CreateCanvasAndPadsFor8PannelTBPlot(canvas8Panel, pad8Panel,  topRCornerX, topRCornerY, relSize8P, textSizePixel);
-
-    TCanvas* canvas8PanelProf;
-    TPad* pad8PanelProf[8];
-    Double_t topRCornerXProf[8];
-    Double_t topRCornerYProf[8];
-    Double_t relSize8PProf[8];
-    CreateCanvasAndPadsFor8PannelTBPlot(canvas8PanelProf, pad8PanelProf,  topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 0.045, "Prof", false);
-
-    std::cout << "plotting single  8M layers" << std::endl;
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
-        if (l%5 == 0 && l > 0 && debug > 0)
-          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
-        if (!setup->IsLayerOn(l,m)){
-          std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
-          continue;
-        }
-        PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
-                            textSizePixel, hSpectra, 1, -25, (it->second.samples)*25, 300, l, m,
-                            Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),  m,  l, plotSuffix.Data()), it->second);
-        PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
-                            textSizePixel, hSpectra, 2, 0, 1024, 300, l, m,
-                            Form("%s/TOA_ADC_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(), m,  l, plotSuffix.Data()), it->second);
-        PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
-                            textSizePixel, hSpectra, 3, 0, 1024, it->second.samples, l, m,
-                            Form("%s/TOA_Sample_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m,  l, plotSuffix.Data()), it->second);
-        PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
-                          textSizePixel, hSpectraTrigg, 1, -25, (it->second.samples)*25, 300, l, m,
-                          Form("%s/WaveformSignal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m, l, plotSuffix.Data()), it->second);            
-        PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
-                            textSizePixel, hSpectraTrigg, 2, 0, 1024, 300, l, m,
-                            Form("%s/TOA_ADC_Signal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m,  l, plotSuffix.Data()), it->second);
-        PlotCorr2D8MLayer(canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf,
-                            textSizePixel, hSpectraTrigg, 3, 0, 1024, it->second.samples, l, m,
-                            Form("%s/TOA_Sample_Signal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m,  l,plotSuffix.Data()), it->second);
-        if (ExtPlot > 1){
-          PlotSpectra8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                              hSpectra, 0, -100, 1024, 1.2, l, m,
-                              Form("%s/Spectra_ADC_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-          PlotSpectra8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                              hSpectra, 3, 0, 1024, 1.2, l, m,
-                              Form("%s/TOA_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-          PlotSpectra8MLayer (canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                              hSpectra, 4, 0, 4096, 1.2, l, m,
-                              Form("%s/TOT_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-        }
-      }
-    }
-    std::cout << "ending plotting single 8M layers" << std::endl;
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-  //Single 2M horizontal Module Plotting 
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
-  } else if (detConf == DetConf::Type::Single2MH){
-    TCanvas* canvas2Panel;
-    TPad* pad2Panel[2];
-    Double_t topRCornerX[2];
-    Double_t topRCornerY[2];
-    Double_t relSizeP[2];
-    CreateCanvasAndPadsFor2PannelTBPlot(canvas2Panel, pad2Panel,  topRCornerX, topRCornerY, relSizeP, textSizePixel);
-
-    TCanvas* canvas2PanelProf;
-    TPad* pad2PanelProf[2];
-    Double_t topRCornerXProf[2];
-    Double_t topRCornerYProf[2];
-    Double_t relSizePProf[2];
-    CreateCanvasAndPadsFor2PannelTBPlot(canvas2PanelProf, pad2PanelProf,  topRCornerXProf, topRCornerYProf, relSizePProf, textSizePixel, 0.075, "Prof", false);
-
-    std::cout << "plotting single  2M layers" << std::endl;
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
-        if (l%10 == 0 && l > 0 && debug > 0)
-          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
-        PlotCorr2D2MLayer(canvas2PanelProf,pad2PanelProf, topRCornerXProf, topRCornerYProf, relSizePProf,
-                            textSizePixel, hSpectra, -25, (it->second.samples)*25, 1000, l, m,
-                            Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m,  l, plotSuffix.Data()), it->second);
-        PlotCorr2D2MLayer(canvas2PanelProf,pad2PanelProf, topRCornerXProf, topRCornerYProf, relSizePProf,
-                          textSizePixel, hSpectraTrigg, -25, (it->second.samples)*25, 1000, l, 0,
-                          Form("%s/WaveformSignal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(), m, l, plotSuffix.Data()), it->second);            
-        if (ExtPlot > 1){
-          PlotSpectra2MLayer (canvas2Panel,pad2Panel, topRCornerX, topRCornerY, relSizeP, textSizePixel, 
-                              hSpectra, 0, -100, 1024, 1.2, l, m,
-                              Form("%s/Spectra_ADC_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-        }          
-      }
-    }   
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-  //Single Tile Plotting 
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
-  } else if (detConf == DetConf::Type::SingleTile){
-    TCanvas* canvasLayer = new TCanvas("canvasLayer","",0,0,620,600);
-    DrawCanvasSettings( canvasLayer,0.12, 0.03, 0.03, 0.1);
-    Double_t topRCornerX = 0.95;
-    Double_t topRCornerY = 0.95;
-    Double_t relSizeP = 30./620;
-  
-    TCanvas* canvasLayerProf = new TCanvas("canvasLayerProf","",0,0,620,600);
-    DrawCanvasSettings( canvasLayerProf,0.138, 0.08, 0.03, 0.1);
-    Double_t topRCornerXProf = 0.175;
-    Double_t topRCornerYProf = 0.95;
-    Double_t relSizePProf = 30./620;
-
-    std::cout << "plotting single tile layers" << std::endl;
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
-        if (l%10 == 0 && l > 0 && debug > 0)
-          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
-        PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
-                            textSizePixel, hSpectra, 1, -25, (it->second.samples)*25, 300, l, m,
-                            Form("%s/Waveform_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m,  l, plotSuffix.Data()), it->second);
-        PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
-                          textSizePixel, hSpectra, 2, 0, 1024, 300, l, 0,
-                          Form("%s/TOA_ADC_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(), m, l, plotSuffix.Data()), it->second);            
-        PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
-                          textSizePixel, hSpectra, 3,0, 1024, it->second.samples, l, 0,
-                          Form("%s/TOA_Sample_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m, l, plotSuffix.Data()), it->second);            
-        PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
-                          textSizePixel, hSpectraTrigg, 1, -25, (it->second.samples)*25, 300, l, 0,
-                          Form("%s/WaveformSignal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(), m, l, plotSuffix.Data()), it->second);            
-        PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
-                          textSizePixel, hSpectraTrigg, 2, 0, 1024, 300, l, 0,
-                          Form("%s/TOA_ADC_Signal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(), m, l, plotSuffix.Data()), it->second);            
-        PlotCorr2D1MLayer(canvasLayerProf, topRCornerXProf, topRCornerYProf, relSizePProf,
-                          textSizePixel, hSpectraTrigg, 3,0, 1024, it->second.samples, l, 0,
-                          Form("%s/TOA_Sample_Signal_Mod_%02d_Layer%02d.%s" ,outputDirPlotsMore.Data(),m, l, plotSuffix.Data()), it->second);            
-        if (ExtPlot > 1){
-          PlotSpectra1MLayer (canvasLayer, topRCornerX, topRCornerY, relSizeP, textSizePixel, 
-                              hSpectra, 0, -100, 1024, 1.2, l, m,
-                              Form("%s/Spectra_ADC_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-          PlotSpectra1MLayer (canvasLayer, topRCornerX, topRCornerY, relSizeP, textSizePixel, 
-                              hSpectra, 3, 0, 1024, 1.2, l, m,
-                              Form("%s/TOA_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-          PlotSpectra1MLayer (canvasLayer, topRCornerX, topRCornerY, relSizeP, textSizePixel, 
-                              hSpectra, 4, 0, 4096, 1.2, l, m,
-                              Form("%s/TOT_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, plotSuffix.Data()), it->second);
-        }          
-      }
-    }
-  }
-  
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-  //Dual module plotting 
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
-  if (detConf == DetConf::Type::Dual8M ){
-    TCanvas* canvas2ModPanel;
-    TPad* pad2ModPanel[16];
-    Double_t topRCornerX2Mod[16];
-    Double_t topRCornerY2Mod[16];
-    Double_t relSize2ModP[16];
-    CreateCanvasAndPadsForDualModTBPlot(canvas2ModPanel, pad2ModPanel,  topRCornerX2Mod, topRCornerY2Mod, relSize2ModP, textSizePixel);
-
-    TCanvas* canvas2ModPanelProf;
-    TPad* pad2ModPanelProf[16];
-    Double_t topRCornerX2ModProf[16];
-    Double_t topRCornerY2ModProf[16];
-    Double_t relSize2ModProf[16];
-    CreateCanvasAndPadsForDualModTBPlot(canvas2ModPanelProf, pad2ModPanelProf,  topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf, textSizePixel, 0.045, "Prof", true);
+  MultiCanvas panelPlot(detConf, "AnaWave");
+  bool init1D = panelPlot.Initialize(1);
+  MultiCanvas panelPlot2D(detConf, "AnaWave2D");
+  bool init2D = panelPlot2D.Initialize(2);
     
-    std::cout << "plotting dual module layers" << std::endl;
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      if (l%10 == 0 && l > 0 && debug > 0)
-        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
-      if (l%4 != 1 ){
-        std::cout << "====> layer " << l << " skipping" << std::endl;
-        continue;
-      }
-      if (!setup->IsLayerOn(l,-1)){
-        std::cout << "====> layer " << l << " not enabled" << std::endl;
-        continue;
-      }
-      if (!calib.IsLayerEnabled(l,-1)){
-        std::cout << "====> layer " << l << " all channels masked" << std::endl;
-        continue;
-      }
-      PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectra, 1, -50, (it->second.samples)*25, -80, 300, l, 
-                          Form("%s/Waveform_Layer%02d.%s" ,outputDirPlotsMore.Data(), l, plotSuffix.Data()), it->second);
-      // PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-      //                     textSizePixel, hSpectra, 2, 0, 1024, 0, 300, l, 
-      //                     Form("%s/TOA_ADC_Layer%02d.%s" ,outputDirPlotsMore.Data(),l, plotSuffix.Data()), it->second);
-      // PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-      //                     textSizePixel, hSpectra, 3, 0, 1024, 0, it->second.samples, l,
-      //                     Form("%s/TOA_Sample_Layer%02d.%s" ,outputDirPlotsMore.Data(), l, plotSuffix.Data()), it->second);
-      PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectraTrigg, 1, -50, (it->second.samples)*25, -80, 300, l, 
-                          Form("%s/WaveformSignal_Layer%02d.%s" ,outputDirPlotsMore.Data(),l, plotSuffix.Data()), it->second);            
-      PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectraTrigg, 2, 0, 1024, 0, 300, l,
-                          Form("%s/TOA_ADC_Signal_Layer%02d.%s" ,outputDirPlotsMore.Data(), l, plotSuffix.Data()), it->second);
-      PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectraTrigg, 3, 0, 1024, 0, it->second.samples, l,                        
-                          Form("%s/TOA_Sample_Signal_Layer%02d.%s" ,outputDirPlotsMore.Data(), l, plotSuffix.Data()), it->second);
-      if (ExtPlot > 1){
-        PlotSpectra2ModLayer (canvas2ModPanel,pad2ModPanel, topRCornerX2Mod, topRCornerY2Mod, relSize2ModP, textSizePixel, 
-                              hSpectra, 0, -100, 1024, 1.2, l,
-                              Form("%s/Spectra_ADC_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-        PlotSpectra2ModLayer (canvas2ModPanel,pad2ModPanel, topRCornerX2Mod, topRCornerY2Mod, relSize2ModP, textSizePixel, 
-                              hSpectra, 3, 0, 1024, 1.2, l,                             
-                              Form("%s/TOA_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-        PlotSpectra2ModLayer (canvas2ModPanel,pad2ModPanel, topRCornerX2Mod, topRCornerY2Mod, relSize2ModP, textSizePixel, 
-                              hSpectra, 4, 0, 4096, 1.2, l, 
-                              Form("%s/TOT_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-      }
-    }
-    std::cout << "ending plotting dual module layers" << std::endl;
-    
+  panelPlot2D.PlotCorr2DLayer(hSpectra, 1, -25, (it->second.samples)*25, 0, 300,
+                              Form("%s/Waveform",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+  panelPlot2D.PlotCorr2DLayer(hSpectra, 2, 0, 1024, 0, 300,
+                              Form("%s/TOA_ADC",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+  panelPlot2D.PlotCorr2DLayer(hSpectra, 3, 0, 1024, 0, it->second.samples,
+                              Form("%s/TOA_Sample",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+  panelPlot2D.PlotCorr2DLayer(hSpectraTrigg, 1, -25, (it->second.samples)*25, 0, 300,
+                              Form("%s/WaveformSignal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+  panelPlot2D.PlotCorr2DLayer(hSpectraTrigg, 2, 0, 1024, 0, 300,
+                              Form("%s/TOA_ADC_Signal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+  panelPlot2D.PlotCorr2DLayer(hSpectraTrigg, 3, 0, 1024, 0, it->second.samples,
+                              Form("%s/TOA_Sample_Signal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+  if (ExtPlot > 1){
+    panelPlot.PlotSpectra( hSpectra, 0, -100, 1024, 1.2,
+                           Form("%s/Spectra_ADC" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+    panelPlot.PlotSpectra( hSpectra, 3, 0, 1024, 1.2,
+                           Form("%s/TOA" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+    panelPlot.PlotSpectra( hSpectra, 4, 0, 4096, 1.2,
+                           Form("%s/TOT" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
   }
-  
+    
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+  // Saving histo putput
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
   std::cout << "Writing output hist file" << std::endl;
   RootOutputHist->cd();
   hHighestADCAbovePedVsLayer->Write();
@@ -789,8 +602,6 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
     }
   }
 
-  
-  
   RootInput->Close();
   return true;
 }
@@ -965,53 +776,23 @@ bool HGCROC_Waveform_Analysis::ExtractTimeWalk(void){
   // print general calib info
   calib.PrintGlobalInfo();  
 
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-  // Find detector config for plotting
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // Single layer plotting
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   DetConf::Type detConf = setup->GetDetectorConfig();
-  
-  // set pixel text size
-  Int_t textSizePixel = 30;
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-  //Dual module plotting 
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
-  if (detConf == DetConf::Type::Dual8M ){
-    TCanvas* canvas2ModPanelProf;
-    TPad* pad2ModPanelProf[16];
-    Double_t topRCornerX2ModProf[16];
-    Double_t topRCornerY2ModProf[16];
-    Double_t relSize2ModProf[16];
-    CreateCanvasAndPadsForDualModTBPlot(canvas2ModPanelProf, pad2ModPanelProf,  topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf, textSizePixel, 0.045, "Prof", true);
+  MultiCanvas panelPlot2D(detConf, "TimeWalk2D");
+  bool init2D = panelPlot2D.Initialize(2);
     
-    std::cout << "plotting dual module layers" << std::endl;
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      if (l%10 == 0 && l > 0 && debug > 0)
-        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
-      // if (l%4 != 1 ){
-        // std::cout << "====> layer " << l << " skipping" << std::endl;
-        // continue;
-      // }
-      if (!setup->IsLayerOn(l,-1)){
-        std::cout << "====> layer " << l << " not enabled" << std::endl;
-        continue;
-      }
-      if (!calib.IsLayerEnabled(l,-1)){
-        std::cout << "====> layer " << l << " all channels masked" << std::endl;
-        continue;
-      }
-      PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectra, 1, -50, (it->second.samples)*25, -80, 800, l, 
-                          Form("%s/Waveform_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-      PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectraAlt, 1, -50, (it->second.samples)*25, -80, 800, l, 
-                          Form("%s/WaveformMaxAdcOnly_Layer%02d.%s" ,outputDirPlots.Data(),l, plotSuffix.Data()), it->second);            
-      PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectraAlt, 2, -6*1024, -2*1024, 0, 1000, l,
-                          Form("%s/TOA_ADC_MaxAdcOnly_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second);
-    }
-    std::cout << "ending plotting dual module layers" << std::endl;    
-  }
+  panelPlot2D.PlotCorr2DLayer(hSpectra, 1, -50, (it->second.samples)*25, -80, 800,
+                              Form("%s/Waveform",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+  panelPlot2D.PlotCorr2DLayer(hSpectraAlt, 1, -50, (it->second.samples)*25, -80, 800,
+                              Form("%s/WaveformMaxAdcOnly",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+  panelPlot2D.PlotCorr2DLayer(hSpectraAlt, 2, -6*1024, -2*1024, 0, 1000,
+                              Form("%s/TOA_ADC_MaxAdcOnly",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
   
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // saving all outputs
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   RootOutputHist->cd();
   if (typeRO == ReadOut::Type::Hgcroc){
     hSampleTOA->Write();
@@ -1534,8 +1315,6 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
                         it->second, 1, kFALSE, "colz",true, Form("Asic %d, Half %d",ro,h));
     }
   }
-
-  
   
   TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
   DefaultCanvasSettings( canvas1DSimple, 0.08, 0.03, 0.03, 0.07);
@@ -1546,74 +1325,36 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
   calib.PrintGlobalInfo();  
 
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-  // Find detector config for plotting
+  // Single Layer Plotting
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
   DetConf::Type detConf = setup->GetDetectorConfig();
+  MultiCanvas panelPlot2D(detConf, "Saturation");
+  bool init2D = panelPlot2D.Initialize(2);
   
-  // set pixel text size
-  Int_t textSizePixel = 30;
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-  //Dual module plotting 
-  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
-  if (detConf == DetConf::Type::Dual8M && ExtPlot > 1 ){
-    TCanvas* canvas2ModPanelProf;
-    TPad* pad2ModPanelProf[16];
-    Double_t topRCornerX2ModProf[16];
-    Double_t topRCornerY2ModProf[16];
-    Double_t relSize2ModProf[16];
-    CreateCanvasAndPadsForDualModTBPlot(canvas2ModPanelProf, pad2ModPanelProf,  topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf, textSizePixel, 0.045, "Prof", true);
-    
-    std::cout << "plotting dual module layers" << std::endl;
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      if (l%5 == 0 && l > 0 && debug > 0)
-        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
-      // if (l%4 != 1 ){
-      //   std::cout << "====> layer " << l << " skipping" << std::endl;
-      //   continue;
-      // }
-      if (!setup->IsLayerOn(l,-1)){
-        std::cout << "====> layer " << l << " not enabled" << std::endl;
-        continue;
-      }
-      if (!calib.IsLayerEnabled(l,-1)){
-        std::cout << "====> layer " << l << " all channels masked" << std::endl;
-        continue;
-      }
-      PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectraXtalk, 1, -50, (it->second.samples)*25, -80, 800, l, 
-                          Form("%s/WaveformNeg_Layer%02d.%s" ,outputDirPlots.Data(), l, plotSuffix.Data()), it->second, 0, GetFixedROChannel());
-      PlotCorr2D2ModLayer(canvas2ModPanelProf,pad2ModPanelProf, topRCornerX2ModProf, topRCornerY2ModProf, relSize2ModProf,
-                          textSizePixel, hSpectraSat, 1, -50, (it->second.samples)*25, -80, 800, l, 
-                          Form("%s/WaveformSat_Layer%02d.%s" ,outputDirPlots.Data(),l, plotSuffix.Data()), it->second, 0, GetFixedROChannel() );            
-    }
-    std::cout << "ending plotting dual module layers" << std::endl;    
+  if (ExtPlot > 1 ){
+    std::cout << "plotting layers" << std::endl;
+    panelPlot2D.PlotCorr2DLayer(hSpectraXtalk, 1, -50, (it->second.samples)*25, -80, 800,
+                                Form("%s/WaveformNeg",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+    panelPlot2D.PlotCorr2DLayer(hSpectraSat, 1, -50, (it->second.samples)*25, -80, 800,
+                                Form("%s/WaveformSat",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
   }
-  
-  TCanvas* canvasPanAsic;
-  TPad* padAsic[64];
-  Double_t topRCornerXAsic[64];
-  Double_t topRCornerYAsic[64];
-  Double_t relSizeAsic[64];
-  CreateCanvasAndPadsForAsicLFHCalTBPlot(canvasPanAsic, padAsic,  topRCornerXAsic, topRCornerYAsic, relSizeAsic, textSizePixel, 0.045, "", true);
 
-  std::cout << "plotting full asic" << std::endl;
-  for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
-    std::cout << "====> asic " << a << std::endl;
-    PlotCorr2DAsicLFHCal(canvasPanAsic,padAsic, topRCornerXAsic, topRCornerYAsic, relSizeAsic,
-                        textSizePixel, hSpectraXtalk, 1, -50, (it->second.samples)*25, -80, 800, a, 
-                        Form("%s/WaveformNeg_Asic%02d.%s" ,outputDirPlots.Data(), a, plotSuffix.Data()), it->second, 0, GetFixedROChannel());
-    PlotCorr2DAsicLFHCal(canvasPanAsic,padAsic, topRCornerXAsic, topRCornerYAsic, relSizeAsic,
-                        textSizePixel, hSpectraSat, 1, -50, (it->second.samples)*25, -80, 800, a, 
-                        Form("%s/WaveformSat_Asic%02d.%s" ,outputDirPlots.Data(),a, plotSuffix.Data()), it->second, 0, GetFixedROChannel() );            
-    PlotCorr2DAsicLFHCal(canvasPanAsic,padAsic, topRCornerXAsic, topRCornerYAsic, relSizeAsic,
-                        textSizePixel, hSampleXtalk, 1, 0, (it->second.samples), -80, 800, a, 
-                        Form("%s/WaveformSampleNeg_Asic%02d.%s" ,outputDirPlots.Data(), a, plotSuffix.Data()), it->second, 0, GetFixedROChannel());
-    PlotCorr2DAsicLFHCal(canvasPanAsic,padAsic, topRCornerXAsic, topRCornerYAsic, relSizeAsic,
-                        textSizePixel, hSampleSat, 1, 0, (it->second.samples), -80, 800, a, 
-                        Form("%s/WaveformSampleSat_Asic%02d.%s" ,outputDirPlots.Data(),a, plotSuffix.Data()), it->second, 0, GetFixedROChannel() );            
-  }
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+  // Single Asic Plotting
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+  std::cout << "plotting full asic" << std::endl;  
+  MultiCanvas panelPlotAsic(DetConf::Type::Asic, "Saturation");
+  bool initAsic = panelPlotAsic.Initialize(2);
+
+  panelPlotAsic.PlotCorr2DLayer(hSpectraXtalk, 1, -50, (it->second.samples)*25, -80, 800,
+                                Form("%s/WaveformNeg",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, GetFixedROChannel() );
+  panelPlotAsic.PlotCorr2DLayer(hSpectraSat, 1, -50, (it->second.samples)*25, -80, 800,
+                                Form("%s/WaveformSat",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, GetFixedROChannel() );
+  panelPlotAsic.PlotCorr2DLayer(hSampleXtalk, 1, 0, (it->second.samples), -80, 800,
+                                Form("%s/WaveformSampleNeg",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, GetFixedROChannel() );
+  panelPlotAsic.PlotCorr2DLayer(hSampleSat, 1, 0, (it->second.samples), -80, 800,
+                                Form("%s/WaveformSampleSat",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, GetFixedROChannel() );
   std::cout << "ending plotting full asic" << std::endl;    
-    
   return true;
 }
 

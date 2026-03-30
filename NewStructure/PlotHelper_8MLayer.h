@@ -18,13 +18,14 @@
   //__________________________________________________________________________________________________________
   // Plot Trigger Primitive with Fits for Full layer
   //__________________________________________________________________________________________________________
-  void PlotTriggerPrimWithFits8MLayer (TCanvas* canvas8Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, 
-                                         Double_t* relSize8P, Int_t textSizePixel, 
-                                         std::map<int,TileSpectra> spectra, Setup* setupT, 
-                                         double avMip, double facLow, double facHigh,
-                                         Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
-                                         int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
-                                  
+  inline void PlotTriggerPrim8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, 
+                                      Double_t* relSize8P, Int_t textSizePixel, 
+                                      std::map<int,TileSpectra> spectra, 
+                                      double avMip, double facLow, double facHigh,
+                                      Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
+                                      int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
+
+    Setup* setupT = Setup::GetInstance();
     Double_t maxY = 0;
     std::map<int, TileSpectra>::iterator ithSpectra;
     std::map<int, TileSpectra>::iterator ithSpectraTrigg;
@@ -107,7 +108,7 @@
   //__________________________________________________________________________________________________________
   // Plot Noise with Fits for Full layer
   //__________________________________________________________________________________________________________
-  void PlotNoiseWithFits8MLayer (TCanvas* canvas8Panel, TPad* pads[8], 
+  inline void PlotNoiseWithFits8MLayer (TCanvas* canvas8Panel, TPad** pads, 
                                  Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                  std::map<int,TileSpectra> spectra, int option, 
                                  Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
@@ -141,7 +142,6 @@
         if (maxY < FindLargestBin1DHist(tempHist, xPMin , xPMax)) maxY = FindLargestBin1DHist(tempHist, xPMin , xPMax);
       }  
     }
-    
     for (int r = 0; r < nRow; r++){
       for (int c = 0; c < nCol; c++){
         canvas8Panel->cd();
@@ -187,7 +187,6 @@
         }
         TLatex *labelChannel    = new TLatex(topRCornerX[p]-0.04,topRCornerY[p]-1.2*relSize8P[p],label);
         SetStyleTLatex( labelChannel, 0.85*textSizePixel,4,1,43,kTRUE,31);
-
         
         TF1* fit = nullptr;
         if (option == 0){
@@ -224,8 +223,8 @@
   //__________________________________________________________________________________________________________
   // Plot Noise extracted from collision data
   //__________________________________________________________________________________________________________
-  void PlotNoiseAdvWithFits8MLayer (TCanvas* canvas8Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
-                                      std::map<int,TileSpectra> spectra, std::map<int,TileSpectra> spectraTrigg, bool isHG, 
+  inline void PlotNoiseAdvWithFits8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
+                                      std::map<int,TileSpectra> spectra, std::map<int,TileSpectra> spectraTrigg, int opt, 
                                       Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
                                   
     Double_t maxY = 0;
@@ -245,7 +244,7 @@
           continue;
         } 
         TH1D* tempHist = nullptr;
-        if (isHG){
+        if (opt == 1){ //HG
           tempHist = ithSpectra->second.GetHG();
         } else {
           tempHist = ithSpectra->second.GetLG();
@@ -275,7 +274,7 @@
         } 
         ithSpectraTrigg=spectraTrigg.find(tempCellID);
         TH1D* tempHist = nullptr;
-        if (isHG){
+        if (opt == 1){ //HG
             tempHist = ithSpectra->second.GetHG();
         } else {
             tempHist = ithSpectra->second.GetLG();
@@ -300,7 +299,7 @@
         }
         
         TH1D* tempHistT = nullptr;
-        if (isHG){
+        if (opt == 1){ //HG
             tempHistT = ithSpectraTrigg->second.GetHG();
         } else {
             tempHistT = ithSpectraTrigg->second.GetLG();
@@ -318,7 +317,7 @@
         
         TF1* fit            = nullptr;
         bool isTrigFit      = false;
-        if (isHG){
+        if (opt == 1){ //HG
           fit = ithSpectraTrigg->second.GetBackModel(1);
           if (!fit){
               fit = ithSpectra->second.GetBackModel(1);
@@ -367,10 +366,11 @@
   //__________________________________________________________________________________________________________
   // Plot Mip with Fits for Full layer
   //__________________________________________________________________________________________________________
-  void PlotMipWithFits8MLayer (TCanvas* canvas8Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
-                                  std::map<int,TileSpectra> spectra, std::map<int,TileSpectra> spectraTrigg, Setup* setupT, bool isHG, 
+  inline void PlotMipWithFits8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
+                                  std::map<int,TileSpectra> spectra, std::map<int,TileSpectra> spectraTrigg, int opt, 
                                   Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
-                                  
+    
+    Setup* setupT = Setup::GetInstance();                                  
     Double_t maxY = 0;
     std::map<int, TileSpectra>::iterator ithSpectra;
     std::map<int, TileSpectra>::iterator ithSpectraTrigg;
@@ -387,7 +387,7 @@
           continue;
         } 
         TH1D* tempHist = nullptr;
-        if (isHG){
+        if (opt == 1){
           tempHist = ithSpectra->second.GetHG();
         } else {
           tempHist = ithSpectra->second.GetLG();
@@ -419,12 +419,12 @@
         ithSpectraTrigg=spectraTrigg.find(tempCellID);
         TH1D* tempHist = nullptr;
         double noiseWidth = 0;
-        if (isHG){
-            tempHist = ithSpectra->second.GetHG();
-            noiseWidth = ithSpectra->second.GetCalib()->PedestalSigH;
+        if (opt == 1){
+          tempHist = ithSpectra->second.GetHG();
+          noiseWidth = ithSpectra->second.GetCalib()->PedestalSigH;
         } else {
-            tempHist = ithSpectra->second.GetLG();
-            noiseWidth = ithSpectra->second.GetCalib()->PedestalSigL;
+          tempHist = ithSpectra->second.GetLG();
+          noiseWidth = ithSpectra->second.GetCalib()->PedestalSigL;
         }
         SetStyleHistoTH1ForGraphs( tempHist, tempHist->GetXaxis()->GetTitle(), tempHist->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.1, 510, 510, 43, 63);  
         SetMarkerDefaults(tempHist, 20, 1, kBlue+1, kBlue+1, kFALSE);   
@@ -438,10 +438,10 @@
         
         TH1D* tempHistT = nullptr;
         
-        if (isHG){
-            tempHistT = ithSpectraTrigg->second.GetHG();
+        if (opt == 1){
+          tempHistT = ithSpectraTrigg->second.GetHG();
         } else {
-            tempHistT = ithSpectraTrigg->second.GetLG();
+          tempHistT = ithSpectraTrigg->second.GetLG();
         }
         SetMarkerDefaults(tempHistT, 24, 1, kRed+1, kRed+1, kFALSE);   
         tempHistT->Draw("same,pe");
@@ -457,7 +457,7 @@
         TF1* fit            = nullptr;
         bool isTrigFit      = false;
         double maxFit       = 0;
-        if (isHG){
+        if (opt == 1){
           fit = ithSpectraTrigg->second.GetSignalModel(1);
           if (!fit){
               fit = ithSpectra->second.GetSignalModel(1);
@@ -515,7 +515,7 @@
   //__________________________________________________________________________________________________________
   // Plot Spectra with Fits for Full layer
   //__________________________________________________________________________________________________________
-  void PlotSpectra8MLayer (TCanvas* canvas8Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
+  inline void PlotSpectra8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                   std::map<int,TileSpectra> spectra, int option, 
                                   Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
                                   
@@ -623,7 +623,7 @@
   //__________________________________________________________________________________________________________
   // Plot Corr with Fits for Full layer
   //__________________________________________________________________________________________________________
-  void PlotCorrWithFits8MLayer (TCanvas* canvas8Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
+  inline void PlotCorrWithFits8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                   std::map<int,TileSpectra> spectra, int option, 
                                   Double_t xPMin, Double_t xPMax, Double_t maxY, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
                                   
@@ -730,7 +730,7 @@
   //__________________________________________________________________________________________________________
   // Plot Corr with Fits for Full layer 2D
   //__________________________________________________________________________________________________________
-  void PlotCorr2D8MLayer (TCanvas* canvas8Panel, TPad* pads[8], 
+  inline void PlotCorr2D8MLayer (TCanvas* canvas8Panel, TPad** pads, 
                           Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                           std::map<int,TileSpectra> spectra, int option,
                           Double_t xPMin, Double_t xPMax, Double_t maxY, int layer, int mod,  TString nameOutput, RunInfo currRunInfo, bool noCalib = 0){
@@ -868,7 +868,7 @@
   //__________________________________________________________________________________________________________
   // Plot Corr with Fits for Full layer
   //__________________________________________________________________________________________________________
-  void PlotTrending8MLayer (TCanvas* canvas8Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
+  inline void PlotTrending8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                               std::map<int,TileTrend> trending, int optionTrend, 
                               Double_t xPMin, Double_t xPMax, int layer, int mod,  TString nameOutput, TString nameOutputSummary, RunInfo currRunInfo, Int_t  detailedPlot = 1){
                                   
@@ -1065,7 +1065,7 @@
   //__________________________________________________________________________________________________________
   // Plot Run overlay for all 8 tiles for all runs available
   //__________________________________________________________________________________________________________
-  void PlotRunOverlay8MLayer (TCanvas* canvas8Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
+  inline void PlotRunOverlay8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                               std::map<int,TileTrend> trending, int nruns, int optionTrend, 
                               Double_t xPMin, Double_t xPMax, int layer, int mod,  TString nameOutput, TString nameOutputSummary, RunInfo currRunInfo, Int_t detailedPlot = 1){
                                   
@@ -1211,7 +1211,7 @@
   //__________________________________________________________________________________________________________
   // Plot Run overlay for all 8 tiles for all runs available
   //__________________________________________________________________________________________________________
-  void PlotRunOverlayProfile8MLayer (TCanvas* canvas8Panel, TPad* pads[8], Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
+  inline void PlotRunOverlayProfile8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                       std::map<int,TileTrend> trending, int nruns,
                                       Double_t xPMin, Double_t xPMax, Double_t yPMin, Double_t yPMax,  int layer, int mod,  TString nameOutput, TString nameOutputSummary, RunInfo currRunInfo, Int_t detailedPlot = 1){
                                   

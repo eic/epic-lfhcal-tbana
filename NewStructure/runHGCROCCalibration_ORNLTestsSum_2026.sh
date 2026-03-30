@@ -44,7 +44,7 @@ fi
 
 
 if [ $2 == "calibMuon" ]; then	
-  #implemented options: BC, default, imp1st, imp2nd, imp3rd, imp4th, saveNewMuon, imp1st_red, imp2nd_red, imp3rd_red, imp4th_red 
+  #implemented options: BC, BCTOA, default, imp1st, imp2nd, imp3rd, imp4th, saveNewMuon, imp1st_red, imp2nd_red, imp3rd_red, imp4th_red 
   badChannelMap="../configs/LocalTesting/badChannelMap_HGCROC_Cosmics_ST.txt"
   toaPhaseOffset=../configs/LocalTesting/ToAOffsets_Cosmics_ST_ORNL02.csv
 # 	runPed='206'

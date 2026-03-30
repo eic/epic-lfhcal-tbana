@@ -11,6 +11,7 @@
 #include "TileSpectra.h"
 #include "PlotHelper.h"
 #include "CommonHelperFunctions.h"
+#include "MultiCanvas.h"
 
 #include "waveform_fitting/waveform_fit_base.h"
 #include "waveform_fitting/crystal_ball_fit.h"
