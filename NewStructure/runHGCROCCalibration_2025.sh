@@ -25,6 +25,10 @@ elif [ $1 = "egpott" ]; then
   dataDirRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
   dataDirOut=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
   PlotBaseDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/plots
+elif [ $1 = "rhamilton" ]; then
+  dataDirRaw=/Users/ryanhamilton/Documents/Research/data.nosync/202511_PST08/CAENData/rawfiles
+  dataDirOut=/Users/ryanhamilton/Documents/Research/data.nosync/202511_PST08/CAENData/processed_data
+  PlotBaseDir=/Users/ryanhamilton/Documents/Research/data.nosync/202511_PST08/CAENData/plots
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
