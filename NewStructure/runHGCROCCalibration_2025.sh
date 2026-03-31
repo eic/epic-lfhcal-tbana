@@ -30,6 +30,12 @@ elif [ $1 = "rhamilton" ]; then
   dataDirOut=/Users/ryanhamilton/Documents/Research/data.nosync/202511_PST08/CAENData/processed_data
   PlotBaseDir=/Users/ryanhamilton/Documents/Research/data.nosync/202511_PST08/CAENData/plots
 else
+elif [ $1 = "imoo" ]; then
+  dataDirRaw=/Users/imoo/physics/LFHCal/TB2025/TB2025_HVscan1/rawroot
+  dataDirOut=/Users/imoo/physics/LFHCal/TB2025/TB2025_HVscan1/rawroot
+  PlotBaseDir=/Users/imoo/physics/LFHCal/TB2025/TB2025_HVscan1/plots
+else
+    
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
 fi
