@@ -2528,7 +2528,11 @@ bool Analyses::GetScaling(void){
     hspectraLGSigmaVsLayer->SetBinContent(bin2D, calib.GetPedestalSigL(cellID));
 
     if (isGood){
+			// get uncertainty on HG Max
+			double rel_err_L_MPV = parErrAndRes[1]/parameters[1]; // Landau MPV error / MPV
+			double sigma_Max = rel_err_L_MPV * parameters[4]; // relative MPV err * Max ADC value
       hspectraHGMaxVsLayer1st->SetBinContent(bin2D, parameters[4]);
+			hspectraHGMaxVsLayer1st->SetBinError(bin2D, sigma_Max);
       hspectraHGFWHMVsLayer1st->SetBinContent(bin2D, parameters[5]);
       hspectraHGLMPVVsLayer1st->SetBinContent(bin2D, parameters[1]);
       hspectraHGLMPVVsLayer1st->SetBinError(bin2D, parErrAndRes[1]);
@@ -2849,12 +2853,14 @@ bool Analyses::GetScaling(void){
 		//double peaksep = parameters[1]-ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG); 
 
     if (isGood){
-			hMPVvsNoisePeak->Fill(ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG), parameters[1]);
-			//hPeakSeparation->Fill(peaksep);
-			hHGscaleChi2VsLayer->SetBinContent(bin2D, redChi2);
-			//hChi2VsNMipTrigg->Fill(numMipTrig, redChi2);
+			// get uncertainty on HG Max
+			double rel_err_L_MPV = parErrAndRes[1]/parameters[1]; // Landau MPV error / MPV
+			double sigma_Max = rel_err_L_MPV * parameters[4]; // relative MPV err * Max ADC value
       hspectraHGMaxVsLayer2nd->SetBinContent(bin2D, parameters[4]);
-      hspectraHGFWHMVsLayer2nd->SetBinContent(bin2D, parameters[5]);
+			hspectraHGMaxVsLayer2nd->SetBinError(bin2D, sigma_Max);
+			hMPVvsNoisePeak->Fill(ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG), parameters[1]);
+			hHGscaleChi2VsLayer->SetBinContent(bin2D, redChi2);	
+			hspectraHGFWHMVsLayer2nd->SetBinContent(bin2D, parameters[5]);
       hspectraHGLMPVVsLayer2nd->SetBinContent(bin2D, parameters[1]);
       hspectraHGLMPVVsLayer2nd->SetBinError(bin2D, parErrAndRes[1]);
       hspectraHGLSigmaVsLayer2nd->SetBinContent(bin2D, parameters[0]);
@@ -3476,8 +3482,13 @@ bool Analyses::GetImprovedScaling(void){
 			//hSNRTrigg->Fill(SNR_trigg);
 			hHGscaleChi2VsLayer->SetBinContent(bin2D, redChi2);
 			//hChi2VsNMipTrigg->Fill(numMipTrig, redChi2);     
+			
+			// get uncertainty on HG Max
+			double rel_err_L_MPV = parErrAndRes[1]/parameters[1]; // Landau MPV error / MPV
+			double sigma_Max = rel_err_L_MPV * parameters[4]; // relative MPV err * Max ADC value
 			hspectraHGMaxVsLayer->SetBinContent(bin2D, parameters[4]);
-      hspectraHGFWHMVsLayer->SetBinContent(bin2D, parameters[5]);
+      hspectraHGMaxVsLayer->SetBinError(bin2D, sigma_Max);
+			hspectraHGFWHMVsLayer->SetBinContent(bin2D, parameters[5]);
       hspectraHGLMPVVsLayer->SetBinContent(bin2D, parameters[1]);
       hspectraHGLMPVVsLayer->SetBinError(bin2D, parErrAndRes[1]);
       hspectraHGLSigmaVsLayer->SetBinContent(bin2D, parameters[0]);
