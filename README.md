@@ -20,6 +20,10 @@ Option 2:
 2) Set up a dedicated build directory.  From the `NewStructure` folder, run `cmake -B build .`
 3) Compile the code.  Switch to the build directory with `cd build` and compile with `make`
 
+Option 3: If you built the h2g_decode package
+1. make a build directory `mkdir build`
+2. configure with cmake `cmake -S . -B build -DH2GDECODE_INSTALL_PATH=/path/to/h2g_decode/install/`
+3. Build `cmake --build build`
 
 For convenience a linker script is provided, which can be used to recreate the software structure with soft links. Execute it in the directory where you would like to work after having added your user name and path to the software repo
 
