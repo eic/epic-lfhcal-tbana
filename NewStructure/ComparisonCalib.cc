@@ -14,6 +14,7 @@
 #include "TileSpectra.h"
 #include "TileTrend.h"
 #include "CalibSummary.h"
+#include "MultiCanvas.h"
 #include "CommonHelperFunctions.h"
 #include "PlotHelper.h"
 

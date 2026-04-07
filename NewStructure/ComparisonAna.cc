@@ -14,6 +14,7 @@
 #include "TileTrend.h"
 #include "AnaSummary.h"
 #include "CalibSummary.h"
+#include "MultiCanvas.h"
 #include "CommonHelperFunctions.h"
 #include "PlotHelper.h"
 #include "ComparisonAna.h"

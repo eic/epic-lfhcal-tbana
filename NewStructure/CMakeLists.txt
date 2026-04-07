@@ -111,6 +111,7 @@ set(ROOT_HEADERS
   TileTrend.h
   CalibSummary.h
   AnaSummary.h
+  MultiCanvas.h
 )
 
 # Generate ROOT dictionary
@@ -129,6 +130,7 @@ set(LIB_SOURCES
   TileTrend.cc
   CalibSummary.cc
   AnaSummary.cc
+  MultiCanvas.cc
 )
 
 # Create the LFHCAL shared library

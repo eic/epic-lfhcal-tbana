@@ -5,7 +5,7 @@
   //__________________________________________________________________________________________________________
   //__________________________________________________________________________________________________________
   //__________________________________________________________________________________________________________
-  TString ReturnDateStr(){
+  inline TString ReturnDateStr(){
       TDatime today;
       int iDate           = today.GetDate();
       int iYear           = iDate/10000;
@@ -18,7 +18,7 @@
   //__________________________________________________________________________________________________________
   // find bin with largest content
   //__________________________________________________________________________________________________________
-  Double_t FindLargestBin1DHist(TH1* hist, Double_t minX = -10000, Double_t maxX = -10000 ){
+  inline Double_t FindLargestBin1DHist(TH1* hist, Double_t minX = -10000, Double_t maxX = -10000 ){
     Double_t largestContent     = 0;
     if (!hist){
         std::cout << "histogram pointer was empty, skipping!" << std::endl;
@@ -38,7 +38,7 @@
   //__________________________________________________________________________________________________________
   // find bin with smallest content
   //__________________________________________________________________________________________________________
-  Double_t FindSmallestBin1DHist(TH1* hist, Double_t maxStart = 1e6 ){
+  inline Double_t FindSmallestBin1DHist(TH1* hist, Double_t maxStart = 1e6 ){
     Double_t smallesContent     = maxStart;
     for (Int_t i= 0; i < hist->GetNbinsX(); i++){
       if (hist->GetBinContent(i) != 0 && smallesContent > hist->GetBinContent(i)){
@@ -51,7 +51,7 @@
   //__________________________________________________________________________________________________________
   // find bin last filled X bin
   //__________________________________________________________________________________________________________
-  Double_t FindLastBinXAboveMin(TH1* hist, Double_t min = 1 ){
+  inline Double_t FindLastBinXAboveMin(TH1* hist, Double_t min = 1 ){
     int i = hist->GetNbinsX()-1;
     // std::cout<< "Find last bin" << std::endl;
     while (i > 0 && hist->GetBinContent(i) < min){ 
@@ -67,7 +67,7 @@
   //__________________________________________________________________________________________________________
   // find bin first filled X bin
   //__________________________________________________________________________________________________________
-  Double_t FindFirstBinXAboveMin(TH1* hist, Double_t min = 1 ){
+  inline Double_t FindFirstBinXAboveMin(TH1* hist, Double_t min = 1 ){
     int i = 1;
     // std::cout<< "Find first bin" << std::endl;
     while (i < hist->GetNbinsX() && hist->GetBinContent(i) < min){
@@ -85,7 +85,7 @@
   // ---------------------------- Function definiton --------------------------------------------------------------------------------------------
   // StyleSettingsBasics will make some standard settings for gStyle
   
-  void StyleSettingsBasics( TString format = ""){
+  inline void StyleSettingsBasics( TString format = ""){
       //gStyle->SetOptTitle(kFALSE);
       gStyle->SetOptDate(0);   //show day and time
       gStyle->SetOptStat(0);  //show statistic
@@ -119,7 +119,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetPlotStyle() {
+  inline void SetPlotStyle() {
   // 	const Int_t nRGBs = 7;
       const Int_t nRGBs = 5;
       const Int_t nCont = 255;
@@ -134,7 +134,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetPlotStyleNConts(    Int_t nCont = 255) {
+  inline void SetPlotStyleNConts(    Int_t nCont = 255) {
       const Int_t nRGBs = 5;
       Double_t stops[nRGBs] = { 0.00, 0.34, 0.61, 0.84, 1.00 };
       Double_t red[nRGBs]   = { 0.00, 0.00, 0.87, 1.00, 0.51 };
@@ -145,20 +145,20 @@
   }
   
   //__________________________________________________________________________________________________________  
-  Color_t GetColorLayer(int l){
+  inline Color_t GetColorLayer(int l){
     Color_t colors[10] = {kBlack, kViolet+4, kBlue-3, kCyan+1, kGreen+1, kYellow-4, kOrange, kRed-4, kPink-5, kMagenta+2 };
     return colors[l%10];
   }
 
   //__________________________________________________________________________________________________________  
-  Style_t GetLineStyleLayer(int l){
+  inline Style_t GetLineStyleLayer(int l){
     Style_t styles[7] = {1, 3, 4, 6, 7, 10, 9};
     int bin = l/10;
     return styles[bin];
   }
   
   //__________________________________________________________________________________________________________
-  void DrawCanvasSettings( TCanvas* c1,
+  inline void DrawCanvasSettings( TCanvas* c1,
                           Double_t leftMargin,
                           Double_t rightMargin,
                           Double_t topMargin,
@@ -177,7 +177,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  TCanvas *GetAndSetCanvas( TString name,
+  inline TCanvas *GetAndSetCanvas( TString name,
                             Double_t leftmargin = 0.11,
                             Double_t bottommargin = 0.1,
                             Double_t x = 1400,
@@ -195,7 +195,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  TLegend *GetAndSetLegend( Double_t positionX,
+  inline TLegend *GetAndSetLegend( Double_t positionX,
                           Double_t positionY,
                           Double_t entries,
                           Int_t Columns = 1,
@@ -217,7 +217,7 @@
   }
   
   //__________________________________________________________________________________________________________
-  TLegend *GetAndSetLegend2(  Double_t positionX,
+  inline TLegend *GetAndSetLegend2(  Double_t positionX,
                               Double_t positionY,
                               Double_t positionXRight,
                               Double_t positionYUp,
@@ -244,7 +244,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetHistogramm( TH1 *hist,
+  inline void SetHistogramm( TH1 *hist,
                       TString xLabel,
                       TString yLabel,
                       Double_t rangeYlow  = -99.,
@@ -274,7 +274,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetGraph( TGraph *graph,
+  inline void SetGraph( TGraph *graph,
                   TString xLabel,
                   TString yLabel,
                   Double_t rangeYlow = -99.,
@@ -301,7 +301,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetMarkerDefaults(    TH1* histo1,
+  inline void SetMarkerDefaults(    TH1* histo1,
                               Style_t markerStyle,
                               Size_t markerSize,
                               Color_t markerColor,
@@ -319,7 +319,7 @@
       }
   }
   //__________________________________________________________________________________________________________
-  void SetMarkerDefaults(    TH1* histo1,
+  inline void SetMarkerDefaults(    TH1* histo1,
                               TString xtitle = "",
                               TString ytitle = "",
                               Style_t markerStyle = 20,
@@ -350,7 +350,7 @@
       histo1->GetYaxis()->SetTitleOffset(yoffset);
   }
   //__________________________________________________________________________________________________________
-  void SetMarkerDefaultsProfile( TProfile* prof,
+  inline void SetMarkerDefaultsProfile( TProfile* prof,
                                   Style_t markerStyle,
                                   Size_t markerSize,
                                   Color_t markerColor,
@@ -366,7 +366,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetLineDefaults(    TH1* histo1,
+  inline void SetLineDefaults(    TH1* histo1,
                               Int_t LineColor,
                               Int_t LineWidth,
                               Int_t LineStyle ) {
@@ -377,7 +377,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetLineDefaultsTF1(  TF1*  Fit1,
+  inline void SetLineDefaultsTF1(  TF1*  Fit1,
                               Int_t LineColor,
                               Int_t LineWidth,
                               Int_t LineStyle ) {
@@ -387,8 +387,8 @@
   }
   
 
-    //__________________________________________________________________________________________________________
-  void DefaultCanvasSettings( TCanvas* c1,
+  //__________________________________________________________________________________________________________
+  inline void DefaultCanvasSettings( TCanvas* c1,
                               Double_t leftMargin,
                               Double_t rightMargin,
                               Double_t topMargin,
@@ -406,7 +406,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void DefaultPadSettings( TPad* pad1,
+  inline void DefaultPadSettings( TPad* pad1,
                           Double_t leftMargin,
                           Double_t rightMargin,
                           Double_t topMargin,
@@ -423,7 +423,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetMarkerDefaultsTGraph(  TGraph* graph,
+  inline void SetMarkerDefaultsTGraph(  TGraph* graph,
                                   Style_t markerStyle,
                                   Size_t markerSize,
                                   Color_t markerColor,
@@ -455,7 +455,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetMarkerDefaultsTGraphErr(   TGraphErrors* graph,
+  inline void SetMarkerDefaultsTGraphErr(   TGraphErrors* graph,
                                       Style_t markerStyle,
                                       Size_t markerSize,
                                       Color_t markerColor,
@@ -484,7 +484,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetMarkerDefaultsTGraphAsym(  TGraphAsymmErrors* graph,
+  inline void SetMarkerDefaultsTGraphAsym(  TGraphAsymmErrors* graph,
                                       Style_t markerStyle,
                                       Size_t markerSize,
                                       Color_t markerColor,
@@ -515,7 +515,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetMarkerDefaultsTF1( TF1* fit1,
+  inline void SetMarkerDefaultsTF1( TF1* fit1,
                               Style_t lineStyle,
                               Size_t lineWidth,
                               Color_t lineColor ) {
@@ -526,7 +526,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetStyleTLatex( TLatex* text,
+  inline void SetStyleTLatex( TLatex* text,
                       Size_t textSize,
                       Width_t lineWidth,
                       Color_t textColor = 1,
@@ -543,7 +543,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void DrawLatex(const double  PosX = 0.5, const double  PosY = 0.5, TString text = "", const bool alignRight = false, const double TextSize = 0.044, const int font = 42, const double dDist = 0.05, const int color = 1){
+  inline void DrawLatex(const double  PosX = 0.5, const double  PosY = 0.5, TString text = "", const bool alignRight = false, const double TextSize = 0.044, const int font = 42, const double dDist = 0.05, const int color = 1){
 
       std::vector<TString> Latex;
       
@@ -564,7 +564,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetStyleHisto( TH1* histo,
+  inline void SetStyleHisto( TH1* histo,
                       Width_t lineWidth,
                       Style_t lineStyle,
                       Color_t lineColor) {
@@ -575,7 +575,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetStyleFit(   TF1* fit,
+  inline void SetStyleFit(   TF1* fit,
                       Double_t xRangeStart,
                       Double_t xRangeEnd,
                       Width_t lineWidth,
@@ -589,7 +589,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetStyleHistoTH2ForGraphs( TH2* histo,
+  inline void SetStyleHistoTH2ForGraphs( TH2* histo,
                                   TString XTitle,
                                   TString YTitle,
                                   Size_t xLableSize,
@@ -626,7 +626,7 @@
   }
 
   //__________________________________________________________________________________________________________
-  void SetStyleHistoTH1ForGraphs( TH1* histo,
+  inline void SetStyleHistoTH1ForGraphs( TH1* histo,
                                   TString XTitle,
                                   TString YTitle,
                                   Size_t xLableSize,
@@ -661,59 +661,59 @@
       histo->GetYaxis()->SetNdivisions(yNDivisions,kTRUE);
   }
 
-//__________________________________________________________________________________________________________
-void SetStyleHistoTH3ForGraphs( TH3* histo,
-                                TString XTitle,
-                                TString YTitle,
-                                TString ZTitle,
-                                Size_t xLableSize,
-                                Size_t xTitleSize,
-                                Size_t yLableSize,
-                                Size_t yTitleSize,
-                                Size_t zLableSize,
-                                Size_t zTitleSize,
-                                Float_t xTitleOffset    = 1,
-                                Float_t yTitleOffset    = 1,
-                                Float_t zTitleOffset    = 1,
-                                Int_t xNDivisions       = 510,
-                                Int_t yNDivisions       = 510,
-                                Int_t zNDivisions       = 510,
-                                Font_t textFontLabel    = 42,
-                                Font_t textFontTitle    = 62
-                              ){
-  histo->SetXTitle(XTitle);
-  histo->SetYTitle(YTitle);
-  histo->SetZTitle(ZTitle);
-  histo->SetTitle("");
+  //__________________________________________________________________________________________________________
+  inline void SetStyleHistoTH3ForGraphs( TH3* histo,
+                                  TString XTitle,
+                                  TString YTitle,
+                                  TString ZTitle,
+                                  Size_t xLableSize,
+                                  Size_t xTitleSize,
+                                  Size_t yLableSize,
+                                  Size_t yTitleSize,
+                                  Size_t zLableSize,
+                                  Size_t zTitleSize,
+                                  Float_t xTitleOffset    = 1,
+                                  Float_t yTitleOffset    = 1,
+                                  Float_t zTitleOffset    = 1,
+                                  Int_t xNDivisions       = 510,
+                                  Int_t yNDivisions       = 510,
+                                  Int_t zNDivisions       = 510,
+                                  Font_t textFontLabel    = 42,
+                                  Font_t textFontTitle    = 62
+                                ){
+    histo->SetXTitle(XTitle);
+    histo->SetYTitle(YTitle);
+    histo->SetZTitle(ZTitle);
+    histo->SetTitle("");
 
-  histo->GetXaxis()->SetLabelFont(textFontLabel);
-  histo->GetYaxis()->SetLabelFont(textFontLabel);
-  histo->GetZaxis()->SetLabelFont(textFontLabel);
-  histo->GetXaxis()->SetTitleFont(textFontTitle);
-  histo->GetYaxis()->SetTitleFont(textFontTitle);
-  histo->GetZaxis()->SetTitleFont(textFontTitle);
+    histo->GetXaxis()->SetLabelFont(textFontLabel);
+    histo->GetYaxis()->SetLabelFont(textFontLabel);
+    histo->GetZaxis()->SetLabelFont(textFontLabel);
+    histo->GetXaxis()->SetTitleFont(textFontTitle);
+    histo->GetYaxis()->SetTitleFont(textFontTitle);
+    histo->GetZaxis()->SetTitleFont(textFontTitle);
 
-  histo->GetXaxis()->SetDecimals();
-  histo->GetXaxis()->SetLabelSize(xLableSize);
-  histo->GetXaxis()->SetTitleSize(xTitleSize);
-  histo->GetXaxis()->SetTitleOffset(xTitleOffset);
-  histo->GetXaxis()->SetNdivisions(xNDivisions,kTRUE);
+    histo->GetXaxis()->SetDecimals();
+    histo->GetXaxis()->SetLabelSize(xLableSize);
+    histo->GetXaxis()->SetTitleSize(xTitleSize);
+    histo->GetXaxis()->SetTitleOffset(xTitleOffset);
+    histo->GetXaxis()->SetNdivisions(xNDivisions,kTRUE);
 
-  histo->GetYaxis()->SetDecimals();
-  histo->GetYaxis()->SetLabelSize(yLableSize);
-  histo->GetYaxis()->SetTitleSize(yTitleSize);
-  histo->GetYaxis()->SetTitleOffset(yTitleOffset);
-  histo->GetYaxis()->SetNdivisions(yNDivisions,kTRUE);
-  
-  histo->GetZaxis()->SetDecimals();
-  histo->GetZaxis()->SetLabelSize(zLableSize);
-  histo->GetZaxis()->SetTitleSize(zTitleSize);
-  histo->GetZaxis()->SetTitleOffset(zTitleOffset);
-  histo->GetZaxis()->SetNdivisions(zNDivisions,kTRUE);
-}
+    histo->GetYaxis()->SetDecimals();
+    histo->GetYaxis()->SetLabelSize(yLableSize);
+    histo->GetYaxis()->SetTitleSize(yTitleSize);
+    histo->GetYaxis()->SetTitleOffset(yTitleOffset);
+    histo->GetYaxis()->SetNdivisions(yNDivisions,kTRUE);
+    
+    histo->GetZaxis()->SetDecimals();
+    histo->GetZaxis()->SetLabelSize(zLableSize);
+    histo->GetZaxis()->SetTitleSize(zTitleSize);
+    histo->GetZaxis()->SetTitleOffset(zTitleOffset);
+    histo->GetZaxis()->SetNdivisions(zNDivisions,kTRUE);
+  }
 
   //__________________________________________________________________________________________________________
-  void SetStyleTProfile( TH1* histo,
+  inline void SetStyleTProfile( TH1* histo,
                          TString XTitle,
                          TString YTitle,
                          Size_t xLableSize,
@@ -755,7 +755,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
   * endY - end point of drawing in y
   * linew - line width
   */
-  void DrawLines(Float_t startX, Float_t endX,
+  inline void DrawLines(Float_t startX, Float_t endX,
                   Float_t startY, Float_t endY,
                   Float_t linew, Float_t lineColor = 4, Style_t lineStyle = 1, Float_t opacity = 1.){
       TLine * l1 = new TLine (startX,startY,endX,endY);
@@ -771,7 +771,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
   //********************************************************************************************************************************
   //********************************************************************************************************************************
   //********************************************************************************************************************************
-  TBox* CreateBox(Color_t colorBox, Double_t xStart, Double_t yStart, Double_t xEnd, Double_t yEnd, Style_t fillStyle = 1001, Float_t opacity = 1.  ) {
+  inline TBox* CreateBox(Color_t colorBox, Double_t xStart, Double_t yStart, Double_t xEnd, Double_t yEnd, Style_t fillStyle = 1001, Float_t opacity = 1.  ) {
       TBox* box = new TBox(xStart ,yStart , xEnd, yEnd);
       box->SetLineColor(colorBox);
       box->SetFillColorAlpha(colorBox,opacity);
@@ -782,7 +782,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
   //********************************************************************************************************************************
   //********************************************************************************************************************************
   //********************************************************************************************************************************
-  void DrawCorrectBadChannelBox (short bctemp, double minX, double minY, double maxX, double maxY){
+  inline void DrawCorrectBadChannelBox (short bctemp, double minX, double minY, double maxX, double maxY){
     if (bctemp != -64 && bctemp < 3){
       Color_t boxCol = kGray;
       if (bctemp == 1)
@@ -796,7 +796,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
   //********************************************************************************************************************************
   //********************************************************************************************************************************
   //********************************************************************************************************************************
-  void DrawHighlightTrigg (double minX, double minY, double maxX, double maxY){
+  inline void DrawHighlightTrigg (double minX, double minY, double maxX, double maxY){
     Color_t boxCol = kOrange+6;
     TBox* highChannelArea =  CreateBox(boxCol, minX, minY, maxX,maxY, 1001, 0.35 );
     highChannelArea->Draw();
@@ -804,7 +804,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
   //********************************************************************************************************************************
   //********************** Returns default labeling strings  ***********************************************************************
   //********************************************************************************************************************************    
-  TString GetStringFromRunInfo(RunInfo currRunInfo, Int_t option = 1){
+  inline TString GetStringFromRunInfo(RunInfo currRunInfo, Int_t option = 1){
       if (option == 1){
           if (currRunInfo.species.Contains("cosmics")){
               return  Form("cosmics, Run %d, #it{V}_{#it{op}} = %1.1f V", currRunInfo.runNr, currRunInfo.vop  );
@@ -873,8 +873,8 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
       return "";
   }
 
-//__________________________________________________________________________________________________________
-  void ReturnCorrectValuesForCanvasScaling(   Int_t sizeX,
+  //__________________________________________________________________________________________________________
+  inline void ReturnCorrectValuesForCanvasScaling(   Int_t sizeX,
                                               Int_t sizeY,
                                               Int_t nCols,
                                               Int_t nRows,
@@ -947,7 +947,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
   }
 
   //__________________________________________________________________________________________________________
-  void ReturnCorrectValuesTextSize(   TPad * pad,
+  inline void ReturnCorrectValuesTextSize(   TPad * pad,
                                       Double_t &textsizeLabels,
                                       Double_t &textsizeFac,
                                       Int_t textSizeLabelsPixel,
@@ -973,7 +973,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
   //********************************************************************************************************************************
   //******** CreateCanvasAndPadsFor8PannelTBPlot ***********************************************************************************
   //********************************************************************************************************************************
-  void CreateCanvasAndPadsFor8PannelTBPlot(TCanvas* &canvas, TPad* pads[8],  Double_t* topRCornerX, Double_t* topRCornerY,  Double_t* relSize8P, Int_t textSizePixel = 30, Double_t marginLeft = 0.03, TString add = "", bool rightCorner = true, int debug = 0){
+  inline void CreateCanvasAndPadsFor8PannelTBPlot(TCanvas* &canvas, TPad* pads[8],  Double_t* topRCornerX, Double_t* topRCornerY,  Double_t* relSize8P, Int_t textSizePixel = 30, Double_t marginLeft = 0.03, TString add = "", bool rightCorner = true, int debug = 0){
     Double_t arrayBoundX[5];
     Double_t arrayBoundY[3];
     Double_t relativeMarginsX[3];
@@ -1054,7 +1054,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
   //********************************************************************************************************************************
   //******** CreateCanvasAndPadsFor2PannelTBPlot ***********************************************************************************
   //********************************************************************************************************************************
-  void CreateCanvasAndPadsFor2PannelTBPlot(TCanvas* &canvas, TPad* pads[2],  Double_t* topRCornerX, Double_t* topRCornerY,  Double_t* relSizeP, Int_t textSizePixel = 30, Double_t marginLeft = 0.03, TString add = "", bool rightCorner = true, int debug = 0){
+  inline void CreateCanvasAndPadsFor2PannelTBPlot(TCanvas* &canvas, TPad* pads[2],  Double_t* topRCornerX, Double_t* topRCornerY,  Double_t* relSizeP, Int_t textSizePixel = 30, Double_t marginLeft = 0.03, TString add = "", bool rightCorner = true, int debug = 0){
     Double_t arrayBoundX[3];
     Double_t arrayBoundY[2];
     Double_t relativeMarginsX[3];
@@ -1109,7 +1109,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
   //********************************************************************************************************************************
   //******** CreateCanvasAndPadsFor8PannelTBPlot ***********************************************************************************
   //********************************************************************************************************************************
-  void CreateCanvasAndPadsForDualModTBPlot(TCanvas* &canvas, TPad* pads[16],  Double_t* topRCornerX, Double_t* topRCornerY,  Double_t* relSize, 
+  inline void CreateCanvasAndPadsForDualModTBPlot(TCanvas* &canvas, TPad* pads[16],  Double_t* topRCornerX, Double_t* topRCornerY,  Double_t* relSize, 
                                            Int_t textSizePixel = 30, Double_t marginLeft = 0.03, TString add = "", bool rightCorner = true, int debug = 0){
     Double_t arrayBoundX[5];
     Double_t arrayBoundY[5];
@@ -1205,7 +1205,7 @@ void SetStyleHistoTH3ForGraphs( TH3* histo,
   //********************************************************************************************************************************
   //******** CreateCanvasAndPadsFor8PannelTBPlot ***********************************************************************************
   //********************************************************************************************************************************
-  void CreateCanvasAndPadsForAsicLFHCalTBPlot(TCanvas* &canvas, TPad* pads[64],  Double_t* topRCornerX, Double_t* topRCornerY,  Double_t* relSize, 
+  inline void CreateCanvasAndPadsForAsicLFHCalTBPlot(TCanvas* &canvas, TPad* pads[64],  Double_t* topRCornerX, Double_t* topRCornerY,  Double_t* relSize, 
                                            Int_t textSizePixel = 30, Double_t marginLeft = 0.03, TString add = "", bool rightCorner = true, int debug = 0){
     Double_t arrayBoundX[9];
     Double_t arrayBoundY[9];

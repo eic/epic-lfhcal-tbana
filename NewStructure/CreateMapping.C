@@ -35,6 +35,7 @@ struct channelInfo{
     int layer;  
     int rowAssembly;
     int colAssembly;
+    int segSize;
     int chID;
     float posX;
     float posY;
@@ -52,9 +53,10 @@ void PrintChannelInfo(channelInfo tempC){
         << "Row in assembly: "<< tempC.rowAssembly  << "\t"
         << "Col in assembly: "<< tempC.colAssembly  << "\t"
         << "Layer Nr: "<< tempC.layer  << "\t"
-        << "Channel ID"<< tempC.chID  << "\t"
+        << "Channel ID: "<< tempC.chID  << "\t"
         << "Assembly Nr.: "<< tempC.nrAssembly  << "\t"
         << "Ch in assembly: "<< tempC.chAssembly  << "\t"
+        << "Segment lenght: "<< tempC.segSize  << "\t"
         << "X: " << tempC.posX  << "cm \t"
         << "Y: " << tempC.posY  << "cm \t"
         << "Z: " << tempC.posZ  << "cm \t"
@@ -149,8 +151,54 @@ float ReturnPosYInLayer(Int_t ch){
       break;    
   }
 }
-float ReturnPosZAbs(Int_t layer){
- return (layer+1)*2.0;
+
+float ReturnPosZAbs(Int_t layer, int opt){
+  if (opt == 0){
+    return (layer+1)*2.0;
+  } else if (opt == 1){
+    switch (layer){
+      case 0:         // summing 5 layers each 2cm
+        return 5.0;
+      case 1:         // summing 5 layers each 2cm
+        return 5.0+10.;
+      case 2:         // summing 10 layers each 2cm
+        return 30.;
+      case 3:         // summing 10 layers each 2cm
+        return 30.+20.;
+      case 4:         // summing 10 layers each 2cm
+        return 30.+2*20.;
+      case 5:         // summing 10 layers each 2cm
+        return 30.+3*20.;
+      case 6:         // summing 5 layers each 2cm
+        return 105.;
+      case 7:         // summing 5 layers each 2cm
+        return 105.+10.;
+      default:
+        return -1.;
+    }
+  } else if (opt == 2){
+    switch (layer){
+      case 0:         // summing 5 layers each 2cm
+        return 5.0;
+      case 1:         // summing 5 layers each 2cm
+        return 5.0+10.;
+      case 2:         // summing 5 layers each 2cm
+        return 5.0+2*10.;
+      case 3:         // summing 5 layers each 2cm
+        return 5.0+3*10.;
+      case 4:         // summing 10 layers each 2cm
+        return 50.;
+      case 5:         // summing 10 layers each 2cm
+        return 50.+1*20.;
+      case 6:         // summing 10 layers each 2cm
+        return 50.+2*20.;
+      case 7:         // summing 10 layers each 2cm
+        return 50.+3*20.;
+      default:
+        return -1.;
+    }
+  }
+  return -1.;
 }
 
 float ReturnAbsX(float XInLayer, float ModX){
@@ -161,12 +209,53 @@ float ReturnAbsY(float YInLayer, float ModY){
   return YInLayer+ModY;
 }
 
+int ReturnLayerInSegment(Int_t layer, int opt){
+    if (opt == 0){
+    return 1;
+  } else if (opt == 1){
+    switch (layer){
+      // summing 5 layers
+      case 0:    
+      case 1:         
+      case 6:         
+      case 7:         
+        return 5;     
+      // summing 10 layers
+      case 2:         
+      case 3:
+      case 4:
+      case 5:
+        return 10;
+      default:
+        return 1;
+    }
+  } else if (opt == 2){
+    switch (layer){
+      // summing 5 layers
+      case 0:    
+      case 1:         
+      case 2:         
+      case 3:
+        return 5;     
+      // summing 10 layers
+      case 4:
+      case 5:
+      case 6:         
+      case 7:         
+        return 10;
+      default:
+        return 1;
+    }
+  }
+  return -1.;
+}
 
 void CreateMapping(   TString filenameUnitMapping,
                       TString filenameLayerMapping,
                       TString filenameModulePositions,
                       TString filenameMappingWrite,
                       int readout = 0,                // 0 - CAEN readout, 1 - HGCROC readout
+                      int summingOpt = 0,
                       int debug = 0
                       
                   ){
@@ -305,6 +394,7 @@ void CreateMapping(   TString filenameUnitMapping,
     std::vector<channelInfo> channels;
     fstream fileMappingClassic(filenameMappingWrite.Data(), ios::out);
     // fileMappingClassic.open(filenameMappingWrite, ios::out);
+    fileMappingClassic<<"sumOpt\t" << summingOpt << "\n";
     if (readout ==0 )fileMappingClassic << "#CAEN board	CAEN Ch	layer	assembly	board channel	row	column modNr modX modY\n" ;
     if (readout ==1 )fileMappingClassic << "#HGCROC board	HGCROC Ch	layer	assembly	board channel	row	column modNr modX modY\n" ;
     TFile* outputRootFile       = new TFile("mappingTree.root","RECREATE");
@@ -312,7 +402,7 @@ void CreateMapping(   TString filenameUnitMapping,
     mapping_tree->SetDirectory(outputRootFile);
     channelInfo tempChannel;
     
-    mapping_tree->Branch("channel", &tempChannel, "ch_ru/I:ru/I:ruID/I:nr_ass/I:ch_ass/I:modNr/I:layer/I:row_ass/I:col_ass/I:chID/I:posX/F:posY/F:posZ/F:modposX/F:modposY/F");
+    mapping_tree->Branch("channel", &tempChannel, "ch_ru/I:ru/I:ruID/I:nr_ass/I:ch_ass/I:modNr/I:layer/I:row_ass/I:col_ass/I:chID/I:posX/F:posY/F:posZ/F:modposX/F:modposY/F:segSize/I");
     
     for (int l = 0; l < (int)layers.size();l++){
       for (int chA = 1; chA < 9; chA++){
@@ -331,12 +421,13 @@ void CreateMapping(   TString filenameUnitMapping,
           tempChannel.chID        = Int_t(tempChannel.modNr<<9)+Int_t(tempChannel.rowAssembly<<8)+Int_t(tempChannel.colAssembly<<6)+tempChannel.layer;
           tempChannel.posX        = ReturnPosXInLayer(chA);
           tempChannel.posY        = ReturnPosYInLayer(chA);
-          tempChannel.posZ        = ReturnPosZAbs(layers.at(l).layerNrAbs);
+          tempChannel.posZ        = ReturnPosZAbs(layers.at(l).layerNrAbs, summingOpt);
           tempChannel.modposX     = positions[layers.at(l).moduleNr].first;
           tempChannel.modposY     = positions[layers.at(l).moduleNr].second;
+          tempChannel.segSize     = ReturnLayerInSegment(layers.at(l).layerNrAbs, summingOpt);
           channels.push_back(tempChannel);
 
-          fileMappingClassic << layers.at(l).rUnit << "\t" << channel << "\t" << layers.at(l).layerNrAbs << "\t" << layers.at(l).layerLabel << "\t" <<  chA << "\t" << ReturnRowBoard(chA) << "\t" << ReturnColumnBoard(chA) << "\t" << tempChannel.modNr << "\t" << tempChannel.modposX << "\t" << tempChannel.modposY <<"\n";
+          fileMappingClassic << layers.at(l).rUnit << "\t" << channel << "\t" << layers.at(l).layerNrAbs << "\t" << layers.at(l).layerLabel << "\t" <<  chA << "\t" << ReturnRowBoard(chA) << "\t" << ReturnColumnBoard(chA) << "\t" << tempChannel.modNr << "\t" << tempChannel.modposX << "\t" << tempChannel.modposY << "\t" << tempChannel.segSize << "\n";
           PrintChannelInfo(tempChannel);
           
           // printf("%b\t%b\t%b\t%b\t%b\n", tempChannel.modNr, tempChannel.rowAssembly, tempChannel.colAssembly, tempChannel.layer, tempChannel.chID);

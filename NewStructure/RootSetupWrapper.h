@@ -26,15 +26,18 @@ class RootSetupWrapper{
   std::map<int, std::pair<float,float>> ModPos;
   //Inverse mapping
   std::map< std::pair<int, int>, int> CellIDfromRO;
+  // key is layerNr
+  std::map<int,int>     SegmentSum;
   int nMaxLayer;
   int nMaxRow;
   int nMaxColumn;
   int nMaxModule;
   int nMaxROUnit;
   int maxCellID;
+  int sumOpt;
   
   friend class Setup;
-  ClassDef(RootSetupWrapper,1)
+  ClassDef(RootSetupWrapper,2)
 };
 
 

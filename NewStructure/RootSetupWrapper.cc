@@ -12,6 +12,7 @@ RootSetupWrapper::RootSetupWrapper(Setup* s){
   Board       =s->Board;
   CellIDfromRO=s->CellIDfromRO;
   ModPos      =s->ModPos;
+  SegmentSum  =s->SegmentSum;
   
   nMaxLayer   = s->nMaxLayer;
   nMaxRow     = s->nMaxRow;
@@ -19,6 +20,6 @@ RootSetupWrapper::RootSetupWrapper(Setup* s){
   nMaxModule  = s->nMaxModule;
   nMaxROUnit  = s->nMaxROUnit;
   maxCellID   = s->maxCellID;
-
+  sumOpt      = s->sumOpt;
 }
 

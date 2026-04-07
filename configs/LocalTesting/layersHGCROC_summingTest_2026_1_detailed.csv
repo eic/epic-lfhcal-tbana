@@ -1,0 +1,4 @@
+#layer  #assembly #HGCROC board   #layer in HGCROC unit # Module Number
+0   E001-E002-E003-E004-E007    0 0 0
+2   E008-E009-E005-E010-F010-E006-F005-F001-F001-F002-F003    0 2 0
+4   F006-F007-F008-F009-F004    0 4 0

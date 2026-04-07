@@ -32,7 +32,7 @@
   //__________________________________________________________________________________________________________
   // Plot 2D fit variables overview
   //__________________________________________________________________________________________________________  
-  void PlotSimple2D( TCanvas* canvas2D, 
+  inline void PlotSimple2D( TCanvas* canvas2D, 
                      TH2* hist, double maxy, double maxx, 
                      Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
                      int labelOpt = 1, Bool_t hasNeg = kFALSE, TString drwOpt ="colz", 
@@ -84,7 +84,7 @@
   //__________________________________________________________________________________________________________
   // Plot 2D fit variables overview
   //__________________________________________________________________________________________________________  
-  void PlotSimple2D( TCanvas* canvas2D, 
+  inline void PlotSimple2D( TCanvas* canvas2D, 
                      TH2* hist, double miny, double maxy, double maxx, 
                      Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
                      int labelOpt = 1, Bool_t hasNeg = kFALSE, TString drwOpt ="colz", 
@@ -137,7 +137,7 @@
   //__________________________________________________________________________________________________________
   // Plot 2D distribution with graph on top
   //__________________________________________________________________________________________________________  
-  void Plot2DWithGraph( TCanvas* canvas2D, 
+  inline void Plot2DWithGraph( TCanvas* canvas2D, 
                      TH2* hist, TGraphErrors* graph, double maxy, double maxx, 
                      Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
                      int labelOpt = 1, Bool_t hasNeg = kFALSE, TString drwOpt ="colz", 
@@ -200,7 +200,7 @@
   //__________________________________________________________________________________________________________
   // Plot 2D distribution with profile on top
   //__________________________________________________________________________________________________________  
-  void Plot2DWithProfile( TCanvas* canvas2D, 
+  inline void Plot2DWithProfile( TCanvas* canvas2D, 
                      TH2* hist, TProfile* profile, double maxy, double maxx, 
                      Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
                      int labelOpt = 1, Bool_t hasNeg = kFALSE, TString drwOpt ="colz", 
@@ -264,7 +264,7 @@
   //__________________________________________________________________________________________________________
   // Plot 1D distribution
   //__________________________________________________________________________________________________________  
-  void PlotSimple1D( TCanvas* canvas2D, 
+  inline void PlotSimple1D( TCanvas* canvas2D, 
                      TH1* hist, Int_t maxy, Int_t maxx, 
                      Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
                      int labelOpt = 1,
@@ -291,7 +291,7 @@
   //__________________________________________________________________________________________________________
   // Plot 1D distribution
   //__________________________________________________________________________________________________________  
-  void PlotSimpleWithFit1D( TCanvas* canvas2D, 
+  inline void PlotSimpleWithFit1D( TCanvas* canvas2D, 
                             TH1* hist, TF1* fit, Int_t maxy, Int_t maxx, 
                             Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
                             int labelOpt = 1,
@@ -333,7 +333,7 @@
   //__________________________________________________________________________________________________________
   // Plot 1D distribution
   //__________________________________________________________________________________________________________  
-  void PlotContamination1D( TCanvas* canvas2D, 
+  inline void PlotContamination1D( TCanvas* canvas2D, 
                      TH1* histAll, TH1* histMuon, TH1* histPrim, Int_t maxy, Int_t maxx, 
                      Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
                      int labelOpt = 1,
@@ -373,7 +373,7 @@
   //__________________________________________________________________________________________________________
   // Plot 1D distribution
   //__________________________________________________________________________________________________________  
-  void PlotLayerOverlay( TCanvas* canvas2D, 
+  inline void PlotLayerOverlay( TCanvas* canvas2D, 
                      TH1D** histLayer, Float_t maxy, Float_t maxx, Float_t meanLayer, int maxLayer,
                      Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
                      int labelOpt = 1,
@@ -454,7 +454,7 @@
   //__________________________________________________________________________________________________________
   // Plot 2D fit variables overview
   //__________________________________________________________________________________________________________  
-  void PlotSimple2DZRange( TCanvas* canvas2D, 
+  inline void PlotSimple2DZRange( TCanvas* canvas2D, 
                      TH2* hist, Int_t maxy, Int_t maxx, double minZ, double maxZ,
                      Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
                      int labelOpt = 1, TString drwOpt ="colz", 
@@ -497,7 +497,7 @@
   //__________________________________________________________________________________________________________
   // Plot Mip with Fits for SingleTile
   //__________________________________________________________________________________________________________
-  void PlotMipWithFitsSingleTile (TCanvas* canvasSingleTile, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSize, Int_t textSizePixel, 
+  inline void PlotMipWithFitsSingleTile (TCanvas* canvasSingleTile, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSize, Int_t textSizePixel, 
                                   std::map<int,TileSpectra> spectra, std::map<int,TileSpectra> spectraTrigg, 
                                   bool isHG, Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
                                   int cellID,  TString nameOutput, RunInfo currRunInfo){
@@ -623,7 +623,7 @@
   //__________________________________________________________________________________________________________
   // Simple event display with different highlighted triggers
   //__________________________________________________________________________________________________________
-  void EventDisplayWithSliceHighlighted( TH3F* h3All, TH1D* h1XAll, TH1D* h1YAll, TH1D* h1ZAll, 
+  inline void EventDisplayWithSliceHighlighted( TH3F* h3All, TH1D* h1XAll, TH1D* h1YAll, TH1D* h1ZAll, 
                                          TH3F* h3LocTrigg, TH1D* h1XLocTrigg, TH1D* h1YLocTrigg, TH1D* h1ZLocTrigg, 
                                          TH3F* h3Remain, TH1D* h1XRemain, TH1D* h1YRemain, TH1D* h1ZRemain, 
                                          Int_t evtNr, Float_t etot, Float_t maxE, 
@@ -741,7 +741,7 @@
 //__________________________________________________________________________________________________________
   // Simple event display with different highlighted triggers
   //__________________________________________________________________________________________________________
-  void EventDisplayWithSlice( TH3F* h3All, TH1D* h1XAll, TH1D* h1YAll, TH1D* h1ZAll, 
+  inline void EventDisplayWithSlice( TH3F* h3All, TH1D* h1XAll, TH1D* h1YAll, TH1D* h1ZAll, 
                               Int_t evtNr, Float_t etot, Float_t maxE, 
                               Float_t maxEX, Float_t maxEY, Float_t maxEZ, bool ktrigg,
                               RunInfo currRunInfo, TString outputName, TString suffix = "pdf", TString unit = "mip eq/tile"
@@ -831,7 +831,7 @@
   //__________________________________________________________________________________________________________
   // Plot 1D distribution
   //__________________________________________________________________________________________________________  
-  void PlotCalibRunOverlay( TCanvas* canvas2D, Int_t option, 
+  inline void PlotCalibRunOverlay( TCanvas* canvas2D, Int_t option, 
                             std::map<int, CalibSummary> sumRuns, 
                             Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
                             //int labelOpt = 1,
@@ -932,7 +932,7 @@
   //__________________________________________________________________________________________________________
   // Plot 1D distribution
   //__________________________________________________________________________________________________________  
-  void PlotAnalysisComparison( TCanvas* canvas2D, Int_t option, 
+  inline void PlotAnalysisComparison( TCanvas* canvas2D, Int_t option, 
                             std::map<int, AnaSummary> sumRuns, 
                             Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
                             int labelOpt = 1,

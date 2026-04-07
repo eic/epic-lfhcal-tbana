@@ -20,5 +20,9 @@ Run Number,beam species,pdg,beam energy (GeV),bias Voltage ,V_br,trigger delay,m
 173,pedestal,0,5,47,38.3,4,10,0.,0.,10000,12,1,4,,29.12.2025 config 6 GSU-01 & ANL-01
 175,cosmics,-13,5,47,38.3,4,10,0.,0.,10000,12,1,4,,29.12.2025 config 6 GSU-01 & ANL-01 trigger OR
 176,cosmics,-13,5,47,38.3,4,10,0.,0.,10000,12,1,4,,29.12.2025 config 6 GSU-01 & ANL-01 trigger AND asic 2 connector pushed in more
-
-
+177,pedestal,0,5,47,38.3,4,10,0.,0.,10000,12,1,4,,4.1.2026 config 6 GSU-01 & ANL-01 -bad
+178,pedestal,0,5,47,38.3,4,10,0.,0.,10000,12,1,4,,4.1.2026 config 6 GSU-01 & ANL-01
+179,cosmics,-13,5,47,38.3,4,10,0.,0.,10000,12,1,4,,4.1.2026 config 6 GSU-01 & ANL-01 trigger AND
+180,pedestal,0,5,47,38.3,4,10,0.,0.,10000,12,1,4,,13.1.2026 config 7 GSU-01 & ANL-01
+181,cosmics,-13,5,47,38.3,4,10,0.,0.,10000,12,1,4,,13.1.2026 config 7 GSU-01 & ANL-01 trigger OR
+182,cosmics,-13,5,47,38.3,4,10,0.,0.,10000,12,1,4,,13.1.2026 config 7 GSU-01 & ANL-01 trigger AND
