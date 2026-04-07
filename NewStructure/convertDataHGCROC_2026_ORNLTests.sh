@@ -5,6 +5,9 @@ echo "run option $2"
 if [ $1 = "fbockTB" ]; then 
 	dataRaw=/media/fbock/Lennard4TB/SummingBoardTestFull/raw/                   # source directory for output files from DAQ system
 	dataDir=/media/fbock/Lennard4TB/SummingBoardTestFull/HGCROCData            # base directory for root trees
+elif [ $1 = "ehagen" ]; then
+	dataRaw=/Users/hagen/Downloads/data/
+	dataDir=/Users/hagen/Downloads/data/converted
 fi
 
 

@@ -18,6 +18,10 @@ if [ $1 = "fbockTB" ]; then
 	dataDirRaw=/media/fbock/Lennard4TB/SummingBoardTestFull/HGCROCData
 	dataDirOut=/media/fbock/Lennard4TB/SummingBoardTestFull/HGCROCData
 	PlotBaseDir=/media/fbock/Lennard4TB/SummingBoardTestFull/
+elif [ $1 = "ehagen" ]; then
+	dataDirRaw=/Users/hagen/Downloads/data/converted
+	dataDirOut=/Users/hagen/Downloads/data/converted
+	PlotBaseDir=/Users/hagen/Downloads/data
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
