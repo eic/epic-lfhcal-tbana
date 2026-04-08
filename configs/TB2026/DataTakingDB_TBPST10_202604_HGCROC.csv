@@ -1,0 +1,8 @@
+year 2026
+month 04
+readout HGCROC
+facility CERN-PS
+beam-line T10
+Run Number,beam species,pdg,beam energy (GeV),bias Voltage ,V_br,trigger delay,machine gun number,Table Position x,Table Position (y),dead time,phase,nrKCU,nrAsic,spare,comments
+7,Muon +,-13,5,44,38.3,4,10,0.1,-5.4,10000,12,2,4,,
+36,pedestal,0,-,44,38.3,4,10,0.1,0.0,10000,12,2,4,,
