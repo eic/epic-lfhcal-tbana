@@ -98,16 +98,29 @@ Int_t findChannelInUnit(std::vector<unitInfo> lUnit, int layer, int chA ){
 //__________________________________________________________________________________________________________
 //__________________________________________________________________________________________________________
 //__________________________________________________________________________________________________________
-Int_t ReturnRowBoard(Int_t ch){
+Int_t ReturnRowBoard(Int_t ch, Int_t inverted){
+  if (inverted > 0){
     if (ch < 5) return 1;
     else return 0;
+  } else {
+    if (ch < 5) return 0;
+    else return 1;    
+  }
 }
-Int_t ReturnColumnBoard(Int_t ch){
+Int_t ReturnColumnBoard(Int_t ch, Int_t inverted){
+  if (inverted > 0){
     if (ch == 1 || ch == 8) return 0;
     if (ch == 2 || ch == 7) return 1;
     if (ch == 3 || ch == 6) return 2;
     if (ch == 4 || ch == 5) return 3;
     return -1;
+  } else {
+    if (ch == 1 || ch == 8) return 3;
+    if (ch == 2 || ch == 7) return 2;
+    if (ch == 3 || ch == 6) return 1;
+    if (ch == 4 || ch == 5) return 0;    
+    return -1;
+  }
 }
 float ReturnPosXInLayer(Int_t ch){
   switch(ch){
@@ -266,6 +279,7 @@ void CreateMapping(   TString filenameUnitMapping,
     std::vector<layerInfo> layers;
     std::vector<unitInfo> uChannels;
     std::map<int, std::pair<float,float>> positions;
+    std::map<int, int> moddirections;
     ifstream inUnit;
     inUnit.open(filenameUnitMapping,ios_base::in);
     if (!inUnit) {
@@ -389,6 +403,7 @@ void CreateMapping(   TString filenameUnitMapping,
       
       // Fill variables
       positions[((TString)((TObjString*)tempArr->At(0))->GetString()).Atoi()] = std::make_pair(((TString)((TObjString*)tempArr->At(1))->GetString()).Atoi(),((TString)((TObjString*)tempArr->At(2))->GetString()).Atoi());
+      moddirections[((TString)((TObjString*)tempArr->At(0))->GetString()).Atoi()] = ((TString)((TObjString*)tempArr->At(3))->GetString()).Atoi();
     }
     
     std::vector<channelInfo> channels;
@@ -415,8 +430,8 @@ void CreateMapping(   TString filenameUnitMapping,
           tempChannel.layer       = layers.at(l).layerNrAbs;
 					tempChannel.nrAssembly  = (int)(((TString)layers.at(l).layerLabel).Atoi());	 
           tempChannel.chAssembly  = chA;
-          tempChannel.rowAssembly = ReturnRowBoard(chA);
-          tempChannel.colAssembly = ReturnColumnBoard(chA);
+          tempChannel.rowAssembly = ReturnRowBoard(chA,moddirections[layers.at(l).moduleNr]);
+          tempChannel.colAssembly = ReturnColumnBoard(chA,moddirections[layers.at(l).moduleNr]);
                                     // 11 bit module Nr., 1 bit row in assembly, 2 bit column in assembly, 6 bit layer in stack
           tempChannel.chID        = Int_t(tempChannel.modNr<<9)+Int_t(tempChannel.rowAssembly<<8)+Int_t(tempChannel.colAssembly<<6)+tempChannel.layer;
           tempChannel.posX        = ReturnPosXInLayer(chA);
@@ -427,7 +442,7 @@ void CreateMapping(   TString filenameUnitMapping,
           tempChannel.segSize     = ReturnLayerInSegment(layers.at(l).layerNrAbs, summingOpt);
           channels.push_back(tempChannel);
 
-          fileMappingClassic << layers.at(l).rUnit << "\t" << channel << "\t" << layers.at(l).layerNrAbs << "\t" << layers.at(l).layerLabel << "\t" <<  chA << "\t" << ReturnRowBoard(chA) << "\t" << ReturnColumnBoard(chA) << "\t" << tempChannel.modNr << "\t" << tempChannel.modposX << "\t" << tempChannel.modposY << "\t" << tempChannel.segSize << "\n";
+          fileMappingClassic << layers.at(l).rUnit << "\t" << channel << "\t" << layers.at(l).layerNrAbs << "\t" << layers.at(l).layerLabel << "\t" <<  chA << "\t" << ReturnRowBoard(chA,moddirections[layers.at(l).moduleNr]) << "\t" << ReturnColumnBoard(chA,moddirections[layers.at(l).moduleNr]) << "\t" << tempChannel.modNr << "\t" << tempChannel.modposX << "\t" << tempChannel.modposY << "\t" << tempChannel.segSize << "\n";
           PrintChannelInfo(tempChannel);
           
           // printf("%b\t%b\t%b\t%b\t%b\n", tempChannel.modNr, tempChannel.rowAssembly, tempChannel.colAssembly, tempChannel.layer, tempChannel.chID);

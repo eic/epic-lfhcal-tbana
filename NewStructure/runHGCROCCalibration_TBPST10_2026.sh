@@ -38,7 +38,7 @@ if [ $2 = "pedestal" ]; then
     runs=''  
   # reference pedestal runs for various campaigns
   elif [ $3 = "Ref" ]; then
-    runs=''
+    runs='39'
   # muon runs
   elif [ $3 = "Muon" ]; then
     runs='' 
@@ -46,11 +46,9 @@ if [ $2 = "pedestal" ]; then
   elif [ $3 = "Electron" ]; then
     runs=''
   fi
-  echo "Add runnumbers before you try this & remove exit"
-  exit
   for runNr in $runs; do 
     printf -v runNrPed "%03d" "$runNr"
-    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNrPed.root -f -o $dataDirOut/rawHGCROC_wPed_$runNrPed.root -O $PlotBaseDir/PlotsPedestal/Run$runNrPed -r $runNrFile
+    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNrPed.root -f -o $dataDirOut/rawHGCROC_wPed_$runNrPed.root -O $PlotBaseDir/PlotsPedestal/Run$runNrPed -r $runList
   done
 fi
 
@@ -62,18 +60,18 @@ if [ $2 = "toaPhase" ]; then
     runs='184'
     for rn in $runs; do 
       printf -v runNr "%03d" "$rn"
-      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirOut/rawHGCROC_wPed_$runNrPed.root #-F png
+      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirOut/rawHGCROC_wPed_$runNrPed.root #-F png
     done
   elif [ $3 = "Electron" ]; then 
     runs='' # 1st HV scan
     for runNr in $runs; do 
-      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
+      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
     done
   elif [ $3 = "Muon" ]; then 
     runs='' # 1st HV scan
     for runNr in $runs; do 
-			./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_wPed_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_wPed_$runNr.root
-      #./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
+			./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_wPed_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_wPed_$runNr.root
+      #./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
     done
   fi
 
@@ -90,14 +88,12 @@ fi
 
 
 if [ $2 == "calibMuon" ]; then
-  echo "Add runnumbers before you try this & remove exit, ideally also add toAPhaseOffset file"
-  exit
-  runPed=''
-	runs=''
+  runPed='39'
+	runs='FirstMuons'
 	badChannelMap=../configs/TB2026/badChannel_HGCROC_PSTB2026_dummy.txt
 	toaPhaseOffset=''
 	for runNr in $runs; do 
-		MuonCalibHGCROC $3 $runNr $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset # -EP 2026/2/15
+		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset # -EP 2026/2/15
 		#MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
 	done
 fi
