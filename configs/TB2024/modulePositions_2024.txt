@@ -1,2 +1,2 @@
-#ModuleNr #ModuleX #ModuleY
-0   0   0
+#ModuleNr #ModuleX #ModuleY #ModuleOrientation
+0   0   0 1
