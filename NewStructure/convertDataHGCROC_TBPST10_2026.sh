@@ -50,47 +50,49 @@ if [ $2 = "pedestals" ]; then
 	# pedestals with different Nr of asics
   runs='001 039 066 070 079 080 082 085'
 	for runNr in $runs; do 
-		./Convert -d 3 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
+		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
 	done
 elif [ $2 = "muons" ]; then 
 	mkdir -p $dataDir/
-  # runs='002 005 006 007 040 041 042 043 044 045 046 047 048 049 050 051 052 053 054 055 056 057 058 086 087 088 089 090 091 092'
-#   
+	
   runs='092'
+# 	runs='008 009 010 011 012 013 014 015 016'
+#   runs='002 005 006 007 040 041 042 043 044 045 046 047 048 049 050 051 052 053 054 055 056 057 058'
+#   runs='059 060 061 062 063 064 065 067 068 069 071 072 073 074 075 076 077 081 083 084'
 
 	for runNr in $runs; do 
 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
 	done
 	
 elif [ $2 = "MergeMuons" ]; then 	
-  runs='040 041 042' # firstMuons
-  echo $runs > runList.txt
-  MergeMuonsFileList $dataDir runList.txt FirstMuons 
+#   runs='040 041 042' # firstMuons
+#   echo $runs > runList.txt
+#   MergeMuonsFileList $dataDir runList.txt FirstMuons 
 
   # position scan
-  runs='040 041 042 043 044 045 046 047 048 049' # firstMuons 0,0
+#   runs='040 041 042 043 044 045 046 047 048 049' # firstMuons 0,0
+#   echo $runs > runList.txt
+#   MergeMuonsFileList $dataDir runList.txt FMuonCent # ok
+  runs='050 051 052' # firstMuons 5,0
   echo $runs > runList.txt
-  MergeMuonsFileList $dataDir runList.txt FMuonCent
-  runs='050 051 052' # firstMuons 0,5
-  echo $runs > runList.txt
-  MergeMuonsFileList $dataDir runList.txt FMuon_0_5
-  runs='053 054 055' # firstMuons 5,-5
-  echo $runs > runList.txt
-  MergeMuonsFileList $dataDir runList.txt FMuon_5_-5
-  runs='056 057' # firstMuons 0,-5
-  echo $runs > runList.txt
-  MergeMuonsFileList $dataDir runList.txt FMuon_0_-5
-  # firstMuons -5,-5
-  cp $dataDir/rawHGCROC_058.root $dataDir/rawHGCROC_FMuon_-5_-5.root 
-  # firstMuons -5,0
-  cp $dataDir/rawHGCROC_059.root $dataDir/rawHGCROC_FMuon_-5_0.root 
+  MergeMuonsFileList $dataDir runList.txt FMuon_5_0 #ok
+#   runs='053 054 055' # firstMuons 5,-5
+#   echo $runs > runList.txt
+#   MergeMuonsFileList $dataDir runList.txt FMuon_5_-5  #ok
+#   runs='056 057' # firstMuons 0,-5
+#   echo $runs > runList.txt
+#   MergeMuonsFileList $dataDir runList.txt FMuon_0_-5  #ok
+#   # firstMuons -5,-5
+#   cp $dataDir/rawHGCROC_058.root $dataDir/rawHGCROC_FMuon_-5_-5.root #ok
+#   # firstMuons -5,0
+#   cp $dataDir/rawHGCROC_059.root $dataDir/rawHGCROC_FMuon_-5_0.root #ok
   # firstMuons 0,5
-  cp $dataDir/rawHGCROC_062.root $dataDir/rawHGCROC_FMuon_0_5.root 
-  # firstMuons 5,5
-  cp $dataDir/rawHGCROC_063.root $dataDir/rawHGCROC_FMuon_5_5.root 
-  runs='060 061' # firstMuons -5,0
-  echo $runs > runList.txt
-  MergeMuonsFileList $dataDir runList.txt FMuon_-5_0
+  cp $dataDir/rawHGCROC_062.root $dataDir/rawHGCROC_FMuon_0_5.root #ok
+#   # firstMuons 5,5
+  cp $dataDir/rawHGCROC_063.root $dataDir/rawHGCROC_FMuon_5_5.root  #ok 
+#   runs='060 061' # firstMuons -5,0
+#   echo $runs > runList.txt
+#   MergeMuonsFileList $dataDir runList.txt FMuon_-5_0  #ok
 
 elif [ $2 = "PositionMuons" ]; then 	
   # position scan
