@@ -1,10 +1,10 @@
-#! /bin/bash
+#!/bin/bash
 
 
 #include common helper functions to make it easier across years
 source helperCalibHGCROC.sh
 
-PlotBaseDir=..
+PlotBaseDir=""
 runNrFile=../configs/LocalTesting/DataTakingDB_ORNL_HGCROC_Cosmics_Summing_202603.csv
 
 # running example:
@@ -22,6 +22,10 @@ elif [ $1 = "ehagen" ]; then
 	dataDirRaw=/Users/hagen/Downloads/data/converted
 	dataDirOut=/Users/hagen/Downloads/data/converted
 	PlotBaseDir=/Users/hagen/Downloads/data
+elif [ $1 = "dkapukch" ]; then
+	dataDirRaw="/Users/davidkapukchyan/Documents/ePIC/LFHCal_TestBeam/DataCosmicsDir"
+	dataDirOut="/Users/davidkapukchyan/Documents/ePIC/LFHCal_TestBeam/DataCosmicsDir"   #Stuff below needs out dir and data dir to be the dame
+	PlotBaseDir="/Users/davidkapukchyan/Documents/ePIC/LFHCal_TestBeam/PlotsCosmicsDir"
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -42,7 +46,7 @@ if [ $2 = "toaPhase" ]; then
 #   runs='206 207'
   runs='206 207'
   for runNr in $runs; do 
-    ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_mipTrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_mipTrigg_wPedwMuon_wBC_$runNr.root #-F png
+    ./build/DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_mipTrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_mipTrigg_wPedwMuon_wBC_$runNr.root #-F png
   done
 fi
 
@@ -70,7 +74,8 @@ if [ $2 == "calibMuon" ]; then
 # 	done
 
   runPed='231'
-	runs='232_234'
+	#runs='232_234'
+	runs='232'
 	for runNr in $runs; do 
 		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
 	done
