@@ -38,7 +38,7 @@ if [ $2 = "pedestal" ]; then
     runs=''  
   # reference pedestal runs for various campaigns
   elif [ $3 = "Ref" ]; then
-    runs='39'
+    runs='1 39 66 70 79 80 82'
   # muon runs
   elif [ $3 = "Muon" ]; then
     runs='85' 
@@ -88,8 +88,16 @@ fi
 
 
 if [ $2 == "calibMuon" ]; then
-  runPed='85'
-	runs='Muon_-5_-5 Muon_-5_0 Muon_0_5 Muon_5_5'
+#   #Muon positions scan Full Scan 42 V
+#   runPed='85'
+# 	runs='Muon_-5_-5 Muon_-5_0 Muon_0_5 Muon_5_5'
+
+	#first muon scans
+  runPed='39'
+# 	runs='FirstMuons'
+  runs='FMuonCent FMuon_5_0 FMuon_0_5 FMuon_5_5'
+#   runs='FMuon_0_5 FMuon_5_-5 FMuon_0_-5 FMuon_-5_-5 FMuon_-5_0 FMuon_0_5 FMuon_5_5 FMuon_-5_0'
+
 	badChannelMap=../configs/TB2026/badChannel_HGCROC_PSTB2026_dummy.txt
 	toaPhaseOffset=''
 	for runNr in $runs; do 
