@@ -36,8 +36,8 @@ elif [ $1 = "egpott" ]; then
 	dataDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
 
 elif [ $1 = "ehagen" ]; then 
-	dataRaw=/Volumes/UWU/25_TB_Data
-	dataDir=/Volumes/UWU/25_TB_Data
+	dataRaw=/Users/hagen/Githubs/TB_data
+	dataDir=/Users/hagen/Githubs/TB_data
 
 fi
   
@@ -48,14 +48,15 @@ runList=../configs/TB2026/DataTakingDB_TBPST10_202604_HGCROC.csv
 if [ $2 = "pedestals" ]; then 
 	mkdir -p $dataDir/
 	# pedestals with different Nr of asics
-  runs='001 039 066 070 079 080 082'
+  runs='001 039 066 070 079 080 082 085'
 	for runNr in $runs; do 
 		./Convert -d 3 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
 	done
 elif [ $2 = "muons" ]; then 
 	mkdir -p $dataDir/
-  runs='002 005 006 007 040 041 042 043 044 045 046 047 048 049 050 051 052 053 054 055 056 057 058'
-#   runs='059 060 061 062 063 064 065 067 068 069 071 072 073 074 075 076 077 081 083 084'
+  # runs='002 005 006 007 040 041 042 043 044 045 046 047 048 049 050 051 052 053 054 055 056 057 058 086 087 088 089 090 091 092'
+#   
+  runs='092'
 
 	for runNr in $runs; do 
 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
@@ -90,6 +91,30 @@ elif [ $2 = "MergeMuons" ]; then
   runs='060 061' # firstMuons -5,0
   echo $runs > runList.txt
   MergeMuonsFileList $dataDir runList.txt FMuon_-5_0
+
+elif [ $2 = "PositionMuons" ]; then 	
+  # position scan
+  runs='091' # Muons 5,5
+  echo $runs > runList.txt
+  MergeMuonsFileList $dataDir runList.txt Muon_5_5
+  runs='092' # Muons -5,5
+  echo $runs > runList.txt
+  MergeMuonsFileList $dataDir runList.txt Muon_-5_5
+  runs='089' # Muons -5,-5
+  echo $runs > runList.txt
+  MergeMuonsFileList $dataDir runList.txt Muon_-5_-5
+  runs='090' # Muons 5,-5
+  echo $runs > runList.txt
+  MergeMuonsFileList $dataDir runList.txt Muon_5_-5
+  # firstMuons 5,5
+  cp $dataDir/rawHGCROC_091.root $dataDir/rawHGCROC_Muon_-5_-5.root 
+  # firstMuons -5,5
+  cp $dataDir/rawHGCROC_092.root $dataDir/rawHGCROC_Muon_-5_0.root 
+  # firstMuons -5,-5
+  cp $dataDir/rawHGCROC_089.root $dataDir/rawHGCROC_Muon_0_5.root 
+  # firstMuons 5,-5
+  cp $dataDir/rawHGCROC_090.root $dataDir/rawHGCROC_Muon_5_5.root 
+
 
 elif [ $2 = "electrons" ]; then 
 	mkdir -p $dataDir/

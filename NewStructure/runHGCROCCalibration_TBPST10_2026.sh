@@ -18,9 +18,9 @@ if [ $1 = "fbockTB" ]; then
 	dataDirOut=/media/fbock/Lennard4TB/202604_PST10/HGCROCData
 	PlotBaseDir=/media/fbock/Lennard4TB/202604_PST10/
 elif [ $1 = "ehagen" ]; then 
-	dataDirRaw=/Users/hagen/Githubs/epic-lfhcal-tbana/TB_Data
-	dataDirOut=/Users/hagen/Githubs/epic-lfhcal-tbana/TB_Data
-	PlotBaseDir=/Users/hagen/Githubs/epic-lfhcal-tbana/plots
+	dataDirRaw=/Users/hagen/Githubs/TB_data
+	dataDirOut=/Users/hagen/Githubs/TB_data
+	PlotBaseDir=/Users/hagen/Githubs/TB_data/plots
 elif [ $1 = "egpott" ]; then
   dataDirRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
   dataDirOut=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
@@ -41,7 +41,7 @@ if [ $2 = "pedestal" ]; then
     runs='39'
   # muon runs
   elif [ $3 = "Muon" ]; then
-    runs='' 
+    runs='85' 
   # electron runs
   elif [ $3 = "Electron" ]; then
     runs=''
@@ -88,8 +88,8 @@ fi
 
 
 if [ $2 == "calibMuon" ]; then
-  runPed='39'
-	runs='FirstMuons'
+  runPed='85'
+	runs='Muon_-5_-5 Muon_-5_0 Muon_0_5 Muon_5_5'
 	badChannelMap=../configs/TB2026/badChannel_HGCROC_PSTB2026_dummy.txt
 	toaPhaseOffset=''
 	for runNr in $runs; do 
