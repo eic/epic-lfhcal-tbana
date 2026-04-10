@@ -26,41 +26,41 @@ function MuonCalibHGCROC()
 	if [ $1 == "BC" ]; then 
     if [ -f "$4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt" ]; then
       echo "overwriting original calib file with manually modified $4/rawHGCROC_wPed_$3_calib_mod.txt"
-      ./DataPrep -d 1 -e -f -P $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wPed_wBC_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibTransfer/$6 -r $runNrFile -k $4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt -B $7     
+      ./DataPrep -d 1 -e -f -P $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wPed_wBC_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibTransfer/$6 -r $runList -k $4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt -B $7     
     else 
-      ./DataPrep -d 1 -e -f -P $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wPed_wBC_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibTransfer/$6 -r $runNrFile -B $7 
+      ./DataPrep -d 1 -e -f -P $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wPed_wBC_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibTransfer/$6 -r $runList -B $7 
     fi
 	elif [ $1 == "BCTOA" ]; then 
     if [ -f "$4/rawHGCROC_wPed_$3_calib_mod.txt" ]; then
       echo "overwriting original calib file with manually modified $4/rawHGCROC_wPed_$3_calib_mod.txt"
-      ./DataPrep -d 1 -e -f -P $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wPed_wBC_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibTransfer/$6 -r $runNrFile -k $4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt -B $7 -G $8
+      ./DataPrep -d 1 -e -f -P $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wPed_wBC_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibTransfer/$6 -r $runList -k $4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt -B $7 -G $8
     else 
-        ./DataPrep -d 2 -e -f -P $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wPed_wBC_$runNrMuon.root  -O $PlotBaseDir/HGCROC_PlotsCalibTransferWToA/$6 -r $runNrFile -B $7  -G $8  
+        ./DataPrep -d 2 -e -f -P $4/rawHGCROC_wPed_$runNrPed.root -i $4/rawHGCROC_$runNrMuon.root -o $4/rawHGCROC_wPed_wBC_$runNrMuon.root  -O $PlotBaseDir/HGCROC_PlotsCalibTransferWToA/$6 -r $runList -B $7  -G $8  
     fi
 	elif [ $1 == "default" ]; then 
-		time ./DataPrep -f -d 1 -e  -s -i $4/rawHGCROC_wPed_wBC_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuon/$6 -r $runNrFile
+		time ./DataPrep -f -d 1 -e  -s -i $4/rawHGCROC_wPed_wBC_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuon/$6 -r $runList
 	elif [ $1 == "imp1st" ]; then 
-		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved/$6 -r $runNrFile
+		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved/$6 -r $runList
 	elif [ $1 == "imp2nd" ]; then 
-		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp2_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved2nd/$6 -r $runNrFile
+		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp2_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved2nd/$6 -r $runList
 	elif [ $1 == "imp3rd" ]; then 
-		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp2_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp3_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved3rd/$6 -r $runNrFile
+		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp2_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp3_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved3rd/$6 -r $runList
 	elif [ $1 == "imp4th" ]; then 
-		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp3_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp4_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved4th/$6 -r $runNrFile
+		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp3_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp4_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved4th/$6 -r $runList
 	elif [ $1 == "saveNewMuon" ]; then 
 		time ./DataPrep -f -d 1 -X -i $4/rawHGCROC_wPedwMuon_wBC_$runNrMuon.root -o $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$runNrMuon.root 
 	elif [ $1 == "imp1st_red" ]; then 
-		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_ImpR_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved_Red/$6 -r $runNrFile
+		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_ImpR_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved_Red/$6 -r $runList
 	elif [ $1 == "imp2nd_red" ]; then 
-		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_ImpR_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp2R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved2nd_Red/$6 -r $runNrFile
+		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_ImpR_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp2R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved2nd_Red/$6 -r $runList
 	elif [ $1 == "imp3rd_red" ]; then 
-		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp2R_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp3R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved3rd_Red/$6 -r $runNrFile
+		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp2R_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp3R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved3rd_Red/$6 -r $runList
 	elif [ $1 == "imp4th_red" ]; then 
-		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp3R_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved4th_Red/$6 -r $runNrFile
+		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp3R_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved4th_Red/$6 -r $runList
 	elif [ $1 == "imp5th_red" ]; then 
-		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved5th_Red/$6 -r $runNrFile
+		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved5th_Red/$6 -r $runList
 	elif [ $1 == "imp6th_red" ]; then 
-		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp6R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved6th_Red/$6 -r $runNrFile	
+		time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp6R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved6th_Red/$6 -r $runList	
 	fi
 }
 
@@ -73,7 +73,7 @@ function Pedestal()
 	echo "OutNameRun: $5" 
 	echo "plot-ending: $6" 
 	
-  ./DataPrep -a -d 1 -p -i $3/rawHGCROC_$2.root -f -o $4/rawHGCROC_wPed_$2.root -O $PlotBaseDir/PlotsPedestal/$5 -r $runNrFile -F $6
+  ./DataPrep -a -d 1 -p -i $3/rawHGCROC_$2.root -f -o $4/rawHGCROC_wPed_$2.root -O $PlotBaseDir/PlotsPedestal/$5 -r $runList -F $6
 }
 
 function WaveformHGCROC()
@@ -84,7 +84,7 @@ function WaveformHGCROC()
 	echo "dataDir: $3"
 	echo "OutNameRun:" $4
   if [ $1 == "wavepdf" ]; then 
-    ./DataPrep -d 1 -E 2 -f -w -i $3/calibratedHGCROC_Run_$2.root -o $3/calibratedHGCROC_Wave_Run_$2.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$4 -r $runNrFile 
+    ./DataPrep -d 1 -E 2 -f -w -i $3/calibratedHGCROC_Run_$2.root -o $3/calibratedHGCROC_Wave_Run_$2.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$4 -r $runList 
   elif [ $1 == "wavepng" ]; then 
     ./DataPrep -d 1 -E 2 -f -w -i $3/calibratedHGCROC_Run_$2.root -o $3/calibratedHGCROC_Wave_Run_$2.root -O $PlotBaseDir/HGCROC_PlotsCalibWave/$4 -r $runNrFile -F png
 	fi
