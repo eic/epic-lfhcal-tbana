@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 
 #include common helper functions to make it easier across years
 source helperCalibHGCROC.sh
@@ -25,6 +25,10 @@ elif [ $1 = "egpott" ]; then
   dataDirRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
   dataDirOut=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
   PlotBaseDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/plots
+elif [ $1 = "dkapukch" ]; then
+  dataDirRaw=/Users/davidkapukchyan/Documents/ePIC/LFHCal_TestBeam/HvScan42VFromDaq/ConvertedData
+  dataDirOut=/Users/davidkapukchyan/Documents/ePIC/LFHCal_TestBeam/HvScan42VFromDaq/ConvertedData
+  PlotBaseDir=/Users/davidkapukchyan/Documents/ePIC/LFHCal_TestBeam/HvScan42VFromDaq/ConvertedData/Plots
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -32,23 +36,23 @@ fi
 
 # run pedest extraction for different run numbers
 if [ $2 = "pedestal" ]; then
-  runs='';
+  runs='70';
   # different number of KCUs & asics
-  if [ $3 = "Test" ]; then
-    runs=''  
+  if [[ $3 = "Test" ]]; then
+    runs='0'  
   # reference pedestal runs for various campaigns
-  elif [ $3 = "Ref" ]; then
+  elif [[ $3 = "Ref" ]]; then
     runs='39'
   # muon runs
-  elif [ $3 = "Muon" ]; then
-    runs='85' 
+  elif [[ $3 = "Muon" ]]; then
+    runs='71' 
   # electron runs
-  elif [ $3 = "Electron" ]; then
-    runs=''
+  elif [[ $3 = "Electron" ]]; then
+    runs='0'
   fi
   for runNr in $runs; do 
     printf -v runNrPed "%03d" "$runNr"
-    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNrPed.root -f -o $dataDirOut/rawHGCROC_wPed_$runNrPed.root -O $PlotBaseDir/PlotsPedestal/Run$runNrPed -r $runList
+    ./build/DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNrPed.root -f -o $dataDirOut/rawHGCROC_wPed_$runNrPed.root -O $PlotBaseDir/PlotsPedestal/Run$runNrPed -r $runList
   done
 fi
 
@@ -60,17 +64,17 @@ if [ $2 = "toaPhase" ]; then
     runs='184'
     for rn in $runs; do 
       printf -v runNr "%03d" "$rn"
-      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirOut/rawHGCROC_wPed_$runNrPed.root #-F png
+      ./build/DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirOut/rawHGCROC_wPed_$runNrPed.root #-F png
     done
   elif [ $3 = "Electron" ]; then 
     runs='' # 1st HV scan
     for runNr in $runs; do 
-      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
+      ./build/DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
     done
   elif [ $3 = "Muon" ]; then 
     runs='' # 1st HV scan
     for runNr in $runs; do 
-			./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_wPed_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_wPed_$runNr.root
+			./build/DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_wPed_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_wPed_$runNr.root
       #./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
     done
   fi
@@ -88,8 +92,9 @@ fi
 
 
 if [ $2 == "calibMuon" ]; then
-  runPed='85'
-	runs='Muon_-5_-5 Muon_-5_0 Muon_0_5 Muon_5_5'
+  runPed='70'
+	#runs='Muon_-5_-5 Muon_-5_0 Muon_0_5 Muon_5_5'
+  runs='071'
 	badChannelMap=../configs/TB2026/badChannel_HGCROC_PSTB2026_dummy.txt
 	toaPhaseOffset=''
 	for runNr in $runs; do 

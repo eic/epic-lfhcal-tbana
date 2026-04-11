@@ -26,6 +26,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Find ROOT package
 find_package(ROOT REQUIRED COMPONENTS Core RIO Hist Tree Gpad Graf)
 include(${ROOT_USE_FILE})
+find_package( H2G_Decode CONFIG OPTIONAL HINTS ${H2GDECODE_INSTALL_PATH} )
+#find_package( h2g_decode CONFIG OPTIONAL HINTS  )
+message( STATUS "h2g_decode: ${H2G_Decode_FOUND}" )
+message( STATUS "h2g_decode_include: ${H2G_Decode_INSTALL_INCLUDE}" )
+include_directories(${H2G_Decode_INSTALL_INCLUDE})
+add_compile_definitions(DECODE_HGCROC)
 
 # Add common compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -ansi -Wno-overloaded-virtual -Wno-long-long -fno-common")
@@ -39,39 +45,58 @@ endif()
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-# Build h2g_decode subproject
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/h2g_decode/CMakeLists.txt)
-  # Set USE_ROOT to OFF for h2g_decode subproject
-  set(USE_ROOT OFF CACHE BOOL "Disable ROOT for h2g_decode" FORCE)
-  add_subdirectory(h2g_decode)
-  set(H2G_DECODE_FOUND TRUE)
-  add_compile_definitions(DECODE_HGCROC)
-  # Add h2g_decode source directory to include paths
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/h2g_decode/src)
-  message(STATUS "Building h2g_decode from source")
-else()
-  # Fallback to prebuilt library
-  set(H2G_DECODE_FOUND FALSE)
-  if(APPLE)
-    set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/libh2g_decode.dylib")
-  elseif(UNIX)
-    set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/libh2g_decode.so")
-  elseif(WIN32)
-    set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/h2g_decode.dll")
-  endif()
-
-  if(EXISTS ${H2G_DECODE_LIBRARY})
-    message(STATUS "Found h2g_decode library: ${H2G_DECODE_LIBRARY}")
-    set(H2G_DECODE_FOUND TRUE)
-    add_compile_definitions(DECODE_HGCROC)
-    # Create imported target for the library
-    add_library(h2g_decode SHARED IMPORTED)
-    set_target_properties(h2g_decode PROPERTIES IMPORTED_LOCATION ${H2G_DECODE_LIBRARY})
-    target_include_directories(h2g_decode INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
-  else()
-    message(STATUS "h2g_decode library not found, HGCROC decoding will be disabled")
-  endif()
+if( APPLE )
+  #-----For setting rpath correctly on MAC OS X
+  # use, i.e. don't skip the full RPATH for the build tree
+  set(CMAKE_SKIP_BUILD_RPATH FALSE)
+  # when building, don't use the install RPATH already
+  # (but later on when installing)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+  # add the automatically determined parts of the RPATH
+  # which point to directories outside the build tree to the install RPATH
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+  # the RPATH to be used when installing, but only if it's not a system directory
+  list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+  if("${isSystemDir}" STREQUAL "-1")
+      set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+  endif("${isSystemDir}" STREQUAL "-1")
+  #-----
 endif()
+
+# Build h2g_decode subproject
+# if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/h2g_decode/CMakeLists.txt)
+#   # Set USE_ROOT to OFF for h2g_decode subproject
+#   set(USE_ROOT OFF CACHE BOOL "Disable ROOT for h2g_decode" FORCE)
+#   add_subdirectory(h2g_decode)
+#   set(H2G_DECODE_FOUND TRUE)
+#   add_compile_definitions(DECODE_HGCROC)
+#   # Add h2g_decode source directory to include paths
+#   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/h2g_decode/src)
+#   message(STATUS "Building h2g_decode from source")
+# else()
+#   # Fallback to prebuilt library
+#   set(H2G_DECODE_FOUND FALSE)
+#   if(APPLE)
+#     set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/libh2g_decode.dylib")
+#   elseif(UNIX)
+#     set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/libh2g_decode.so")
+#   elseif(WIN32)
+#     set(H2G_DECODE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/lib/h2g_decode.dll")
+#   endif()
+
+#   if(EXISTS ${H2G_DECODE_LIBRARY})
+#     message(STATUS "Found h2g_decode library: ${H2G_DECODE_LIBRARY}")
+#     set(H2G_DECODE_FOUND TRUE)
+#     add_compile_definitions(DECODE_HGCROC)
+#     # Create imported target for the library
+#     add_library(h2g_decode SHARED IMPORTED)
+#     set_target_properties(h2g_decode PROPERTIES IMPORTED_LOCATION ${H2G_DECODE_LIBRARY})
+#     target_include_directories(h2g_decode INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+#   else()
+#     message(STATUS "h2g_decode library not found, HGCROC decoding will be disabled")
+#   endif()
+# endif()
 
 # Generate ROOT dictionary
 set(LINKDEF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/LinkDef.h)
@@ -138,9 +163,9 @@ target_link_libraries(Analysis ${ROOT_LIBRARIES})
 # Convert executable
 add_executable(Convert Convert.cc)
 target_link_libraries(Convert LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES})
-if(H2G_DECODE_FOUND)
+if(H2G_Decode_FOUND)
   target_compile_definitions(Convert PRIVATE DECODE_HGCROC)
-  target_link_libraries(Convert h2g_decode)
+  target_link_libraries(Convert H2G_Decode::h2g_decode)
 endif()
 
 # DataPrep executable
@@ -150,25 +175,25 @@ target_link_libraries(HGCROCStudy LFHCAL WaveformFitting ${ROOT_LIBRARIES})
 # DataPrep executable
 add_executable(DataPrep DataPrep.cc)
 target_link_libraries(DataPrep LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES})
-if(H2G_DECODE_FOUND)
+if(H2G_Decode_FOUND)
   target_compile_definitions(DataPrep PRIVATE DECODE_HGCROC)
-  target_link_libraries(DataPrep h2g_decode)
+  target_link_libraries(DataPrep H2G_Decode::h2g_decode)
 endif()
 
 # DataAna executable
 add_executable(DataAna DataAna.cc DataAnalysis.cc)
 target_link_libraries(DataAna LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES})
-if(H2G_DECODE_FOUND)
+if(H2G_Decode_FOUND)
   target_compile_definitions(DataAna PRIVATE DECODE_HGCROC)
-  target_link_libraries(DataAna h2g_decode)
+  target_link_libraries(DataAna H2G_Decode::h2g_decode)
 endif()
 
 # Display executable
 add_executable(Display Display.cc EventDisplay.cc)
 target_link_libraries(Display LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES})
-if(H2G_DECODE_FOUND)
+if(H2G_Decode_FOUND)
   target_compile_definitions(Display PRIVATE DECODE_HGCROC)
-  target_link_libraries(Display h2g_decode)
+  target_link_libraries(Display H2G_Decode::h2g_decode)
 endif()
 
 # CompareCalib executable
@@ -180,28 +205,28 @@ add_executable(CompareAna CompareAna.cc ComparisonAna.cc)
 target_link_libraries(CompareAna LFHCAL ${ROOT_LIBRARIES})
 
 # HGCROC_Conversion target (modified Convert with additional flags)
-if(H2G_DECODE_FOUND)
+if(H2G_Decode_FOUND)
   add_executable(HGCROC_Conversion Convert.cc)
   target_compile_definitions(HGCROC_Conversion PRIVATE DECODE_HGCROC)
-  target_link_libraries(HGCROC_Conversion LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES} h2g_decode)
+  target_link_libraries(HGCROC_Conversion LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES} H2G_Decode::h2g_decode)
 else()
   message(WARNING "HGCROC_Conversion target will not be built - h2g_decode library not found")
 endif()
 
 # Calib sample parser
-if(H2G_DECODE_FOUND)
+if(H2G_Decode_FOUND)
   add_executable(ParseCalibSamples ParseCalibSamples.cc CalibSampleParser.cc)
   target_compile_definitions(ParseCalibSamples PRIVATE DECODE_HGCROC)
-  target_link_libraries(ParseCalibSamples LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES} h2g_decode)
+  target_link_libraries(ParseCalibSamples LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES} H2G_Decode::h2g_decode)
 else()
   message(WARNING "HGCROC calib sample parser will not be built - h2g_decode library not found")
 endif()
 
 # Compare HGCROC calib samples
-if(H2G_DECODE_FOUND)
+if(H2G_Decode_FOUND)
   add_executable(CompareHGCROCCalib CompareParsedHGCROC.cc CompareHGCROCCalib.cc)
   target_compile_definitions(CompareHGCROCCalib PRIVATE DECODE_HGCROC)
-  target_link_libraries(CompareHGCROCCalib LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES} h2g_decode)
+  target_link_libraries(CompareHGCROCCalib LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES} H2G_Decode::h2g_decode)
 else()
   message(WARNING "HGCROC calib sample parser will not be built - h2g_decode library not found")
 endif()
