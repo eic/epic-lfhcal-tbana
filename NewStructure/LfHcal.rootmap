@@ -1,0 +1,7 @@
+Library.Setup: libLFHCAL
+Library.RootSetupWrapper: libLFHCAL
+Library.Event: libLFHCAL
+Library.Tile: libLFHCAL
+Library.Calib: libLFHCAL
+Library.TileCalib: libLFHCAL
+Library.Hgcroc: libLFHCAL
