@@ -38,7 +38,9 @@ if [ $2 = "pedestal" ]; then
     runs=''  
   # reference pedestal runs for various campaigns
   elif [ $3 = "Ref" ]; then
-    runs='1 39 66 70 79 80 82'
+    runs='1 39 66 '
+  elif [ $3 = "HVScan" ]; then
+    runs='70 79 80 82' 
   # muon runs
   elif [ $3 = "Muon" ]; then
     runs='85' 
@@ -88,15 +90,26 @@ fi
 
 
 if [ $2 == "calibMuon" ]; then
-#   #Muon positions scan Full Scan 42 V
-#   runPed='85'
-# 	runs='Muon_-5_-5 Muon_-5_0 Muon_0_5 Muon_5_5'
 
 	#first muon scans
-  runPed='39'
 # 	runs='FirstMuons'
-  runs='FMuonCent FMuon_5_0 FMuon_0_5 FMuon_5_5'
-#   runs='FMuon_0_5 FMuon_5_-5 FMuon_0_-5 FMuon_-5_-5 FMuon_-5_0 FMuon_0_5 FMuon_5_5 FMuon_-5_0'
+#   runs='FMuonCent FMuon_5_0 FMuon_0_5 FMuon_5_5'
+#   runs='FMuon_0_5 FMuon_5_-5 FMuon_0_-5 FMuon_-5_-5 FMuon_-5_0 FMuon_5_5'
+  
+  if [ $4 == "FMuon" ]; then
+    runPed='39'
+    runs='FMuon_-5_-5 FMuon_0_5 FMuon_5_-5 FMuon_5_5 FMuon_5_0 FMuonCent'
+  elif [ $4 = "HVScan42" ]; then
+    runPed='70'
+    runs='Muon_HVScan_42V'
+  elif [ $4 = "HVScan42_5" ]; then
+    runPed='66'
+    runs='Muon_HVScan_42_5V'
+  else 
+    #Muon positions scan Full Scan 43 V
+    runPed='85'
+    runs='Muon_-5_-5 Muon_-5_0 Muon_0_5 Muon_5_5'
+  fi
 
 	badChannelMap=../configs/TB2026/badChannel_HGCROC_PSTB2026_dummy.txt
 	toaPhaseOffset=''
@@ -105,3 +118,23 @@ if [ $2 == "calibMuon" ]; then
 		#MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
 	done
 fi
+
+if [ $2 == "calibMuon2" ]; then
+#   #Muon positions scan Full Scan 43 V
+#   runPed='85'
+# 	runs='Muon_-5_-5 Muon_-5_0 Muon_0_5 Muon_5_5'
+
+	#first muon scans
+  runPed='39'
+  runs='FMuon_-5_0  FMuon_0_-5 FMuon_-5_5'
+
+
+	badChannelMap=../configs/TB2026/badChannel_HGCROC_PSTB2026_dummy.txt
+	toaPhaseOffset=''
+	for runNr in $runs; do 
+		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset # -EP 2026/2/15
+		#MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
+	done
+fi
+
+
