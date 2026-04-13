@@ -624,7 +624,8 @@ void EvaluateRecoEffiHGCROC( TString configFileName     = "",
 
     PlotTrending (canvas, 0.95,  0.95, 0.035, 30, 
                   graphRecEffi, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, Form("%s/RecEffi.pdf",outputDir.Data()) );
-  
+    PlotTrending (canvas, 0.95,  0.95, 0.035, 30, 
+                  graphRecEffi, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, Form("%s/RecEffi.png",outputDir.Data()) );
   
 //     std::cout<<"=============================================================="<<std::endl;
 //     std::vector<runInfo> compRuns;
