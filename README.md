@@ -26,3 +26,8 @@ For convenience a linker script is provided, which can be used to recreate the s
 ```console
 bash $PATHTOSCRIPT/prepareAnalysisDirectory.sh $USERNAME [new/old]
 ```
+
+In order to prevent ROOT from complaining about dictionaries of classes not found you must run `hadd` or `root` from *NewStructure*. This is because when root starts up it will read the "rootmap" file present in the current directory and load the libraries accordingly with the paths given. Since the paths in the "rootmap" file are relative to *NewStructure* it will only work there.
+
+To generate doxygen documentation for the project in *NewStructure*, navigate to the *NewStructure* directory (`cd NewStructure`) and run `doxygen Doxyfile`. This will generate [Doxygen](https://www.doxygen.nl/) style documentation for the project in a new folder called __doxy__ inside *NewStructure*. The Doxygen settings can be modified in a file called __Doxyfile__ found in *NewStructure*.
+
