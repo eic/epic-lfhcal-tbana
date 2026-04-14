@@ -388,6 +388,7 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
   //   par[3]=Width (sigma) of convoluted Gaussian function
   //
 
+  Setup* setupT=Setup::GetInstance();
   if (verbosity > 2) std::cout << "FitHG cell ID: " << cellID << std::endl;
   
   TString funcName = Form("fmip%sHGCellID%d",TileName.Data(),cellID);
@@ -407,7 +408,11 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
     fitrange[0] = 0.6*avmip;
     fitrange[1] = 3*avmip;
     if (ROType == ReadOut::Type::Hgcroc)
-      fitrange[1] = 4*avmip;
+      // make fitting range for iterative improved fitting segment depth dependent for different summing options in the same stack
+      if (setupT->GetLayersInSegment(cellID) < 6)
+        fitrange[1] = 4*avmip;
+      else 
+        fitrange[1] = 4*avmip;
   }
   if (year == 2023 && fitrange[0] < 100)
     fitrange[0] = 100;
@@ -443,7 +448,11 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
     parlimitslo[1]  = 0.5*avmip;    
     parlimitshi[1]  = 1.7*avmip;
     if (ROType == ReadOut::Type::Hgcroc)
-      parlimitshi[1]  = 2.2*avmip;
+      // make maximum Landau peak range for iterative improved fitting segment depth dependent for different summing options in the same stack
+      if (setupT->GetLayersInSegment(cellID) < 6)
+        parlimitshi[1]  = 2.2*avmip;
+      else 
+        parlimitshi[1]  = 3.5*avmip;
   }
   if (ROType == ReadOut::Type::Caen){
     if (vov != -1000){

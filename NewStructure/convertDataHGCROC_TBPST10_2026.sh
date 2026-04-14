@@ -47,9 +47,10 @@ runList=../configs/TB2026/DataTakingDB_TBPST10_202604_HGCROC.csv
 # default path for the HGCROC analysis	
 if [ $2 = "HVScan1" ]; then 	
   if [ $3 = "convert" ]; then 
-#     runs='039 066 070 079 080 082 064 065 067 068 069 071 072 073 074 075 076 077 081 083 084 221 223 224 225 226 227 228 230 229 231 '
+#     runs='039 066 070 079 080 082 064 065 067 068 069 071 072 073 074 075 076 077 081 083 084 221 223 224 225 226 227 228 230 229 231 232 233'
 #     runs='039 066 070 079 080 082 064 065 067 068 069 071 072 073 074 075 076 077 081 083 084' #part 2
-    runs='221 223 224 225 226 227 228 230 229 231 ' #part 2
+#     runs='221 223 224 225 226 227 228 230 229 231 232 233' #part 2
+    runs='232 233' #part 2
     for runNr in $runs; do 
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done
@@ -90,23 +91,23 @@ if [ $2 = "HVScan1" ]; then
 #     cp $dataDir/rawHGCROC_084.root $dataDir/rawHGCROC_Muon_HVScan_44V_bottom.root #ok  
 #     cp $dataDir/rawHGCROC_083.root $dataDir/rawHGCROC_Muon_HVScan_44V_top.root #ok  
 # 
-    runs='223 224' # HV 44_5V
-    echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt Muon_HVScan_44_5V  #ok
-    cp $dataDir/rawHGCROC_224.root $dataDir/rawHGCROC_Muon_HVScan_44_5V_bottom.root #ok  
-    cp $dataDir/rawHGCROC_223.root $dataDir/rawHGCROC_Muon_HVScan_44_5V_top.root #ok  
-
-    runs='226 227' # HV 45V
-    echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt Muon_HVScan_45V  #ok
-    cp $dataDir/rawHGCROC_226.root $dataDir/rawHGCROC_Muon_HVScan_45V_bottom.root #ok  
-    cp $dataDir/rawHGCROC_227.root $dataDir/rawHGCROC_Muon_HVScan_45V_top.root #ok  
-
-    runs='230 229' # HV 45.5V
-    echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt Muon_HVScan_45_5V  #ok
-    cp $dataDir/rawHGCROC_230.root $dataDir/rawHGCROC_Muon_HVScan_45_5V_bottom.root #ok  
-    cp $dataDir/rawHGCROC_229.root $dataDir/rawHGCROC_Muon_HVScan_45_5V_top.root #ok  
+#     runs='223 224' # HV 44_5V
+#     echo $runs > runList.txt
+#     MergeMuonsFileList $dataDir runList.txt Muon_HVScan_44_5V  #ok
+#     cp $dataDir/rawHGCROC_224.root $dataDir/rawHGCROC_Muon_HVScan_44_5V_bottom.root #ok  
+#     cp $dataDir/rawHGCROC_223.root $dataDir/rawHGCROC_Muon_HVScan_44_5V_top.root #ok  
+# 
+#     runs='226 227' # HV 45V
+#     echo $runs > runList.txt
+#     MergeMuonsFileList $dataDir runList.txt Muon_HVScan_45V  #ok
+#     cp $dataDir/rawHGCROC_226.root $dataDir/rawHGCROC_Muon_HVScan_45V_bottom.root #ok  
+#     cp $dataDir/rawHGCROC_227.root $dataDir/rawHGCROC_Muon_HVScan_45V_top.root #ok  
+# 
+#     runs='230 229' # HV 45.5V
+#     echo $runs > runList.txt
+#     MergeMuonsFileList $dataDir runList.txt Muon_HVScan_45_5V  #ok
+#     cp $dataDir/rawHGCROC_230.root $dataDir/rawHGCROC_Muon_HVScan_45_5V_bottom.root #ok  
+#     cp $dataDir/rawHGCROC_229.root $dataDir/rawHGCROC_Muon_HVScan_45_5V_top.root #ok  
 
     runs='232 233' # HV 46V
     echo $runs > runList.txt
@@ -170,7 +171,8 @@ elif [ $2 = "SetA-PosScanMuons" ]; then
 # 43 V, summing board V2, original default preamp settings
 elif [ $2 = "FullSetA" ]; then 
   if [ $3 = "convert" ]; then 
-    runs='085 086 087 088 089 090 091 092 094 095 096 097 098 099 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 123 124 125 126' #full list
+#     runs='085 086 087 088 089 090 091 092 094 095 096 097 098 099 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 123 124 125 126' #full list
+        runs='107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 123 124 125 126' 
     #   runs='085 120' #pedestals
     #   runs='088 086 087 090 089 092 091' #muons set 1
     #   runs='121 122 123 124 125 126' #muons set 2
@@ -202,7 +204,8 @@ elif [ $2 = "FullSetA" ]; then
 # 42.5 V, summing board V2, original default preamp settings
 elif [ $2 = "FullSetB" ]; then 
   if [ $3 = "convert" ]; then 
-    runs='189 190 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 217 218 219 220' #full list
+#     runs='189 190 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 217 218 219 220' #full list
+    runs='205 206 207 208 209 210 211 212 213 214 215 217 218 219 220' #full list
     #   runs='215' #pedestals
     #   runs='189 190 192 193' #muons set 1
     #   runs='217 218 219 220' #muons set 2
@@ -222,7 +225,7 @@ elif [ $2 = "FullSetB" ]; then
 # 44 V, summing board V2, original default preamp settings
 elif [ $2 = "FullSetC" ]; then 
   if [ $3 = "convert" ]; then 
-    runs='130 121 132 133 134 135 136 139 160 140 161 141 162 142 163 143 164 144 165 145 166 146 167 150 151 152 153 154 155 156 157 149 168 148 168 169 147 170 158 159 171 177 179 178 181 182 180 183 184' #full list
+    runs='130 131 132 133 134 135 136 139 160 140 161 141 162 142 163 143 164 144 165 145 166 146 167 150 151 152 153 154 155 156 157 149 168 148 168 169 147 170 158 159 171 177 179 178 181 182 180 183 184' #full list
     #   runs='130 171' #pedestals
     #   runs='130 121 132 133 134 135 136' #muons set 1
     #   runs='177 179 178 181 182 180 183 184' #muons set 2
@@ -232,7 +235,7 @@ elif [ $2 = "FullSetC" ]; then
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done
   elif [ $3 = "merge" ]; then 
-    runs='130 121 132 133 134 135 136' # set 1
+    runs='130 131 132 133 134 135 136' # set 1
     echo $runs > runList.txt
     MergeMuonsFileList $dataDir runList.txt Muon_FullSetC_1  #ok
     runs='177 179 178 181 182 180 183 184' # set 2
