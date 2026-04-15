@@ -121,7 +121,7 @@ bool ComparisonCalib::CheckAndOpenIO(void){
         dummyTxt>>dummyRootCalibName >> dummyRootHistName;
       }
     }
-  }
+  } // end read input from text file
   // *****************************************************************************************
   // Reading files by auto-expansion
   // - we did not provide a txt file with a list of root file we want to process but directly 
@@ -160,7 +160,7 @@ bool ComparisonCalib::CheckAndOpenIO(void){
         std::cout<<"Issues retrieving Setup tree from "<<it->Data()<<", file is ignored"<<std::endl;
       }
     }
-  }
+  } // end read files by auto-extension
   // *****************************************************************************************
   // Setup Output files
   // *****************************************************************************************
@@ -194,7 +194,7 @@ bool ComparisonCalib::CheckAndOpenIO(void){
   }
   
   return true;    
-}
+} // end CheckAndOpenIO()
 
 // ===========================================================================================
 // Main function of this calibration comparison 
@@ -318,7 +318,7 @@ bool ComparisonCalib::ProcessCalib(void){
           hSB_Signal2D  = (TH2D*)tempFile->Get("hSuppresionSignal");          
         } 
       }
-    } // end if (expandedList > 0)
+    } // end if expandedList
     
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // Loop over all cells in the calib object for trending plots
@@ -369,9 +369,10 @@ bool ComparisonCalib::ProcessCalib(void){
         hgLMPV_E      = hHG_LMPV2D->GetBinError(hHG_LMPV2D->FindBin(layer,chInLayer));
         hgLSigma      = hHG_LSigma2D->GetBinContent(hHG_LSigma2D->FindBin(layer,chInLayer));
         hgLSigma_E    = hHG_LSigma2D->GetBinError(hHG_LSigma2D->FindBin(layer,chInLayer));
-        hgGSigma      = hHG_GSigma2D->GetBinContent(hHG_GSigma2D->FindBin(layer,chInLayer));
+        hgGSigma      = hHG_GSigma2D->GetBinContent(hHG_GSigma2D->FindBin(layer,chInLayer));	
         hgGSigma_E    = hHG_GSigma2D->GetBinError(hHG_GSigma2D->FindBin(layer,chInLayer));
-        if (!isHGCROC){
+       	
+			 if (!isHGCROC){
           lgLMPV        = hLG_LMPV2D->GetBinContent(hLG_LMPV2D->FindBin(layer,chInLayer));
           lgLMPV_E      = hLG_LMPV2D->GetBinError(hLG_LMPV2D->FindBin(layer,chInLayer));
           lgLSigma      = hLG_LSigma2D->GetBinContent(hLG_LSigma2D->FindBin(layer,chInLayer));
@@ -380,8 +381,9 @@ bool ComparisonCalib::ProcessCalib(void){
           lgGSigma_E    = hLG_GSigma2D->GetBinError(hLG_GSigma2D->FindBin(layer,chInLayer));
         }
         sbNoise       = hSB_Noise2D->GetBinError(hSB_Noise2D->FindBin(layer,chInLayer));
-        sbSignal      = hSB_Signal2D->GetBinError(hSB_Signal2D->FindBin(layer,chInLayer));
-      } else if (expandedList == 2){
+        sbSignal      = hSB_Signal2D->GetBinError(hSB_Signal2D->FindBin(layer,chInLayer)); 
+			} // end if expandedList == 1 
+			else if (expandedList == 2){
         if (ExtPlot > 1){
           profCellLGHG    = (TProfile*)tempFile->Get(Form("IndividualCells/hCoorspectramip1stLGHGCellID%i",itcalib->first));
           histCellHG      = (TH1D*)tempFile->Get(Form("IndividualCellsTrigg/hspectramipTriggHGCellID%i",itcalib->first));
@@ -422,9 +424,8 @@ bool ComparisonCalib::ProcessCalib(void){
       
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       // fill calib summary object for specific cell
-      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      aSum.Fill(itcalib->second);
-      
+      // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+			aSum.Fill(itcalib->second); 
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       // fill trending object for a single cell
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -621,10 +622,13 @@ bool ComparisonCalib::ProcessCalib(void){
         PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   trend, 2, Xmin,Xmax, l, 0,
                                   Form("%s/SingleLayer/HGScale_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGScale",OutputNameDirPlots.Data()), it->second,ExtPlot);        
+        //PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
+          //                        trend, 3, Xmin,Xmax, l, 0,
+            //                      Form("%s/SingleLayer/LGScale_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGScale",OutputNameDirPlots.Data()), it->second,ExtPlot);        
+        if (!isHGCROC){
         PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                   trend, 3, Xmin,Xmax, l, 0,
                                   Form("%s/SingleLayer/LGScale_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGScale",OutputNameDirPlots.Data()), it->second,ExtPlot);        
-        if (!isHGCROC){
           PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
                                     trend, 4, Xmin,Xmax, l, 0,
                                     Form("%s/SingleLayer/LGHGCorr_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGHGCorr",OutputNameDirPlots.Data()), it->second,ExtPlot);        

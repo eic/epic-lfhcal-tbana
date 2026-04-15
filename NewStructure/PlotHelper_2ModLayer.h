@@ -1144,7 +1144,7 @@
       canvas->Print(Form("%s.pdf",nameOutputSummary.Data()));
       if (layer == setupT->GetNMaxLayer()) canvas->Print(Form("%s.pdf]",nameOutputSummary.Data()));
     }
-  }
+  } // end PlotTrending2ModLayer()
   
   //__________________________________________________________________________________________________________
   // Plot Run overlay for all 16 tiles for all runs available

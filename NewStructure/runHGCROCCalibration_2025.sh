@@ -25,6 +25,7 @@ elif [ $1 = "egpott" ]; then
   dataDirRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
   dataDirOut=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
   PlotBaseDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/plots
+	PlotDirCompCal=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/plots/CompareCalib
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -137,4 +138,20 @@ if [ $2 == "calibMuon2" ]; then
 	for runNr in $runs; do 
 		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
 	done
+fi
+
+if [ $2 == "compareCalib" ]; then
+	# currently set up for extended file list read-in where each line in the txt file has (separated by a space):
+	#  - calibration file (produced by stripCalib_2025.sh)
+	#  - hist file from improved mip fit
+	inputFileList=calibFileList_TB2025_HVscan1.txt # include relative path if not in NewStructure
+	outFileName=compareCalib_28_33.root
+	trendingPlotsX=V # =V: plot as function of Vop. =R: plot as function of run number
+	runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
+	# -e 1 --> do extended plotting
+	# -d 0 --> debug level 0
+	# -f   --> force to write output if already exist
+	# -H   --> use HGCROC (instead of CAEN)
+	# -I   --> extended input file list
+	./CompareCalib -e 1 -d 0 -f -H -$trendingPlotsX -I $inputFileList -o $outFileName -O $PlotDirCompCal -r $runNrFile
 fi
