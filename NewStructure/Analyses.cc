@@ -1614,7 +1614,6 @@ bool Analyses::TransferCalib(void){
 
   // initialize lookup-table run list
   std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
-  
   std::map<int,TileSpectra> hSpectra;
   std::map<int, TileSpectra>::iterator ithSpectra;
   std::map<int,TileSpectra> hSpectraTrigg;
@@ -3036,6 +3035,9 @@ bool Analyses::GetScaling(void){
   PlotSimple2D( canvas2DCorr, hspectraHGLMPVVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/HG_LandMPVMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraHGLSigmaVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/HG_LandSigMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraHGGSigmaVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/HG_GaussSigMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+ PlotSimple2D( canvas2DCorr, hSNRTriggVsLayer, -10000, -10000, textSizeRel, Form("%s/SNRTriggVsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+ PlotSimple2D( canvas2DCorr, hHGscaleChi2VsLayer, -10000, -10000, textSizeRel, Form("%s/HGscaleChi2VsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+ PlotSimple2D( canvas2DCorr, hMipTriggXY, -10000, -10000, textSizeRel, Form("%s/MipTriggXY.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   canvas2DCorr->SetLogz(1);
   TString drawOpt = "colz";
   if (yearData == 2023)
@@ -3622,6 +3624,10 @@ bool Analyses::GetImprovedScaling(void){
   PlotSimple2D( canvas2DCorr, hspectraHGLMPVVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_LandMPVMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraHGLSigmaVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_LandSigMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraHGGSigmaVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_GaussSigMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+ PlotSimple2D( canvas2DCorr, hSNRTriggVsLayer, -10000, -10000, textSizeRel, Form("%s/SNRTriggVsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+ PlotSimple2D( canvas2DCorr, hHGscaleChi2VsLayer, -10000, -10000, textSizeRel, Form("%s/HGscaleChi2VsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+ PlotSimple2D( canvas2DCorr, hMipTriggXY, -10000, -10000, textSizeRel, Form("%s/MipTriggXY.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+ 
   canvas2DCorr->SetLogz(1);
   TString drawOpt = "colz";
   if (yearData == 2023)
@@ -3629,7 +3635,7 @@ bool Analyses::GetImprovedScaling(void){
   PlotSimple2D( canvas2DCorr, hmipTriggers, -10000, -10000, textSizeRel, Form("%s/MuonTriggers.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, drawOpt, true, Form( "evt. collected = %d", evts));
   PlotSimple2D( canvas2DCorr, hSuppresionNoise, -10000, -10000, textSizeRel, Form("%s/SuppressionNoise.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, drawOpt, true, Form( "#LT S/B noise #GT = %.3f", meanSB_NoiseR));
   PlotSimple2D( canvas2DCorr, hSuppresionSignal, -10000, -10000, textSizeRel, Form("%s/SuppressionSignal.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, drawOpt, true, Form( "#LT S/B signal #GT = %.3f", meanSB_SigR));
-  
+
   if (typeRO == ReadOut::Type::Caen){
     canvas2DCorr->SetLogz(0);
     PlotSimple2D( canvas2DCorr, hspectraLGMaxVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_MaxMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form( "#LT Max_{LG} #GT = %.1f", averageScaleUpdatedLow));

@@ -22,10 +22,10 @@ elif [ $1 = "ehagen" ]; then
 	dataDirOut=/Users/hagen/Githubs/epic-lfhcal-tbana/TB_Data
 	PlotBaseDir=/Users/hagen/Githubs/epic-lfhcal-tbana/plots
 elif [ $1 = "egpott" ]; then
-  dataDirRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
-  dataDirOut=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
-  PlotBaseDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/plots
-	PlotDirCompCal=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/plots/CompareCalib
+  dataDirRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan2/rawroot
+  dataDirOut=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan2/rawroot
+  PlotBaseDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan2/plots
+	PlotDirCompCal=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan2/plots/CompareCalib
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -40,7 +40,7 @@ if [ $2 = "pedestal" ]; then
   # reference pedestal runs for various campaigns
   elif [ $3 = "Ref" ]; then
 #     runs='68 208 210 259 381'
-    runs='208'
+    runs='270'
   # muon runs
   elif [ $3 = "Muon" ]; then
   #   runs='69 70 71 72 73 74 75 76 164' # Full Set A - muon set 1
@@ -80,9 +80,11 @@ if [ $2 = "toaPhase" ]; then
       ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
     done
   elif [ $3 = "Muon" ]; then 
-    runs='028 029 030 031 032 033 034 035' # 1st HV scan
-    for runNr in $runs; do 
-			./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_wPed_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_wPed_$runNr.root
+    #runs='028 029 030 031 032 033 034 035' # 1st HV scan
+    runNrPed='270'
+		runs='260'
+		for runNr in $runs; do 
+			./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_wPed_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_wPed_$runNrPed.root
       #./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
     done
   fi
@@ -111,14 +113,16 @@ if [ $2 == "calibMuon" ]; then
 # 	runs='FullSetB_1'
 #   runPed='259'
 # 	runs='FullSetB_2'
-  runPed='030'
+ # runPed='030'
 	#runs='028 029 030 031 032 033 034 035'
-	runs='030'
+	runs='261 262 263 264 265 266 267 268'
+	#runs='260'
+	runPed='270'
 	badChannelMap=../configs/TB2025/badChannel_HGCROC_PSTB2025_default.txt
 	runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
-	toaPhaseOffset=../configs/TB2025/ToAOffsets_TB2025_MuonScan1.csv
+	toaPhaseOffset=../configs/TB2025/ToAOffsets_TB2025_MuonScan2.csv
 	for runNr in $runs; do 
-		MuonCalibHGCROC $3 $runNr $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset # -EP 2026/2/15
+		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset 
 		#MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
 	done
 fi
