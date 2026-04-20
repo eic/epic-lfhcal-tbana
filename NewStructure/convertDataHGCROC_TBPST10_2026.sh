@@ -40,6 +40,10 @@ elif [ $1 = "ehagen" ]; then
 	dataDir=/Users/hagen/Githubs/TB_data
 
 fi
+elif [ $1 = "atamis" ]; then 
+	dataRaw=/home/drewtam20/Documents/eic/LFHCALDATA/Runs
+	dataDir=/home/drewtam20/Documents/eic/LFHCALDATA/Converted
+fi
   
 # global run list for 2026 PS TB
 runList=../configs/TB2026/DataTakingDB_TBPST10_202604_HGCROC.csv

@@ -10,6 +10,7 @@
 #include "Setup.h"
 #include "Calib.h"
 #include "TRandom3.h"
+#include <algorithm>
 
 class Event{
 
