@@ -31,7 +31,7 @@ if [ $1 = "fbockTB" ]; then
 	dataRaw=/media/fbock/Lennard4TB/202604_PST10/raw/      # source directory for output files from DAQ system
 	dataDir=/media/fbock/Lennard4TB/202604_PST10/HGCROCData           # base directory for root trees
 
-elif [ $1 = "egpott" ]; then
+elif [ $1 = "egpott" ]; then # bla bla bla test test test
 	dataRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/raw
 	dataDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
 

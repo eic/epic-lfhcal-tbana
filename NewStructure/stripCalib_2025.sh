@@ -13,11 +13,15 @@ fi
   
 
 if [ $2 == "BaseCalibs" ]; then
+	runs='028 029 030 031 032 033'
+	for runNr in $runs; do
+		./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNr.root -A $dataDirOut/calib_$runNr.root
+	done;
 # 	./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp3R_FullSetA_1.root -A $dataDirOut/calib_FullSetA1.root
 # 	./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp3R_FullSetA_2.root -A $dataDirOut/calib_FullSetA2.root
 # 	./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp3R_FullSetB_1.root -A $dataDirOut/calib_FullSetB1.root
 #	./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_FullSetB_2.root -A $dataDirOut/calib_FullSetB2.root
-	./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_030.root -A $dataDirOut/calib_030.root
+
 
 # elif [ $2 == "ScanA" ]; then
 # 	# 192K events

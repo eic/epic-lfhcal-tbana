@@ -1,5 +1,6 @@
 #! /bin/bash
-runNrFile=""
+#runNrFile=""
+runList=$runNrFile
 PlotBaseDir=""
 
 function MuonCalibHGCROC()
@@ -21,7 +22,8 @@ function MuonCalibHGCROC()
 	fi
 	printf -v runNrPed "%03d" "$2"
 	runNrMuon=$3
-	
+	runList=$runNrFile
+
 	echo "=================================================================================="
 	if [ $1 == "BC" ]; then 
     if [ -f "$4/rawHGCROC_wPed_$runNrMuon_calib_mod.txt" ]; then
