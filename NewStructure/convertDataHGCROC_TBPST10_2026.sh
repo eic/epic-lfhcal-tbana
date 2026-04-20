@@ -38,7 +38,10 @@ elif [ $1 = "egpott" ]; then # bla bla bla test test test
 elif [ $1 = "ehagen" ]; then 
 	dataRaw=/Users/hagen/Githubs/TB_data
 	dataDir=/Users/hagen/Githubs/TB_data
-
+	
+elif [ $1 = "atamis" ]; then 
+	dataRaw=/home/drewtam20/Documents/eic/LFHCALDATA/Runs
+	dataDir=/home/drewtam20/Documents/eic/LFHCALDATA/Converted
 fi
   
 # global run list for 2026 PS TB
