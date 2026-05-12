@@ -24,74 +24,78 @@ class TileTrend: public TObject{
     debug          = deb;
     extended       = ext;
     
-    gTrendLGped    = TGraphErrors();
-    gTrendLGped    .SetName(Form("TrendLGpedCellID%d",CellID));
-    gTrendLGped    .GetYaxis()->SetTitle("#mu_{PED, LG} (arb. units)");
-    gTrendLGped    .SetLineColor(kRed);
-    gTrendLGped    .SetMarkerColor(kRed);
-    gTrendLGped    .SetMarkerStyle(kFullCircle);
+    // full filling for calib monitoring
+    if (ext < 3){
+      gTrendLGped    = TGraphErrors();
+      gTrendLGped    .SetName(Form("TrendLGpedCellID%d",CellID));
+      gTrendLGped    .GetYaxis()->SetTitle("#mu_{PED, LG} (arb. units)");
+      gTrendLGped    .SetLineColor(kRed);
+      gTrendLGped    .SetMarkerColor(kRed);
+      gTrendLGped    .SetMarkerStyle(kFullCircle);
+      
+      gTrendHGped    = TGraphErrors();
+      gTrendHGped    .SetName(Form("TrendHGpedCellID%d",CellID));
+      gTrendHGped    .GetYaxis()->SetTitle("#mu_{PED, HG} (arb. units)");
+      gTrendHGped    .SetLineColor(kRed);
+      gTrendHGped    .SetMarkerColor(kRed);
+      gTrendHGped    .SetMarkerStyle(kFullCircle);
+      
+      gTrendLGpedwidth  = TGraphErrors();
+      gTrendLGpedwidth  .SetName(Form("TrendLGpedwidthCellID%d",CellID));
+      gTrendLGpedwidth  .GetYaxis()->SetTitle("#sigma_{PED, LG} (arb. units)");
+      gTrendLGpedwidth  .SetLineColor(kRed);
+      gTrendLGpedwidth  .SetMarkerColor(kRed);
+
+      gTrendHGpedwidth  = TGraphErrors();
+      gTrendHGpedwidth  .SetName(Form("TrendHGpedwidthCellID%d",CellID));
+      gTrendHGpedwidth  .GetYaxis()->SetTitle("#sigma_{PED, HG} (arb. units)");
+      gTrendHGpedwidth  .SetLineColor(kRed);
+      gTrendHGpedwidth  .SetMarkerColor(kRed);
+
+      gTrendLGscale  = TGraphErrors();
+      gTrendLGscale  .SetName(Form("TrendLGscaleCellID%d",CellID));
+      gTrendLGscale  .GetYaxis()->SetTitle("Max_{LG} (arb. units)");
+      gTrendLGscale  .SetLineColor(kRed);
+      gTrendLGscale  .SetMarkerColor(kRed);
+      gTrendLGscale  .SetMarkerStyle(kFullCircle);
+
+      gTrendHGscale  = TGraphErrors();
+      gTrendHGscale  .SetName(Form("TrendHGscaleCellID%d",CellID));
+      gTrendHGscale  .GetYaxis()->SetTitle("Max_{HG} (arb. units)");
+      gTrendHGscale  .SetLineColor(kRed);
+      gTrendHGscale  .SetMarkerColor(kRed);
+      gTrendHGscale  .SetMarkerStyle(kFullCircle);
+
+      gTrendHGLGcorr = TGraphErrors();
+      gTrendHGLGcorr .SetName(Form("TrendHGLGcorrCellID%d",CellID));
+      gTrendHGLGcorr .GetYaxis()->SetTitle("a_{HG-LG} (arb. units)");
+      gTrendHGLGcorr .SetLineColor(kRed);
+      gTrendHGLGcorr .SetMarkerColor(kRed);
+      gTrendHGLGcorr .SetMarkerStyle(kFullCircle);
+
+      gTrendLGHGcorr = TGraphErrors();    
+      gTrendLGHGcorr .SetName(Form("TrendLGHGcorrCellID%d",CellID));
+      gTrendLGHGcorr .GetYaxis()->SetTitle("a_{LG-HG} (arb. units)");
+      gTrendLGHGcorr .SetLineColor(kRed);
+      gTrendLGHGcorr .SetMarkerColor(kRed);
+      gTrendLGHGcorr .SetMarkerStyle(kFullCircle);    
+
+      gTrendHGLGOffset = TGraphErrors();
+      gTrendHGLGOffset .SetName(Form("TrendHGLGOffsetCellID%d",CellID));
+      gTrendHGLGOffset .GetYaxis()->SetTitle("b_{HG,LG} (arb. units)");
+      gTrendHGLGOffset .SetLineColor(kRed);
+      gTrendHGLGOffset .SetMarkerColor(kRed);
+      gTrendHGLGOffset .SetMarkerStyle(kFullCircle);
+
+      gTrendLGHGOffset = TGraphErrors();
+      gTrendLGHGOffset .SetName(Form("TrendLGHGOffsetCellID%d",CellID));
+      gTrendLGHGOffset .GetYaxis()->SetTitle("b_{LG,HG} (arb. units)");
+      gTrendLGHGOffset .SetLineColor(kRed);
+      gTrendLGHGOffset .SetMarkerColor(kRed);
+      gTrendLGHGOffset .SetMarkerStyle(kFullCircle);
+    }
     
-    gTrendHGped    = TGraphErrors();
-    gTrendHGped    .SetName(Form("TrendHGpedCellID%d",CellID));
-    gTrendHGped    .GetYaxis()->SetTitle("#mu_{PED, HG} (arb. units)");
-    gTrendHGped    .SetLineColor(kRed);
-    gTrendHGped    .SetMarkerColor(kRed);
-    gTrendHGped    .SetMarkerStyle(kFullCircle);
-    
-    gTrendLGpedwidth  = TGraphErrors();
-    gTrendLGpedwidth  .SetName(Form("TrendLGpedwidthCellID%d",CellID));
-    gTrendLGpedwidth  .GetYaxis()->SetTitle("#sigma_{PED, LG} (arb. units)");
-    gTrendLGpedwidth  .SetLineColor(kRed);
-    gTrendLGpedwidth  .SetMarkerColor(kRed);
-
-    gTrendHGpedwidth  = TGraphErrors();
-    gTrendHGpedwidth  .SetName(Form("TrendHGpedwidthCellID%d",CellID));
-    gTrendHGpedwidth  .GetYaxis()->SetTitle("#sigma_{PED, HG} (arb. units)");
-    gTrendHGpedwidth  .SetLineColor(kRed);
-    gTrendHGpedwidth  .SetMarkerColor(kRed);
-
-    gTrendLGscale  = TGraphErrors();
-    gTrendLGscale  .SetName(Form("TrendLGscaleCellID%d",CellID));
-    gTrendLGscale  .GetYaxis()->SetTitle("Max_{LG} (arb. units)");
-    gTrendLGscale  .SetLineColor(kRed);
-    gTrendLGscale  .SetMarkerColor(kRed);
-    gTrendLGscale  .SetMarkerStyle(kFullCircle);
-
-    gTrendHGscale  = TGraphErrors();
-    gTrendHGscale  .SetName(Form("TrendHGscaleCellID%d",CellID));
-    gTrendHGscale  .GetYaxis()->SetTitle("Max_{HG} (arb. units)");
-    gTrendHGscale  .SetLineColor(kRed);
-    gTrendHGscale  .SetMarkerColor(kRed);
-    gTrendHGscale  .SetMarkerStyle(kFullCircle);
-
-    gTrendHGLGcorr = TGraphErrors();
-    gTrendHGLGcorr .SetName(Form("TrendHGLGcorrCellID%d",CellID));
-    gTrendHGLGcorr .GetYaxis()->SetTitle("a_{HG-LG} (arb. units)");
-    gTrendHGLGcorr .SetLineColor(kRed);
-    gTrendHGLGcorr .SetMarkerColor(kRed);
-    gTrendHGLGcorr .SetMarkerStyle(kFullCircle);
-
-    gTrendLGHGcorr = TGraphErrors();    
-    gTrendLGHGcorr .SetName(Form("TrendLGHGcorrCellID%d",CellID));
-    gTrendLGHGcorr .GetYaxis()->SetTitle("a_{LG-HG} (arb. units)");
-    gTrendLGHGcorr .SetLineColor(kRed);
-    gTrendLGHGcorr .SetMarkerColor(kRed);
-    gTrendLGHGcorr .SetMarkerStyle(kFullCircle);    
-
-    gTrendHGLGOffset = TGraphErrors();
-    gTrendHGLGOffset .SetName(Form("TrendHGLGOffsetCellID%d",CellID));
-    gTrendHGLGOffset .GetYaxis()->SetTitle("b_{HG,LG} (arb. units)");
-    gTrendHGLGOffset .SetLineColor(kRed);
-    gTrendHGLGOffset .SetMarkerColor(kRed);
-    gTrendHGLGOffset .SetMarkerStyle(kFullCircle);
-
-    gTrendLGHGOffset = TGraphErrors();
-    gTrendLGHGOffset .SetName(Form("TrendLGHGOffsetCellID%d",CellID));
-    gTrendLGHGOffset .GetYaxis()->SetTitle("b_{LG,HG} (arb. units)");
-    gTrendLGHGOffset .SetLineColor(kRed);
-    gTrendLGHGOffset .SetMarkerColor(kRed);
-    gTrendLGHGOffset .SetMarkerStyle(kFullCircle);
-    
+    // also monitoring triggers
     if (ext == 1 || ext == 2){
       // std::cout << "entering expanded option" << std::endl;
       gTrendTrigger = TGraphErrors();
@@ -115,6 +119,7 @@ class TileTrend: public TObject{
       gTrendSBSignal .SetMarkerColor(kRed);
       gTrendSBSignal .SetMarkerStyle(kFullCircle);
     } 
+    // monitor extended trending
     if (ext == 1){
       gTrendHGLMPV = TGraphErrors();
       gTrendHGLMPV .SetName(Form("TrendHGLMPVCellID%d",CellID));
@@ -157,7 +162,17 @@ class TileTrend: public TObject{
       gTrendLGGSigma .SetLineColor(kRed);
       gTrendLGGSigma .SetMarkerColor(kRed);
       gTrendLGGSigma .SetMarkerStyle(kFullCircle);
-    } 
+    }
+    // mode for injection plotting
+    if (ext == 3){
+      gTrendHGped    = TGraphErrors();
+      gTrendHGped    .SetName(Form("TrendHGpedCellID%d",CellID));
+      gTrendHGped    .GetYaxis()->SetTitle("#mu_{PED, 0^{th} sample} (arb. units)");
+      gTrendHGped    .SetLineColor(kRed);
+      gTrendHGped    .SetMarkerColor(kRed);
+      gTrendHGped    .SetMarkerStyle(kFullCircle);      
+    }
+    
   }
   ~TileTrend(){}
 
@@ -169,6 +184,11 @@ class TileTrend: public TObject{
   void FillGSigma     (double, double, double, double, double);
   void FillSB         (double, double, double);
   void FillCorrOffset (double, double, double, double, double);
+  
+  bool FillInjection  ( double x, double ped, int runNr, 
+                        TProfile* wave, TProfile* toa, TProfile* tot, 
+                        double val_rf = -1., double val_cf= -1., double val_cfcomp= -1., double val_cc= -1.);
+  
   
   // Drawing functions for graphs
   bool DrawLGped      (TString);
@@ -250,11 +270,19 @@ class TileTrend: public TObject{
   inline double GetMinHGLGOffset(){return MinHGLGOff;};
   inline double GetMaxHGLGOffset(){return MaxHGLGOff;};
   
+  inline double GetMaxInjADC(){return MaxInjADC;};
+  inline double GetMaxInjTOT(){return MaxInjTOT;};
+  
+  
   inline int GetNRuns()           {return (int)runNrs.size();};
   inline int GetFirstRun()        {if (runNrs.size()> 0) return runNrs[0]; else return -1;};
   inline int GetLastRun()         {if (runNrs.size()> 0) return runNrs[runNrs.size()-1]; else return -1;};
   inline int GetRunNr(int i)      {if (runNrs.size()> 0 && i < (int)runNrs.size()) return runNrs[i]; else return -1;}
   inline int GetVoltage(int i)    {if (voltages.size()> 0 && i < (int)voltages.size()) return voltages[i]; else return -1;}
+  inline int GetRF(int i)         {if (rf.size()> 0 && i < (int)rf.size()) return rf[i]; else return -1;}
+  inline int GetCF(int i)         {if (cf.size()> 0 && i < (int)cf.size()) return cf[i]; else return -1;}
+  inline int GetCFComp(int i)     {if (cfcomp.size()> 0 && i < (int)cfcomp.size()) return cfcomp[i]; else return -1;}
+  inline int GetCC(int i)         {if (cc.size()> 0 && i < (int)cc.size()) return cc[i]; else return -1;}
   
   // Getters for graphs
   inline TGraphErrors* GetHGped()     {return &gTrendHGped;};
@@ -281,6 +309,9 @@ class TileTrend: public TObject{
   TH1D* GetHGTriggRun(int);
   TH1D* GetLGTriggRun(int);
   TProfile* GetLGHGTriggRun(int);
+  TProfile* GetWave1DRun(int);
+  TProfile* GetTOTRun(int);
+  TProfile* GetTOARun(int);
   
  protected:
   int CellID;
@@ -327,8 +358,10 @@ class TileTrend: public TObject{
   double MaxLGGSigma =0.;
   double MaxSBNoise  =0.;
   double MaxSBSignal =0.;
-  double MaxLGHGOff  =-10000.;
-  double MaxHGLGOff  =-10000.;
+  double MaxLGHGOff   =-10000.;
+  double MaxHGLGOff   =-10000.;
+  double MaxInjADC    =-10000.;
+  double MaxInjTOT    =-10000.;
   
   double MinLGped    =9999.;
   double MinHGped    =9999.;
@@ -354,11 +387,18 @@ class TileTrend: public TObject{
   
   std::vector<int> runNrs;
   std::vector<double> voltages;
+  std::vector<double> rf;
+  std::vector<double> cf;
+  std::vector<double> cfcomp;
+  std::vector<double> cc;
   std::map<int, TH1D> HGTriggRuns;
   std::map<int, TH1D> LGTriggRuns;
   std::map<int, TProfile> LGHGTriggRuns;
+  std::map<int, TProfile> Wave1DProf;
+  std::map<int, TProfile> TOAProf;
+  std::map<int, TProfile> TOTProf;
   
-  ClassDef(TileTrend,4);
+  ClassDef(TileTrend,6);
 };
 
 #endif

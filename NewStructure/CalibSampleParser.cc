@@ -79,7 +79,7 @@ bool CalibSampleParser::CheckAndOpenIO(void){
 
     RootOutput    = new TFile(OutputFilename.Data(), "RECREATE");
 
-    if( optParse == 0 ){
+    if( optParse == 0  || optParse == 2 ){
       tOutTree      = new TTree("CalibSample","CalibSample");
       tOutTree->Branch("event",&event);
       tOutTree->SetDirectory(RootOutput);
@@ -132,6 +132,9 @@ bool CalibSampleParser::Process(void){
         if( doPlotting ) status = ProcessAndPlotWaveforms();
       } else if ( optParse == 1 ) {
         status = ParsePedestalCalib();
+      } else if ( optParse == 2 ) {
+        status = ParseInjectionCalibX();
+        if( doPlotting ) status = ProcessAndPlotWaveforms();
       }
     }
     return status;
@@ -334,6 +337,238 @@ bool CalibSampleParser::Parse(){
     return true;
 }
 
+// ****************************************************************************
+// Parsing routine
+// ****************************************************************************
+bool CalibSampleParser::ParseInjectionCalibX(){
+  
+    std::cout << "*******************************************************************" << std::endl;
+    std::cout<< "Entered injection CalibX parser" << std::endl;
+    std::cout << "*******************************************************************" << std::endl;
+    // initialize run number file
+    if (RunListInputName.CompareTo("")== 0) {
+        std::cerr << "ERROR: No run list file has been provided, please make sure you do so! Aborting!" << std::endl;
+        return false;
+    }
+    std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
+    // Get run info object
+    std::map<int,RunInfo>::iterator it=ri.find( RunNr );
+    
+    // initialize setup
+    if (MapInputName.CompareTo("")== 0) {
+        std::cerr << "ERROR: No mapping file has been provided, please make sure you do so! Aborting!" << std::endl;
+        return false;
+    }
+    if( debug > 2) std::cout << "Setup max row " << setup->GetNMaxRow() << "\t max col " << setup->GetNMaxColumn() << "\t max layer " << setup->GetNMaxLayer() << "\t max module " << setup->GetNMaxModule() << std::endl;
+
+    std::cout << "Creating mapping " << std::endl;
+    setup->Initialize(MapInputName.Data(),debug);
+
+    // Initialize calib
+    TcalibOut->GetEntry(0);        // use first calib object in list (there 
+    
+    // initialize a dummy event - it will be a tree with one branch containing one event, event contains multiple tiles
+    event.SetRunNumber( RunNr ); // to be fixed?
+    event.SetROtype(ReadOut::Type::Hgcroc);
+    event.SetBeamName( "injection" );
+    event.SetBeamID( 0 );
+    event.SetBeamEnergy( 0 );
+    event.SetVop(it->second.vop);
+    event.SetVov(it->second.vop-it->second.vbr);
+    
+    calib.SetRunNumber(RunNr);
+    calib.SetRunNumberPed(RunNr);
+    calib.SetRunNumberMip(RunNr);
+    calib.SetVop(it->second.vop);
+    calib.SetVov(it->second.vop-it->second.vbr);
+    calib.SetBCCalib(false);
+    
+    
+    std::cout << "Run numbers: \t" << calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+    
+    Int_t temp_channel  = -1;
+    int cell_id         = -1;
+    int counter         = 1;
+    int sample_counter  = 1;
+
+    std::vector<Hgcroc>   samples;
+    samples.clear();
+    Hgcroc tmpTile;
+
+    std::vector<int> temp_adc;
+    std::vector<int> temp_toa;
+    std::vector<int> temp_tot;
+    temp_adc.clear();
+    temp_toa.clear();
+    temp_tot.clear();
+    
+    std::ifstream   calibSampleCsvADC( Form("%s_val0.csv",inputFilePath.Data()) );
+    std::ifstream   calibSampleCsvTOA( Form("%s_val2.csv",inputFilePath.Data()) );
+    std::ifstream   calibSampleCsvTOT( Form("%s_val1.csv",inputFilePath.Data()) );
+    std::string lineADC, lineTOA, lineTOT ;
+    std::getline( calibSampleCsvADC, lineADC ); // skip first line 
+    std::getline( calibSampleCsvTOA, lineTOA ); // skip first line 
+    std::getline( calibSampleCsvTOT, lineTOT ); // skip first line 
+    
+    while (std::getline( calibSampleCsvADC, lineADC )){
+      std::stringstream sADC(lineADC);
+      std::string tokenADC;
+      std::vector<std::string> tokensADC;
+      while(std::getline(sADC,tokenADC,',')){
+        tokensADC.push_back(tokenADC); // tokens[0] - channelNr, remaining token single ADC values
+      }
+      int channel = std::stoi(tokensADC[0]);
+      int asic = 0; 
+      std::cout << channel << "\t" << tokensADC.size() << "\t nr. sample*phase max: "<< (it->second.samples+1)*16 << std::endl;
+      
+      std::getline( calibSampleCsvTOA, lineTOA );
+      std::stringstream sTOA(lineTOA);
+      std::string tokenTOA;
+      std::vector<std::string> tokensTOA;
+      while(std::getline(sTOA,tokenTOA,',')){
+        tokensTOA.push_back(tokenTOA); // tokens[0] - channelNr, remaining token single ADC values
+      }
+      int channelToA = std::stoi(tokensTOA[0]);
+      
+      std::getline( calibSampleCsvTOT, lineTOT );
+      std::stringstream sTOT(lineTOT);
+      std::string tokenTOT;
+      std::vector<std::string> tokensTOT;
+      while(std::getline(sTOT,tokenTOT,',')){
+        tokensTOT.push_back(tokenTOT); // tokens[0] - channelNr, remaining token single ADC values
+      }
+      int channelToT = std::stoi(tokensTOT[0]);
+      
+      if ((int)channel != channelToA || (int)channel != channelToT ){
+        std::cout << "something went really wrong" << std::endl;
+        std::cout << channel << "\t" << tokensADC[0] << "\t" << tokensTOA[0] << "\t" << tokensTOT[0] << std::endl;
+      } 
+      
+      temp_channel = channel;
+      int temp_channel2 = temp_channel%76;
+      std::cout << "channel org:\t" << temp_channel <<std::endl;
+      if (temp_channel2 == 0){
+        std::cout << "skipping 0" << std::endl;
+        continue;
+      } else if (temp_channel2 == 37){
+        std::cout << "skipping 37" << std::endl;
+        continue;
+      } else if (temp_channel2 == 38){
+        std::cout << "skipping 38" << std::endl;
+        continue;
+      } else if (temp_channel2 == 75){
+        std::cout << "skipping 75" << std::endl;
+        continue;
+      }
+      asic    = (temp_channel/76);
+      
+      channel = channel%76;
+      
+      if (temp_channel2 < 37)
+        channel--;
+      if (temp_channel2 >  37)
+        channel--;
+      if (temp_channel2 >  38 && temp_channel2 < 75)
+        channel--;
+      
+      std::cout << "org: "<<  temp_channel2 << "\tchannel mod: " <<  channel << "\t" << asic  <<std::endl;
+     
+      cell_id  = setup->GetCellID(asic, channel % 72);
+
+      if (cell_id == -1) continue;
+            
+      for (int k = 0; k < tokensADC.size()-1; k++){
+        temp_adc.push_back( std::atoi(tokensADC[k+1].c_str()) );
+        temp_toa.push_back( std::atoi(tokensTOA[k+1].c_str()) );
+        // TOT Decoder
+        // TOT is a 12 bit counter, but gets sent as a 10 bit number
+        // If the most significant bit is 1, then the lower two bits were dropped
+        int temp  = std::atoi(tokensTOT[k+1].c_str());
+        // if( temp & 0x200){
+        //     temp = temp & 0b0111111111;
+        //     temp = temp << 3;
+        // }
+        
+        temp_tot.push_back( temp );
+      }
+      
+      // save the current tiles waveforms, and then push the tile to the samples vector
+      sample_counter =  tokensADC.size()-1;
+      tmpTile.SetNsample(sample_counter);
+      tmpTile.SetCellID(cell_id);
+      tmpTile.SetE(0);          // need to process waveform to set this
+      // TOT - the first non-zero value
+      int tempTOT   = 0;
+      tempTOT = *(std::find_if(temp_tot.begin(), temp_tot.end(), [](int n){ return n!=0; }) );
+      if (tempTOT < 0) tempTOT = 0;
+      tmpTile.SetCorrectedTOT( tempTOT );        // need to process waveform to set this - the first value that comes up 
+      // TOA - the first non-zero value
+      int tempTOA   = 0;
+      tempTOA   = *(std::find_if(temp_toa.begin(), temp_toa.end(), [](int n){ return n!=0; }) );
+      if (tempTOA < 0) tempTOA = 0;
+      tmpTile.SetCorrectedTOA( tempTOA );        // need to process waveform to set this - the first value that comes up 
+      // SetIntegratedADC as max ADC 
+      int tempIntADC    = *(std::max_element( temp_adc.begin(), temp_adc.end() ));
+      tmpTile.SetIntegratedADC( tempIntADC );
+      tmpTile.SetADCWaveform( temp_adc );
+      tmpTile.SetTOAWaveform( temp_toa );
+      tmpTile.SetTOTWaveform( temp_tot );
+      
+      double ped = (temp_adc[1] + temp_adc[2] + temp_adc[3])/3.;
+      TileCalib* tileCalib = calib.GetTileCalib(cell_id);
+      tileCalib->PedestalMeanH  = ped;
+      tileCalib->PedestalSigH   = 0.;
+          
+      samples.push_back( tmpTile );
+      if(debug > 1) std::cout << "Channel: " << temp_channel << "\t Cell ID: " << cell_id 
+        // <<  "\t NSamples: " << sample_counter 
+        
+        << "\t ADC: " << tempIntADC << "\t ToT: " << tempTOT << "\t ToA: " << tempTOA << std::endl;
+            
+      // we're moving to the next tile
+      temp_adc.clear();
+      temp_toa.clear();
+      temp_tot.clear();
+      sample_counter = 1;
+    }
+    
+    int counter2 = 0;
+    for(auto it = samples.begin(); it!= samples.end(); ++it){
+      if( debug > 1 ) {
+        std::cout << "Sample: " << counter2 << "\t CellID:" << (*it).GetCellID() << std::endl;
+      }
+      counter2++;
+      event.AddTile( new Hgcroc(*it) );
+    }
+
+    // fill the tree and write it out to file - should contain just one event
+    RootOutput->cd();
+
+    // setup 
+    RootSetupWrapper rswtmp=RootSetupWrapper(setup);
+    rsw=rswtmp;
+    TsetupOut->Fill();
+    TsetupOut->Write();
+  
+    // calib
+    calib.PrintGlobalInfo();    
+    TcalibOut->Fill();
+    TcalibOut->Write();
+
+    // data
+    tOutTree->Fill();
+    tOutTree->Write();
+
+    // close the file
+    RootOutput->Close();
+
+    std::cout <<"=============================================================" << std::endl;
+    std::cout <<" Parsing complete" << std::endl;
+    std::cout <<" Output saved to " << OutputFilename.Data() << std::endl;
+    std::cout <<"=============================================================" << std::endl;
+    return true;
+}
+
 bool CalibSampleParser::ProcessAndPlotWaveforms(){
 
   // initialize run number file
@@ -345,7 +580,7 @@ bool CalibSampleParser::ProcessAndPlotWaveforms(){
 
   // Get run info object
   std::map<int,RunInfo>::iterator it=ri.find( RunNr );
-
+  
   RootOutputHist  = new TFile(OutputHistFilename.Data(), "RECREATE");
   RootOutputHist->mkdir("IndividualCells");
   RootOutput->cd();
@@ -386,49 +621,51 @@ bool CalibSampleParser::ProcessAndPlotWaveforms(){
     aTile->SetPedestal(waveform_builder->get_pedestal());
     
     if(ithSpectra!=hSpectra.end()){
-      ithSpectra->second.FillExtHGCROC(adc, 0., tot, 0,-1);
-      ithSpectra->second.FillWaveformVsTimeParser(aTile->GetADCWaveform(),ped);
-    } else {
-      RootOutputHist->cd("IndividualCells");
-      hSpectra[aTile->GetCellID()]=TileSpectra("ped",8,aTile->GetCellID(),nullptr,event.GetROtype(),debug);
-      hSpectra[aTile->GetCellID()].FillExtHGCROC(adc, 0., tot, 0,-1);
-      hSpectra[aTile->GetCellID()].FillWaveformVsTimeParser(aTile->GetADCWaveform(),ped);
+      ithSpectra->second.FillExtHGCROC(adc, toa, tot, 0,-1);
+      ithSpectra->second.FillWaveformVsTimeParser(aTile->GetADCWaveform(),ped-20);
       hSpectra[aTile->GetCellID()].FillTOTProfile(aTile->GetTOTWaveform());
       hSpectra[aTile->GetCellID()].FillTOAProfile(aTile->GetTOAWaveform());
-      hSpectra[aTile->GetCellID()].WriteExt(false);
-      RootOutput->cd();
+    } else {
+      RootOutputHist->cd("IndividualCells");
+      hSpectra[aTile->GetCellID()]=TileSpectra("inj",8,aTile->GetCellID(),nullptr,event.GetROtype(),debug);
+      hSpectra[aTile->GetCellID()].FillExtHGCROC(adc, toa, tot, 0,-1);
+      hSpectra[aTile->GetCellID()].FillWaveformVsTimeParser(aTile->GetADCWaveform(),ped-20);
+      hSpectra[aTile->GetCellID()].FillTOTProfile(aTile->GetTOTWaveform());
+      hSpectra[aTile->GetCellID()].FillTOAProfile(aTile->GetTOAWaveform());
+      // hSpectra[aTile->GetCellID()].WriteExt(false);
+      RootOutputHist->cd();
     }
   }
   
   int t_max = ((Hgcroc*)event.GetTile(0))->GetNsample();
+  DetConf::Type detConf = DetConf::Type::Asic;
+  
+  // create directory for plot output
+  gSystem->Exec("mkdir -p "+outputDirPlots);
 
-  Int_t textSizePixel = 30;
+  
+  MultiCanvas panelPlot2D(detConf, "Pedestal2D");
+  bool init2D = panelPlot2D.Initialize(2);
+  
+  panelPlot2D.PlotCorr2DLayer(hSpectra, 11, 0, t_max, 0, 1024, 
+                                Form("%s/Waveform",outputDirPlots.Data()), suffix.Data(), it->second, &calib, 1 );
+  
+  panelPlot2D.PlotCorr2DLayer(hSpectra, 5, 0, t_max, 0, 4024, 
+                                Form("%s/TOT",outputDirPlots.Data()), suffix.Data(), it->second, &calib, 1);
+  
+  panelPlot2D.PlotCorr2DLayer(hSpectra, 6, 0, t_max, 0, 1024, 
+                                Form("%s/TOA",outputDirPlots.Data()), suffix.Data(), it->second, &calib, 1 );
 
-  TCanvas* canvas8PanelProf;
-  TPad* pad8PanelProf[8];
-  Double_t topRCornerXProf[8];
-  Double_t topRCornerYProf[8];
-  Double_t relSize8PProf[8];
-  CreateCanvasAndPadsFor8PannelTBPlot(canvas8PanelProf, pad8PanelProf,  topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 0.045, "Prof", false);
+  RootOutput->cd();
+  RootOutputHist->cd("IndividualCells");
+  for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
+    ithSpectra->second.Write(true);
+  }  
+  RootOutputHist->Write();
+  RootOutputHist->Close();
 
-  for(int l=0; l < setup->GetNMaxLayer()+1; l++){
-    for(int m=0; m < setup->GetNMaxModule()+1; m++ ){
-        if (l%10 == 0 && l > 0 && debug > 0) std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;    
-        
-          PlotCorr2D8MLayer(canvas8PanelProf, pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
-                            hSpectra, 1, 0, t_max, 1024, l, m,
-                            Form("%s/Waveform_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, suffix.Data()), it->second, 1);
-
-          PlotCorr2D8MLayer(canvas8PanelProf, pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
-                            hSpectra, 5, 0, t_max, 4099, l, m,
-                            Form("%s/TOT_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, suffix.Data()), it->second, 1);
-
-          PlotCorr2D8MLayer(canvas8PanelProf, pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
-                            hSpectra, 6, 0, t_max, 1024, l, m,
-                            Form("%s/TOA_Mod%02d_Layer%02d.%s" ,outputDirPlots.Data(), m, l, suffix.Data()), it->second, 1);
-    }
-  }
-
+  
+  
   std::cout <<"=============================================================" << std::endl;
   std::cout <<" Plots saved to " << outputDirPlots.Data() << std::endl;
   std::cout <<"=============================================================" << std::endl;

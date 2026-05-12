@@ -41,7 +41,7 @@ class CalibSampleParser{
         inline void SetTOALines(int i)                  {lines=i;}
         inline void SetInputCalibFile(TString name)     {calibInputFile=name;};
         inline void SetPlottingSuffix(TString name)     {suffix=name;};
-
+        inline void SetCalibXInjection()                {optParse=2;}
 
         // general methods
         bool CheckAndOpenIO(void);
@@ -61,7 +61,7 @@ class CalibSampleParser{
         TFile*          RootOutput      = nullptr;      // root file output 
         TFile*          RootOutputHist  = nullptr;      // root file output for histos
         int             debug           = 0;            // debug level
-        int             optParse        = 0;            // 0 - default .csv file from H2GCalib, 1 - pedestal extracted with .py script
+        int             optParse        = 0;            // 0 - default .csv file from H2GCalib, 1 - pedestal extracted with .py script, 2 - calibX injection output
         int             optTOA          = 0;            // 0 - default, 1 - .csv file read as TOA calib file
         int             lines           = 0;            // tell us how many lines to skip to get to the last line
         TString         suffix          = "pdf";        // plotting
@@ -79,7 +79,7 @@ class CalibSampleParser{
         TTree*      TcalibOut       = nullptr;
 
         bool        doPlotting      = false;
-
+        
         std::vector<int>  calibChannelsSet; // #of channels, channels listed
         int         kcu             = 0;
 
@@ -87,6 +87,7 @@ class CalibSampleParser{
 
     private:
         bool Parse();
+        bool ParseInjectionCalibX();
         bool ProcessAndPlotWaveforms();
         bool ParsePedestalCalib();
         bool ParseTOA();

@@ -15,6 +15,7 @@ namespace DetConf{
               Single2MV, 
               SingleTile, 
               Dual8M, 
+              MediumTB,
               LargeTB,
               Asic
             };

@@ -1,5 +1,5 @@
-#ifndef PLOTTHELPER_1MLAYER_H
-#define PLOTTHELPER_1MLAYER_H
+#ifndef PLOTHELPER_1MLAYER_H
+#define PLOTHELPER_1MLAYER_H
 
   // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // dedicated class for all 1M layer plotting functions
@@ -260,10 +260,11 @@
     DrawLatex(topRCornerX, topRCornerY-offset*0.85*relSizeP-2.2*relSizeP, GetStringFromRunInfo(currRunInfo, 3), false, 0.85*relSizeP, 42);
     canvas2Panel->SaveAs(nameOutput.Data());
   }
-//   
-//   //__________________________________________________________________________________________________________
-//   // Plot Run overlay for all 1 tiles for all runs available
-//   //__________________________________________________________________________________________________________
+
+  
+  //__________________________________________________________________________________________________________
+  // Plot Run overlay for all 1 tiles for all runs available
+  //__________________________________________________________________________________________________________
   inline void PlotRunOverlay1MLayer (TCanvas* canvas2Panel, Double_t topRCornerX, Double_t topLCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
                               std::map<int,TileTrend> trending, int nruns, int optionTrend, 
                               Double_t xPMin, Double_t xPMax, int layer, int mod,  TString nameOutput, TString nameOutputSummary, RunInfo currRunInfo, Int_t detailedPlot = 1, bool plotMean = false){
@@ -397,8 +398,9 @@
   // Plot Run overlay for all 1 tiles for all runs available
   //__________________________________________________________________________________________________________
   inline void PlotRunOverlayProfile1MLayer (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topLCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
-                                      std::map<int,TileTrend> trending, int nruns,
-                                      Double_t xPMin, Double_t xPMax, Double_t yPMin, Double_t yPMax,  int layer, int mod,  TString nameOutput, TString nameOutputSummary, RunInfo currRunInfo, Int_t detailedPlot = 1, bool scaleInt = false ){
+                                      std::map<int,TileTrend> trending, int nruns, int option,
+                                      Double_t xPMin, Double_t xPMax, Double_t yPMin, Double_t yPMax,  int layer, int mod,  TString nameOutput, TString nameOutputSummary,
+                                      RunInfo currRunInfo, Int_t detailedPlot = 1, bool scaleInt = false ){
                                   
     Setup* setupT = Setup::GetInstance();
     
@@ -417,13 +419,13 @@
       return;
     } 
 
-    for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
-      if (rc == 0){
-        commanVoltage = ithTrend->second.GetVoltage(rc);
-      } else {
-        if (commanVoltage != ithTrend->second.GetVoltage(rc))  isSameVoltage = false;
-      }
-    }
+    Int_t nSameSettings = 0;
+    if (currRunInfo.rf > -1) nSameSettings++;
+    if (currRunInfo.cf > -1) nSameSettings++;
+    if (currRunInfo.cfcomp > -1) nSameSettings++;
+    if (currRunInfo.cc > -1) nSameSettings++;
+    if (currRunInfo.vop > -1) nSameSettings++;
+
     TProfile* profs[30];
 
     double lineBottom  = (7);
@@ -433,54 +435,84 @@
     else if (nruns < 17) lineBottom = (4);
     else if (nruns < 21) lineBottom = (5);
     else if (nruns < 25) lineBottom = (6);
+    if (nSameSettings == 4) lineBottom++;
     
     canvas2Panel->cd();
     canvas2Panel->SetLogy(0);
     ithTrend=trending.find(tempCellID);
 
     TString label           = Form("layer %d", layer);
-    TString label2          = Form("Common V_{op} = %2.1f V", commanVoltage);
-    
+    TString label2          = Form("V_{op}=%2.1fV", currRunInfo.vop);
+    TString label3          = GetLabelHGCROCSettingsCF(currRunInfo);
+    TString label4          = GetLabelHGCROCSettingsRFCC(currRunInfo);
+
     Double_t yPosStart = topRCornerY;
-    double startLegY  = yPosStart -lineBottom*relSizeP;
+    double startLegY  = yPosStart -(lineBottom-1)*relSizeP;
     double endLegY    = yPosStart;
+    TString header    = "";
+    double width      = 0.5;
+    if (nSameSettings == 4){
+        width = 0.9;
+        std::cout <<  currRunInfo.rf << "\t" << currRunInfo.cf << "\t" << currRunInfo.cfcomp << "\t" << currRunInfo.cc << "\t" << currRunInfo.vop << std::endl;
+        if (currRunInfo.rf < 0)
+          header = "RF (k#Omega)";
+        if (currRunInfo.cf < 0) header = "CF (fF)";
+        if (currRunInfo.cfcomp < 0) header = "CF_{comp} (fF)";
+        if (currRunInfo.cc < 0)  header = "CC";
+        if (currRunInfo.vop < 0)  header = "V_{op} (V)";
+    }
     TLegend* legend = GetAndSetLegend2(  topRCornerX, startLegY, 0.55, endLegY,
-                                0.75*textSizePixel, 4, "",43,0.25);    
+                                0.75*textSizePixel, 4, header,43,0.25);    
     TH1D* dummyhist;
     for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
       int tmpRunNr = ithTrend->second.GetRunNr(rc);
       profs[rc] = nullptr;
       if (tmpRunNr != -1) {
-        profs[rc] = ithTrend->second.GetLGHGTriggRun(ithTrend->second.GetRunNr(rc));
-        if (scaleInt) profs[rc]->Scale(1/profs[rc]->Integral());
-        std::cout << profs[rc] << std::endl;
+        if (option == 0)
+          profs[rc] = ithTrend->second.GetLGHGTriggRun(ithTrend->second.GetRunNr(rc));
+        else if (option == 1)
+          profs[rc] = ithTrend->second.GetWave1DRun(ithTrend->second.GetRunNr(rc));
+        else if (option == 2)
+          profs[rc] = ithTrend->second.GetTOARun(ithTrend->second.GetRunNr(rc));
+        else if (option == 3)  
+          profs[rc] = ithTrend->second.GetTOTRun(ithTrend->second.GetRunNr(rc));
+        if (scaleInt&& profs[rc] != nullptr) profs[rc]->Scale(1/profs[rc]->Integral());
+        // std::cout << profs[rc] << std::endl;
       }
       if (profs[rc]){
         if (rc == 0){
           TString yTitle = profs[rc]->GetYaxis()->GetTitle();
           if (scaleInt) yTitle = Form("%s/ integral", yTitle.Data());
           dummyhist = new TH1D("dummyhist", "", profs[rc]->GetNbinsX(), profs[rc]->GetXaxis()->GetXmin(), profs[rc]->GetXaxis()->GetXmax());
-          SetStyleHistoTH1ForGraphs( dummyhist, profs[rc]->GetXaxis()->GetTitle(), yTitle, 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);
+          SetStyleHistoTH1ForGraphs( dummyhist, profs[rc]->GetXaxis()->GetTitle(), yTitle, 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.85, 1.3, 510, 510, 43, 63);
           dummyhist->GetXaxis()->SetRangeUser(xPMin,xPMax);
           dummyhist->GetYaxis()->SetRangeUser(yPMin,yPMax);
           dummyhist->Draw("axis");
         }
 
         SetLineDefaults(profs[rc], GetColorLayer(rc), 2, GetLineStyleLayer(rc));   
-        profs[rc]->SetMarkerStyle(24);
-        if (rc < 10)
-          profs[rc]->SetMarkerStyle(24);
-        else 
-          profs[rc]->SetMarkerStyle(25);
+        profs[rc]->SetMarkerSize(0.7);
+        profs[rc]->SetMarkerStyle(GetMarkerLayer(rc,true));
         profs[rc]->Draw("same,pe");
-        legend->AddEntry(profs[rc],Form("%d",tmpRunNr),"p");
+        
+        TString labelLegend = Form("%d",tmpRunNr);
+        if (nSameSettings == 4){
+          if (currRunInfo.vop < 0) labelLegend = Form("%.1f",(double)ithTrend->second.GetVoltage(rc));
+          if (currRunInfo.rf < 0) labelLegend = Form("%.1f",ReturnRFValue(ithTrend->second.GetRF(rc)));
+          if (currRunInfo.cf < 0) labelLegend = Form("%.0f",ReturnCFValue(ithTrend->second.GetCF(rc)));
+          if (currRunInfo.cfcomp < 0) labelLegend = Form("%.0f",ReturnCFCompValue(ithTrend->second.GetCFComp(rc)));
+          if (currRunInfo.cc < 0)  labelLegend = Form("%.0f",ReturnCCValue(ithTrend->second.GetCC(rc)));
+        }
+        legend->AddEntry(profs[rc],labelLegend.Data(),"p");
       }
     }
     if (dummyhist) dummyhist->Draw("axis,same");                
     
     // labeling inside the panels & legend drawing 
-    if (isSameVoltage){
-      DrawLatex(topRCornerX, yPosStart-(lineBottom+0.5)*relSizeP, label2, false, 0.75*textSizePixel, 43);
+    if ( nSameSettings > 0 ){
+      DrawLatex(topRCornerX, yPosStart-(lineBottom+0.5)*relSizeP, label2, true, 0.75*textSizePixel, 43);
+      DrawLatex(topRCornerX, yPosStart-(lineBottom+1+0.5)*relSizeP, label3, true, 0.75*textSizePixel, 43);
+      DrawLatex(topRCornerX, yPosStart-(lineBottom+2+0.5)*relSizeP, label4, true, 0.75*textSizePixel, 43);
     }
     
     legend->Draw();
@@ -490,10 +522,10 @@
       lab1 = beamline;
     TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
     TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
-    DrawLatex(topLCornerX, yPosStart-1*0.75*relSizeP, lab1, true, 0.75*textSizePixel, 43);
-    DrawLatex(topLCornerX, yPosStart-2*0.75*relSizeP, lab2, true, 0.75*textSizePixel, 43);
-    DrawLatex(topLCornerX, yPosStart-3*0.75*relSizeP, lab3, true, 0.75*textSizePixel, 43);
-    DrawLatex(topLCornerX, yPosStart-4*0.75*relSizeP, label, true, 0.75*textSizePixel, 43);
+    DrawLatex(topLCornerX, yPosStart-1*0.75*relSizeP, lab1, false, 0.75*textSizePixel, 43);
+    DrawLatex(topLCornerX, yPosStart-2*0.75*relSizeP, lab2, false, 0.75*textSizePixel, 43);
+    DrawLatex(topLCornerX, yPosStart-3*0.75*relSizeP, lab3, false, 0.75*textSizePixel, 43);
+    DrawLatex(topLCornerX, yPosStart-4*0.75*relSizeP, label, false, 0.75*textSizePixel, 43);
   
     if(detailedPlot) canvas2Panel->SaveAs(nameOutput.Data());
     if (layer == 0) canvas2Panel->Print(Form("%s.pdf[",nameOutputSummary.Data()));

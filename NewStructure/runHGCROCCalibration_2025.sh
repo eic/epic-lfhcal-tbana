@@ -4,7 +4,7 @@
 source helperCalibHGCROC.sh
 
 PlotBaseDir=..
-runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
+runList=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
 
 # running example:
 # bash runCalibration_2024.sh fbockExt2 muoncalibA1 improvedWBC4th

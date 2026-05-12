@@ -1,14 +1,128 @@
-#ifndef PLOTHELPER_ASICLFHCAL_H
-#define PLOTHELPER_ASICLFHCAL_H
+#ifndef PLOTHELPER_MEDIUMTBLFHCAL_H
+#define PLOTHELPER_MEDIUMTBLFHCAL_H
 
   //*****************************************************************
-  // ASIC geom sorted by LFHCal layer geom in addtion
+  // Medium TB geom sorted by LFHCal layer geom in addtion
   //===========================================================
+    //*****************************************************************
+    // Test beam geometry (beam coming from viewer)
+    //          =================================================================================================================
+    //   row 0  ||    8 (40)   ||    7 (41)  ||    6 (42)  ||    5 (43)  || 8 (44)   ||    7 (45)  ||    6 (46)  ||    5 (47)  ||   row 0
+    // mod 4    =================================================================================================================           mod 5
+    //   row 1  ||    1 (32)   ||    2 (33)  ||    3 (34)  ||    4 (35)  || 1 (36)   ||    2 (37)  ||    3 (38)  ||    4 (39)  ||   row 1
+    //          =================================================================================================================
+    //   row 0  ||    8 (24)   ||    7 (25)  ||    6 (26)  ||    5 (27)  || 8 (28)   ||    7 (29)  ||    6 (30)  ||    5 (31)  ||   row 0
+    // mod 2    =================================================================================================================           mod 3
+    //   row 1  ||    1 (16)   ||    2 (17)  ||    3 (18)  ||    4 (19)  || 1 (20)    ||   2 (21)  ||    3 (22)  ||    4 (23)  ||   row 1
+    //          =================================================================================================================
+    //   row 0  ||    8 (8)    ||    7 (9)   ||    6 (10)   ||   5 (11)  || 8 (12)   ||    7 (13)  ||    6 (14)  ||    5 (15)  ||   row 0
+    //mod 0     =================================================================================================================           mod 1
+    //   row 1  ||    1 (0)    ||    2 (1)   ||    3 (2)   ||    4 (3)   || 1 (4)    ||    2 (5)   ||    3 (6)  ||    4 (7)    ||   row 1
+    //          ================================================================================================================= 
+    //                col 0          col 1        col 2         col  3       col 0          col 1        col 2         col  3
+    // rebuild pad geom in similar way (numbering -1)
+    //*****************************************************************
     
   //__________________________________________________________________________________________________________
-  // Plot Corr with Fits for Full Asic 2D
+  // Plot Trigger Primitive with Fits for MediumTB
   //__________________________________________________________________________________________________________
-  inline void PlotCorr2DAsicLFHCal (TCanvas* canvas, TPad** pads, 
+  inline void PlotTriggerPrimMediumTBLayer (TCanvas* canvas, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, 
+                                         Double_t* relSize8P, Int_t textSizePixel, 
+                                         std::map<int,TileSpectra> spectra, 
+                                         double avMip, double facLow, double facHigh,
+                                         Double_t xMin, Double_t xMax, Double_t scaleYMax, 
+                                         int layer, TString nameOutput, RunInfo currRunInfo){
+                                  
+    Double_t maxY = 0;
+    Setup* setupT = Setup::GetInstance();
+    std::map<int, TileSpectra>::iterator ithSpectra;
+    std::map<int, TileSpectra>::iterator ithSpectraTrigg;
+    
+    int nRow = setupT->GetNMaxRow()+1;
+    int nCol = setupT->GetNMaxColumn()+1;
+    int nMod = setupT->GetNMaxModule()+1;
+    int skipped = 0;
+    for (int r = 0; r < nRow; r++){
+      for (int c = 0; c < nCol; c++){
+        for (int m = 0; m < nMod; m++){
+          int tempCellID = setupT->GetCellID(r,c, layer, m);
+          ithSpectra=spectra.find(tempCellID);
+          if(ithSpectra==spectra.end()){
+            std::cout << "WARNING: skipping cell ID: " << tempCellID << "\t row " << r << "\t column " << c << "\t layer " << layer << "\t module " << m << std::endl;
+            continue;
+          } 
+          TH1D* tempHist = ithSpectra->second.GetTriggPrim();
+          if (maxY < FindLargestBin1DHist(tempHist, xMin , xMax)) maxY = FindLargestBin1DHist(tempHist, xMin , xMax);
+        }
+      }  
+    }
+
+    for (int r = 0; r < nRow; r++){
+      for (int c = 0; c < nCol; c++){
+        for (int m = 0; m < nMod; m++){
+          canvas->cd();
+          int tempCellID = setupT->GetCellID(r,c, layer, m);
+          int p = setupT->GetChannelInLayerFull(tempCellID);
+          pads[p]->Draw();
+          pads[p]->cd();
+          pads[p]->SetLogy();
+          ithSpectra=spectra.find(tempCellID);
+          if(ithSpectra==spectra.end()){
+            skipped++;
+            std::cout << "WARNING: skipping cell ID: " << tempCellID << "\t row " << r << "\t column " << c << "\t layer " << layer << "\t module " << m << std::endl;
+            pads[p]->Clear();
+            pads[p]->Draw();
+            if (p ==15 ){
+              DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-2.*relSize8P[p], GetStringFromRunInfo(currRunInfo, 2), true, 0.85*relSize8P[p], 42);
+              DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-3.*relSize8P[p], GetStringFromRunInfo(currRunInfo, 3), true, 0.85*relSize8P[p], 42);
+              DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-4.*relSize8P[p], "Trigger primitives", true, 0.85*relSize8P[p], 42);
+            }
+            continue;
+          } 
+          TH1D* tempHist = ithSpectra->second.GetTriggPrim();
+          SetStyleHistoTH1ForGraphs( tempHist, tempHist->GetXaxis()->GetTitle(), tempHist->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.1, 510, 510, 43, 63);  
+          SetMarkerDefaults(tempHist, 20, 1, kBlue+1, kBlue+1, kFALSE);   
+          tempHist->GetXaxis()->SetRangeUser(xMin,xMax);
+          tempHist->GetYaxis()->SetRangeUser(0.7,scaleYMax*maxY);
+          
+          tempHist->Draw("pe");
+          DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xMin, 0, xMax, maxY);
+          tempHist->Draw("same,axis");
+          tempHist->Draw("same,pe");
+
+          TString label           = Form("r:%d c:%d m:%d", r, c, m);
+          if (p == 15){
+            label = Form("r:%d c:%d m:%d layer %d", r, c, m, layer);
+          }
+          TLatex *labelChannel    = new TLatex(topRCornerX[p]-0.045,topRCornerY[p]-1.2*relSize8P[p],label);
+          SetStyleTLatex( labelChannel, 0.85*textSizePixel,4,1,43,kTRUE,31);
+          labelChannel->Draw();  
+                  
+          TBox* triggArea =  CreateBox(kBlue-8, avMip*facLow, 0.7, avMip*facHigh,scaleYMax*maxY, 1001 );
+          triggArea->Draw();
+          DrawLines(avMip*facLow, avMip*facLow,0.7, scaleYMax*maxY, 1, 1, 7);
+          DrawLines(avMip*facHigh, avMip*facHigh,0.7, scaleYMax*maxY, 1, 1, 7);
+          tempHist->Draw("same,axis");
+          tempHist->Draw("same,pe");
+          
+          if (p == 15 ){
+            DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-2.*relSize8P[p], GetStringFromRunInfo(currRunInfo, 2), true, 0.85*relSize8P[p], 42);
+            DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-3.*relSize8P[p], GetStringFromRunInfo(currRunInfo, 3), true, 0.85*relSize8P[p], 42);
+            DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-4.*relSize8P[p], "Trigger primitives", true, 0.85*relSize8P[p], 42);
+          }
+        }
+      }
+    }
+    if (skipped < 16)
+      canvas->SaveAs(nameOutput.Data());
+  }
+  
+  
+    
+  //__________________________________________________________________________________________________________
+  // Plot Corr with Fits for Medium TB geom
+  //__________________________________________________________________________________________________________
+  inline void PlotCorr2DMediumTBLFHCal (TCanvas* canvas, TPad** pads, 
                               Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                               std::map<int,TileSpectra> spectra, int option,
                               Double_t xMin, Double_t xMax, Double_t minY, Double_t maxY, int asic, TString nameOutput, RunInfo currRunInfo, bool noCalib = 0, int triggCh = -1 ){
@@ -47,7 +161,7 @@
       ithSpectra=spectra.find(tempCellID);
       if(ithSpectra==spectra.end()){
         skipped++;
-        std::cout << "WARNING: PlotCorr2DAsicLFHCal skipping cell ID: " << tempCellID << "\t row " << row << "\t column " << col << "\t layer " << layer << "\t module " << mod << "\t asic " << asic << "\tro ch asic " << ch << std::endl;
+        std::cout << "WARNING: PlotCorr2DMediumTBLFHCal skipping cell ID: " << tempCellID << "\t row " << row << "\t column " << col << "\t layer " << layer << "\t module " << mod << "\t asic " << asic << "\tro ch asic " << ch << std::endl;
         pads[cp]->Clear();
         pads[cp]->Draw();
         if (cp ==63 ){
@@ -187,9 +301,9 @@
   }
   
   //__________________________________________________________________________________________________________
-  // Plot Corr with Fits for Full layer
+  // Plot Corr with Fits for Medium TB geom
   //__________________________________________________________________________________________________________
-  inline void PlotTrendingAsicLFHCal (TCanvas* canvas, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
+  inline void PlotTrendingMediumTBLFHCal (TCanvas* canvas, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                               std::map<int,TileTrend> trending, int optionTrend, 
                               Double_t xMin, Double_t xMax, Double_t minY, Double_t maxY, bool isSameVoltage, double commanVoltage, 
                               int asic, TString nameOutput, TString nameOutputSummary, RunInfo currRunInfo, Int_t  detailedPlot = 1){
@@ -335,9 +449,9 @@
   }
   
   //__________________________________________________________________________________________________________
-  // Plot Run overlay for all 16 tiles for all runs available
+  // Plot Run overlay for Medium TB geom for all runs available
   //__________________________________________________________________________________________________________
-  inline void PlotRunOverlayProfileAsicLFHCal ( TCanvas* canvas, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
+  inline void PlotRunOverlayProfileMediumTBLFHCal ( TCanvas* canvas, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                                 std::map<int,TileTrend> trending, int nruns, int option,
                                                 Double_t xMin, Double_t xMax, Double_t yPMin, Double_t yPMax,  int asic,
                                                 TString nameOutput, TString nameOutputSummary, 

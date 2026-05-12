@@ -27,12 +27,6 @@
 #include "AnaSummary.h"
 #include "CommonHelperFunctions.h"
 #include "PlotHelper.h"
-// #include "PlotHelper_general.h"
-// #include "PlotHelper_8MLayer.h"
-// #include "PlotHelper_2MLayer.h"
-// #include "PlotHelper_1MLayer.h"
-// #include "PlotHelper_2ModLayer.h"
-// #include "PlotHelper_AsicLFHCal.h"
 
 class MultiCanvas{
 
@@ -65,6 +59,8 @@ class MultiCanvas{
 
   void CreateCanvasAndPadsForAsicLFHCalTBPlot( Int_t textSizePixel = 30, Double_t marginLeft = 0.03, TString add = "", bool rightCorner = true, int debug = 0);
 
+  void CreateCanvasAndPadsForMediumLFHCalTBPlot( Int_t textSizePixel = 30, Double_t marginLeft = 0.03, TString add = "", bool rightCorner = true, int debug = 0);
+
   void DefaultCanvasSettings( TCanvas* c1, Double_t leftMargin, Double_t rightMargin, Double_t topMargin, Double_t bottomMargin);
 
   void DefaultPadSettings( TPad* pad1, Double_t leftMargin, Double_t rightMargin, Double_t topMargin, Double_t bottomMargin);
@@ -75,6 +71,12 @@ class MultiCanvas{
   void PlotNoiseAdvWithFits(  std::map<int,TileSpectra> spectra, std::map<int,TileSpectra> spectraNoise, int option, 
                               Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
                               TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int debug = 1);
+  void Plot3SpectraOverlay(  std::map<int,TileSpectra> spectra,
+                             std::map<int,TileSpectra> spectraTrigg,
+                             std::map<int,TileSpectra> spectraNoise, 
+                             int option, Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
+                             TString nameOutputBase, TString suffix, 
+                             RunInfo currRunInfo, Calib* calib, int debug = 1);
   
   void PlotCorr2DLayer(   std::map<int,TileSpectra> spectra, int option, 
                           Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, 
@@ -100,6 +102,26 @@ class MultiCanvas{
                          TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, 
                          int debug = 1);
   
+  void PlotRunOverlayProfile( std::map<int,TileTrend>  trend, int nrun, int option,
+                              Double_t xPMin, Double_t xPMax, Double_t yMin, Double_t yMax,
+                              TString nameOutputBase, TString namePlot, TString suffix, 
+                              RunInfo currRunInfo, int ExtPlot,
+                              int debug = 1, bool scaleInt = false);
+  
+  
+  void PlotRunOverlaySpectra(  std::map<int,TileTrend>  trend, int nrun, int option,
+                                 Double_t xPMin, Double_t xPMax,
+                                 TString nameOutputBase, TString namePlot, TString suffix, 
+                                 RunInfo currRunInfo, int ExtPlot,
+                                 int debug = 1, bool plotMean = 1);
+
+  
+  void PlotTrending(  std::map<int,TileTrend>  trend, int option,
+                      Double_t xPMin, Double_t xPMax,
+                      TString nameOutputBase, TString namePlot, TString suffix, 
+                      RunInfo currRunInfo, int ExtPlot,
+                      int debug = 1);
+
  private:
   TCanvas* canvasMulti;
   TPad* padMulti[64];

@@ -446,6 +446,9 @@ DetConf::Type Setup::GetDetectorConfig() const{
   } else if (GetNMaxModule()+1 == 8){
     if(GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
       return DetConf::Type::LargeTB;
+  } else if (GetNMaxModule()+1 == 6){
+    if(GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
+      return DetConf::Type::MediumTB;
   } else if (GetNMaxModule()+1 == 1){
     if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
       return DetConf::Type::Single8M;

@@ -54,6 +54,18 @@ double Calib::GetScaleHigh(int cellID)const {
   } else return -1.;
 }
 
+double Calib::GetScaleHighPerSingleLayer(int cellID)const {
+  Setup* setup = Setup::GetInstance();
+  std::map<int, TileCalib>::const_iterator it= CaloCalib.find(cellID);
+  if(it!=CaloCalib.end()){
+    if (it->second.ScaleH != -1000  && (BCcalc && it->second.BadChannel > 1)){
+      return it->second.ScaleH/setup->GetLayersInSegment(cellID);
+    } else {
+      return GetAverageScaleHighPerSingleLayer();
+    }
+  } else return -1.;
+}
+
 double Calib::GetScaleWidthHigh(int cellID)const {
   //std::map<int, double>::const_iterator it=ScaleH.find(cellID);
   //if(it!=ScaleH.end()) return it->second;
@@ -159,6 +171,13 @@ double Calib::GetScaleHigh(int row, int col, int lay, int mod=0)const{
   int key=setup->GetCellID(row, col,lay,mod);
   return GetScaleHigh(key);
 }
+
+double Calib::GetScaleHighPerSingleLayer(int row, int col, int lay, int mod=0)const{
+  Setup* setup = Setup::GetInstance();
+  int key=setup->GetCellID(row, col,lay,mod);
+  return GetScaleHighPerSingleLayer(key);
+}
+
 
 double Calib::GetScaleWidthHigh(int row, int col, int lay, int mod=0)const{
   Setup* setup = Setup::GetInstance();
@@ -306,6 +325,44 @@ double Calib::GetAverageScaleHigh(int &active )const{
   active=(CaloCalib.size()-notCalib);
   return avSc/(CaloCalib.size()-notCalib);
 }
+
+double Calib::GetAverageScaleHighPerSingleLayer( )const{
+  double avSc   = 0;
+  int notCalib  = 0;
+  Setup* setup = Setup::GetInstance();
+  std::map<int, TileCalib>::const_iterator it;
+  for(it=CaloCalib.begin(); it!=CaloCalib.end(); ++it){
+    if (it->second.ScaleH == -1000 || (BCcalc && it->second.BadChannel < 2) ){
+      notCalib++;
+    } else {
+      avSc += it->second.ScaleH/setup->GetLayersInSegment(it->first);
+    }
+  }
+  return avSc/(CaloCalib.size()-notCalib);
+}
+
+
+double Calib::GetAverageScaleHighPerSingleLayer(int &active, double &avTilesPerLayer )const{
+  double avSc   = 0;
+  int notCalib  = 0;
+  avTilesPerLayer = 0.;
+  Setup* setup = Setup::GetInstance();
+  std::map<int, TileCalib>::const_iterator it;
+  for(it=CaloCalib.begin(); it!=CaloCalib.end(); ++it){
+    if (it->second.ScaleH == -1000 || (BCcalc && it->second.BadChannel < 2) ){
+      notCalib++;
+    } else {
+      avSc += it->second.ScaleH/setup->GetLayersInSegment(it->first);
+      avTilesPerLayer +=setup->GetLayersInSegment(it->first);
+    }
+  }
+  active=(CaloCalib.size()-notCalib);
+  avTilesPerLayer=avTilesPerLayer/active;
+  return avSc/(CaloCalib.size()-notCalib);
+}
+
+
+
 
 double Calib::GetAverageScaleWidthHigh()const{
   double avSc = 0;

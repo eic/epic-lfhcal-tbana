@@ -1,38 +1,10 @@
 #! /bin/bash
 
-function Calib()
-{
-	runNrFile='../configs/TB2025/DataTakingDB_202511_HGCROC.csv'
-	echo "===================================================================="
-	echo "option:  $1"
-	echo "calib File:  $2"
-	echo "raw data path:  $3"
-	echo "out data path:  $4"
-	echo "additional Name/runNr:  $5"
-	echo "Plots Directory-Base: $6"
-	echo "Plots additional name: $7"
-	echo "external bad channel:" $8
-	echo "external TOA phase calib:" $9
-	echo "===================================================================="
-	if [ $1 == "transfer" ]; then
-		time ./DataPrep -d 1 -e -a -f -P $2 -i $3/rawHGCROC_$5.root  -o $3/rawHGCROCWithCalib_$5.root -O $6/HGCROC_PlotsFullCalibTransferBC/Run_$5 -r $runNrFile
-	elif [ $1 == "trigg" ]; then
-		time ./DataPrep -f -d 1 -T $2 -i $3/rawHGCROC_$5.root -o $3/rawHGCROCWithLocTrigg_$5.root 
-	elif [ $1 == "triggMuon" ]; then
-		time ./DataPrep -f -d 1 -u -T $2 -i $3/rawHGCROC_miptrigg_wPedwMuon_wBC_$5.root -o $3/rawHGCROCWithLocTrigg_$5.root 
-	elif [ $1 == "calibNoTrigg" ]; then
-		time ./DataPrep -t -e -f -d 1 -a -C $2 -i $3/rawHGCROCWithLocTrigg_$5.root -o $4/calibratedHGCROC_Run_$5.root -O $6/$7$5 -r $runNrFile -B $8 -G $9 #-F png
-	elif [ $1 == "calibNoTriggNLP" ]; then
-    echo "no layer plotting" 
-		time ./DataPrep -t -f -d 1 -a -C $2 -i $3/rawHGCROCWithLocTrigg_$5.root -o $4/calibratedHGCROC_Run_$5.root -O $6/$7$5 -r $runNrFile -B $8 -G $9 -F png
-	elif [ $1 == "calibNoTriggZC" ]; then
-		time ./DataPrep -t -e -f -d 1 -a -C $2 -i $3/rawHGCROCWithLocTrigg_$5.root -o $4/calibratedNoCutOffHGCROC_Run_$5.root -O $6NoCutOff$7$5 -r $runNrFile -B $8 -G $9 -c -10.
-	elif [ $1 == "calibNoTriggZCMuon" ]; then
-		time ./DataPrep -t -e -f -d 1 -a -C $2 -i $3/rawHGCROC_wPedwMuon_wBC_$5.root -o $4/calibratedNoCutOffHGCROC_Run_$5.root -O $6NoCutOff$7$5 -r $runNrFile -B $8 -G $9 -c -10.
-	elif [ $1 == "full" ]; then
-		time ./DataPrep -e -f -d 1 -a -C $2 -i $3/rawHGCROC_$5.root -o $4/calibratedHGCROC_Run_$5.root -O $6/$7$5 -r $runNrFile -B $8 -G $9
-	fi
-}
+#include common helper functions to make it easier across years
+source helperCalibHGCROC.sh
+
+#run list file
+runList=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
 
 dataDirCal=""
 if [ $1 = "fbockTB" ]; then 

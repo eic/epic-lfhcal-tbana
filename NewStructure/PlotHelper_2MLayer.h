@@ -1,5 +1,5 @@
-#ifndef PLOTTHELPER_2MLAYER_H
-#define PLOTTHELPER_2MLAYER_H
+#ifndef PLOTHELPER_2MLAYER_H
+#define PLOTHELPER_2MLAYER_H
       //***********************************************************************************************************
       //********************************* 2 Panel overview plot  **************************************************
       //***********************************************************************************************************
@@ -518,8 +518,9 @@
   // Plot Run overlay for all 8 tiles for all runs available
   //__________________________________________________________________________________________________________
   inline void PlotRunOverlayProfile2MLayer (TCanvas* canvas2Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSizeP, Int_t textSizePixel, 
-                                      std::map<int,TileTrend> trending, int nruns,
-                                      Double_t xPMin, Double_t xPMax, Double_t yPMin, Double_t yPMax,  int layer, int mod,  TString nameOutput, TString nameOutputSummary, RunInfo currRunInfo, Int_t detailedPlot = 1){
+                                      std::map<int,TileTrend> trending, int nruns, int option,
+                                      Double_t xPMin, Double_t xPMax, Double_t yPMin, Double_t yPMax,  int layer, int mod,  TString nameOutput, TString nameOutputSummary,
+                                      RunInfo currRunInfo, Int_t detailedPlot = 1, bool scaleInt = false  ){
                                   
     Setup* setupT = Setup::GetInstance();
     
@@ -599,13 +600,23 @@
         int tmpRunNr = ithTrend->second.GetRunNr(rc);
         profs[rc] = nullptr;
         if (tmpRunNr != -1) {
-          profs[rc] = ithTrend->second.GetLGHGTriggRun(ithTrend->second.GetRunNr(rc));
-          std::cout << profs[rc] << std::endl;
+          if (option == 0)
+            profs[rc] = ithTrend->second.GetLGHGTriggRun(ithTrend->second.GetRunNr(rc));
+          else if (option == 1)
+            profs[rc] = ithTrend->second.GetWave1DRun(ithTrend->second.GetRunNr(rc));
+          else if (option == 2)
+            profs[rc] = ithTrend->second.GetTOARun(ithTrend->second.GetRunNr(rc));
+          else if (option == 3)  
+            profs[rc] = ithTrend->second.GetTOTRun(ithTrend->second.GetRunNr(rc));
+          if (scaleInt && profs[rc] != nullptr) profs[rc]->Scale(1/profs[rc]->Integral());
         }
         if (profs[rc]){
           if (rc == 0){
+            TString yTitle = profs[rc]->GetYaxis()->GetTitle();
+            if (scaleInt) yTitle = Form("%s/ integral", yTitle.Data());
+
             dummyhist = new TH1D("dummyhist", "", profs[rc]->GetNbinsX(), profs[rc]->GetXaxis()->GetXmin(), profs[rc]->GetXaxis()->GetXmax());
-            SetStyleHistoTH1ForGraphs( dummyhist, profs[rc]->GetXaxis()->GetTitle(), profs[rc]->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
+            SetStyleHistoTH1ForGraphs( dummyhist, profs[rc]->GetXaxis()->GetTitle(), yTitle, 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
             dummyhist->GetXaxis()->SetRangeUser(xPMin,xPMax);
             dummyhist->GetYaxis()->SetRangeUser(yPMin,yPMax);
             dummyhist->Draw("axis");

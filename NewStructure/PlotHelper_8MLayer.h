@@ -1,5 +1,5 @@
-#ifndef PLOTTHELPER_8MLAYER_H
-#define PLOTTHELPER_8MLAYER_H
+#ifndef PLOTHELPER_8MLAYER_H
+#define PLOTHELPER_8MLAYER_H
 
   // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // dedicated class for all 8M layer plotting functions
@@ -870,7 +870,8 @@
   //__________________________________________________________________________________________________________
   inline void PlotTrending8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                               std::map<int,TileTrend> trending, int optionTrend, 
-                              Double_t xPMin, Double_t xPMax, int layer, int mod,  TString nameOutput, TString nameOutputSummary, RunInfo currRunInfo, Int_t  detailedPlot = 1){
+                              Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, bool isSameVoltage, double commanVoltage, 
+                              int layer, int mod,  TString nameOutput, TString nameOutputSummary, RunInfo currRunInfo, Int_t  detailedPlot = 1){
                                   
     Setup* setupT = Setup::GetInstance();
     
@@ -878,89 +879,7 @@
     int nRow = setupT->GetNMaxRow()+1;
     int nCol = setupT->GetNMaxColumn()+1;
     int skipped = 0;
-    bool isSameVoltage    = true;
-    double commanVoltage  = 0;
     
-    Double_t minY = 9999;
-    Double_t maxY = 0.;
-    
-    for (int r = 0; r < nRow; r++){
-      for (int c = 0; c < nCol; c++){
-        int tempCellID = setupT->GetCellID(r,c, layer, mod);
-        ithTrend=trending.find(tempCellID);
-        if (optionTrend == 0){
-          if(minY>ithTrend->second.GetMinHGped()) minY=ithTrend->second.GetMinHGped();
-          if(maxY<ithTrend->second.GetMaxHGped()) maxY=ithTrend->second.GetMaxHGped();
-        } else if (optionTrend == 1){
-          if(minY>ithTrend->second.GetMinLGped()) minY=ithTrend->second.GetMinLGped();
-          if(maxY<ithTrend->second.GetMaxLGped()) maxY=ithTrend->second.GetMaxLGped();
-        } else if (optionTrend == 2){
-          if(minY>ithTrend->second.GetMinHGscale()) minY=ithTrend->second.GetMinHGscale();
-          if(maxY<ithTrend->second.GetMaxHGscale()) maxY=ithTrend->second.GetMaxHGscale();
-        } else if (optionTrend == 3){
-          if(minY>ithTrend->second.GetMinLGscale()) minY=ithTrend->second.GetMinLGscale();
-          if(maxY<ithTrend->second.GetMaxLGscale()) maxY=ithTrend->second.GetMaxLGscale();
-        } else if (optionTrend == 4){
-          if(minY>ithTrend->second.GetMinLGHGcorr()) minY=ithTrend->second.GetMinLGHGcorr();
-          if(maxY<ithTrend->second.GetMaxLGHGcorr()) maxY=ithTrend->second.GetMaxLGHGcorr();
-        } else if (optionTrend == 5){
-          if(minY>ithTrend->second.GetMinHGLGcorr()) minY=ithTrend->second.GetMinHGLGcorr();
-          if(maxY<ithTrend->second.GetMaxHGLGcorr()) maxY=ithTrend->second.GetMaxHGLGcorr();          
-        } else if (optionTrend == 6){
-          if(minY>ithTrend->second.GetMinTrigg()) minY=ithTrend->second.GetMinTrigg();
-          if(maxY<ithTrend->second.GetMaxTrigg()) maxY=ithTrend->second.GetMaxTrigg();          
-        } else if (optionTrend == 7){
-          if(minY>ithTrend->second.GetMinSBSignal()) minY=ithTrend->second.GetMinSBSignal();
-          if(maxY<ithTrend->second.GetMaxSBSignal()) maxY=ithTrend->second.GetMaxSBSignal();          
-        } else if (optionTrend == 8){
-          if(minY>ithTrend->second.GetMinSBNoise()) minY=ithTrend->second.GetMinSBNoise();
-          if(maxY<ithTrend->second.GetMaxSBNoise()) maxY=ithTrend->second.GetMaxSBNoise();          
-        } else if (optionTrend == 9){
-          if(minY>ithTrend->second.GetMinHGMPV()) minY=ithTrend->second.GetMinHGMPV();
-          if(maxY<ithTrend->second.GetMaxHGMPV()) maxY=ithTrend->second.GetMaxHGMPV();          
-        } else if (optionTrend == 10){
-          if(minY>ithTrend->second.GetMinLGMPV()) minY=ithTrend->second.GetMinLGMPV();
-          if(maxY<ithTrend->second.GetMaxLGMPV()) maxY=ithTrend->second.GetMaxLGMPV();          
-        } else if (optionTrend == 11){
-          if(minY>ithTrend->second.GetMinHGLSigma()) minY=ithTrend->second.GetMinHGLSigma();
-          if(maxY<ithTrend->second.GetMaxHGLSigma()) maxY=ithTrend->second.GetMaxHGLSigma();          
-        } else if (optionTrend == 12){
-          if(minY>ithTrend->second.GetMinLGLSigma()) minY=ithTrend->second.GetMinLGLSigma();
-          if(maxY<ithTrend->second.GetMaxLGLSigma()) maxY=ithTrend->second.GetMaxLGLSigma();          
-        } else if (optionTrend == 13){
-          if(minY>ithTrend->second.GetMinHGGSigma()) minY=ithTrend->second.GetMinHGGSigma();
-          if(maxY<ithTrend->second.GetMaxHGGSigma()) maxY=ithTrend->second.GetMaxHGGSigma();          
-        } else if (optionTrend == 14){
-          if(minY>ithTrend->second.GetMinLGGSigma()) minY=ithTrend->second.GetMinLGGSigma();
-          if(maxY<ithTrend->second.GetMaxLGGSigma()) maxY=ithTrend->second.GetMaxLGGSigma();          
-        } else if (optionTrend == 15){
-          if(minY>ithTrend->second.GetMinHGpedwidth()) minY=ithTrend->second.GetMinHGpedwidth();
-          if(maxY<ithTrend->second.GetMaxHGpedwidth()) maxY=ithTrend->second.GetMaxHGpedwidth();          
-        } else if (optionTrend == 16){
-          if(minY>ithTrend->second.GetMinLGpedwidth()) minY=ithTrend->second.GetMinLGpedwidth();
-          if(maxY<ithTrend->second.GetMaxLGpedwidth()) maxY=ithTrend->second.GetMaxLGpedwidth();          
-        } else if (optionTrend == 17){
-          if(minY>ithTrend->second.GetMinLGHGOffset()) minY=ithTrend->second.GetMinLGHGOffset();
-          if(maxY<ithTrend->second.GetMaxLGHGOffset()) maxY=ithTrend->second.GetMaxLGHGOffset();          
-        } else if (optionTrend == 18){
-          if(minY>ithTrend->second.GetMinHGLGOffset()) minY=ithTrend->second.GetMinHGLGOffset();
-          if(maxY<ithTrend->second.GetMaxHGLGOffset()) maxY=ithTrend->second.GetMaxHGLGOffset();          
-        }
-        for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
-          if (r == 0 && c == 0){
-            if (rc == 0){
-              commanVoltage = ithTrend->second.GetVoltage(rc);
-            } else {
-              if (commanVoltage != ithTrend->second.GetVoltage(rc))  isSameVoltage = false;
-            }
-          }
-        }
-      }
-    }
-    if (minY == 9999 && maxY == 0.){
-      std::cout <<"Something went wrong! No ranges set for layer " <<  layer << " \t trend plotting option: " << optionTrend << "\t ABORTING!" << std::endl;
-      return;
-    }
     // prep for log scale
     if (optionTrend == 6){ 
       if (minY ==0 ) minY = 1;
@@ -973,6 +892,7 @@
       minY = 0.9*minY;
       maxY = 1.1*maxY;      
     }
+    
     for (int r = 0; r < nRow; r++){
       for (int c = 0; c < nCol; c++){
         
@@ -1212,8 +1132,9 @@
   // Plot Run overlay for all 8 tiles for all runs available
   //__________________________________________________________________________________________________________
   inline void PlotRunOverlayProfile8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
-                                      std::map<int,TileTrend> trending, int nruns,
-                                      Double_t xPMin, Double_t xPMax, Double_t yPMin, Double_t yPMax,  int layer, int mod,  TString nameOutput, TString nameOutputSummary, RunInfo currRunInfo, Int_t detailedPlot = 1){
+                                      std::map<int,TileTrend> trending, int nruns, int option,
+                                      Double_t xPMin, Double_t xPMax, Double_t yPMin, Double_t yPMax,  int layer, int mod,  TString nameOutput, TString nameOutputSummary, 
+                                      RunInfo currRunInfo, Int_t detailedPlot = 1, bool scaleInt = false){
                                   
     Setup* setupT = Setup::GetInstance();
     
@@ -1261,7 +1182,7 @@
 
         TString label           = Form("row %d col %d", r, c);
         TString label2          = Form("Common V_{op} = %2.1f V", commanVoltage);
-        if (p == 7){
+        if (p == 7){   
           label = Form("row %d col %d layer %d", r, c, layer);
         }
         if(ithTrend==trending.end()){
@@ -1292,14 +1213,26 @@
         TH1D* dummyhist;
         for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
           int tmpRunNr = ithTrend->second.GetRunNr(rc);
+          // std::cout << "run nr: " <<  rc << std::endl;
           profs[rc] = nullptr;
           if (tmpRunNr != -1) {
-            profs[rc] = ithTrend->second.GetLGHGTriggRun(ithTrend->second.GetRunNr(rc));
+            if (option == 0)
+              profs[rc] = ithTrend->second.GetLGHGTriggRun(ithTrend->second.GetRunNr(rc));
+            else if (option == 1)
+              profs[rc] = ithTrend->second.GetWave1DRun(ithTrend->second.GetRunNr(rc));
+            else if (option == 2)
+              profs[rc] = ithTrend->second.GetTOARun(ithTrend->second.GetRunNr(rc));
+            else if (option == 3)  
+              profs[rc] = ithTrend->second.GetTOTRun(ithTrend->second.GetRunNr(rc));
+            if (scaleInt && profs[rc] != nullptr) profs[rc]->Scale(1/profs[rc]->Integral());
           }
+          // std::cout << "current hist: " <<  profs[rc] << std::endl;
           if (profs[rc]){
             if (rc == 0){
+              TString yTitle = profs[rc]->GetYaxis()->GetTitle();
+              if (scaleInt) yTitle = Form("%s/ integral", yTitle.Data());
               dummyhist = new TH1D("dummyhist", "", profs[rc]->GetNbinsX(), profs[rc]->GetXaxis()->GetXmin(), profs[rc]->GetXaxis()->GetXmax());
-              SetStyleHistoTH1ForGraphs( dummyhist, profs[rc]->GetXaxis()->GetTitle(), profs[rc]->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
+              SetStyleHistoTH1ForGraphs( dummyhist, profs[rc]->GetXaxis()->GetTitle(), yTitle, 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
               dummyhist->GetXaxis()->SetRangeUser(xPMin,xPMax);
               dummyhist->GetYaxis()->SetRangeUser(yPMin,yPMax);
               dummyhist->Draw("axis");

@@ -37,7 +37,10 @@ class Calib{
   double GetPedestalSigH (int /**/, int /**/, int /**/, int /**/) const;
   double GetPedestalSigL (int /**/, int /**/, int /**/, int /**/) const;
   double GetScaleHigh(int /**/) const;
+  double GetScaleHighPerSingleLayer(int /**/) const;
   double GetScaleHigh(int /**/, int /**/, int /**/, int /**/) const;
+  double GetScaleHighPerSingleLayer(int /**/, int /**/, int /**/, int /**/) const;
+  
   double GetScaleWidthHigh(int /**/) const;
   double GetScaleWidthHigh(int /**/, int /**/, int /**/, int /**/) const;
   double GetCalcScaleLow (int /**/) const;
@@ -62,7 +65,9 @@ class Calib{
   double GetAveragePedestalMeanLow() const;
   double GetAveragePedestalSigLow() const;
   double GetAverageScaleHigh() const;
+  double GetAverageScaleHighPerSingleLayer()const;
   double GetAverageScaleHigh(int &) const;
+  double GetAverageScaleHighPerSingleLayer(int &, double &)const;
   double GetAverageScaleWidthHigh() const;
   double GetAverageScaleLow() const;
   double GetAverageScaleWidthLow() const;

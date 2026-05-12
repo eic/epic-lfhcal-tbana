@@ -48,6 +48,7 @@ fi
 runList=../configs/TB2026/DataTakingDB_TBPST10_202604_HGCROC.csv
 
 # default path for the HGCROC analysis	
+#V2 summing board, initial preamp settings 
 if [ $2 = "HVScan1" ]; then 	
   if [ $3 = "convert" ]; then 
 #     runs='039 066 070 079 080 082 064 065 067 068 069 071 072 073 074 075 076 077 081 083 084 221 223 224 225 226 227 228 230 229 231 232 233'
@@ -118,6 +119,22 @@ if [ $2 = "HVScan1" ]; then
     cp $dataDir/rawHGCROC_232.root $dataDir/rawHGCROC_Muon_HVScan_46V_bottom.root #ok  
     cp $dataDir/rawHGCROC_233.root $dataDir/rawHGCROC_Muon_HVScan_46V_top.root #ok  
   fi
+#V2 summing board, new preamp settings 43V
+elif [ $2 = "HVScan2" ]; then 	
+  if [ $3 = "convert" ]; then 
+    runs='324 325 322 323 315 321 326 327 328 329 330 331' 
+    for runNr in $runs; do 
+      ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
+    done
+  fi  
+#V2 summing board, new preamp settings 43V  
+elif [ $2 = "HVScan3" ]; then 	
+  if [ $3 = "convert" ]; then 
+    runs='409 410 411 412 413 414 415 416 417 418 419 422' 
+    for runNr in $runs; do 
+      ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
+    done
+  fi  
 elif [ $2 = "FirstPosScanMuons" ]; then 	
   if [ $3 = "convert" ]; then 
     runs='039 040 041 042 043 044 045 046 047 048 049 050 051 052 053 054 055 056 057 058 059 060 061 062 063'
@@ -174,13 +191,14 @@ elif [ $2 = "SetA-PosScanMuons" ]; then
 # 43 V, summing board V2, original default preamp settings
 elif [ $2 = "FullSetA" ]; then 
   if [ $3 = "convert" ]; then 
-#     runs='085 086 087 088 089 090 091 092 094 095 096 097 098 099 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 123 124 125 126' #full list
-        runs='107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 123 124 125 126' 
+#     runs='085 086 087 088 089 090 091 092 094 095 096 097 098 099 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126' #full list
+#     runs='122' 
+#         runs='107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 123 124 125 126' 
     #   runs='085 120' #pedestals
     #   runs='088 086 087 090 089 092 091' #muons set 1
     #   runs='121 122 123 124 125 126' #muons set 2
     #   runs='098 096 099 100 101 101 102 103 104 105 106 097 108' #pi-
-    #   runs='109 110 111 112 113 114 115 116 117 118 119 095 094' #h+
+    #   runs='109 110 111 112 113 114 115 116 117 118 119 095 094 093' #h+
     for runNr in $runs; do 
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done
@@ -210,7 +228,7 @@ elif [ $2 = "FullSetB" ]; then
 #     runs='189 190 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 217 218 219 220' #full list
     runs='205 206 207 208 209 210 211 212 213 214 215 217 218 219 220' #full list
     #   runs='215' #pedestals
-    #   runs='189 190 192 193' #muons set 1
+    #   runs='189 190 191 192 193' #muons set 1
     #   runs='217 218 219 220' #muons set 2
     #   runs='194 195 196 197 198 199 200 201 202 203 204' #pi-
     #   runs='205 206 207 208 209 210 211 212 213 214' #h+
@@ -218,7 +236,7 @@ elif [ $2 = "FullSetB" ]; then
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done
   elif [ $3 = "merge" ]; then 
-    runs='189 190 192 193 ' # set 1
+    runs='189 190 191 192 193 ' # set 1
     echo $runs > runList.txt
     MergeMuonsFileList $dataDir runList.txt Muon_FullSetB_1  #ok
     runs='217 218 219 220 ' # set 2
@@ -248,52 +266,52 @@ elif [ $2 = "FullSetC" ]; then
     #pi- merge
     runs='139 160 '
     echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt pi-_1GeV_FullSetA  #ok
+    MergeMuonsFileList $dataDir runList.txt pi-_1GeV_FullSetC  #ok
     runs='140 161'
     echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt pi-_2GeV_FullSetA  #ok
+    MergeMuonsFileList $dataDir runList.txt pi-_2GeV_FullSetC  #ok
     runs='141 162'
     echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt pi-_3GeV_FullSetA  #ok
+    MergeMuonsFileList $dataDir runList.txt pi-_3GeV_FullSetC  #ok
     runs='142 163 '
     echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt pi-_4GeV_FullSetA  #ok
+    MergeMuonsFileList $dataDir runList.txt pi-_4GeV_FullSetC  #ok
     runs='143 164  '
     echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt pi-_5GeV_FullSetA  #ok
+    MergeMuonsFileList $dataDir runList.txt pi-_5GeV_FullSetC  #ok
     runs='144 165  '
     echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt pi-_6GeV_FullSetA  #ok
+    MergeMuonsFileList $dataDir runList.txt pi-_6GeV_FullSetC  #ok
     runs='145 166  '
     echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt pi-_7GeV_FullSetA  #ok
+    MergeMuonsFileList $dataDir runList.txt pi-_7GeV_FullSetC  #ok
     runs='146 167  '
     echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt pi-_8GeV_FullSetA  #ok
-    cp $dataDir/rawHGCROC_150.root $dataDir/rawHGCROC_pi-_9GeV_FullSetA.root 
+    MergeMuonsFileList $dataDir runList.txt pi-_8GeV_FullSetC  #ok
+    cp $dataDir/rawHGCROC_150.root $dataDir/rawHGCROC_pi-_9GeV_FullSetC.root 
     runs='151 152  '
     echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt pi-_10GeV_FullSetA  #ok
+    MergeMuonsFileList $dataDir runList.txt pi-_10GeV_FullSetC  #ok
     
     # had merge
     runs='149 168'
     echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt Had+_6GeV_FullSetA  #ok
+    MergeMuonsFileList $dataDir runList.txt Had+_6GeV_FullSetC  #ok
     runs='148 169'
     echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt Had+_7GeV_FullSetA  #ok
+    MergeMuonsFileList $dataDir runList.txt Had+_7GeV_FullSetC  #ok
     runs='147 170'
     echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt Had+_8GeV_FullSetA  #ok
+    MergeMuonsFileList $dataDir runList.txt Had+_8GeV_FullSetC  #ok
 
   fi  
 # 44V, summing board V2, new preamp settings 
 elif [ $2 = "FullSetD" ]; then 
   if [ $3 = "convert" ]; then 
-    runs='238 242 241 240 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265' #full list
+#     runs='238 242 241 240 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269' #full list
     #   runs='238 265' #pedestals
     #   runs='242 241 240 244' #muons set 1
-    #   runs='266 267 268 269' #muons set 2
+      runs='266 267 268 269' #muons set 2
     #   runs='245 246 247 248 249 250 251 252 253 254' #pi-
     #   runs='255 256 257 258 259 260 261 262 263 264' #h+
     for runNr in $runs; do 
@@ -329,6 +347,101 @@ elif [ $2 = "FullSetE" ]; then
     MergeMuonsFileList $dataDir runList.txt Muon_FullSetE_2  #ok
     runs='292 293'
     echo $runs > runList.txt
-    MergeMuonsFileList $dataDir runList.txt pi-_1GeV_FullSetA  #ok
+    MergeMuonsFileList $dataDir runList.txt pi-_1GeV_FullSetE  #ok
+  fi
+# 42V, summing board V2, new preamp settings 
+elif [ $2 = "FullSetF" ]; then 
+  if [ $3 = "convert" ]; then 
+    runs='338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 ' #full list
+    #   runs='338 366' #pedestals
+    #   runs='339 340 341 342 343 344' #muons set 1
+    #   runs='367 368 369 370 ' #muons set 2
+    #   runs='345 346 347 348 349 350 351 352 353 354 355' #pi-
+    #   runs='356 357 358 359 360 361 362 363 364 365' #h+
+    for runNr in $runs; do 
+      ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
+    done
+  elif [ $3 = "merge" ]; then 
+    runs='339 340 341 342 343 344' # set 1
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_FullSetF_1  #ok
+    runs='367 368 369 370 ' # set 2
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_FullSetF_2  #ok
+    runs='346 347'
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt pi-_2GeV_FullSetF  #ok
+  fi
+# 43V, summing board V1, new preamp settings 
+elif [ $2 = "FullSetG" ]; then 
+  if [ $3 = "convert" ]; then 
+    runs='379 404 380 381 382 383 405 406 407 408 384 385 386 387 388 389 390 391 392 393 394 395 396 397 398 399 400 401 402 403' #full list
+    #   runs='379 404' #pedestals
+    #   runs='380 381 382 383' #muons set 1
+    #   runs='405 406 407 408' #muons set 2
+    #   runs='384 385 386 387 388 389 390 391 392 393' #pi-
+    #   runs='394 395 396 397 398 399 400 401 402 403' #h+
+    for runNr in $runs; do 
+      ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
+    done
+  elif [ $3 = "merge" ]; then 
+    runs='380 381 382 383' # set 1
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_FullSetG_1  #ok
+    runs='405 406 407 408' # set 2
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_FullSetG_2  #ok
+  fi
+# 44V, summing board V1, new preamp settings - large scintillator paddles for all had
+elif [ $2 = "FullSetH" ]; then 
+  if [ $3 = "convert" ]; then 
+#     runs='425 427 428 429 430 450 447 446 445 444 436 435 434 433 431 432 451 449 448 443 442 441 440 439 438 437' #full list
+    runs='429 430 450 447 446 445 444 436 435 434 433 431 432 451 449 448 443 442 441 440 439 438 437' #full list
+    #   runs='425' #pedestals
+    #   runs='427 428 429 430' #muons set 1
+    #   runs='' #muons set 2
+    #   runs='450 447 446 445 444 436 435 434 433 431 432' #pi-
+    #   runs='451 449 448 443 442 441 440 439 438 437' #h+
+    for runNr in $runs; do 
+      ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
+    done
+  elif [ $3 = "merge" ]; then 
+    runs='427 428 429 430' # set 1
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_FullSetG_1  #ok
+    runs='431 432'
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt pi-_10GeV_FullSetG  #ok
+  fi  
+# 44V, summing board V1, new preamp settings - large scintillator paddles for all had
+elif [ $2 = "PartSetI" ]; then 
+  if [ $3 = "convert" ]; then 
+#     runs='425 427 428 429 430 464 463 456 455 454 453 452 461 460 459 458 457 462 463 464' #full list
+    runs='428 429 430 464 463 456 455 454 453 452 461 460 459 458 457 462 463 464' #full list
+    #   runs='425 462' #pedestals
+    #   runs='427 428 429 430' #muons set 1
+    #   runs='464 463' #muons set 2
+    #   runs='456 455 454 453 452' #pi-
+    #   runs='461 460 459 458 457' #h+
+    for runNr in $runs; do 
+      ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
+    done
+  elif [ $3 = "merge" ]; then 
+    runs='427 428 429 430' # set 1
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_FullSetI_1  #ok
+    runs='427 428 429 430' # set 1
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_FullSetI_1  #ok
+  fi    
+elif [ $2 = "NoSet" ]; then 
+  if [ $3 = "convert" ]; then   
+#     runs='137 138 172 173 174 175 176 185 186 187 235 236 237 239 243 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 298 332 333 334 335 336 337 371 372 373 374 375 376 377 378 420 421 426 565 466 467 468'
+#     runs='234 191 188 127 128 129 112 093'
+#     runs='423 424'
+    runs='465'
+    for runNr in $runs; do 
+      ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
+    done
   fi
 fi
