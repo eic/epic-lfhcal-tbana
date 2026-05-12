@@ -74,7 +74,7 @@
   }
   
   struct RunInfo{
-    RunInfo(): runNr(0), species(""), pdg(0), energy(0), vop(0), vbr(0), lgSet(0), hgSet(0), posX(0), posY(0), shapetime(0), assemblyNr(0), year(-1), month(-1), readout(""), facility(""), beamline(""), samples(0), trigDelay(0) {}
+    RunInfo(): runNr(0), species(""), pdg(0), energy(0), vop(0), vbr(0), lgSet(0), hgSet(0), posX(0), posY(0), shapetime(0), assemblyNr(0), year(-1), month(-1), readout(""), facility(""), beamline(""), samples(0), trigDelay(0), trigDead(0), phase(0), nFPGA(0), nASIC(0), rf(12), cf(10), cc(12), cfcomp(10), temp(20.), injMode(0), injDAC(0) {}
     int runNr;
     TString species;
     int pdg;
@@ -98,6 +98,13 @@
     int phase;
     int nFPGA;
     int nASIC;
+    int rf;
+    int cf;
+    int cc; 
+    int cfcomp;
+    float temp;
+    int injMode;  // 0: low, 1: high, 2:2.5V
+    int injDAC;
   } ;
 
   TString GetStringFromRunInfo(RunInfo, Int_t);
@@ -162,32 +169,69 @@
       tempRun.readout = readout;
       tempRun.year    = year; 
       tempRun.month    = month; 
-      tempRun.runNr    = ((TString)((TObjString*)tempArr->At(0))->GetString()).Atoi();
-      tempRun.species  =  (TString)((TObjString*)tempArr->At(1))->GetString();
-      tempRun.pdg      = ((TString)((TObjString*)tempArr->At(2))->GetString()).Atoi();
-      tempRun.energy   = ((TString)((TObjString*)tempArr->At(3))->GetString()).Atof();
-      tempRun.vop      = ((TString)((TObjString*)tempArr->At(4))->GetString()).Atof();
-      tempRun.vbr      = ((TString)((TObjString*)tempArr->At(5))->GetString()).Atof();
       
-      if (readout.CompareTo("CAEN") == 0){
-        tempRun.hgSet    = ((TString)((TObjString*)tempArr->At(6))->GetString()).Atoi();
-        tempRun.lgSet    = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
-        if (tempArr->GetEntries() > 10){
-         tempRun.shapetime = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atof();
+      // normal run 
+      if (beamline.CompareTo("injection") != 0){
+        tempRun.runNr    = ((TString)((TObjString*)tempArr->At(0))->GetString()).Atoi();
+        tempRun.species  =  (TString)((TObjString*)tempArr->At(1))->GetString();
+        tempRun.pdg      = ((TString)((TObjString*)tempArr->At(2))->GetString()).Atoi();
+        tempRun.energy   = ((TString)((TObjString*)tempArr->At(3))->GetString()).Atof();
+        tempRun.vop      = ((TString)((TObjString*)tempArr->At(4))->GetString()).Atof();
+        tempRun.vbr      = ((TString)((TObjString*)tempArr->At(5))->GetString()).Atof();
+        
+        if (readout.CompareTo("CAEN") == 0){
+          tempRun.hgSet    = ((TString)((TObjString*)tempArr->At(6))->GetString()).Atoi();
+          tempRun.lgSet    = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
+          if (tempArr->GetEntries() > 10){
+          tempRun.shapetime = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atof();
+          }
+        } else {
+          tempRun.trigDelay = ((TString)((TObjString*)tempArr->At(6))->GetString()).Atoi();
+          tempRun.samples   = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
+          tempRun.trigDead  = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atoi();
+          tempRun.phase     = ((TString)((TObjString*)tempArr->At(11))->GetString()).Atoi();
+          tempRun.nFPGA     = ((TString)((TObjString*)tempArr->At(12))->GetString()).Atoi();
+          tempRun.nASIC     = ((TString)((TObjString*)tempArr->At(13))->GetString()).Atoi();
         }
+        tempRun.posX    = ((TString)((TObjString*)tempArr->At(8))->GetString()).Atoi();
+        tempRun.posY    = ((TString)((TObjString*)tempArr->At(9))->GetString()).Atoi();
+        if (specialData == 1) tempRun.assemblyNr = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atoi();
+        
+        tempRun.rf        = 12;
+        tempRun.cf        = 10;
+        tempRun.cc        = 12;
+        tempRun.cfcomp    = 10;
+        tempRun.temp      = -1.;
+        tempRun.injMode   = -1;
+        tempRun.injDAC    = -1;
+       
+        if (debug > 1) std::cout << "Run " << tempRun.runNr << "\t species: " << tempRun.species << "\t energy: "  << tempRun.energy << "\t Vop: " << tempRun.vop << "\t Vov: " << tempRun.vop-tempRun.vbr << "\t Xbeam: " << tempRun.posX<< "\t Ybeam: " << tempRun.posY << "\t shaping time: " << tempRun.shapetime << std::endl;
+  
+      // injection tests
       } else {
-        tempRun.trigDelay = ((TString)((TObjString*)tempArr->At(6))->GetString()).Atoi();
-        tempRun.samples   = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
-        tempRun.trigDead  = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atoi();
-        tempRun.phase     = ((TString)((TObjString*)tempArr->At(11))->GetString()).Atoi();
-        tempRun.nFPGA     = ((TString)((TObjString*)tempArr->At(12))->GetString()).Atoi();
-        tempRun.nASIC     = ((TString)((TObjString*)tempArr->At(13))->GetString()).Atoi();
+        tempRun.runNr    = ((TString)((TObjString*)tempArr->At(0))->GetString()).Atoi();
+        tempRun.species  =  (TString)((TObjString*)tempArr->At(1))->GetString();
+        tempRun.pdg      = 0;
+        tempRun.energy   = 0.;
+        tempRun.vop      = ((TString)((TObjString*)tempArr->At(2))->GetString()).Atof();
+        tempRun.vbr      = ((TString)((TObjString*)tempArr->At(3))->GetString()).Atof();
+        tempRun.posX     = 0.;
+        tempRun.posY     = 0.;
+        tempRun.samples   = ((TString)((TObjString*)tempArr->At(4))->GetString()).Atoi();
+        tempRun.trigDelay = 0;
+        tempRun.trigDead  = ((TString)((TObjString*)tempArr->At(5))->GetString()).Atoi();
+        tempRun.phase     = ((TString)((TObjString*)tempArr->At(6))->GetString()).Atoi();
+        tempRun.nFPGA     = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
+        tempRun.nASIC     = ((TString)((TObjString*)tempArr->At(8))->GetString()).Atoi();
+        tempRun.rf        = ((TString)((TObjString*)tempArr->At(9))->GetString()).Atoi();
+        tempRun.cf        = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atoi();
+        tempRun.cc        = ((TString)((TObjString*)tempArr->At(11))->GetString()).Atoi();
+        tempRun.cfcomp    = ((TString)((TObjString*)tempArr->At(12))->GetString()).Atoi();
+        tempRun.temp      = 20.;
+        tempRun.injMode   = ((TString)((TObjString*)tempArr->At(13))->GetString()).Atoi();
+        tempRun.injDAC    = ((TString)((TObjString*)tempArr->At(14))->GetString()).Atoi();
+        if (debug > 1) std::cout << "Run " << tempRun.runNr << "\t type: " << tempRun.species << "\t Vop: " << tempRun.vop << "\t Vov: " << tempRun.vop-tempRun.vbr << "\t RF: " << tempRun.rf <<"\t CF: " << tempRun.cf<< "\t CC: " << tempRun.cc<< "\t CFcomp: "<< tempRun.cfcomp<< "\t inj mode: " << tempRun.injMode<< "\t inj value: "<< tempRun.injDAC<< std::endl;
       }
-      tempRun.posX    = ((TString)((TObjString*)tempArr->At(8))->GetString()).Atoi();
-      tempRun.posY    = ((TString)((TObjString*)tempArr->At(9))->GetString()).Atoi();
-      if (specialData == 1) tempRun.assemblyNr = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atoi();
-                  
-      if (debug > 1) std::cout << "Run " << tempRun.runNr << "\t species: " << tempRun.species << "\t energy: "  << tempRun.energy << "\t Vop: " << tempRun.vop << "\t Vov: " << tempRun.vop-tempRun.vbr << "\t Xbeam: " << tempRun.posX<< "\t Ybeam: " << tempRun.posY << "\t shaping time: " << tempRun.shapetime << std::endl;
       runs[tempRun.runNr]=tempRun;
     }
     std::cout << year << "-" << month << "\t:\t" << facility.Data() << "-" << beamline.Data() << "\t Readout: " << readout.Data() << std::endl;
@@ -241,6 +285,7 @@
     }
   }
   
+  
   inline Double_t ReturnMipPlotRangeDepVov(double Vov, bool isHG, ReadOut::Type type){
     if (type == ReadOut::Type::Caen){
       if (isHG){
@@ -281,6 +326,127 @@
     } else {
       return -25.;
     }
+  }
+  
+  inline Double_t ReturnRFValue(int rf, int debug = 0){
+    if (debug) std::cout << "RF:  " << rf ;
+    Double_t rfOhm = 0;
+    if ((rf - 8) >= 0){
+      rfOhm = rfOhm+25;
+      rf = rf-8;
+    }  
+    if ((rf - 4) >= 0){
+      rfOhm = rfOhm+50;
+      rf = rf-4;
+    }  
+    if ((rf - 2) >= 0){
+      rfOhm = rfOhm+66.66;
+      rf = rf-2;
+    }  
+    if ((rf - 1) == 0){
+      rfOhm = rfOhm+100;
+      rf = rf-1;
+    }
+    if (debug) std::cout << "\t" << rfOhm << " kOhm" << std::endl;
+    return rfOhm;
+  }
+  
+  inline Double_t ReturnCFValue(int cf, int debug = 0){
+    if (debug) std::cout << "CF:  " << cf ;
+    Double_t cffF = 0;
+    if ((cf - 8) >= 0){
+      cffF = cffF+400;
+      cf = cf-8;
+    }  
+    if ((cf - 4) >= 0){
+      cffF = cffF+200;
+      cf = cf-4;
+    }  
+    if ((cf - 2) >= 0){
+      cffF = cffF+100;
+      cf = cf-2;
+    }  
+    if ((cf - 1) == 0){
+      cffF = cffF+50;
+      cf = cf-1;
+    }
+    if (debug) std::cout << "\t" << cffF << " fF" << std::endl;
+    return cffF;
+  }
+  
+  inline Double_t ReturnCFCompValue(int cf, int debug = 0){
+    if (debug) std::cout << "CFComp:  " << cf ;
+    Double_t cffF = 0;
+    if ((cf - 8) >= 0){
+      cffF = cffF+400;
+      cf = cf-8;
+    }  
+    if ((cf - 4) >= 0){
+      cffF = cffF+200;
+      cf = cf-4;
+    }  
+    if ((cf - 2) >= 0){
+      cffF = cffF+100;
+      cf = cf-2;
+    }  
+    if ((cf - 1) == 0){
+      cffF = cffF+50;
+      cf = cf-1;
+    }
+    if (debug) std::cout << "\t" << cffF << " fF" << std::endl;
+    return cffF;
+  }
+  
+  inline Double_t ReturnCCValue(int cc, int debug = 0){
+    if (debug) std::cout << "CFComp:  " << cc ;
+    Double_t ccVal = 0;
+    if ((cc - 8) >= 0){
+      ccVal = ccVal+0.2;
+      cc = cc-8;
+    }  
+    if ((cc - 4) >= 0){
+      ccVal = ccVal+0.1;
+      cc = cc-4;
+    }  
+    if ((cc - 2) >= 0){
+      ccVal = ccVal+0.05;
+      cc = cc-2;
+    }  
+    if ((cc - 1) == 0){
+      ccVal = ccVal+0.025;
+      cc = cc-1;
+    }
+    if (debug) std::cout << "\t" << ccVal  << std::endl;
+    return ccVal;
+  }
+  
+  inline TString GetLabelHGCROCSettings(RunInfo currRunInfo){
+    TString label = "";
+    if (currRunInfo.rf > -1)
+      label = Form("%sRF=%.1fk#Omega ",label.Data() , ReturnRFValue(currRunInfo.rf));
+    if (currRunInfo.cf > -1)
+      label = Form("%sCF=%.1ffF ",label.Data() , ReturnCFValue(currRunInfo.cf));
+    if (currRunInfo.cfcomp > -1)
+      label = Form("%sCF_{comp}=%.1ffF ",label.Data() , ReturnCFCompValue(currRunInfo.cfcomp));
+    if (currRunInfo.cc > -1)
+      label = Form("%sCC=%.3f",label.Data() , ReturnCCValue(currRunInfo.cc));
+    return label;
+  }
+  inline TString GetLabelHGCROCSettingsCF(RunInfo currRunInfo){
+    TString label = "";
+    if (currRunInfo.cf > -1)
+      label = Form("%sCF=%.1ffF ",label.Data() , ReturnCFValue(currRunInfo.cf));
+    if (currRunInfo.cfcomp > -1)
+      label = Form("%sCF_{comp}=%.1ffF",label.Data() , ReturnCFCompValue(currRunInfo.cfcomp));
+    return label;
+  }
+  inline TString GetLabelHGCROCSettingsRFCC(RunInfo currRunInfo){
+    TString label = "";
+    if (currRunInfo.rf > -1)
+      label = Form("%sRF=%.1fk#Omega ",label.Data() , ReturnRFValue(currRunInfo.rf));
+    if (currRunInfo.cc > -1)
+      label = Form("%sCC=%.3f",label.Data() , ReturnCCValue(currRunInfo.cc));
+    return label;
   }
   
   // // Function to generate the CRC-32 lookup table at runtime (or compile time with C++11 constexpr)

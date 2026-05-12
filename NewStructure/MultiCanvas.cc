@@ -23,10 +23,11 @@ bool MultiCanvas::Initialize(int opt){
     // Single tile setup
     if ( detType ==  DetConf::Type::SingleTile){
       canvasMulti = new TCanvas(Form("canvasLayer%s",addName.Data()),"",0,0,620,600);
-      DefaultCanvasSettings( canvasMulti,0.12, 0.03, 0.03, 0.1);
-      legPlace_X[0] = 0.95;
-      legPlace_Y[0] = 0.95;
-      relTextSize[0] = {30./620};
+      DefaultCanvasSettings( canvasMulti,0.11, 0.01, 0.02, 0.08);
+      legPlace_X[0]   = 0.95;
+      legPlace_Y[0]   = 0.95;
+      textSize        = 26;
+      relTextSize[0]  = {(double)textSize/620.};
       init = true;
       
     // 2M module setup horizontal
@@ -56,13 +57,18 @@ bool MultiCanvas::Initialize(int opt){
       CreateCanvasAndPadsForDualModTBPlot(textSize, 0.03, addName);        
       maxPads       = 16;
       init = true;
-    // large TB setup 2026 (2x4 8M modules)
+    // medium TB setup 2026 (2x3 8M modules)
+    } else if ( detType ==  DetConf::Type::MediumTB){
+      CreateCanvasAndPadsForMediumLFHCalTBPlot( textSize, 0.035, addName);
+      maxPads       = 48;      
+      init = true;
+    // large TB setup 2028 (2x4 8M modules)
     } else if ( detType ==  DetConf::Type::LargeTB){
       init = false;
       std::cout << "Setup-1d: this option hasn't been implemented yet!" << std::endl;
     // full asic plot
     } else if ( detType ==  DetConf::Type::Asic){
-      CreateCanvasAndPadsForAsicLFHCalTBPlot( textSize, 0.045, addName);
+      CreateCanvasAndPadsForAsicLFHCalTBPlot( textSize, 0.035, addName);
       maxPads       = 64;      
       init = true;
     }
@@ -92,7 +98,8 @@ bool MultiCanvas::Initialize(int opt){
       DefaultCanvasSettings( canvasMulti,0.138, 0.08, 0.03, 0.1);
       legPlace_X[0] = 0.175;
       legPlace_Y[0] = 0.95;
-      relTextSize[0] = 30./620;
+      textSize        = 26;
+      relTextSize[0]  = {(double)textSize/620.};
       maxPads       = 1;
       init = true;
     // 4M module setup
@@ -122,7 +129,11 @@ bool MultiCanvas::Initialize(int opt){
       CreateCanvasAndPadsForDualModTBPlot(textSize, 0.045, addName+"Prof", true);
       maxPads       = 16;
       init = true;
-
+    // medium TB setup 2026 (2x3 8M modules)
+    } else if ( detType ==  DetConf::Type::MediumTB){
+      CreateCanvasAndPadsForMediumLFHCalTBPlot( textSize, 0.035, addName+"Prof", true);
+      maxPads       = 48;      
+      init = true;
     // large TB setup 2026 (2x4 8M modules)
     } else if ( detType == DetConf::Type::LargeTB){
       init = false;
@@ -130,7 +141,7 @@ bool MultiCanvas::Initialize(int opt){
         
     // full asic plot
     } else if ( detType == DetConf::Type::Asic){
-      CreateCanvasAndPadsForAsicLFHCalTBPlot( textSize, 0.045, addName+"Prof", true);
+      CreateCanvasAndPadsForAsicLFHCalTBPlot( textSize, 0.035, addName+"Prof", true);
       maxPads       = 64;
       init = true;
     }
@@ -474,9 +485,9 @@ void MultiCanvas::CreateCanvasAndPadsForDualModTBPlot(Int_t textSizePixel,
   } else {
     for (int i = 0; i < 16; i++){
       if (i%4 == 0)
-        legPlace_X[i]  = 1-relativeMarginsX[0];
+        legPlace_X[i]  = relativeMarginsX[0];
       else 
-        legPlace_X[i]  = 1-relativeMarginsX[1];
+        legPlace_X[i]  = relativeMarginsX[1];
     }
   }
   
@@ -584,6 +595,98 @@ void MultiCanvas::CreateCanvasAndPadsForAsicLFHCalTBPlot(Int_t textSizePixel,
   return;
 }   
 
+//********************************************************************************************************************************
+//******** CreateCanvasAndPadsFor8PannelTBPlot ***********************************************************************************
+//********************************************************************************************************************************
+void MultiCanvas::CreateCanvasAndPadsForMediumLFHCalTBPlot(Int_t textSizePixel,
+                                                          Double_t marginLeft, 
+                                                          TString add, 
+                                                          bool rightCorner, 
+                                                          int debug
+                                                          ){
+  Double_t arrayBoundX[9];
+  Double_t arrayBoundY[7];
+  Double_t relativeMarginsX[3];
+  Double_t relativeMarginsY[3];
+  ReturnCorrectValuesForCanvasScaling(3300,2475, 6, 8,marginLeft, 0.005, 0.005,marginLeft,arrayBoundX,arrayBoundY,relativeMarginsX,relativeMarginsY, debug);
+
+  canvasMulti = new TCanvas(Form("canvas6x8Panel%s", add.Data()),"",0,0,3300,2475);  // gives the page size
+  canvasMulti->cd();
+
+  for (int k = 0; k< 8; k++){
+    padMulti[k+0*8]   = new TPad(Form("pad8x8Panel%s_%d", add.Data(),k+0*8), "", arrayBoundX[k], arrayBoundY[6], arrayBoundX[k+1], arrayBoundY[5],-1, -1, -2);
+    padMulti[k+1*8]   = new TPad(Form("pad8x8Panel%s_%d", add.Data(),k+8), "", arrayBoundX[k], arrayBoundY[5], arrayBoundX[k+1], arrayBoundY[4],-1, -1, -2);
+    padMulti[k+2*8]   = new TPad(Form("pad8x8Panel%s_%d", add.Data(),k+2*8), "", arrayBoundX[k], arrayBoundY[4], arrayBoundX[k+1], arrayBoundY[3],-1, -1, -2);
+    padMulti[k+3*8]   = new TPad(Form("pad8x8Panel%s_%d", add.Data(),k+3*8), "", arrayBoundX[k], arrayBoundY[3], arrayBoundX[k+1], arrayBoundY[2],-1, -1, -2);
+    padMulti[k+4*8]   = new TPad(Form("pad8x8Panel%s_%d", add.Data(),k+4*8), "", arrayBoundX[k], arrayBoundY[2], arrayBoundX[k+1], arrayBoundY[1],-1, -1, -2);
+    padMulti[k+5*8]   = new TPad(Form("pad8x8Panel%s_%d", add.Data(),k+5*8), "", arrayBoundX[k], arrayBoundY[1], arrayBoundX[k+1], arrayBoundY[0],-1, -1, -2);
+  }
+      
+  for (int k = 0; k < 48; k++){ 
+    // 0th column
+    if (k%8 ==0 && k > 7 && k < 40 )
+      DefaultPadSettings( padMulti[k], relativeMarginsX[0], relativeMarginsX[1], relativeMarginsY[1], relativeMarginsY[1]);
+    else if (k == 0)
+      DefaultPadSettings( padMulti[k], relativeMarginsX[0], relativeMarginsX[1], relativeMarginsY[1], relativeMarginsY[2]);
+    else if (k == 56)
+      DefaultPadSettings( padMulti[k], relativeMarginsX[0], relativeMarginsX[1], relativeMarginsY[0], relativeMarginsY[1]);
+    
+    //5th column
+    else if (k%8 ==7 && k > 7 && k < 40 )
+      DefaultPadSettings( padMulti[k], relativeMarginsX[1], relativeMarginsX[2], relativeMarginsY[1], relativeMarginsY[1]);
+    else if (k == 7)
+      DefaultPadSettings( padMulti[k], relativeMarginsX[1], relativeMarginsX[2], relativeMarginsY[1], relativeMarginsY[2]);
+    else if (k == 47)
+      DefaultPadSettings( padMulti[k], relativeMarginsX[1], relativeMarginsX[2], relativeMarginsY[0], relativeMarginsY[1]);
+    
+    // bottom row
+    else if (k > 0 && k < 7)
+      DefaultPadSettings( padMulti[k], relativeMarginsX[1], relativeMarginsX[1], relativeMarginsY[1], relativeMarginsY[2]);
+    // top row
+    else if (k > 40 && k < 47)
+      DefaultPadSettings( padMulti[k], relativeMarginsX[1], relativeMarginsX[1], relativeMarginsY[0], relativeMarginsY[1]);
+    // everything in the middle
+    else 
+      DefaultPadSettings( padMulti[k], relativeMarginsX[1], relativeMarginsX[1], relativeMarginsY[1], relativeMarginsY[1]);
+  }
+  
+  // everything except top row
+  for (int i = 0; i < 40; i++)
+    legPlace_Y[i]  = 1-relativeMarginsY[1];
+  // top row
+  for (int i = 40; i < 48; i++)
+    legPlace_Y[i]  = 1-relativeMarginsY[0];
+  
+  // right corner
+  if (rightCorner){
+    for (int i = 0; i < 48; i++){
+      if (i%8 == 7)
+        legPlace_X[i]  = 1-relativeMarginsX[2];
+      else 
+        legPlace_X[i]  = 1-relativeMarginsX[1];
+    }
+  // left corner
+  } else {
+    for (int i = 0; i < 48; i++){
+      if (i%8 == 0)
+        legPlace_X[i]  = relativeMarginsX[0];
+      else 
+        legPlace_X[i]  = relativeMarginsX[1];
+    }
+  }
+  
+  for (Int_t p = 0; p < 48; p++){
+    if (padMulti[p]->XtoPixel(padMulti[p]->GetX2()) < padMulti[p]->YtoPixel(padMulti[p]->GetY1())){
+      relTextSize[p]  = (Double_t)textSizePixel/padMulti[p]->XtoPixel(padMulti[p]->GetX2()) ;
+    } else {
+      relTextSize[p]  = (Double_t)textSizePixel/padMulti[p]->YtoPixel(padMulti[p]->GetY1());
+    }
+    if(debug > 1)std::cout << p << "\t" << legPlace_X[p]<< "\t" << legPlace_Y[p] << "\t" << relTextSize[p] << std::endl;
+  }
+  return;
+}   
+
+
 
 //__________________________________________________________________________________________________________
 void MultiCanvas::DefaultCanvasSettings( TCanvas* c1,
@@ -687,11 +790,54 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
                                   relTextSize, textSize, 
                                   spectra, option, xPMin, xPMax, scaleYMax, l,
                                   Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
+    } 
+  // 2x3 8M module plotting - 2026 TB setup
+  } else if ( detType == DetConf::Type::MediumTB){
+    std::cout << "PlotNoiseWithFits: this option hasn't been implemented yet!" << std::endl;
+    return;
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }    
+      if (!calib->IsLayerEnabled(l,-1)){
+        std::cout << "====> layer " << l << " all channels masked" << std::endl;
+        continue;
+      }        
+      
+      // PlotNoiseWithFits2ModLayer (canvasMulti, padMulti, legPlace_X, legPlace_Y, 
+      //                             relTextSize, textSize, 
+      //                             spectra, option, xPMin, xPMax, scaleYMax, l,
+      //                             Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
+    } 
+  // 2x4 8M module plotting - 2028 TB setup
+  } else if ( detType == DetConf::Type::LargeTB){
+    std::cout << "PlotNoiseWithFits: this option hasn't been implemented yet!" << std::endl;
+    return;
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }    
+      if (!calib->IsLayerEnabled(l,-1)){
+        std::cout << "====> layer " << l << " all channels masked" << std::endl;
+        continue;
+      }        
     }
+  // full asic plot
+  } else if ( detType == DetConf::Type::Asic){
+    std::cout << "PlotNoiseWithFits: this option hasn't been implemented yet!" << std::endl; 
+    // for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
+
+    // }
   }
 }  
   
-  
+
 //_____________________________________________________________________________________________________________
 // plotting wrapper for 2D correlation plots
 //_____________________________________________________________________________________________________________
@@ -773,6 +919,27 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
                            spectra, option, xPMin, xPMax, minY, maxY, l,
                            Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo, noCalib, triggerCha);
     }
+  // 2x3 8M module plotting - 2026 TB setup
+  } else if ( detType == DetConf::Type::MediumTB){
+    std::cout << "PlotCorr2DLayer: this option hasn't been implemented yet!" << std::endl;
+    return;
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }    
+      if (!calib->IsLayerEnabled(l,-1)){
+        std::cout << "====> layer " << l << " all channels masked" << std::endl;
+        continue;
+      }        
+      
+      // PlotNoiseWithFits2ModLayer (canvasMulti, padMulti, legPlace_X, legPlace_Y, 
+      //                             relTextSize, textSize, 
+      //                             spectra, option, xPMin, xPMax, scaleYMax, l,
+      //                             Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
+    } 
   // 2x4 8M module plotting - 2026 TB setup
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "PlotCorr2DLayer: this option hasn't been implemented yet!" << std::endl;
@@ -847,6 +1014,76 @@ void MultiCanvas::PlotNoiseAdvWithFits(  std::map<int,TileSpectra> spectra, std:
     std::cout << "PlotNoiseAdvWithFits: this option hasn't been implemented yet!" << std::endl;
   }
 }  
+
+//_____________________________________________________________________________________________________________
+// plotting wrapper for Spectra plots in noise region with fit and triggered distribution
+//_____________________________________________________________________________________________________________
+void MultiCanvas::Plot3SpectraOverlay(  std::map<int,TileSpectra> spectra, std::map<int,TileSpectra> spectraTrigg, std::map<int,TileSpectra> spectraNoise, 
+                                         int option, Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
+                                         TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int debug ){
+  
+  std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
+  Setup* setup = Setup::GetInstance();
+  // Single tile plotting
+  if (detType ==  DetConf::Type::SingleTile){
+    std::cout << "Plot3SpectraOverlay: this option hasn't been implemented yet!" << std::endl;
+  // Single 2M horizontal plotting    
+  } else if (detType ==  DetConf::Type::Single2MH){    
+    std::cout << "Plot3SpectraOverlay: this option hasn't been implemented yet!" << std::endl;
+  // 2M module setup vertical
+  } else if ( detType ==  DetConf::Type::Single2MV){
+    std::cout << "Plot3SpectraOverlay: this option hasn't been implemented yet!" << std::endl;
+  // Single 8M plotting    
+  } else if (detType ==  DetConf::Type::Single8M){
+    std::cout << "Plot3SpectraOverlay: this option hasn't been implemented yet!" << std::endl;
+  // Dual 8M plotting - 2025 TB setup
+  } else if (detType ==  DetConf::Type::Dual8M){  
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }    
+      if (!calib->IsLayerEnabled(l,-1)){
+        std::cout << "====> layer " << l << " all channels masked" << std::endl;
+        continue;
+      }        
+      Plot3SpectraOverlay2ModLayer (canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize, 
+                                     spectra, spectraTrigg, spectraNoise, option, xPMin, xPMax, scaleYMax, l, 
+                                     Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
+    }
+  // 2x3 8M module plotting - 2026 TB setup
+  } else if ( detType == DetConf::Type::MediumTB){
+    std::cout << "PlotNoiseAdvWithFits: this option hasn't been implemented yet!" << std::endl;
+    return;
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }    
+      if (!calib->IsLayerEnabled(l,-1)){
+        std::cout << "====> layer " << l << " all channels masked" << std::endl;
+        continue;
+      }        
+      
+      // PlotNoiseWithFits2ModLayer (canvasMulti, padMulti, legPlace_X, legPlace_Y, 
+      //                             relTextSize, textSize, 
+      //                             spectra, option, xPMin, xPMax, scaleYMax, l,
+      //                             Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
+    } 
+  // 2x4 8M module plotting - 2028 TB setup
+  } else if ( detType == DetConf::Type::LargeTB){
+    std::cout << "PlotNoiseAdvWithFits: this option hasn't been implemented yet!" << std::endl;
+        
+  // full asic plot
+  } else if ( detType == DetConf::Type::Asic){
+    std::cout << "PlotNoiseAdvWithFits: this option hasn't been implemented yet!" << std::endl;
+  }
+}  
+
 
 //_____________________________________________________________________________________________________________
 // plotting wrapper Spectra plots
@@ -927,7 +1164,28 @@ void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option,
                             spectra, option, xPMin, xPMax, scaleYMax, l,
                             Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
     }
-  // 2x4 8M module plotting - 2026 TB setup
+  // 2x3 8M module plotting - 2026 TB setup
+  } else if ( detType == DetConf::Type::MediumTB){
+    std::cout << "PlotSpectra: this option hasn't been implemented yet!" << std::endl;
+    return;
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }    
+      if (!calib->IsLayerEnabled(l,-1)){
+        std::cout << "====> layer " << l << " all channels masked" << std::endl;
+        continue;
+      }        
+      
+      // PlotNoiseWithFits2ModLayer (canvasMulti, padMulti, legPlace_X, legPlace_Y, 
+      //                             relTextSize, textSize, 
+      //                             spectra, option, xPMin, xPMax, scaleYMax, l,
+      //                             Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
+    } 
+  // 2x4 8M module plotting - 2028 TB setup
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "PlotSpectra: this option hasn't been implemented yet!" << std::endl;
         
@@ -988,7 +1246,49 @@ void MultiCanvas::PlotCorrWithFits( std::map<int,TileSpectra> spectra, int optio
                                 spectra, option, xPMin, xPMax, maxY, l,
                                 Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
     }
-  // 2x4 8M module plotting - 2026 TB setup
+  // 2x3 8M module plotting - 2026 TB setup
+  } else if ( detType == DetConf::Type::MediumTB){
+    std::cout << "PlotCorrWithFits: this option hasn't been implemented yet!" << std::endl;
+    return;
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }    
+      if (!calib->IsLayerEnabled(l,-1)){
+        std::cout << "====> layer " << l << " all channels masked" << std::endl;
+        continue;
+      }        
+      
+      // PlotNoiseWithFits2ModLayer (canvasMulti, padMulti, legPlace_X, legPlace_Y, 
+      //                             relTextSize, textSize, 
+      //                             spectra, option, xPMin, xPMax, scaleYMax, l,
+      //                             Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
+    } 
+  // 2x3 8M module plotting - 2026 TB setup
+  } else if ( detType == DetConf::Type::MediumTB){
+    std::cout << "PlotSpectra: this option hasn't been implemented yet!" << std::endl;
+    return;
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }    
+      if (!calib->IsLayerEnabled(l,-1)){
+        std::cout << "====> layer " << l << " all channels masked" << std::endl;
+        continue;
+      }        
+      
+      // PlotNoiseWithFits2ModLayer (canvasMulti, padMulti, legPlace_X, legPlace_Y, 
+      //                             relTextSize, textSize, 
+      //                             spectra, option, xPMin, xPMax, scaleYMax, l,
+      //                             Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
+    } 
+  // 2x4 8M module plotting - 2028 TB setup
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "PlotCorrWithFits: this option hasn't been implemented yet!" << std::endl;
         
@@ -1049,7 +1349,28 @@ void MultiCanvas::PlotMipWithFits(  std::map<int,TileSpectra> spectra, std::map<
                                 spectra, spectraTrigg, option, xPMin, xPMax, scaleYMax, l,
                                 Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
     }
-  // 2x4 8M module plotting - 2026 TB setup
+  // 2x3 8M module plotting - 2026 TB setup
+  } else if ( detType == DetConf::Type::MediumTB){
+    std::cout << "PlotMipWithFits: this option hasn't been implemented yet!" << std::endl;
+    return;
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }    
+      if (!calib->IsLayerEnabled(l,-1)){
+        std::cout << "====> layer " << l << " all channels masked" << std::endl;
+        continue;
+      }        
+      
+      // PlotNoiseWithFits2ModLayer (canvasMulti, padMulti, legPlace_X, legPlace_Y, 
+      //                             relTextSize, textSize, 
+      //                             spectra, option, xPMin, xPMax, scaleYMax, l,
+      //                             Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
+    } 
+  // 2x4 8M module plotting - 2028 TB setup
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "PlotMipWithFits: this option hasn't been implemented yet!" << std::endl;
         
@@ -1114,12 +1435,449 @@ void MultiCanvas::PlotTriggerPrim(  std::map<int,TileSpectra> spectra,
                               spectra, avMip, facLow, facHigh, xPMin, xPMax, scaleYMax, l, 
                               Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
     }
-  // 2x4 8M module plotting - 2026 TB setup
+  // 2x3 8M module plotting - 2026 TB setup
+  } else if ( detType == DetConf::Type::MediumTB){
+    std::cout << "PlotTriggerPrim: this option hasn't been implemented yet!" << std::endl;
+    return;
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }    
+      if (!calib->IsLayerEnabled(l,-1)){
+        std::cout << "====> layer " << l << " all channels masked" << std::endl;
+        continue;
+      }        
+      
+      // PlotNoiseWithFits2ModLayer (canvasMulti, padMulti, legPlace_X, legPlace_Y, 
+      //                             relTextSize, textSize, 
+      //                             spectra, option, xPMin, xPMax, scaleYMax, l,
+      //                             Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
+    } 
+  // 2x4 8M module plotting - 2028 TB setup
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "PlotTriggerPrim: this option hasn't been implemented yet!" << std::endl;
         
   // full asic plot
   } else if ( detType == DetConf::Type::Asic){
     std::cout << "PlotTriggerPrim: this option hasn't been implemented yet!" << std::endl;
+  }  
+}
+
+
+//_____________________________________________________________________________________________________________
+// plotting wrapper for Trending plots from Calib comparisions
+//_____________________________________________________________________________________________________________
+void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
+                                 Double_t xPMin, Double_t xPMax,
+                                 TString nameOutputBase, TString namePlot, TString suffix, 
+                                 RunInfo currRunInfo, int ExtPlot,
+                                 int debug){
+  
+  
+  std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
+  // std::cout << avMip << "\t" << facLow << "\t" << facHigh << std::endl;
+  // std::cout << xPMin << "\t" << xPMax << "\t" << scaleYMax << std::endl;
+  
+  Double_t minY = 9999;
+  Double_t maxY = 0.;
+  bool isSameVoltage    = true;
+  double commanVoltage  = 0;
+    
+  std::map<int, TileTrend>::iterator itrend;
+  for(itrend=trend.begin(); itrend!=trend.end(); ++itrend){      
+    if (option == 0){
+      if(minY>itrend->second.GetMinHGped()) minY=itrend->second.GetMinHGped();
+      if(maxY<itrend->second.GetMaxHGped()) maxY=itrend->second.GetMaxHGped();
+    } else if (option == 1){
+      if(minY>itrend->second.GetMinLGped()) minY=itrend->second.GetMinLGped();
+      if(maxY<itrend->second.GetMaxLGped()) maxY=itrend->second.GetMaxLGped();
+    } else if (option == 2){
+      if(minY>itrend->second.GetMinHGscale()) minY=itrend->second.GetMinHGscale();
+      if(maxY<itrend->second.GetMaxHGscale()) maxY=itrend->second.GetMaxHGscale();
+    } else if (option == 3){
+      if(minY>itrend->second.GetMinLGscale()) minY=itrend->second.GetMinLGscale();
+      if(maxY<itrend->second.GetMaxLGscale()) maxY=itrend->second.GetMaxLGscale();
+    } else if (option == 4){
+      if(minY>itrend->second.GetMinLGHGcorr()) minY=itrend->second.GetMinLGHGcorr();
+      if(maxY<itrend->second.GetMaxLGHGcorr()) maxY=itrend->second.GetMaxLGHGcorr();
+    } else if (option == 5){
+      if(minY>itrend->second.GetMinHGLGcorr()) minY=itrend->second.GetMinHGLGcorr();
+      if(maxY<itrend->second.GetMaxHGLGcorr()) maxY=itrend->second.GetMaxHGLGcorr();          
+    } else if (option == 6){
+      if(minY>itrend->second.GetMinTrigg()) minY=itrend->second.GetMinTrigg();
+      if(maxY<itrend->second.GetMaxTrigg()) maxY=itrend->second.GetMaxTrigg();          
+    } else if (option == 7){
+      if(minY>itrend->second.GetMinSBSignal()) minY=itrend->second.GetMinSBSignal();
+      if(maxY<itrend->second.GetMaxSBSignal()) maxY=itrend->second.GetMaxSBSignal();          
+    } else if (option == 8){
+      if(minY>itrend->second.GetMinSBNoise()) minY=itrend->second.GetMinSBNoise();
+      if(maxY<itrend->second.GetMaxSBNoise()) maxY=itrend->second.GetMaxSBNoise();          
+    } else if (option == 9){
+      if(minY>itrend->second.GetMinHGMPV()) minY=itrend->second.GetMinHGMPV();
+      if(maxY<itrend->second.GetMaxHGMPV()) maxY=itrend->second.GetMaxHGMPV();          
+    } else if (option == 10){
+      if(minY>itrend->second.GetMinLGMPV()) minY=itrend->second.GetMinLGMPV();
+      if(maxY<itrend->second.GetMaxLGMPV()) maxY=itrend->second.GetMaxLGMPV();          
+    } else if (option == 11){
+      if(minY>itrend->second.GetMinHGLSigma()) minY=itrend->second.GetMinHGLSigma();
+      if(maxY<itrend->second.GetMaxHGLSigma()) maxY=itrend->second.GetMaxHGLSigma();          
+    } else if (option == 12){
+      if(minY>itrend->second.GetMinLGLSigma()) minY=itrend->second.GetMinLGLSigma();
+      if(maxY<itrend->second.GetMaxLGLSigma()) maxY=itrend->second.GetMaxLGLSigma();          
+    } else if (option == 13){
+      if(minY>itrend->second.GetMinHGGSigma()) minY=itrend->second.GetMinHGGSigma();
+      if(maxY<itrend->second.GetMaxHGGSigma()) maxY=itrend->second.GetMaxHGGSigma();          
+    } else if (option == 14){
+      if(minY>itrend->second.GetMinLGGSigma()) minY=itrend->second.GetMinLGGSigma();
+      if(maxY<itrend->second.GetMaxLGGSigma()) maxY=itrend->second.GetMaxLGGSigma();          
+    } else if (option == 15){
+      if(minY>itrend->second.GetMinHGpedwidth()) minY=itrend->second.GetMinHGpedwidth();
+      if(maxY<itrend->second.GetMaxHGpedwidth()) maxY=itrend->second.GetMaxHGpedwidth();          
+    } else if (option == 16){
+      if(minY>itrend->second.GetMinLGpedwidth()) minY=itrend->second.GetMinLGpedwidth();
+      if(maxY<itrend->second.GetMaxLGpedwidth()) maxY=itrend->second.GetMaxLGpedwidth();          
+    } else if (option == 17){
+      if(minY>itrend->second.GetMinLGHGOffset()) minY=itrend->second.GetMinLGHGOffset();
+      if(maxY<itrend->second.GetMaxLGHGOffset()) maxY=itrend->second.GetMaxLGHGOffset();          
+    } else if (option == 18){
+      if(minY>itrend->second.GetMinHGLGOffset()) minY=itrend->second.GetMinHGLGOffset();
+      if(maxY<itrend->second.GetMaxHGLGOffset()) maxY=itrend->second.GetMaxHGLGOffset();          
+    }
+  }
+  itrend=trend.begin();
+  for (int rc = 0; rc < itrend->second.GetNRuns() && rc < 30; rc++ ){
+    if (rc == 0){
+      commanVoltage = itrend->second.GetVoltage(rc);
+    } else {
+      if (commanVoltage != itrend->second.GetVoltage(rc))  isSameVoltage = false;
+    }
+  }    
+  
+  std::cout << "resetting  range  "  << minY << "\t"<< maxY << std::endl;
+
+  
+  
+  Setup* setup = Setup::GetInstance();
+  // Single tile plotting
+  if (detType ==  DetConf::Type::SingleTile){
+    std::cout << "PlotTrending: this option hasn't been implemented yet!" << std::endl;
+  // Single 2M horizontal plotting    
+  } else if (detType ==  DetConf::Type::Single2MH){    
+    std::cout << "PlotTrending: this option hasn't been implemented yet!" << std::endl;
+  // 2M module setup vertical
+  } else if ( detType ==  DetConf::Type::Single2MV){
+    std::cout << "PlotTrending: this option hasn't been implemented yet!" << std::endl;
+  // Single 8M plotting    
+  } else if (detType ==  DetConf::Type::Single8M){
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (l%10 == 0 && l > 0 && debug > 0)
+          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+        if (!setup->IsLayerOn(l,m)){
+          std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+          continue;
+        }
+        
+        PlotTrending8MLayer(      canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                                  trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commanVoltage, l, m,
+                                  Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
+                                  Form("%sTrend%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                  currRunInfo, ExtPlot);        
+      }
+    }
+  // Dual 8M plotting - 2025 TB setup
+  } else if (detType ==  DetConf::Type::Dual8M){  
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }    
+      PlotTrending2ModLayer (canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                             trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commanVoltage, l,
+                             Form("%s/SingleLayer/%s_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), l, suffix.Data()), 
+                             Form("%sTrend%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                             currRunInfo, ExtPlot);
+    }
+  // 2x3 8M module plotting - 2026 TB setup
+  } else if ( detType == DetConf::Type::MediumTB){
+    std::cout << "PlotTrending: this option hasn't been implemented yet!" << std::endl;
+    return;
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }          
+      // PlotNoiseWithFits2ModLayer (canvasMulti, padMulti, legPlace_X, legPlace_Y, 
+      //                             relTextSize, textSize, 
+      //                             spectra, option, xPMin, xPMax, scaleYMax, l,
+      //                             Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
+    } 
+  // 2x4 8M module plotting - 2028 TB setup
+  } else if ( detType == DetConf::Type::LargeTB){
+    std::cout << "PlotTrending: this option hasn't been implemented yet!" << std::endl;
+        
+  // full asic plot
+  } else if ( detType == DetConf::Type::Asic){
+    for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
+      std::cout << "====> asic " << a << "\t detailed plot option: " << ExtPlot<< std::endl;
+      PlotTrendingAsicLFHCal (canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                             trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commanVoltage, a,
+                             Form("%s/SingleLayer/%s_Asic%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), a, suffix.Data()), 
+                             Form("%sTrend%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                             currRunInfo, ExtPlot);
+    }
+  }  
+}
+
+
+//_____________________________________________________________________________________________________________
+// plotting wrapper for Trending plots from Calib comparisions
+//_____________________________________________________________________________________________________________
+void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nrun, int option,
+                                 Double_t xPMin, Double_t xPMax, Double_t yMin, Double_t yMax,
+                                 TString nameOutputBase, TString namePlot, TString suffix, 
+                                 RunInfo currRunInfo, int ExtPlot,
+                                 int debug, bool scaleInt){
+  
+  std::map<int, TileTrend>::iterator itrend;
+  if (yMax == -10000 && (option == 1) ||  (option == 3)){
+    for(itrend=trend.begin(); itrend!=trend.end(); ++itrend){      
+      if (option == 1){
+        if(yMax<itrend->second.GetMaxInjADC()) yMax=itrend->second.GetMaxInjADC();
+      } else if (option == 3){
+        if(yMax<itrend->second.GetMaxInjTOT()) yMax=itrend->second.GetMaxInjTOT();
+      }
+    }
+    yMax = yMax*1.25;
+    std::cout << "resetting max Y range to: " << yMax << std::endl;
+  }
+
+  std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
+  Setup* setup = Setup::GetInstance();
+  // Single tile plotting
+  if (detType ==  DetConf::Type::SingleTile){
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
+      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (l%10 == 0 && l > 0 && debug > 0)
+          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+        if (!setup->IsLayerOn(l,m)){
+          std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+          continue;
+        }    
+
+        PlotRunOverlayProfile1MLayer( canvasMulti, legPlace_X[0], legPlace_X[0]-0.8, legPlace_Y[0], relTextSize[0], textSize,
+                                      trend, nrun, option, xPMin,xPMax, yMin, yMax, l, m,
+                                      Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
+                                      Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                      currRunInfo, ExtPlot, scaleInt);        
+      }
+    }
+  // Single 2M horizontal plotting    
+  } else if (detType ==  DetConf::Type::Single2MH){    
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
+      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (l%10 == 0 && l > 0 && debug > 0)
+          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+        if (!setup->IsLayerOn(l,m)){
+          std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+          continue;
+        }
+        PlotRunOverlayProfile2MLayer( canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                                      trend, nrun, option, xPMin,xPMax, yMin, yMax, l, m,
+                                      Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
+                                      Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                      currRunInfo, ExtPlot, scaleInt);        
+
+      }
+    }
+  // 2M module setup vertical
+  } else if ( detType ==  DetConf::Type::Single2MV){
+    std::cout << "PlotRunOverlayProfile: this option hasn't been implemented yet!" << std::endl;
+  // Single 8M plotting    
+  } else if (detType ==  DetConf::Type::Single8M){
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (l%10 == 0 && l > 0 && debug > 0)
+          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+        if (!setup->IsLayerOn(l,m)){
+          std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+          continue;
+        }
+        
+        PlotRunOverlayProfile8MLayer( canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                                      trend, nrun, option, xPMin,xPMax, yMin, yMax, l, m,
+                                      Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
+                                      Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                      currRunInfo, ExtPlot, scaleInt);        
+      }
+    }
+  // Dual 8M plotting - 2025 TB setup
+  } else if (detType ==  DetConf::Type::Dual8M){  
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }    
+      PlotRunOverlayProfile2ModLayer( canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                                    trend, nrun, option, xPMin,xPMax, yMin, yMax, l,
+                                    Form("%s/SingleLayer/%s_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), l, suffix.Data()), 
+                                    Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                    currRunInfo, ExtPlot, scaleInt);        
+    }
+  // 2x3 8M module plotting - 2026 TB setup
+  } else if ( detType == DetConf::Type::MediumTB){
+    std::cout << "PlotRunOverlayProfile: this option hasn't been implemented yet!" << std::endl;
+    return;
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }          
+      // PlotNoiseWithFits2ModLayer (canvasMulti, padMulti, legPlace_X, legPlace_Y, 
+      //                             relTextSize, textSize, 
+      //                             spectra, option, xPMin, xPMax, scaleYMax, l,
+      //                             Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
+    } 
+  // 2x4 8M module plotting - 2028 TB setup
+  } else if ( detType == DetConf::Type::LargeTB){
+    std::cout << "PlotRunOverlayProfile: this option hasn't been implemented yet!" << std::endl;
+        
+  // full asic plot
+  } else if ( detType == DetConf::Type::Asic){
+    for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
+      std::cout << "====> asic " << a << std::endl;
+      PlotRunOverlayProfileAsicLFHCal (canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                             trend, nrun, option, xPMin,xPMax, yMin, yMax, a,
+                             Form("%s/SingleLayer/%s_Asic%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), a, suffix.Data()), 
+                             Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                             currRunInfo, ExtPlot, scaleInt);
+    }
+  }  
+}
+
+//_____________________________________________________________________________________________________________
+// plotting wrapper for overlaying spectra from different ReturnCorrectValuesTextSize
+//_____________________________________________________________________________________________________________
+void MultiCanvas::PlotRunOverlaySpectra(  std::map<int,TileTrend>  trend, int nrun, int option,
+                                 Double_t xPMin, Double_t xPMax,
+                                 TString nameOutputBase, TString namePlot, TString suffix, 
+                                 RunInfo currRunInfo, int ExtPlot,
+                                 int debug, bool plotMean){
+  
+  
+  std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
+  Setup* setup = Setup::GetInstance();
+  // Single tile plotting
+  if (detType ==  DetConf::Type::SingleTile){
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
+      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (l%10 == 0 && l > 0 && debug > 0)
+          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+        if (!setup->IsLayerOn(l,m)){
+          std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+          continue;
+        }    
+
+        PlotRunOverlay1MLayer (  canvasMulti, legPlace_X[0], legPlace_X[0]-0.8, legPlace_Y[0], relTextSize[0], textSize,
+                                 trend, nrun, option, xPMin,xPMax, l, m,
+                                 Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
+                                 Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                 currRunInfo, ExtPlot, plotMean);        
+      }
+    }
+  // Single 2M horizontal plotting    
+  } else if (detType ==  DetConf::Type::Single2MH){    
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
+      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (l%10 == 0 && l > 0 && debug > 0)
+          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+        if (!setup->IsLayerOn(l,m)){
+          std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+          continue;
+        }
+        PlotRunOverlay2MLayer (  canvasMulti, padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                                 trend, nrun, option, xPMin,xPMax, l, m,
+                                 Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
+                                 Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                 currRunInfo, ExtPlot);        
+      }
+    }
+  // 2M module setup vertical
+  } else if ( detType ==  DetConf::Type::Single2MV){
+    std::cout << "PlotRunOverlaySpectra: this option hasn't been implemented yet!" << std::endl;
+  // Single 8M plotting    
+  } else if (detType ==  DetConf::Type::Single8M){
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (l%10 == 0 && l > 0 && debug > 0)
+          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+        if (!setup->IsLayerOn(l,m)){
+          std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+          continue;
+        }
+        PlotRunOverlay8MLayer (   canvasMulti, padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                                  trend, nrun, option, xPMin,xPMax, l, m,
+                                  Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
+                                  Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                  currRunInfo, ExtPlot);
+      }
+    }
+  // Dual 8M plotting - 2025 TB setup
+  } else if (detType ==  DetConf::Type::Dual8M){  
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }    
+      PlotRunOverlay2ModLayer( canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                                trend, nrun, option, xPMin,xPMax, l,
+                                Form("%s/SingleLayer/%s_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), l, suffix.Data()), 
+                                Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                currRunInfo, ExtPlot);  
+    }
+  // 2x3 8M module plotting - 2026 TB setup    
+  } else if ( detType == DetConf::Type::MediumTB){
+    std::cout << "PlotRunOverlayProfile: this option hasn't been implemented yet!" << std::endl;
+    return;
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (l%5 == 0 && l > 0 && debug > 0)
+        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+      if (!setup->IsLayerOn(l,-1)){
+        std::cout << "====> layer " << l << " not enabled" << std::endl;
+        continue;
+      }          
+      // PlotNoiseWithFits2ModLayer (canvasMulti, padMulti, legPlace_X, legPlace_Y, 
+      //                             relTextSize, textSize, 
+      //                             spectra, option, xPMin, xPMax, scaleYMax, l,
+      //                             Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo);
+    } 
+  // 2x4 8M module plotting - 2028 TB setup
+  } else if ( detType == DetConf::Type::LargeTB){
+    std::cout << "PlotRunOverlaySpectra: this option hasn't been implemented yet!" << std::endl;
+        
+  // full asic plot
+  } else if ( detType == DetConf::Type::Asic){
+    std::cout << "PlotRunOverlaySpectra: this option hasn't been implemented yet!" << std::endl;
+    // for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
+    //   std::cout << "====> asic " << a << std::endl;
+    //   PlotTrendingAsicLFHCal (canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+    //                          trend, option, xPMin,xPMax, a,
+    //                          Form("%s/SingleLayer/%s_Asic%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), a, suffix.Data()), 
+    //                          Form("%sTrend%s" ,nameOutputBase.Data(),namePlot.Data()), 
+    //                          it->second, ExtPlot, scaleInt);
+    // }
   }  
 }

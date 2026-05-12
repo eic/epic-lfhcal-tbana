@@ -1,5 +1,5 @@
-#ifndef PLOTTHELPER_GENERAL_H
-#define PLOTTHELPER_GENERAL_H
+#ifndef PLOTHELPER_GENERAL_H
+#define PLOTHELPER_GENERAL_H
 
 
   //__________________________________________________________________________________________________________
@@ -148,6 +148,16 @@
   inline Color_t GetColorLayer(int l){
     Color_t colors[10] = {kBlack, kViolet+4, kBlue-3, kCyan+1, kGreen+1, kYellow-4, kOrange, kRed-4, kPink-5, kMagenta+2 };
     return colors[l%10];
+  }
+
+  //__________________________________________________________________________________________________________  
+  inline Style_t GetMarkerLayer(int l, bool full = false){
+    Style_t styles[10]      = {24, 25, 28, 30, 44, 46, 42, 27, 76, 89};
+    Style_t stylesFull[10]  = {20, 21, 34, 29, 45, 47, 43, 33, 41, 48};
+    if (full)
+      return stylesFull[(int)(l/5)];
+    else 
+      return styles[(int)(l/5)];
   }
 
   //__________________________________________________________________________________________________________  
@@ -813,6 +823,7 @@
           } else {
               TString beam = currRunInfo.species.Data();
               if (beam.CompareTo("Muon +") == 0) beam = "#mu^{+}";
+              if (beam.CompareTo("Muon -") == 0) beam = "#mu^{-}";
               if (beam.CompareTo("Electron") == 0) beam = "e^{-}";              
               if (beam.CompareTo("Positron") == 0) beam = "e^{+}";              
               if (beam.CompareTo("Pion -") == 0) beam = "#pi^{-}";              
@@ -827,6 +838,7 @@
           } else {
               TString beam = currRunInfo.species.Data();
               if (beam.CompareTo("Muon +") == 0) beam = "#mu^{+}";
+              if (beam.CompareTo("Muon -") == 0) beam = "#mu^{-}";
               if (beam.CompareTo("Electron") == 0) beam = "e^{-}";              
               if (beam.CompareTo("Positron") == 0) beam = "e^{+}";              
               if (beam.CompareTo("Pion -") == 0) beam = "#pi^{-}";              
@@ -843,6 +855,7 @@
           } else{
               TString beam = currRunInfo.species.Data();
               if (beam.CompareTo("Muon +") == 0) beam = "#mu^{+}";
+              if (beam.CompareTo("Muon -") == 0) beam = "#mu^{-}";
               if (beam.CompareTo("Electron") == 0) beam = "e^{-}";              
               if (beam.CompareTo("Positron") == 0) beam = "e^{+}";              
               if (beam.CompareTo("Pion -") == 0) beam = "#pi^{-}";              

@@ -154,7 +154,7 @@ bool Event::InspectIfLocalMuonTrigg( int currTileID,
                                      double minThrSc = 0.9, 
                                      double maxThrSc = 3
                                     ){
-  
+  Setup* setup = Setup::GetInstance();
   double trPrim = ((Tile*)GetTileFromID(currTileID))->GetLocalTriggerPrimitive();
   // std::cout << "Trigg Primitive & decision: " << averageScale*minThrSc  << "\t" << maxThrSc*averageScale << "\t" << trPrim << std::endl;
   // evaluate stored trigger primitive
@@ -312,8 +312,9 @@ double Event::CalculateLocalMuonTrigg(  Calib calib,
         avsurr +=tmpGain;
     } else {
       // TODO: THIS NEEDS TO BE REWORKED ONCE WE HAVE THE CROSS CALIB BETWEEN ADC & TOT
-      tmpGain = ((Hgcroc*)GetTileFromID(ids[t]))->GetIntegratedADC();
+      tmpGain = ((Hgcroc*)GetTileFromID(ids[t]))->GetIntegratedADC()/setup->GetLayersInSegment(ids[t]);
       avsurr +=tmpGain;
+      // std:: cout << tmpGain << "\t";
     }
   }
   if (activeTiles > 1)

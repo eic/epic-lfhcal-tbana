@@ -571,256 +571,76 @@ bool ComparisonCalib::ProcessCalib(void){
   }
   std::cout << "row max: " << setup->GetNMaxRow() << "\t column max: "  << setup->GetNMaxColumn() << std::endl;
   
-  if (setup->GetNMaxRow()+1 == 2 && setup->GetNMaxColumn()+1 == 4){
   
-    //******************************************************************************
-    // plotting trending for each layer separately
-    //******************************************************************************
-    //*****************************************************************
-    // Test beam geometry (beam coming from viewer)
-    //===========================================================
-    //||    8 (4)    ||    7 (5)   ||    6 (6)   ||    5 (7)   ||  row 0
-    //===========================================================
-    //||    1 (0)    ||    2 (1)   ||    3 (2)   ||    4 (3)   ||  row 1
-    //===========================================================
-    //    col 0     col 1       col 2     col  3
-    // rebuild pad geom in similar way (numbering -1)
-    //*****************************************************************
-    TCanvas* canvas8Panel;
-    TPad* pad8Panel[8];
-    Double_t topRCornerX[8];
-    Double_t topRCornerY[8];
-    Double_t relSize8P[8];
-    CreateCanvasAndPadsFor8PannelTBPlot(canvas8Panel, pad8Panel,  topRCornerX, topRCornerY, relSize8P, textSizePixel, 0.045, "", true, debug);
-    TCanvas* canvas8PanelProf;
-    TPad* pad8PanelProf[8];
-    Double_t topRCornerXProf[8];
-    Double_t topRCornerYProf[8];
-    Double_t relSize8PProf[8];
-    CreateCanvasAndPadsFor8PannelTBPlot(canvas8PanelProf, pad8PanelProf,  topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 0.045, "Prof", false, debug);
-    int layerVerb = 5;
-    if (expandedList == 1)layerVerb = 1;
+  // plotting individual layers/asics
+  DetConf::Type detConf = setup->GetDetectorConfig();
+
+  MultiCanvas panelPlot(detConf, "Injection");
+  bool init1D = panelPlot.Initialize(1);
+  
+  MultiCanvas panelPlot2D(detConf, "Injection");
+  bool init2D = panelPlot2D.Initialize(2);
     
+  if (expandedList != 3 ){
+    TString pedAName = "HG";
+    if (isHGCROC) pedAName = "0thSample";
+    panelPlot.PlotTrending(trend, 0, Xmin,Xmax, OutputNameDirPlots, Form("%sped",pedAName.Data()), plotSuffix, it->second, ExtPlot );
+    panelPlot.PlotTrending(trend, 15, Xmin,Xmax, OutputNameDirPlots, Form("%spedwidth",pedAName.Data()), plotSuffix, it->second, ExtPlot );
+    
+    TString pedBName = "LG";
+    if (isHGCROC) pedBName = "Wave";
+    panelPlot.PlotTrending(trend, 1, Xmin,Xmax, OutputNameDirPlots, Form("%sped", pedBName.Data()), plotSuffix, it->second, ExtPlot );
+    panelPlot.PlotTrending(trend, 16, Xmin,Xmax, OutputNameDirPlots, Form("%sLGpedwidth", pedBName.Data()), plotSuffix, it->second, ExtPlot );
   
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1 && l < maxLayerPlot; l++){    
-      if (l%layerVerb == 0 && l > 0 && debug > 0)
-        std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
-      if (expandedList != 3 ){
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 0, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/HGped_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGPedestal",OutputNameDirPlots.Data()), it->second,ExtPlot);        
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 15, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/HGpedwidth_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGPedestalWidth",OutputNameDirPlots.Data()), it->second,ExtPlot);        
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 1, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/LGped_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGPedestal",OutputNameDirPlots.Data()), it->second,ExtPlot);        
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 16, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/LGpedwidth_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGPedestalWidth",OutputNameDirPlots.Data()), it->second,ExtPlot);    
-        if (globalStatus < 2) continue;
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 2, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/HGScale_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGScale",OutputNameDirPlots.Data()), it->second,ExtPlot);        
-        //PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-          //                        trend, 3, Xmin,Xmax, l, 0,
-            //                      Form("%s/SingleLayer/LGScale_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGScale",OutputNameDirPlots.Data()), it->second,ExtPlot);        
-        if (!isHGCROC){
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 3, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/LGScale_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGScale",OutputNameDirPlots.Data()), it->second,ExtPlot);        
-          PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                    trend, 4, Xmin,Xmax, l, 0,
-                                    Form("%s/SingleLayer/LGHGCorr_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGHGCorr",OutputNameDirPlots.Data()), it->second,ExtPlot);        
-          PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                    trend, 5, Xmin,Xmax, l, 0,
-                                    Form("%s/SingleLayer/HGLGCorr_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGLGCorr",OutputNameDirPlots.Data()), it->second,ExtPlot);        
-          PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                    trend, 17, Xmin,Xmax, l, 0,
-                                    Form("%s/SingleLayer/LGHG_Offset_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGHGOffet",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-          PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                    trend, 18, Xmin,Xmax, l, 0,
-                                    Form("%s/SingleLayer/HGLG_Offset_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGLGOffet",OutputNameDirPlots.Data()), it->second,ExtPlot);
-        }
-      }
-      if (expandedList == 1){
-        if (globalStatus < 2) continue;
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 9, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/HG_LandMPV_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGLandMPV",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 11, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/HG_LandSigma_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGLandSigma",OutputNameDirPlots.Data()), it->second,ExtPlot);
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 13, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/HG_GaussSigma_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendHGGaussSigma",OutputNameDirPlots.Data()), it->second,ExtPlot);            
-
-        if (!isHGCROC){
-          PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                    trend, 10, Xmin,Xmax, l, 0,
-                                    Form("%s/SingleLayer/LG_LandMPV_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGLandMPV",OutputNameDirPlots.Data()), it->second,ExtPlot);            
-
-          PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                    trend, 12, Xmin,Xmax, l, 0,
-                                    Form("%s/SingleLayer/LG_LandSigma_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGLandSigma",OutputNameDirPlots.Data()), it->second,ExtPlot);                  
-          PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                    trend, 14, Xmin,Xmax, l, 0,
-                                    Form("%s/SingleLayer/LG_GaussSigma_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendLGGaussSigma",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-        }
-      }
-      if (expandedList == 1 || expandedList == 2 ){
-        if (globalStatus < 2) continue;
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 6, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/MuonTriggers_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendMuonTriggers",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 7, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/SBSignal_MuonTriggers_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendSBSignal_MuonTriggers",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-        PlotTrending8MLayer(     canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                  trend, 8, Xmin,Xmax, l, 0,
-                                  Form("%s/SingleLayer/SBNoise_MuonTriggers_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/TrendSBNoise_MuonTriggers",OutputNameDirPlots.Data()), it->second,ExtPlot);      
+    if (globalStatus >1 ){
+      panelPlot.PlotTrending(trend, 2, Xmin,Xmax, OutputNameDirPlots, "HGScale", plotSuffix, it->second, ExtPlot );
+      if (!isHGCROC){
+        panelPlot.PlotTrending(trend, 3, Xmin,Xmax, OutputNameDirPlots, "LGScale", plotSuffix, it->second, ExtPlot );
+        panelPlot.PlotTrending(trend, 4, Xmin,Xmax, OutputNameDirPlots, "LGHGCorr", plotSuffix, it->second, ExtPlot );
+        panelPlot.PlotTrending(trend, 5, Xmin,Xmax, OutputNameDirPlots, "HGLGCorr", plotSuffix, it->second, ExtPlot );
+        panelPlot.PlotTrending(trend, 17, Xmin,Xmax, OutputNameDirPlots, "LGHG_Offset", plotSuffix, it->second, ExtPlot );
+        panelPlot.PlotTrending(trend, 18, Xmin,Xmax, OutputNameDirPlots, "HGLG_Offset", plotSuffix, it->second, ExtPlot );
       }
     }
-    
-    if (ExtPlot > 1){
-      std::cout<< "plotting individual distribution per run overlayed" << std::endl;
-      for (Int_t l = 0; l < setup->GetNMaxLayer()+1 && l < maxLayerPlot; l++){    
-        if (l%layerVerb == 0 && l > 0 && debug > 0)
-          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
-        if (expandedList == 1 || expandedList == 2 ){
-          PlotRunOverlay8MLayer (  canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                    trend, nRun, 0, -15,850, l, 0,
-                                    Form("%s/SingleLayer/MuonTriggers_HGDist_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonHGDist",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-          if (!isHGCROC){
-            PlotRunOverlay8MLayer (  canvas8Panel,pad8Panel, topRCornerX, topRCornerY, relSize8P, textSizePixel, 
-                                    trend, nRun, 1, -10,210, l, 0,
-                                    Form("%s/SingleLayer/MuonTriggers_LGDist_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonLGDist",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-          }
-        }
-        if (expandedList > 0 && !isHGCROC){
-          if (globalStatus < 2) continue;
-          PlotRunOverlayProfile8MLayer (canvas8PanelProf,pad8PanelProf, topRCornerXProf, topRCornerYProf, relSize8PProf, textSizePixel, 
-                                        trend, nRun,-20, 340, -20, 3900, l, 0,
-                                        Form("%s/SingleLayer/MuonTriggers_LGHGCorr_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonLGHGCorr",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-        }
-      }      
+  }  
+  if (expandedList == 1 && globalStatus > 1 ){
+    panelPlot.PlotTrending(trend, 9, Xmin,Xmax, OutputNameDirPlots, "HG_LandMPV", plotSuffix, it->second, ExtPlot );
+    panelPlot.PlotTrending(trend, 11, Xmin,Xmax, OutputNameDirPlots, "HG_LandSigma", plotSuffix, it->second, ExtPlot );
+    panelPlot.PlotTrending(trend, 13, Xmin,Xmax, OutputNameDirPlots, "HG_GaussSigma", plotSuffix, it->second, ExtPlot );
+    if (!isHGCROC){
+      panelPlot.PlotTrending(trend, 10, Xmin,Xmax, OutputNameDirPlots, "LG_LandMPV", plotSuffix, it->second, ExtPlot );
+      panelPlot.PlotTrending(trend, 12, Xmin,Xmax, OutputNameDirPlots, "LG_LandSigma", plotSuffix, it->second, ExtPlot );
+      panelPlot.PlotTrending(trend, 14, Xmin,Xmax, OutputNameDirPlots, "LG_GaussSigma", plotSuffix, it->second, ExtPlot );
     }
-  } else if (setup->GetNMaxRow()+1 == 1 && setup->GetNMaxColumn()+1 == 2){
-    //***********************************************************************************************************
-    //********************************* 2 Panel overview plot  **************************************************
-    //***********************************************************************************************************
-    //*****************************************************************
-      // Test beam geometry (beam coming from viewer)
-      //===========================================================
-      //||    1 (0)    ||    2 (1)   || row 0
-      //===========================================================
-      //    col 0     col 1 
-      // rebuild pad geom in similar way (numbering -1)
-    //*****************************************************************
-    TCanvas* canvas2Panel;
-    TPad* pad2Panel[2];
-    Double_t topRCornerX[2];
-    Double_t topRCornerY[2];
-    Int_t textSizePixel = 30;
-    Double_t relSizeP[2];
-    CreateCanvasAndPadsFor2PannelTBPlot(canvas2Panel, pad2Panel,  topRCornerX, topRCornerY, relSizeP, textSizePixel);
-
-    TCanvas* canvas2PanelProf;
-    TPad* pad2PanelProf[2];
-    Double_t topRCornerXProf[2];
-    Double_t topRCornerYProf[2];
-    Double_t relSizePProf[2];
-    CreateCanvasAndPadsFor2PannelTBPlot(canvas2PanelProf, pad2PanelProf,  topRCornerXProf, topRCornerYProf, relSizePProf, textSizePixel, 0.075, "Prof", false);
-    int layerVerb = 5;
-    if (expandedList == 1)layerVerb = 1;
-
-    if (ExtPlot > 1){
-      std::cout<< "plotting individual distribution per run overlayed" << std::endl;
-      for (Int_t l = 0; l < setup->GetNMaxLayer()+1 && l < maxLayerPlot; l++){    
-        if (l%layerVerb == 0 && l > 0 && debug > 0)
-          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
-        if (expandedList == 1 || expandedList == 2 || expandedList == 4){
-          PlotRunOverlay2MLayer (  canvas2Panel,pad2Panel, topRCornerX, topRCornerY, relSizeP, textSizePixel, 
-                                    trend, nRun, 0, -15,850, l, 0,
-                                    Form("%s/SingleLayer/MuonTriggers_HGDist_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonHGDist",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-        }
-        if (expandedList == 1 || expandedList == 2 ){
-          PlotRunOverlay2MLayer (  canvas2Panel,pad2Panel, topRCornerX, topRCornerY, relSizeP, textSizePixel, 
-                                    trend, nRun, 1, -10,210, l, 0,
-                                    Form("%s/SingleLayer/MuonTriggers_LGDist_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonLGDist",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-        }
-        if (expandedList > 0 ){
-          Int_t maxComp = 3900;
-          Double_t maxX = 340;
-          if (GetIsHGCROC()){
-            maxComp = 1048;
-            maxX = 500000;
-          }
-          if (globalStatus < 2) continue;
-          PlotRunOverlayProfile2MLayer (canvas2PanelProf,pad2PanelProf, topRCornerXProf, topRCornerYProf, relSizePProf, textSizePixel, 
-                                        trend, nRun,-20, 340, -20, maxComp, l, 0,
-                                        Form("%s/SingleLayer/MuonTriggers_LGHGCorr_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonLGHGCorr",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-        }
-      }      
-    }
-    
-  } else if (setup->GetNMaxRow()+1 == 1 && setup->GetNMaxColumn()+1 == 1){
-    //***********************************************************************************************************
-    //********************************* Single tile overview plot  **************************************************
-    //***********************************************************************************************************
-
-    TCanvas* canvasLayer = new TCanvas("canvasLayer","",0,0,620,600);
-    DrawCanvasSettings( canvasLayer,0.125, 0.01, 0.03, 0.1);
-    Double_t topRCornerX = 0.95;
-    Double_t topLCornerX = 0.165;
-    Double_t topRCornerY = 0.99;
-    Int_t textSizePixel = 30;
-    Double_t relSizeP = 30./620;
+  }
+  if (( expandedList == 1 || expandedList == 2)  && globalStatus > 1){
+    panelPlot.PlotTrending(trend, 6, Xmin,Xmax, OutputNameDirPlots, "MuonTriggers", plotSuffix, it->second, ExtPlot );
+    panelPlot.PlotTrending(trend, 7, Xmin,Xmax, OutputNameDirPlots, "SBSignal_MuonTriggers", plotSuffix, it->second, ExtPlot );
+    panelPlot.PlotTrending(trend, 7, Xmin,Xmax, OutputNameDirPlots, "SBNoise_MuonTriggers", plotSuffix, it->second, ExtPlot );
+  }
   
-    TCanvas* canvasLayerProf = new TCanvas("canvasLayerProf","",0,0,620,600);
-    DrawCanvasSettings( canvasLayerProf,0.138, 0.08, 0.03, 0.1);
-    Double_t topRCornerXProf = 0.175;
-    Double_t topLCornerXProf = 0.89;
-    Double_t topRCornerYProf = 0.95;
-    Double_t relSizePProf = 30./620;
-    int layerVerb = 5;
-    if (expandedList == 1)layerVerb = 1;
-
-    if (ExtPlot > 1){
-      std::cout<< "plotting individual distribution per run overlayed" << std::endl;
-      for (Int_t l = 0; l < setup->GetNMaxLayer()+1 && l < maxLayerPlot; l++){    
-        if (l%layerVerb == 0 && l > 0 && debug > 0)
-          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;
-        if (expandedList == 1 || expandedList == 2){
-          PlotRunOverlay1MLayer (  canvasLayer, topRCornerX, topLCornerX, topRCornerY, relSizeP, textSizePixel, 
-                                    trend, nRun, 0, -15,310, l, 0,
-                                    Form("%s/SingleLayer/MuonTriggers_HGDist_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonHGDist",OutputNameDirPlots.Data()), it->second,ExtPlot);
-          PlotRunOverlay1MLayer (  canvasLayer,topRCornerX, topLCornerX, topRCornerY, relSizeP, textSizePixel, 
-                                    trend, nRun, 1, -10,210, l, 0,
-                                    Form("%s/SingleLayer/MuonTriggers_LGDist_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonLGDist",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-        }
-        if ( expandedList == 4){
-          PlotRunOverlay1MLayer (  canvasLayer, topRCornerX, topLCornerX, topRCornerY, relSizeP, textSizePixel, 
-                                    trend, nRun, 0, -15,310, l, 0,
-                                    Form("%s/SingleLayer/MaxAdc_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonHGDist",OutputNameDirPlots.Data()), it->second,ExtPlot,true);
-        }
-        if (expandedList > 0 ){
-          Int_t maxComp = 3900;
-          Double_t maxX = 340;
-          if (GetIsHGCROC()){
-            maxComp = 250;
-            maxX    = 450000;
-          }
-          PlotRunOverlayProfile1MLayer (canvasLayerProf, topRCornerXProf, topLCornerXProf, topRCornerYProf, relSizePProf, textSizePixel, 
-                                        trend, nRun,-20, maxX, -20, maxComp, l, 0,
-                                        Form("%s/SingleLayer/MuonTriggers_LGHGCorr_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonLGHGCorr",OutputNameDirPlots.Data()), it->second,ExtPlot);      
-          PlotRunOverlayProfile1MLayer (canvasLayerProf, topRCornerXProf, topLCornerXProf, topRCornerYProf, relSizePProf, textSizePixel, 
-                                        trend, nRun,-20, maxX, -0.01, 0.05, l, 0,
-                                        Form("%s/SingleLayer/MuonTriggers_LGHGCorrScaled_Layer%02d.%s" ,OutputNameDirPlots.Data(), l, plotSuffix.Data()),Form("%s/OverlayMuonLGHGCorr",OutputNameDirPlots.Data()), it->second,ExtPlot, true);      
-        }
-      }      
+  if (ExtPlot > 1){
+    if (expandedList == 1 || expandedList == 2 ){
+      Int_t maxADC = 850;
+      TString nameADC = "MuonTriggers_HGDist";
+      if (isHGCROC){
+        maxADC = 350;
+        nameADC = "MuonTriggers_ADCDist";
+      }
+      panelPlot.PlotRunOverlaySpectra(trend, nRun, 0, -15, maxADC, OutputNameDirPlots, nameADC, plotSuffix, it->second, ExtPlot);
+      if (!isHGCROC) 
+        panelPlot.PlotRunOverlaySpectra(trend, nRun, 1, -10,210, OutputNameDirPlots, "MuonTriggers_LGDist", plotSuffix, it->second, ExtPlot);
     }
-  }   
+    if (expandedList > 0 && !isHGCROC){
+      if (globalStatus > 1) panelPlot.PlotRunOverlayProfile(trend, nRun, 1, -20, 340, -20, 3900, OutputNameDirPlots, "MuonTriggers_LGHGCorr", plotSuffix, it->second, ExtPlot );
+    }
+
+    if (expandedList > 0 && isHGCROC && globalStatus > 1){
+      panelPlot.PlotRunOverlayProfile(trend, nRun, 1, -20, 450000, -20, 1024, OutputNameDirPlots, "WaveOverlay", plotSuffix, it->second, ExtPlot );
+      panelPlot.PlotRunOverlayProfile(trend, nRun, 1, -20, 450000, -0.01, 0.05, OutputNameDirPlots, "WaveOverlayScaled", plotSuffix, it->second, ExtPlot, 1, true);
+    }    
+  }
+  
   return status;
 }
 

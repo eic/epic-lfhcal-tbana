@@ -122,6 +122,55 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
 }
 
 //===============================================================================
+bool TileTrend::FillInjection(
+                                double x, double ped, int runNr, 
+                                TProfile* wave, TProfile* toa, TProfile* tot, 
+                                double val_rf, double val_cf, double val_cfcomp, double val_cc
+                              ){
+  
+  if (extended != 3 ){
+    std::cout << "This option Filling option isn't implemented for the current extended option" << std::endl;
+    return false;
+  }
+
+  gTrendHGped.AddPoint     (x,ped     );
+  gTrendHGped.SetPointError     (gTrendHGped.GetN()-1,0.,0.);
+
+  if(ped<MinHGped) MinHGped  = ped;
+  if(ped>MaxHGped) MaxHGped  = ped;
+    
+  if (wave){
+    TProfile temp = *wave;
+    temp.SetName(Form("%s_Run%i",wave->GetName(),runNr));
+    temp.SetDirectory(0);
+    MinHGSpec = 0;
+    if (MaxInjADC < temp.GetMaximum()) MaxInjADC = temp.GetMaximum();
+    Wave1DProf[runNr] = temp;
+  }
+  
+  if (toa){
+    TProfile temp = *toa;
+    temp.SetName(Form("%s_Run%i",toa->GetName(),runNr));
+    temp.SetDirectory(0);
+    TOAProf[runNr] = temp;
+  }
+  if (tot){
+    TProfile temp = *tot;
+    temp.SetName(Form("%s_Run%i",tot->GetName(),runNr));
+    if (MaxInjTOT < temp.GetMaximum()) MaxInjTOT = temp.GetMaximum();
+    temp.SetDirectory(0);
+    TOTProf[runNr] = temp;
+  }
+  
+  rf.push_back(val_rf);
+  cf.push_back(val_cf);
+  cfcomp.push_back(val_cfcomp);
+  cc.push_back(val_cc);
+  
+  return true;
+}
+
+//===============================================================================
 void TileTrend::FillMPV(double x, double hgmpv, double ehgmpv, double lgmpv, double elgmpv){
   gTrendHGLMPV.AddPoint     (x,hgmpv     );
   gTrendHGLMPV.SetPointError(gTrendHGLMPV.GetN()-1,0.,ehgmpv);
@@ -222,6 +271,39 @@ TProfile* TileTrend::GetLGHGTriggRun(int run){
   }
 }
 
+//===============================================================================
+TProfile* TileTrend::GetWave1DRun(int run){
+  std::map<int, TProfile>::iterator currRun;
+  currRun=Wave1DProf.find(run);
+  if(currRun!=Wave1DProf.end()){
+    return &currRun->second;
+  } else {
+    return nullptr;
+  }
+}
+
+//===============================================================================
+TProfile* TileTrend::GetTOARun(int run){
+  std::map<int, TProfile>::iterator currRun;
+  currRun=TOAProf.find(run);
+  if(currRun!=TOAProf.end()){
+    return &currRun->second;
+  } else {
+    return nullptr;
+  }
+}
+
+//===============================================================================
+TProfile* TileTrend::GetTOTRun(int run){
+  std::map<int, TProfile>::iterator currRun;
+  currRun=TOTProf.find(run);
+  if(currRun!=TOTProf.end()){
+    return &currRun->second;
+  } else {
+    return nullptr;
+  }
+}
+
 //************************************************************************
 // Drawing functions for graphs
 //************************************************************************
@@ -316,109 +398,129 @@ bool TileTrend::DrawLGHGOffset(TString opt){
 //************************************************************************
 //===============================================================================
 bool TileTrend::SetLineColor(uint col){
-  gTrendLGped    .SetLineColor(col);
-  gTrendHGped    .SetLineColor(col);
-  gTrendLGpedwidth.SetLineColor(col);
-  gTrendHGpedwidth.SetLineColor(col);
-  gTrendLGscale  .SetLineColor(col);
-  gTrendHGscale  .SetLineColor(col);
-  gTrendHGLGcorr .SetLineColor(col);
-  gTrendLGHGcorr .SetLineColor(col);
-  gTrendHGLGOffset .SetLineColor(col);
-  gTrendLGHGOffset .SetLineColor(col);
-  if (extended == 1 || extended == 2 ){
-    gTrendTrigger .SetLineColor(col);
-    gTrendSBNoise .SetLineColor(col);
-    gTrendSBSignal.SetLineColor(col);
-  }
-  if (extended == 1){
-    gTrendHGLMPV  .SetLineColor(col);
-    gTrendLGLMPV  .SetLineColor(col);
-    gTrendHGLSigma.SetLineColor(col);
-    gTrendLGLSigma.SetLineColor(col);
-    gTrendHGGSigma.SetLineColor(col);
-    gTrendLGGSigma.SetLineColor(col);
+  if (extended < 3){
+    gTrendLGped    .SetLineColor(col);
+    gTrendHGped    .SetLineColor(col);
+    gTrendLGpedwidth.SetLineColor(col);
+    gTrendHGpedwidth.SetLineColor(col);
+    gTrendLGscale  .SetLineColor(col);
+    gTrendHGscale  .SetLineColor(col);
+    gTrendHGLGcorr .SetLineColor(col);
+    gTrendLGHGcorr .SetLineColor(col);
+    gTrendHGLGOffset .SetLineColor(col);
+    gTrendLGHGOffset .SetLineColor(col);
+    if (extended == 1 || extended == 2 ){
+      gTrendTrigger .SetLineColor(col);
+      gTrendSBNoise .SetLineColor(col);
+      gTrendSBSignal.SetLineColor(col);
+    }
+    if (extended == 1){
+      gTrendHGLMPV  .SetLineColor(col);
+      gTrendLGLMPV  .SetLineColor(col);
+      gTrendHGLSigma.SetLineColor(col);
+      gTrendLGLSigma.SetLineColor(col);
+      gTrendHGGSigma.SetLineColor(col);
+      gTrendLGGSigma.SetLineColor(col);
+    }
+  } else {
+    gTrendHGped    .SetLineColor(col);
+    gTrendHGpedwidth.SetLineColor(col);    
   }
   return true;
 }
 //===============================================================================
 bool TileTrend::SetMarkerColor(uint col){
-  gTrendLGped    .SetMarkerColor(col);
-  gTrendHGped    .SetMarkerColor(col);
-  gTrendLGpedwidth.SetMarkerColor(col);
-  gTrendHGpedwidth.SetMarkerColor(col);
-  gTrendLGscale  .SetMarkerColor(col);
-  gTrendHGscale  .SetMarkerColor(col);
-  gTrendHGLGcorr .SetMarkerColor(col);
-  gTrendLGHGcorr .SetMarkerColor(col);
-  gTrendHGLGOffset .SetMarkerColor(col);
-  gTrendLGHGOffset .SetMarkerColor(col);
-  if (extended == 1 || extended == 2 ){
-    gTrendTrigger .SetMarkerColor(col);
-    gTrendSBNoise .SetMarkerColor(col);
-    gTrendSBSignal.SetMarkerColor(col);
-  }
-  if (extended == 1){
-    gTrendHGLMPV  .SetMarkerColor(col);
-    gTrendLGLMPV  .SetMarkerColor(col);
-    gTrendHGLSigma.SetMarkerColor(col);
-    gTrendLGLSigma.SetMarkerColor(col);
-    gTrendHGGSigma.SetMarkerColor(col);
-    gTrendLGGSigma.SetMarkerColor(col);
+  if (extended < 3){
+    gTrendLGped    .SetMarkerColor(col);
+    gTrendHGped    .SetMarkerColor(col);
+    gTrendLGpedwidth.SetMarkerColor(col);
+    gTrendHGpedwidth.SetMarkerColor(col);
+    gTrendLGscale  .SetMarkerColor(col);
+    gTrendHGscale  .SetMarkerColor(col);
+    gTrendHGLGcorr .SetMarkerColor(col);
+    gTrendLGHGcorr .SetMarkerColor(col);
+    gTrendHGLGOffset .SetMarkerColor(col);
+    gTrendLGHGOffset .SetMarkerColor(col);
+    if (extended == 1 || extended == 2 ){
+      gTrendTrigger .SetMarkerColor(col);
+      gTrendSBNoise .SetMarkerColor(col);
+      gTrendSBSignal.SetMarkerColor(col);
+    }
+    if (extended == 1){
+      gTrendHGLMPV  .SetMarkerColor(col);
+      gTrendLGLMPV  .SetMarkerColor(col);
+      gTrendHGLSigma.SetMarkerColor(col);
+      gTrendLGLSigma.SetMarkerColor(col);
+      gTrendHGGSigma.SetMarkerColor(col);
+      gTrendLGGSigma.SetMarkerColor(col);
+    }
+  } else {
+    gTrendHGped    .SetMarkerColor(col);
+    gTrendHGpedwidth.SetMarkerColor(col);    
   }
   return true;
 }
 //===============================================================================
 bool TileTrend::SetMarkerStyle(uint col){
-  gTrendLGped    .SetMarkerStyle(col);
-  gTrendHGped    .SetMarkerStyle(col);
-  gTrendLGpedwidth.SetMarkerStyle(col);
-  gTrendHGpedwidth.SetMarkerStyle(col);
-  gTrendLGscale  .SetMarkerStyle(col);
-  gTrendHGscale  .SetMarkerStyle(col);
-  gTrendHGLGcorr .SetMarkerStyle(col);
-  gTrendLGHGcorr .SetMarkerStyle(col);
-  gTrendHGLGOffset .SetMarkerStyle(col);
-  gTrendLGHGOffset .SetMarkerStyle(col);
-  if (extended == 1 || extended == 2 ){
-    gTrendTrigger .SetMarkerStyle(col);
-    gTrendSBNoise .SetMarkerStyle(col);
-    gTrendSBSignal.SetMarkerStyle(col);
-  }
-  if (extended == 1){
-    gTrendHGLMPV  .SetMarkerStyle(col);
-    gTrendLGLMPV  .SetMarkerStyle(col);
-    gTrendHGLSigma.SetMarkerStyle(col);
-    gTrendLGLSigma.SetMarkerStyle(col);
-    gTrendHGGSigma.SetMarkerStyle(col);
-    gTrendLGGSigma.SetMarkerStyle(col);
+  if (extended < 3){
+    gTrendLGped    .SetMarkerStyle(col);
+    gTrendHGped    .SetMarkerStyle(col);
+    gTrendLGpedwidth.SetMarkerStyle(col);
+    gTrendHGpedwidth.SetMarkerStyle(col);
+    gTrendLGscale  .SetMarkerStyle(col);
+    gTrendHGscale  .SetMarkerStyle(col);
+    gTrendHGLGcorr .SetMarkerStyle(col);
+    gTrendLGHGcorr .SetMarkerStyle(col);
+    gTrendHGLGOffset .SetMarkerStyle(col);
+    gTrendLGHGOffset .SetMarkerStyle(col);
+    if (extended == 1 || extended == 2 ){
+      gTrendTrigger .SetMarkerStyle(col);
+      gTrendSBNoise .SetMarkerStyle(col);
+      gTrendSBSignal.SetMarkerStyle(col);
+    }
+    if (extended == 1){
+      gTrendHGLMPV  .SetMarkerStyle(col);
+      gTrendLGLMPV  .SetMarkerStyle(col);
+      gTrendHGLSigma.SetMarkerStyle(col);
+      gTrendLGLSigma.SetMarkerStyle(col);
+      gTrendHGGSigma.SetMarkerStyle(col);
+      gTrendLGGSigma.SetMarkerStyle(col);
+    }
+  } else {
+    gTrendHGped    .SetMarkerStyle(col);
+    gTrendHGpedwidth.SetMarkerStyle(col);    
   }
   return true;
 }
 //===============================================================================
 bool TileTrend::SetXAxisTitle(TString title){
-  gTrendLGped    .GetXaxis()->SetTitle(title.Data());
-  gTrendHGped    .GetXaxis()->SetTitle(title.Data());
-  gTrendLGpedwidth.GetXaxis()->SetTitle(title.Data());
-  gTrendHGpedwidth.GetXaxis()->SetTitle(title.Data());
-  gTrendLGscale  .GetXaxis()->SetTitle(title.Data());
-  gTrendHGscale  .GetXaxis()->SetTitle(title.Data());
-  gTrendHGLGcorr .GetXaxis()->SetTitle(title.Data());
-  gTrendLGHGcorr .GetXaxis()->SetTitle(title.Data());
-  gTrendHGLGOffset.GetXaxis()->SetTitle(title.Data());
-  gTrendLGHGOffset.GetXaxis()->SetTitle(title.Data());
-  if (extended == 1 || extended == 2 ){
-    gTrendTrigger .GetXaxis()->SetTitle(title.Data());
-    gTrendSBNoise .GetXaxis()->SetTitle(title.Data());
-    gTrendSBSignal.GetXaxis()->SetTitle(title.Data());
-  }
-  if (extended == 1){
-    gTrendHGLMPV  .GetXaxis()->SetTitle(title.Data());
-    gTrendLGLMPV  .GetXaxis()->SetTitle(title.Data());
-    gTrendHGLSigma.GetXaxis()->SetTitle(title.Data());
-    gTrendLGLSigma.GetXaxis()->SetTitle(title.Data());
-    gTrendHGGSigma.GetXaxis()->SetTitle(title.Data());
-    gTrendLGGSigma.GetXaxis()->SetTitle(title.Data());
+  if (extended < 3){
+    gTrendLGped    .GetXaxis()->SetTitle(title.Data());
+    gTrendHGped    .GetXaxis()->SetTitle(title.Data());
+    gTrendLGpedwidth.GetXaxis()->SetTitle(title.Data());
+    gTrendHGpedwidth.GetXaxis()->SetTitle(title.Data());
+    gTrendLGscale  .GetXaxis()->SetTitle(title.Data());
+    gTrendHGscale  .GetXaxis()->SetTitle(title.Data());
+    gTrendHGLGcorr .GetXaxis()->SetTitle(title.Data());
+    gTrendLGHGcorr .GetXaxis()->SetTitle(title.Data());
+    gTrendHGLGOffset.GetXaxis()->SetTitle(title.Data());
+    gTrendLGHGOffset.GetXaxis()->SetTitle(title.Data());
+    if (extended == 1 || extended == 2 ){
+      gTrendTrigger .GetXaxis()->SetTitle(title.Data());
+      gTrendSBNoise .GetXaxis()->SetTitle(title.Data());
+      gTrendSBSignal.GetXaxis()->SetTitle(title.Data());
+    }
+    if (extended == 1){
+      gTrendHGLMPV  .GetXaxis()->SetTitle(title.Data());
+      gTrendLGLMPV  .GetXaxis()->SetTitle(title.Data());
+      gTrendHGLSigma.GetXaxis()->SetTitle(title.Data());
+      gTrendLGLSigma.GetXaxis()->SetTitle(title.Data());
+      gTrendHGGSigma.GetXaxis()->SetTitle(title.Data());
+      gTrendLGGSigma.GetXaxis()->SetTitle(title.Data());
+    }
+  } else {
+    gTrendHGped    .GetXaxis()->SetTitle(title.Data());
+    gTrendHGpedwidth.GetXaxis()->SetTitle(title.Data());    
   }
   return true;
 }
@@ -427,28 +529,33 @@ bool TileTrend::SetXAxisTitle(TString title){
 // Sort
 //************************************************************************
 void TileTrend::Sort(){
-  gTrendLGped    .Sort();
-  gTrendHGped    .Sort();
-  gTrendLGpedwidth.Sort();
-  gTrendHGpedwidth.Sort();
-  gTrendLGscale  .Sort();
-  gTrendHGscale  .Sort();
-  gTrendHGLGcorr .Sort();
-  gTrendLGHGcorr .Sort();
-  gTrendHGLGOffset .Sort();
-  gTrendLGHGOffset .Sort();
-  if (extended == 1 || extended == 2 ){
-    gTrendTrigger .Sort();
-    gTrendSBNoise .Sort();
-    gTrendSBSignal.Sort();
-  }
-  if (extended == 1){
-    gTrendHGLMPV  .Sort();
-    gTrendLGLMPV  .Sort();
-    gTrendHGLSigma.Sort();
-    gTrendLGLSigma.Sort();
-    gTrendHGGSigma.Sort();
-    gTrendLGGSigma.Sort();
+  if (extended < 3){
+    gTrendLGped    .Sort();
+    gTrendHGped    .Sort();
+    gTrendLGpedwidth.Sort();
+    gTrendHGpedwidth.Sort();
+    gTrendLGscale  .Sort();
+    gTrendHGscale  .Sort();
+    gTrendHGLGcorr .Sort();
+    gTrendLGHGcorr .Sort();
+    gTrendHGLGOffset .Sort();
+    gTrendLGHGOffset .Sort();
+    if (extended == 1 || extended == 2 ){
+      gTrendTrigger .Sort();
+      gTrendSBNoise .Sort();
+      gTrendSBSignal.Sort();
+    }
+    if (extended == 1){
+      gTrendHGLMPV  .Sort();
+      gTrendLGLMPV  .Sort();
+      gTrendHGLSigma.Sort();
+      gTrendLGLSigma.Sort();
+      gTrendHGGSigma.Sort();
+      gTrendLGGSigma.Sort();
+    }
+  } else {
+    gTrendHGped    .Sort();
+    gTrendHGpedwidth.Sort();    
   }
   return;  
 }
@@ -458,28 +565,36 @@ void TileTrend::Sort(){
 //************************************************************************
 bool TileTrend::Write(TFile* f){
   f->cd();
-  gTrendLGped    .Write();
-  gTrendHGped    .Write();
-  gTrendLGpedwidth.Write();
-  gTrendHGpedwidth.Write();
-  gTrendLGscale  .Write();
-  gTrendHGscale  .Write();
-  gTrendHGLGcorr .Write();
-  gTrendLGHGcorr .Write();
-  gTrendHGLGOffset .Write();
-  gTrendLGHGOffset .Write();
-  if (extended == 1 || extended == 2 ){
-    gTrendTrigger .Write();
-    gTrendSBNoise .Write();
-    gTrendSBSignal.Write();
+  if (extended < 3){
+    gTrendLGped    .Write();
+    gTrendHGped    .Write();
+    gTrendLGpedwidth.Write();
+    gTrendHGpedwidth.Write();
+    gTrendLGscale  .Write();
+    gTrendHGscale  .Write();
+    gTrendHGLGcorr .Write();
+    gTrendLGHGcorr .Write();
+    gTrendHGLGOffset .Write();
+    gTrendLGHGOffset .Write();
+    if (extended == 1 || extended == 2 ){
+      gTrendTrigger .Write();
+      gTrendSBNoise .Write();
+      gTrendSBSignal.Write();
+    }
+    if (extended == 1){
+      gTrendHGLMPV  .Write();
+      gTrendLGLMPV  .Write();
+      gTrendHGLSigma.Write();
+      gTrendLGLSigma.Write();
+      gTrendHGGSigma.Write();
+      gTrendLGGSigma.Write();
+    }
   }
-  if (extended == 1){
-    gTrendHGLMPV  .Write();
-    gTrendLGLMPV  .Write();
-    gTrendHGLSigma.Write();
-    gTrendLGLSigma.Write();
-    gTrendHGGSigma.Write();
-    gTrendLGGSigma.Write();
+  if (extended == 3){
+    gTrendHGped    .Write();
+    gTrendHGpedwidth.Write();
+    
   }
+  
   return true;
 }

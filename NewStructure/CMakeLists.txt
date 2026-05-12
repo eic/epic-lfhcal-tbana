@@ -175,6 +175,11 @@ endif()
 add_executable(CompareCalib CompareCalib.cc ComparisonCalib.cc)
 target_link_libraries(CompareCalib LFHCAL ${ROOT_LIBRARIES})
 
+# CompareCalib executable
+add_executable(CompareInjection CompareInjection.cc ComparisonInjection.cc)
+target_link_libraries(CompareInjection LFHCAL ${ROOT_LIBRARIES})
+
+
 # CompareAna executable
 add_executable(CompareAna CompareAna.cc ComparisonAna.cc)
 target_link_libraries(CompareAna LFHCAL ${ROOT_LIBRARIES})

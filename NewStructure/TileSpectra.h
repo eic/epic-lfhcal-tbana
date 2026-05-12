@@ -50,7 +50,7 @@ class TileSpectra: public TObject{
       hspectraTOT.SetDirectory(0);
       hspectraTOA    = TH1D(Form("hspectra%sTOACellID%d",name.Data(),id),Form("ToA spectrum CellID %d; TOA (arb. units); counts",id),1124,-100,1024);
       hspectraTOA.SetDirectory(0);
-      hTriggPrim    = TH1D(Form("hTriggerPrimitive%sCellID%d",name.Data(),id),Form("Trigger primitive CellID %d; ADC (arb. units); counts ",id),500,0,4000);
+      hTriggPrim    = TH1D(Form("hTriggerPrimitive%sCellID%d",name.Data(),id),Form("Trigger primitive CellID %d; ADC (arb. units); counts ",id),500,0,500);
       hTriggPrim.SetDirectory(0);
       hADCTOT  = TProfile(Form("hCoorspectra%sTOTADCCellID%d",name.Data(),id),Form("TOT-ADC correlation CellID %d; ADC (arb. units); TOT (arb. units)",id),1124,-100,1024);
       hADCTOT.SetDirectory(0); 
@@ -170,6 +170,8 @@ class TileSpectra: public TObject{
       }
     // Waveform analysis for the HG2Calib parser 
     } else if(extend == 8){
+        hWaveForm     = TProfile(Form("waveform1D%sCellID%d",name.Data(),id),Form("1D waveform CellID %d;  t (ns) ; ADC (arb. units)",id),550,-50,500);
+        hWaveForm.SetDirectory(0);
         hcorr         = TH2D(Form("waveform%sCellID%d",name.Data(),id),Form("2D f CellID %d; t (ns) ; ADC (arb. units)",id),550,-50,500, 1034, -10, 1024);
         hcorr.SetDirectory(0);
         hProfileTOT   = TProfile( Form("TOT%sCellID%d",name.Data(),id),Form("TOT CellID %d; t(ns); TOT (arb.units)",id),4400,-50,500,-10,4300,""); 

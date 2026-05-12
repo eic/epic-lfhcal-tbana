@@ -47,7 +47,7 @@ if [ $2 = "pedestal" ]; then
     runs='39 66 70 79 80 82 221 225 228 231' 
   # Full Scan A
   elif [ $3 = "FullSetA" ]; then
-    runs='085 120' #pedestals
+    runs='85 120' #pedestals
   # Full Scan B
   elif [ $3 = "FullSetB" ]; then
     runs='215' #pedestals
@@ -60,6 +60,18 @@ if [ $2 = "pedestal" ]; then
   # Full Scan E
   elif [ $3 = "FullSetE" ]; then
     runs='287 315' 
+  # Full Scan F
+  elif [ $3 = "FullSetF" ]; then
+    runs='338 366' 
+  # Full Scan G
+  elif [ $3 = "FullSetG" ]; then
+    runs='379 404' 
+  # Full Scan H
+  elif [ $3 = "FullSetH" ]; then
+    runs='425' 
+  # Part Scan I
+  elif [ $3 = "PartSetI" ]; then
+    runs='425 462' 
   fi
   for runNr in $runs; do 
     printf -v runNrPed "%03d" "$runNr"
@@ -67,25 +79,22 @@ if [ $2 = "pedestal" ]; then
   done
 fi
 
-if [ $2 = "toaPhase" ]; then 
-  echo "Add runnumbers before you try this & remove exit"
-  exit
-  runNrPed='208'
-  if [ $3 = "Hadron" ]; then 
-    runs='184'
-    for rn in $runs; do 
-      printf -v runNr "%03d" "$rn"
+if [ $2 = "toaPhase" ]; then   
+  if [ $3 = "FullSetE_1" ]; then
+    runNrPed='287'
+    if [ $4 = "Hadron" ]; then 
+      runs='304'
+    elif [ $4 = "Muon" ]; then 
+      runs='' # 1st HV scan
+    fi
+  fi
+  if [ $4 = "Hadron" ]; then 
+    for runNr in $runs; do 
       ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirOut/rawHGCROC_wPed_$runNrPed.root #-F png
     done
-  elif [ $3 = "Electron" ]; then 
-    runs='' # 1st HV scan
+  elif [ $4 = "Muon" ]; then 
     for runNr in $runs; do 
-      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
-    done
-  elif [ $3 = "Muon" ]; then 
-    runs='' # 1st HV scan
-    for runNr in $runs; do 
-			./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_wPed_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_wPed_$runNr.root
+			./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_wPed_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_wPed_$runNrPed.root
       #./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
     done
   fi
@@ -116,20 +125,46 @@ if [ $2 == "calibMuon" ]; then
   elif [ $4 = "HVScan42" ]; then
     runPed='70'
     runs='Muon_HVScan_42V'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_HVScan1.csv'
   elif [ $4 = "HVScan42_5" ]; then
     runPed='66'
     runs='Muon_HVScan_42_5V'
-  elif [ $4 = "HVScan42_5" ]; then
-    runPed='66'
-    runs='Muon_HVScan_42_5V'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_HVScan1.csv'
+  elif [ $4 = "HVScan43" ]; then
+    runPed='39'
+    runs='Muon_HVScan_43V'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_HVScan1.csv'
+  elif [ $4 = "HVScan43_5" ]; then
+    runPed='80'
+    runs='Muon_HVScan_43_5V'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_HVScan1.csv'
+  elif [ $4 = "HVScan44" ]; then
+    runPed='82'
+    runs='Muon_HVScan_44V'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_HVScan1.csv'
+  elif [ $4 = "HVScan44_5" ]; then
+    runPed='221'
+    runs='Muon_HVScan_44_5V'
+  elif [ $4 = "HVScan45" ]; then
+    runPed='225'
+    runs='Muon_HVScan_45V'
+  elif [ $4 = "HVScan45" ]; then
+    runPed='225'
+    runs='Muon_HVScan_45V'
+  elif [ $4 = "HVScan45_5" ]; then
+    runPed='228'
+    runs='Muon_HVScan_45_5V'
+  elif [ $4 = "HVScan46" ]; then
+    runPed='231'
+    runs='Muon_HVScan_46V'
   elif [ $4 = "FullSetE_1" ]; then
     runPed='287'
     runs='Muon_FullSetE_1'
-    toaPhaseOffset='../configs/TB2025/ToAOffsets_TB2025_HadRun.csv'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_FullSetE.csv'
   elif [ $4 = "FullSetE_2" ]; then
     runPed='315'
     runs='Muon_FullSetE_2'
-    toaPhaseOffset='../configs/TB2025/ToAOffsets_TB2025_HadRun.csv'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_FullSetE.csv'
   else 
     #Muon positions scan Full Scan 43 V
     runPed='85'

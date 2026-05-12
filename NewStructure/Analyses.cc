@@ -2600,12 +2600,20 @@ bool Analyses::GetScaling(void){
   //==================================================================================
   int actCh1st = 0; 
   double averageScale = calib.GetAverageScaleHigh(actCh1st);
+  int actChIalt                  = 0;
+  double averageNTilesI          = 0.;
+  double averageScalePerTile     = calib.GetAverageScaleHighPerSingleLayer(actChIalt, averageNTilesI);
   double meanFWHMHG   = calib.GetAverageScaleWidthHigh();
   double avHGLGCorr   = calib.GetAverageHGLGCorr();
   double avHGLGOffCorr= calib.GetAverageHGLGCorrOff();
   double avLGHGCorr   = calib.GetAverageLGHGCorr();
   double avLGHGOffCorr= calib.GetAverageLGHGCorrOff();
-  std::cout << "average HG mip: " << averageScale << "\t active ch: "<< actCh1st<< std::endl;
+  if (typeRO == ReadOut::Type::Caen){
+    std::cout << "average HG mip: " << averageScale << "\t active ch: "<< actCh1st<< std::endl;
+  } else {
+    std::cout << "average mip: " << averageScale << " per tile mip: "<< averageScalePerTile << "\t act. ch: "<< actCh1st << "\t av tiles/seg "<< averageNTilesI << std::endl;
+  }
+  
   for(int i=0; i<evts && i < maxEvents; i++){ // loop over events
     TdataIn->GetEntry(i);
     if (i%evtDeb == 0 && i > 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
@@ -2628,7 +2636,7 @@ bool Analyses::GetScaling(void){
 
         aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, currCellID, localTriggerTiles, avLGHGCorr));
         // estimate local muon trigger
-        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScale, factorMinTrigg, factorMaxTrigg);
+        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScalePerTile, factorMinTrigg, factorMaxTrigg);
         int chInLayer       = setup->GetChannelInLayerFull(currCellID);
         hHGTileSum[chInLayer]->Fill(aTile->GetLocalTriggerPrimitive());
         
@@ -2664,7 +2672,7 @@ bool Analyses::GetScaling(void){
 
         aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, currCellID, localTriggerTiles, 0));
         // estimate local muon trigger
-        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScale, factorMinTrigg, factorMaxTrigg);
+        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScalePerTile, factorMinTrigg, factorMaxTrigg);
         int chInLayer       = setup->GetChannelInLayerFull(currCellID);
         hHGTileSum[chInLayer]->Fill(aTile->GetLocalTriggerPrimitive());
         
@@ -2899,6 +2907,12 @@ bool Analyses::GetScaling(void){
   //==================================================================================    
   int actCh2nd = 0;
   double averageScaleUpdated    = calib.GetAverageScaleHigh(actCh2nd);
+  
+  int actChAalt                  = 0;
+  double averageNTilesA          = 0.;
+  double averageScaleUpPerTile   = calib.GetAverageScaleHighPerSingleLayer(actChAalt, averageNTilesA);
+
+  
   double meanFWHMHGUpdated      = calib.GetAverageScaleWidthHigh();
   double averageScaleLowUpdated = 0.;
   double meanFWHMLGUpdated      = 0.;
@@ -2906,9 +2920,14 @@ bool Analyses::GetScaling(void){
     averageScaleLowUpdated = calib.GetAverageScaleLow();
     meanFWHMLGUpdated      = calib.GetAverageScaleWidthLow();
   }
-  std::cout << "average 1st iteration HG mip: " << averageScale << "\t act. channels: " <<   actCh1st << std::endl;
-  std::cout << "average 2nd iteration  HG mip: " << averageScaleUpdated << "\t LG mip: " << averageScaleLowUpdated << "\t act. channels: " <<   actCh2nd << std::endl;
   
+  if (typeRO == ReadOut::Type::Caen) {
+    std::cout << "average 1st iteration HG mip: " << averageScale << "\t act. channels: " <<   actCh1st << std::endl;
+    std::cout << "average 2nd iteration  HG mip: " << averageScaleUpdated << "\t LG mip: " << averageScaleLowUpdated << "\t act. channels: " <<   actCh2nd << std::endl;
+  } else {
+    std::cout << "average input mip: " << averageScale << " per tile mip: "<< averageScalePerTile << "\t act. ch: "<< actCh1st << "\t av tiles/seg "<< averageNTilesI << std::endl;
+    std::cout << "average updated mip: " << averageScaleUpdated << " per tile mip: "<< averageScaleUpPerTile << "\t act. ch: "<< actCh2nd<< "\t av tiles/seg "<< averageNTilesA << std::endl;    
+  }
   RootOutput->cd();
   
   if (IsCalibSaveToFile()){
@@ -3072,7 +3091,7 @@ bool Analyses::GetScaling(void){
   std::cout << "plotting single layers" << std::endl;
   Double_t maxTriggPPlot = maxHG*2;
   if (typeRO != ReadOut::Type::Caen)
-    maxTriggPPlot = 500;
+    maxTriggPPlot = 150;
 
 
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
@@ -3087,7 +3106,7 @@ bool Analyses::GetScaling(void){
   if (ExtPlot > 0){
     panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 1, -100, maxHG, 1.2, 
                                Form("%s/MIP_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
-    panelPlot.PlotTriggerPrim( hSpectraTrigg, averageScale, factorMinTrigg, factorMaxTrigg, 0, maxTriggPPlot, 1.2,
+    panelPlot.PlotTriggerPrim( hSpectraTrigg, averageScalePerTile, factorMinTrigg, factorMaxTrigg, 0, maxTriggPPlot, 1.2,
                              Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
 
     if (typeRO == ReadOut::Type::Caen) {
@@ -3148,10 +3167,20 @@ bool Analyses::GetImprovedScaling(void){
   }
   
   int evts=TdataIn->GetEntries();
-  int runNr = -1;
-  int actChI  = 0;
-  ReadOut::Type typeRO = ReadOut::Type::Caen;
+  
+  // reading first event in tree to extract runnumber & RO-type
+  TdataIn->GetEntry(0);
+  Int_t runNr           = event.GetRunNumber();
+  ReadOut::Type typeRO  = event.GetROtype();
+  std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+
   int evtDeb = 5000;
+  if (typeRO != ReadOut::Type::Caen){
+    evtDeb = 2500;
+    factorMinTrigg    = 0.5;
+    std::cout << "reseting lower trigger factor limit to: " << factorMinTrigg << std::endl;
+    
+  }
   
   if (maxEvents == -1){
     maxEvents = evts;
@@ -3161,29 +3190,26 @@ bool Analyses::GetImprovedScaling(void){
     std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
   }
   
+  int actChI  = 0;
   double averageScale     = calib.GetAverageScaleHigh(actChI);
-  double averageScaleLow  = calib.GetAverageScaleLow();
-  std::cout << "average HG mip: " << averageScale << " LG mip: "<< averageScaleLow << "\t act. ch: "<< actChI << std::endl;
+  double averageScaleLow  = 0.;
   
+  int actChIalt                  = 0;
+  double averageNTilesI          = 0.;
+  double averageScalePerTile     = calib.GetAverageScaleHighPerSingleLayer(actChIalt, averageNTilesI);
+  if (typeRO == ReadOut::Type::Caen) {
+    averageScaleLow  = calib.GetAverageScaleLow();
+  }
+
+  if (typeRO == ReadOut::Type::Caen){
+    std::cout << "average HG mip: " << averageScale << " LG mip: "<< averageScaleLow << "\t act. ch: "<< actChI << std::endl;
+  } else {
+    std::cout << "average mip: " << averageScale << " per tile mip: "<< averageScalePerTile << "\t act. ch: "<< actChI << "\t av tiles/seg "<< averageNTilesI << std::endl;
+  }
   //==================================================================================
   // process events from tree for mip fitting
   //==================================================================================
   for(int i=0; i<maxEvents; i++){
-    TdataIn->GetEntry(i);    
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    // reset calib object info 
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    if (i == 0){
-      runNr = event.GetRunNumber();
-      typeRO = event.GetROtype();
-      if (typeRO != ReadOut::Type::Caen){
-        evtDeb = 400;
-        factorMinTrigg    = 0.5;
-        std::cout << "reseting lower trigger factor limit to: " << factorMinTrigg << std::endl;
-      }
-      std::cout<< "Total number of events: " << evts << std::endl;
-      std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
-    }
     TdataIn->GetEntry(i);
     if (i%evtDeb == 0 && i > 0 && debug > 0) std::cout << "Reading " <<  i << " / " << maxEvents << " events" << std::endl;
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -3204,7 +3230,7 @@ bool Analyses::GetImprovedScaling(void){
         double lgCorr = aTile->GetADCLow()-calib.GetPedestalMeanL(currCellID);
 
         // estimate local muon trigger
-        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScale, factorMinTrigg, factorMaxTrigg);
+        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScalePerTile, factorMinTrigg, factorMaxTrigg);
         
         if(ithSpectraTrigg!=hSpectraTrigg.end()){
           ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
@@ -3254,7 +3280,7 @@ bool Analyses::GetImprovedScaling(void){
         double toa = aTile->GetRawTOA();
         
         // estimate local muon trigger
-        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScale, factorMinTrigg, factorMaxTrigg);
+        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScalePerTile, factorMinTrigg, factorMaxTrigg);
         
         if(ithSpectraTrigg!=hSpectraTrigg.end()){
           ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
@@ -3541,6 +3567,9 @@ bool Analyses::GetImprovedScaling(void){
   int actChA                     = 0;
   double averageScaleUpdated     = calib.GetAverageScaleHigh(actChA);
   double averageScaleUpdatedLow  = 0.;
+  int actChAalt                  = 0;
+  double averageNTilesA          = 0.;
+  double averageScaleUpPerTile   = calib.GetAverageScaleHighPerSingleLayer(actChAalt, averageNTilesA);
   double meanFWHMHG              = calib.GetAverageScaleWidthHigh();
   double meanFWHMLG              = 0.;
 
@@ -3549,9 +3578,13 @@ bool Analyses::GetImprovedScaling(void){
     meanFWHMLG              = calib.GetAverageScaleWidthLow();
   }
   
-  std::cout << "average input HG mip: " << averageScale << " LG mip: "<< averageScaleLow << "\t act. ch: "<< actChI<< std::endl;
-  std::cout << "average updated HG mip: " << averageScaleUpdated << " LG mip: "<< averageScaleUpdatedLow << "\t act. ch: "<< actChA<< std::endl;
-  
+  if (typeRO == ReadOut::Type::Caen) {
+    std::cout << "average input HG mip: " << averageScale << " LG mip: "<< averageScaleLow << "\t act. ch: "<< actChI<< std::endl;
+    std::cout << "average updated HG mip: " << averageScaleUpdated << " LG mip: "<< averageScaleUpdatedLow << "\t act. ch: "<< actChA<< std::endl;
+  } else {
+    std::cout << "average input mip: " << averageScale << " per tile mip: "<< averageScalePerTile << "\t act. ch: "<< actChI << "\t av tiles/seg "<< averageNTilesI << std::endl;
+    std::cout << "average updated mip: " << averageScaleUpdated << " per tile mip: "<< averageScaleUpPerTile << "\t act. ch: "<< actChA<< "\t av tiles/seg "<< averageNTilesA << std::endl;
+  }
   RootOutput->Close();
   
   //==================================================================================
@@ -3651,7 +3684,7 @@ bool Analyses::GetImprovedScaling(void){
   Double_t maxTriggPPlot  = maxHG*2;
   Int_t textSizePixel     = 30;
   if (typeRO != ReadOut::Type::Caen)
-    maxTriggPPlot = 500;
+    maxTriggPPlot = 150;
 
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
   // Single layer plotting
@@ -3662,7 +3695,7 @@ bool Analyses::GetImprovedScaling(void){
   std::cout << "plotting single layers" << std::endl;
   panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 1, minHG, maxHG, 1.2, 
                               Form("%s/MIP_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
-  panelPlot.PlotTriggerPrim( hSpectraTrigg, averageScale, factorMinTrigg, factorMaxTrigg, 0, maxTriggPPlot, 1.2,
+  panelPlot.PlotTriggerPrim( hSpectraTrigg, averageScalePerTile, factorMinTrigg, factorMaxTrigg, 0, maxTriggPPlot, 1.2,
                              Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
   if (typeRO == ReadOut::Type::Caen){
     panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 0, -20, maxLG, 1.2, 
@@ -3950,7 +3983,11 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
 bool Analyses::RunEvalLocalTriggers(void){
   std::cout<<"EvalLocalTriggers"<<std::endl;
 
+  // read full run list
+  std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
+
   RootOutput->cd();
+  // reading calib object
   std::cout << "starting to run trigger eval: " << TcalibIn <<  "\t" << TcalibIn->GetEntry(0) << std::endl;
   TcalibIn->GetEntry(0);
   // check whether calib should be overwritten based on external text file
@@ -3958,29 +3995,41 @@ bool Analyses::RunEvalLocalTriggers(void){
     calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
   }
   
+  // reading first event in tree to extract runnumber & RO-type
+  TdataIn->GetEntry(0);
+  int evts              = TdataIn->GetEntries();
+  Int_t runNr           = event.GetRunNumber();
+  ReadOut::Type typeRO  = event.GetROtype();
+  // reset calib object event infos
+  std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+  calib.SetRunNumber(runNr);
+  calib.SetBeginRunTime(event.GetBeginRunTimeAlt());
+  std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+  
+  // getting averages from calib objects
   int actCh1st = 0;
   double averageScale = calib.GetAverageScaleHigh(actCh1st);
+  int actChalt                  = 0;
+  double averageNTiles          = 0.;
+  double averageScalePerTile    = calib.GetAverageScaleHighPerSingleLayer(actChalt, averageNTiles);
   double avLGHGCorr   = calib.GetAverageLGHGCorr();
-  std::cout << "average HG mip: " << averageScale << "\t active ch: "<< actCh1st<< std::endl;
+  std::cout << "average HG mip: " << averageScale << "\t per tile: " <<  averageScalePerTile << "\t active ch: "<< actCh1st << "\t av NTiles/seg: " << averageNTiles << std::endl;
   
   // setup local trigger sel
   TRandom3* rand    = new TRandom3();
-  Int_t localTriggerTiles = 4;
+  Int_t localTriggerTiles     = 4;
   if (yearData == 2023){
-    localTriggerTiles = 6;
+    localTriggerTiles         = 6;
   }
-  double factorMinTrigg   = 0.8;
-  double factorMinTriggNoise = 0.2;
-  double factorMaxTrigg   = 2.;
+  double factorMinTrigg       = 0.8;
+  double factorMinTriggNoise  = 0.2;
+  double factorMaxTrigg       = 2.5;
   if (yearData == 2023){
-    factorMinTrigg    = 0.9;
-    factorMaxTrigg    = 2.;
+    factorMinTrigg            = 0.9;
+    factorMaxTrigg            = 2.;
   }
   
-  int outCount      = 1000;
-  int evts=TdataIn->GetEntries();
-  ReadOut::Type typeRO = ReadOut::Type::Caen;
-  
+  // reset maximum number of events if requested
   if (maxEvents == -1){
     maxEvents = evts;
   } else {
@@ -3989,65 +4038,252 @@ bool Analyses::RunEvalLocalTriggers(void){
     std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
   }
   
+  // set cout frequent
+  int outCount                = 1000;
   if (evts < 10000)
     outCount  = 500;
   if (evts > 100000)
     outCount  = 5000;
-  int runNr = -1;
+  
+  //==================================================================================
+  // Create & setup general monitoring histograms
+  //==================================================================================  
+  // create output file for histos
+  CreateOutputRootHistFile();
+  // 2D beam profile -EP
+  int maxChannelPerLayer          = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
+  int maxChannelPerLayerSingleMod = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+	int thisbinxmax = setup->GetNMaxColumn()+1;	
+	int thisbinymax = (int)(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
+  int thisbinzmax = (int)setup->GetNMaxLayer()+1;
+  
+  RootOutputHist->cd();
+  // 2D beam profile front view
+  TH2D* hMipTriggXY               = new TH2D( "hMipTriggXY", "MIP Triggers summed over layers; X (col); Y (row); Num triggers", 
+                                              thisbinxmax, -0.5, thisbinxmax-0.5, thisbinymax, -0.5, thisbinymax-0.5); 
+	hMipTriggXY->SetDirectory(0);
+	// 3D beam profile -EP
+	TH3D *hMipTriggXYZ              = new TH3D( "hMipTriggXYZ", "MIP Triggers; X (col); Z (layer); Y (row); Num triggers", 
+                                               thisbinxmax, -0.5, thisbinxmax-0.5, thisbinzmax, -0.5, thisbinzmax-0.5, thisbinymax, -0.5, thisbinymax-0.5);
+	hMipTriggXYZ->SetDirectory(0);
+  // monitoring trigger 
+  TH2D* hmipTriggers              = new TH2D( "hmipTriggers","muon triggers; layer; brd channel; counts ",
+                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
+  hmipTriggers->SetDirectory(0);
+  // monitoring triggers vs Cell ID
+  TH1D* hMipTriggersGvsCellID     = new TH1D( "hMipTriggersGvsCellID","mip Triggers vs CellID ; cell ID; Nr. mip trigg ",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5);
+  hMipTriggersGvsCellID->SetDirectory(0);
+ 
+  // create tileSpectra objects
+  std::map<int,TileSpectra> hSpectra;
+  std::map<int,TileSpectra> hSpectraTrigg;
+  std::map<int, TileSpectra>::iterator ithSpectra;
+  std::map<int, TileSpectra>::iterator ithSpectraTrigg;
+  RootOutputHist->mkdir("IndividualCells");
+  RootOutputHist->mkdir("IndividualCellsTrigg");
+  RootOutputHist->cd("IndividualCellsTrigg");  
+
+  //==================================================================================
+  // Process input tree & evaulate new triggers
+  //==================================================================================  
   for(int i=0; i<evts && i < maxEvents; i++){
     TdataIn->GetEntry(i);
-    if(debug==1000){
-        std::cerr<<event.GetTimeStamp()<<std::endl;
-      }
-    if (i == 0){
-      runNr   = event.GetRunNumber();
-      typeRO  = event.GetROtype();
-      std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
-      calib.SetRunNumber(runNr);
-      calib.SetBeginRunTime(event.GetBeginRunTimeAlt());
-      std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
-    }
-    
     if (i%outCount == 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
+    
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // Single tile processing
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     for(int j=0; j<event.GetNTiles(); j++){
+
+      //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      // CAEN treatment
+      //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++      
       if (typeRO == ReadOut::Type::Caen) {
         Caen* aTile=(Caen*)event.GetTile(j);      
+        int currCellID = aTile->GetCellID();  
         // calculate trigger primitives
-        if (EvalTriggerPrimitives) aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, aTile->GetCellID(), localTriggerTiles, avLGHGCorr));
-        bool localMuonTrigg   = event.InspectIfLocalMuonTrigg(aTile->GetCellID(), averageScale, factorMinTrigg, factorMaxTrigg);
-        bool localNoiseTrigg  = event.InspectIfNoiseTrigg(aTile->GetCellID(), averageScale, factorMinTriggNoise);
+        if (EvalTriggerPrimitives) aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, currCellID, localTriggerTiles, avLGHGCorr));
+        bool localMuonTrigg   = event.InspectIfLocalMuonTrigg(currCellID, averageScalePerTile, factorMinTrigg, factorMaxTrigg);
+        bool localNoiseTrigg  = event.InspectIfNoiseTrigg(currCellID, averageScalePerTile, factorMinTriggNoise);
         aTile->SetLocalTriggerBit(0);
         if (localMuonTrigg) aTile->SetLocalTriggerBit(1);
         if (localNoiseTrigg) aTile->SetLocalTriggerBit(2);
+        
+      //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      // HGCROC treatment
+      //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       } else if (typeRO == ReadOut::Type::Hgcroc) {
         Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
+        int currCellID = aTile->GetCellID();  
+        
         // calculate trigger primitives
-        if (EvalTriggerPrimitives) aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, aTile->GetCellID(), localTriggerTiles, 0.));
-        bool localMuonTrigg   = event.InspectIfLocalMuonTrigg(aTile->GetCellID(), averageScale, factorMinTrigg, factorMaxTrigg);
-        bool localNoiseTrigg  = event.InspectIfNoiseTrigg(aTile->GetCellID(), averageScale, factorMinTriggNoise);
+        aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, currCellID, localTriggerTiles, 0.));
+        
+        bool localMuonTrigg   = event.InspectIfLocalMuonTrigg(currCellID, averageScalePerTile, factorMinTrigg, factorMaxTrigg);
+        // if (localMuonTrigg) std::cout << " triggered " << std::endl;
+        bool localNoiseTrigg  = event.InspectIfNoiseTrigg(currCellID, averageScalePerTile, factorMinTriggNoise);
+        
+        // reset Local trigger bit
         aTile->SetLocalTriggerBit(0);
-        if (localMuonTrigg) aTile->SetLocalTriggerBit(1);
-        if (localNoiseTrigg) aTile->SetLocalTriggerBit(2);
+        // set trigger bit to muon
+        if (localMuonTrigg){
+          aTile->SetLocalTriggerBit(1);
+          hMipTriggersGvsCellID->Fill(currCellID);
+          
+          int layer       = setup->GetLayer(currCellID);
+          int chInLayer   = setup->GetChannelInLayerFull(currCellID);
+          int row         = setup->GetRow(currCellID);
+          int col         = setup->GetColumn(currCellID);
+          int mod         = setup->GetModule(currCellID);
+          
+          hmipTriggers->Fill(layer,chInLayer);
+          hMipTriggXY->Fill(col, (mod*2) + row);
+          hMipTriggXYZ->Fill(col, layer, (mod*2) + row);
+        }
+        // set trigger bit to noise
+        if (localNoiseTrigg) {
+          aTile->SetLocalTriggerBit(2);
+        }
+          
+        double adc = aTile->GetIntegratedADC();
+        double tot = aTile->GetRawTOT();
+        double toa = aTile->GetRawTOA();
+
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        // filling single tile spectra for monitoring
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        ithSpectraTrigg = hSpectraTrigg.find(currCellID);
+        ithSpectra      = hSpectra.find(currCellID);
+        
+        // create tile sprectra object if not yet there for triggered cells & fill trigger primitives
+        if(ithSpectraTrigg!=hSpectraTrigg.end()){
+          ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
+        } else {
+          RootOutputHist->cd("IndividualCellsTrigg");
+          hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+          hSpectraTrigg[currCellID].FillTrigger(aTile->GetLocalTriggerPrimitive());;
+          RootOutput->cd();
+        }
+        // only fill tile spectra if 4 surrounding tiles on average are compatible with muon response
+        if (localMuonTrigg){
+          ithSpectraTrigg=hSpectraTrigg.find(currCellID);
+          ithSpectraTrigg->second.FillHGCROC(adc, toa, tot);
+        }
+        
+        // create tile sprectra object if not yet there for all cells & fill 
+        if (ithSpectra!=hSpectra.end()){
+          ithSpectra->second.FillHGCROC(adc, toa, tot);
+        } else {
+          RootOutputHist->cd("IndividualCells");
+          hSpectra[currCellID]=TileSpectra("mip1st",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+          hSpectra[currCellID].FillHGCROC(adc, toa, tot);
+          RootOutput->cd();
+        }
       }
     }
+    RootOutput->cd();
     TdataOut->Fill();
   }
-  TdataOut->Write();
-  TsetupIn->CloneTree()->Write();
   
-  if (IsCalibSaveToFile()){
-    TString fileCalibPrint = RootOutputName;
-    fileCalibPrint         = fileCalibPrint.ReplaceAll(".root","_calib.txt");
-    calib.PrintCalibToFile(fileCalibPrint);
-  }
-  
-  TcalibOut->Fill();
-  TcalibOut->Write();
-  
+  //==================================================================================
+  // Write tree output file
+  //==================================================================================
+  RootOutput->cd();
+    TdataOut->Write();
+    TsetupIn->CloneTree()->Write();
+    
+    if (IsCalibSaveToFile()){
+      TString fileCalibPrint = RootOutputName;
+      fileCalibPrint         = fileCalibPrint.ReplaceAll(".root","_calib.txt");
+      calib.PrintCalibToFile(fileCalibPrint);
+    }
+    
+    TcalibOut->Fill();
+    TcalibOut->Write();
   RootOutput->Close();
   RootInput->Close();      
   
+  //==================================================================================
+  // Set up general plotting variables
+  //==================================================================================
+  // Get run info object
+  std::map<int,RunInfo>::iterator it=ri.find(runNr);
+  // create directory for plot output
+  TString outputDirPlots  = GetPlotOutputDir();
+  gSystem->Exec("mkdir -p "+outputDirPlots);
+  
+  Double_t textSizeRel = 0.035;
+  StyleSettingsBasics("pdf");
+  SetPlotStyle();  
+  // find detector config for plotting
+  DetConf::Type detConf   = setup->GetDetectorConfig();
+
+  Double_t maxHG          = ReturnMipPlotRangeDepVov(calib.GetVov(),true, typeRO);
+  Double_t minHG          = ReturnMipMinPlotRangeDepVov(calib.GetVov(),true, typeRO);
+  Double_t maxLG          = ReturnMipPlotRangeDepVov(calib.GetVov(),false, typeRO);
+  Double_t maxTriggPPlot  = maxHG*2;
+  Int_t textSizePixel     = 30;
+  if (typeRO != ReadOut::Type::Caen)
+    maxTriggPPlot = 150;
+
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+  // Single layer plotting
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+  MultiCanvas panelPlot(detConf, "Skim");
+  bool init1D = panelPlot.Initialize(1);
+    
+  std::cout << "plotting single layers" << std::endl;
+  panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 1, minHG, maxHG, 1.2, 
+                              Form("%s/MIP_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+  panelPlot.PlotTriggerPrim( hSpectraTrigg, averageScalePerTile, factorMinTrigg, factorMaxTrigg, 0, maxTriggPPlot, 1.2,
+                             Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+  std::cout << "done plotting" << std::endl;
+
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+  // Overview plots
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+  TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
+  DefaultCanvasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
+  TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
+  DefaultCanvasSettings( canvas1DSimple, 0.08, 0.03, 0.03, 0.07);
+  
+  std::cout << "plotting overview" << std::endl;
+  PlotSimple2D( canvas2DCorr, hmipTriggers, -10000, -10000, textSizeRel, 
+                Form("%s/MipTrigger.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DCorr, hMipTriggXY, -10000, -10000, textSizeRel, 
+                Form("%s/MipTriggerXY.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple1D(canvas1DSimple, hMipTriggersGvsCellID, -10000, -10000, textSizeRel, 
+               Form("%s/MuonTriggVsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+  TH1D* hMipTriggersGvsCellIDPerEvt = (TH1D*)hMipTriggersGvsCellID->Clone("hMipTriggersGvsCellIDPerEvt");
+  hMipTriggersGvsCellIDPerEvt->Scale(1./evts);
+  hMipTriggersGvsCellIDPerEvt->GetYaxis()->SetTitle("#mu triggers/event");
+  PlotSimple1D(canvas1DSimple, hMipTriggersGvsCellIDPerEvt, -10000, -10000, textSizeRel, 
+               Form("%s/MuonTriggPerEventVsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+
+  //==================================================================================
+  // Write output hist file
+  //==================================================================================
+  RootOutputHist->cd();
+    hMipTriggersGvsCellID->Write();
+    hMipTriggersGvsCellIDPerEvt->Write();
+    hmipTriggers->Write();
+    hMipTriggXY->Write();
+    hMipTriggXYZ->Write();
+    
+  RootOutputHist->cd("IndividualCellsTrigg");
+    for(ithSpectraTrigg=hSpectraTrigg.begin(); ithSpectraTrigg!=hSpectraTrigg.end(); ++ithSpectraTrigg){
+      ithSpectraTrigg->second.Write(true);
+    }
+  RootOutputHist->cd("IndividualCells");
+    for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
+      ithSpectra->second.Write(true);
+    }
+  RootOutputHist->Write();
+  RootOutputHist->Close();
+  
   return true;
+
 }
 
 //***********************************************************************************************
@@ -4188,56 +4424,75 @@ bool Analyses::Calibrate(void){
   TH2D* hspectraEnergyTotvsNCells  = new TH2D( "hspectraTotEnergy_vsNCells","Energy vs CellID; N_{Cells}; E_{tot} (mip eq./tile); counts",
                                             setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5, 6000,0,1000);
   hspectraEnergyTotvsNCells->SetDirectory(0);
-
+  TH2D* hspectraEnergyTotvsNCellsNoNoise  = new TH2D( "hspectraTotEnergy_vsNCells_NoNoise","Energy vs CellID; N_{Cells}; E_{tot} (mip eq./tile); counts",
+                                            setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5, 6000,0,1000);
+  hspectraEnergyTotvsNCellsNoNoise->SetDirectory(0);
+  TH2D* hspectraEnergyTotvsNCellsST  = new TH2D( "hspectraTotEnergy_vsNCellsST","Energy vs CellID; N_{Tiles}; E_{tot} (mip eq./tile); counts",
+                                            (setup->GetNActiveCells()*5)+1, -0.5, (setup->GetNActiveCells()*10)+1-0.5, 6000,0,1000);
+  hspectraEnergyTotvsNCellsST->SetDirectory(0);
+  
   std::map<int,TileSpectra> hSpectra;
   std::map<int, TileSpectra>::iterator ithSpectra;
+  std::map<int,TileSpectra> hSpectraLocalTrigg;
+  std::map<int, TileSpectra>::iterator ithSpectraLocalTrigg;
   std::map<int,TileSpectra> hSpectraNoise;
   std::map<int, TileSpectra>::iterator ithSpectraNoise;
+  std::map<int,TileSpectra> hSpectraNotNoise;
+  std::map<int, TileSpectra>::iterator ithSpectraNotNoise;
   
   // entering histoOutput file
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->cd("IndividualCells");
   RootOutputHist->mkdir("IndividualCellsNoise");
   RootOutputHist->cd("IndividualCellsNoise");
+  RootOutputHist->mkdir("IndividualCellsLocalTrigg");
+  RootOutputHist->cd("IndividualCellsLocalTrigg");
 
   RootOutput->cd();
   
   //=============================================================================================
   // Setup general variables for analysis
   //=============================================================================================
-  int actCh1st = 0;
-  double averageScale = calib.GetAverageScaleHigh(actCh1st);
-  double avLGHGCorr   = calib.GetAverageLGHGCorr();
-  double avPedMean    = calib.GetAveragePedestalMeanLow();
-  double avPedSig     = calib.GetAveragePedestalSigHigh();
-  std::cout << "average HG mip: " << averageScale << "\t active ch: "<< actCh1st<< std::endl;
-  
+  int actCh1st                = 0;
+  double averageScale         = calib.GetAverageScaleHigh(actCh1st);
+  int actChalt                = 0;
+  double averageNTiles        = 0.;
+  double averageScalePerTile  = calib.GetAverageScaleHighPerSingleLayer(actChalt, averageNTiles);
+  // variable per single tile for possible summed output
+  double avLGHGCorr           = calib.GetAverageLGHGCorr();
+  double avPedMean            = calib.GetAveragePedestalMeanLow();
+  double avPedSig             = calib.GetAveragePedestalSigHigh();
+  // print out key calib variables
+  if (typeRO == ReadOut::Type::Caen)
+    std::cout << "average HG mip: " << averageScale << "\t active ch: "<< actCh1st<< std::endl;
+  else if (typeRO == ReadOut::Type::Hgcroc)
+    std::cout << "average HG mip: " << averageScale << "\t per tile: " << averageScalePerTile << "\t active ch: "<< actCh1st<< "\t average Ntiles for calib: "<< averageNTiles << std::endl;
+
   // setup local trigger sel
   TRandom3* rand    = new TRandom3();
-  Int_t localTriggerTiles = 4;
+  Int_t localTriggerTiles     = 4;
   if (yearData == 2023){
-    localTriggerTiles = 6;
+    localTriggerTiles         = 6;
   }
-  double factorMinTrigg   = 0.8;
-  double factorMinTriggNoise = 0.2;
-  double factorMaxTrigg   = 2.;
+  double factorMinTrigg       = 0.8;
+  double factorMinTriggNoise  = 0.2;
+  double factorMaxTrigg       = 2.5;
   if (yearData == 2023){
-    factorMinTrigg    = 0.9;
-    factorMaxTrigg    = 2.;
+    factorMinTrigg            = 0.9;
+    factorMaxTrigg            = 2.;
   }
-  
-  int corrHGADCSwap = 3500;
-  int outCount      = 5000;
+  int corrHGADCSwap           = 3500;
   int evts=TdataIn->GetEntries();
   if (maxEvents == -1){
-    maxEvents = evts;
+    maxEvents                 = evts;
   } else {
     std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
     std::cout << "ATTENTION: YOU ARE RESETTING THE MAXIMUM NUMBER OF EVENTS TO BE PROCESSED TO: " << maxEvents << ". THIS SHOULD ONLY BE USED FOR TESTING!" << std::endl;
     std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
   }
+  int outCount                = 5000;
   if (evts < 10000)
-    outCount  = 500;
+    outCount                  = 500;
   
   //==================================================================================
   // setup waveform builder for HGCROC data
@@ -4254,14 +4509,25 @@ bool Analyses::Calibrate(void){
       }
     TdataIn->GetEntry(i);
     if (i%outCount == 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
-    double Etot = 0;
-    int nCells  = 0;
+    
+    double Etot         = 0;
+    int nCells          = 0;
+    int nCellsST        = 0;    // Ncells single tile equivalent
+    double EtotNoNoise  = 0;
+    int nCellsNoNoise   = 0;
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // Single tile processing
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     for(int j=0; j<event.GetNTiles(); j++){
       // tile energy
-      double energy = 0;
+      double energy = 0;      
       // calculate trigger primitives
       bool localMuonTrigg   = false;
       bool localNoiseTrigg  = false;
+
+      //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      // CAEN treatment
+      //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       if (typeRO == ReadOut::Type::Caen) {
         Caen* aTile=(Caen*)event.GetTile(j);
         // remove bad channels from output
@@ -4285,15 +4551,20 @@ bool Analyses::Calibrate(void){
             std::cout << "-> Cell ID: " <<  aTile->GetCellID() << "\t HG\t" << corrHG << "\t" << corrHG/calib.GetScaleHigh(aTile->GetCellID()) << "\t LG \t" << corrLG << "\t" <<  corrLG/calib.GetCalcScaleLow(aTile->GetCellID()) << "\t"<< corrLG/calib.GetScaleLow(aTile->GetCellID()) << "\t delta: \t"<< corrHG/calib.GetScaleHigh(aTile->GetCellID())-(corrLG/calib.GetCalcScaleLow(aTile->GetCellID())) << "\tLGHG\t" << calib.GetLGHGCorr(aTile->GetCellID())<< std::endl;
         }
 
+        // check if you need to rerun the trigger
         if (!UseLocTriggFromFile()){
           aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, aTile->GetCellID(), localTriggerTiles, avLGHGCorr));
           aTile->SetLocalTriggerBit(0);
-          localMuonTrigg   = event.InspectIfLocalMuonTrigg(aTile->GetCellID(), averageScale, factorMinTrigg, factorMaxTrigg);
-          localNoiseTrigg  = event.InspectIfNoiseTrigg(aTile->GetCellID(), averageScale, factorMinTriggNoise);
+          localMuonTrigg   = event.InspectIfLocalMuonTrigg(aTile->GetCellID(), averageScalePerTile, factorMinTrigg, factorMaxTrigg);
+          localNoiseTrigg  = event.InspectIfNoiseTrigg(aTile->GetCellID(), averageScalePerTile, factorMinTriggNoise);
           if (localMuonTrigg) aTile->SetLocalTriggerBit(1);
           if (localNoiseTrigg) aTile->SetLocalTriggerBit(2);
+        // trigger decision taken from inout file
         } else {
-          if (aTile->GetLocalTriggerBit() == 2)  localNoiseTrigg = true;
+          if (aTile->GetLocalTriggerBit() == 2)  localNoiseTrigg  = true;
+          // reeval muon trigger based on updated values
+          localMuonTrigg  = event.InspectIfLocalMuonTrigg(aTile->GetCellID(), averageScalePerTile, factorMinTrigg, factorMaxTrigg);
+          if (localMuonTrigg) aTile->SetLocalTriggerBit(1);
         }
         
         hspectraHGvsCellID->Fill(aTile->GetCellID(), aTile->GetADCHigh());
@@ -4315,6 +4586,17 @@ bool Analyses::Calibrate(void){
           RootOutput->cd();
         }
 
+        if (localMuonTrigg){
+          ithSpectraLocalTrigg=hSpectraLocalTrigg.find(aTile->GetCellID());
+          if(ithSpectraLocalTrigg!=hSpectraLocalTrigg.end()){
+            ithSpectraLocalTrigg->second.FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
+          } else {
+            RootOutputHist->cd("IndividualCellsLocalTrigg");
+            hSpectraLocalTrigg[aTile->GetCellID()]=TileSpectra("CalibrateLocalTrigg",1,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectraLocalTrigg[aTile->GetCellID()].FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
+            RootOutput->cd();
+          }
+        }
         if (localNoiseTrigg){
           ithSpectraNoise=hSpectraNoise.find(aTile->GetCellID());
           if(ithSpectraNoise!=hSpectraNoise.end()){
@@ -4325,7 +4607,23 @@ bool Analyses::Calibrate(void){
             hSpectraNoise[aTile->GetCellID()].FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
             RootOutput->cd();
           }
+        } else {
+          ithSpectraNotNoise=hSpectraNotNoise.find(aTile->GetCellID());
+          if(ithSpectraNotNoise!=hSpectraNotNoise.end()){
+            ithSpectraNotNoise->second.FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
+          } else {
+            RootOutputHist->cd("IndividualCellsNoise");
+            hSpectraNotNoise[aTile->GetCellID()]=TileSpectra("CalibrateNotNoise",1,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectraNotNoise[aTile->GetCellID()].FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
+            RootOutput->cd();
+          }          
         }
+        
+        if (!localNoiseTrigg){
+         EtotNoNoise  = EtotNoNoise+energy; 
+         nCellsNoNoise++;
+        }
+        // reject cell if not above minimum threshold
         if(energy > minMipFrac){ 
           aTile->SetE(energy);
           hspectraEnergyvsCellID->Fill(aTile->GetCellID(), energy);
@@ -4335,6 +4633,10 @@ bool Analyses::Calibrate(void){
           event.RemoveTile(aTile);
           j--;
         }
+        
+      //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      // HGCROC treatment
+      //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       } else if (typeRO == ReadOut::Type::Hgcroc){
         Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
         // remove bad channels from output
@@ -4383,9 +4685,9 @@ bool Analyses::Calibrate(void){
 
         // temporarily only calibrate with adc & average Scale
         // double tempE = adc/averageScale; 
-        double tempE = adc/calib.GetScaleHigh(aTile->GetCellID());
-        if (tempE > minMipFrac)
-          energy=tempE;
+        double energy      = adc/(calib.GetScaleHighPerSingleLayer(aTile->GetCellID()) );
+        double energySeg  = adc/(calib.GetScaleHigh(aTile->GetCellID()) );
+
         if (debug > 1 && adc >= 900 ){
             std::cout << "----> High ADC Cell ID: " <<  aTile->GetCellID() << "\t ADC\t" << adc << "\t" <<  "\t Tot \t" << tot << "\t toa\t"  <<  toa<< std::endl;
         }
@@ -4396,12 +4698,16 @@ bool Analyses::Calibrate(void){
         if (!UseLocTriggFromFile()){
           aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, aTile->GetCellID(), localTriggerTiles, 0));
           aTile->SetLocalTriggerBit(0);
-          localMuonTrigg   = event.InspectIfLocalMuonTrigg(aTile->GetCellID(), averageScale, factorMinTrigg, factorMaxTrigg);
-          localNoiseTrigg  = event.InspectIfNoiseTrigg(aTile->GetCellID(), averageScale, factorMinTriggNoise);
+          localMuonTrigg   = event.InspectIfLocalMuonTrigg(aTile->GetCellID(), averageScalePerTile, factorMinTrigg, factorMaxTrigg);
+          localNoiseTrigg  = event.InspectIfNoiseTrigg(aTile->GetCellID(), averageScalePerTile, factorMinTriggNoise);
           if (localMuonTrigg) aTile->SetLocalTriggerBit(1);
           if (localNoiseTrigg) aTile->SetLocalTriggerBit(2);
+        // trigger decision taken from inout file
         } else {
-          if (aTile->GetLocalTriggerBit() == 2)  localNoiseTrigg = true;
+          if (aTile->GetLocalTriggerBit() == 2)  localNoiseTrigg  = true;
+          // reeval muon trigger based on updated values
+          localMuonTrigg  = event.InspectIfLocalMuonTrigg(aTile->GetCellID(), averageScalePerTile, factorMinTrigg, factorMaxTrigg);
+          if (localMuonTrigg) aTile->SetLocalTriggerBit(1);
         }
         
         hspectraHGvsCellID->Fill(aTile->GetCellID(), adc);
@@ -4438,12 +4744,54 @@ bool Analyses::Calibrate(void){
           hSpectra[aTile->GetCellID()].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
           RootOutput->cd();
         }
+
+        ithSpectraLocalTrigg=hSpectraLocalTrigg.find(aTile->GetCellID());
+        if(ithSpectraLocalTrigg!=hSpectraLocalTrigg.end()){
+          if (localMuonTrigg) ithSpectraLocalTrigg->second.FillHGCROC(adc,toa,tot);
+          ithSpectraLocalTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
+        } else {
+          RootOutputHist->cd("IndividualCellsLocalTrigg");
+          hSpectraLocalTrigg[aTile->GetCellID()]=TileSpectra("CalibratedLocalTrigg",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+          if (localMuonTrigg) hSpectraLocalTrigg[aTile->GetCellID()].FillHGCROC(adc,toa,tot);
+          hSpectraLocalTrigg[aTile->GetCellID()].FillTrigger(aTile->GetLocalTriggerPrimitive());
+          RootOutput->cd();
+        }
+      
+        if (localNoiseTrigg){
+          ithSpectraNoise=hSpectraNoise.find(aTile->GetCellID());
+          if(ithSpectraNoise!=hSpectraNoise.end()){
+            ithSpectraNoise->second.FillHGCROC(adc,toa,tot);
+          } else {
+            RootOutputHist->cd("IndividualCellsNoise");
+            hSpectraNoise[aTile->GetCellID()]=TileSpectra("CalibratedNoise",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectraNoise[aTile->GetCellID()].FillHGCROC(adc,toa,tot);
+            RootOutput->cd();
+          }
+        } else {
+          ithSpectraNotNoise=hSpectraNotNoise.find(aTile->GetCellID());
+          if(ithSpectraNotNoise!=hSpectraNotNoise.end()){
+            ithSpectraNotNoise->second.FillHGCROC(adc,toa,tot);
+          } else {
+            RootOutputHist->cd("IndividualCells");
+            hSpectraNotNoise[aTile->GetCellID()]=TileSpectra("CalibratedNotNoise",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectraNotNoise[aTile->GetCellID()].FillHGCROC(adc,toa,tot);
+            RootOutput->cd();
+          }
+          
+        }
+        
+        if (!localNoiseTrigg){
+         EtotNoNoise  = EtotNoNoise+energy; 
+         nCellsNoNoise++;
+        }
+        
         // only save if energy is larger minMip fraction
-        if(energy > minMipFrac){ 
+        if(energySeg > minMipFrac){ 
           aTile->SetE(energy);
           hspectraEnergyvsCellID->Fill(aTile->GetCellID(), energy);
           Etot=Etot+energy;
           nCells++;
+          nCellsST= nCellsST+setup->GetLayersInSegment(aTile->GetCellID());
         } else {
           event.RemoveTile(aTile);
           j--;
@@ -4451,9 +4799,15 @@ bool Analyses::Calibrate(void){
       }
     }
     hspectraEnergyTotvsNCells->Fill(nCells,Etot);
+    hspectraEnergyTotvsNCellsNoNoise->Fill(nCellsNoNoise,EtotNoNoise);
+    hspectraEnergyTotvsNCellsST->Fill(nCellsST,Etot);
     RootOutput->cd();
     TdataOut->Fill();
   }
+
+  //*********************************************************************************************
+  // Write Output tree
+  //*********************************************************************************************  
   TdataOut->Write();
   TsetupIn->CloneTree()->Write();
   
@@ -4470,54 +4824,70 @@ bool Analyses::Calibrate(void){
   RootOutput->Close();
   RootInput->Close();      
   
+  //*********************************************************************************************
+  // Write Output hist File
+  //*********************************************************************************************
   RootOutputHist->cd();
 
-  hspectraHGvsCellID->Write();
-  hspectraHGCorrvsCellIDNoise->Write();
-  if (typeRO == ReadOut::Type::Caen){
-    hspectraHGCorrvsCellID->Write();
-    hspectraLGvsCellID->Write();
-    hspectraLGCorrvsCellID->Write();
-    hspectraLGCorrvsCellIDNoise->Write();
-  } else {
-    hspectraTotvsCellID->Write();
-    hspectraTotvsCellIDNoise->Write();
-    hSaturatedCellID->Write();
-    
-    hSampleTOA->Write();
-    hSampleTOAVsCellID->Write();
-    hTOANsVsCellID->Write();
-    hTOACorrNsVsCellID->Write();
-    hspectraTOAvsCellID->Write();
-    for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
-      for (int h = 0; h< 2; h++){
-        h2DToAvsnSample[ro][h]->Write();
-        h2DWaveFormHalfAsicAll[ro][h]->Write();
-        hWaveFormHalfAsicAll[ro][h]->Write();
+    hspectraHGvsCellID->Write();
+    hspectraHGCorrvsCellIDNoise->Write();
+    if (typeRO == ReadOut::Type::Caen){
+      hspectraHGCorrvsCellID->Write();
+      hspectraLGvsCellID->Write();
+      hspectraLGCorrvsCellID->Write();
+      hspectraLGCorrvsCellIDNoise->Write();
+    } else {
+      hspectraTotvsCellID->Write();
+      hspectraTotvsCellIDNoise->Write();
+      hSaturatedCellID->Write();
+      
+      hSampleTOA->Write();
+      hSampleTOAVsCellID->Write();
+      hTOANsVsCellID->Write();
+      hTOACorrNsVsCellID->Write();
+      hspectraTOAvsCellID->Write();
+      for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+        for (int h = 0; h< 2; h++){
+          h2DToAvsnSample[ro][h]->Write();
+          h2DWaveFormHalfAsicAll[ro][h]->Write();
+          hWaveFormHalfAsicAll[ro][h]->Write();
+        }
       }
     }
-  }
-  hspectraEnergyvsCellID->Write();
-  hspectraEnergyTotvsNCells->Write();
-  
-  TH1D* hspectraEnergyTot = (TH1D*)hspectraEnergyTotvsNCells->ProjectionY();
-  hspectraEnergyTot->SetDirectory(0);
-  TH1D* hspectraNCells = (TH1D*)hspectraEnergyTotvsNCells->ProjectionX();
-  hspectraNCells->SetDirectory(0);
-  hspectraEnergyTot->Write("hTotEnergy");
-  hspectraNCells->Write("hNCells");
-
-  RootOutputHist->cd("IndividualCells");
-  for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
-    if (typeRO == ReadOut::Type::Caen)
-      ithSpectra->second.FitLGHGCorr(debug,false);
-    ithSpectra->second.WriteExt(true);
-  }
-  RootOutputHist->cd("IndividualCellsNoise");
-  for(ithSpectraNoise=hSpectraNoise.begin(); ithSpectraNoise!=hSpectraNoise.end(); ++ithSpectraNoise){
-    ithSpectraNoise->second.WriteExt(true);
-  }
+    hspectraEnergyvsCellID->Write();
+    hspectraEnergyTotvsNCells->Write();
+    hspectraEnergyTotvsNCellsST->Write();
+    hspectraEnergyTotvsNCellsNoNoise->Write();
+    
+    TH1D* hspectraEnergyTot = (TH1D*)hspectraEnergyTotvsNCells->ProjectionY();
+    hspectraEnergyTot->SetDirectory(0);
+    TH1D* hspectraNCells = (TH1D*)hspectraEnergyTotvsNCells->ProjectionX();
+    hspectraNCells->SetDirectory(0);
+    TH1D* hspectraNCellsST = (TH1D*)hspectraEnergyTotvsNCellsST->ProjectionX();
+    hspectraNCellsST->SetDirectory(0);
+    hspectraEnergyTot->Write("hTotEnergy");
+    hspectraNCells->Write("hNCells");
+    hspectraNCellsST->Write("hNCellsST");
+    
+    RootOutputHist->cd("IndividualCells");
+    for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
+      if (typeRO == ReadOut::Type::Caen)
+        ithSpectra->second.FitLGHGCorr(debug,false);
+      ithSpectra->second.WriteExt(true);
+    }
+    for(ithSpectraNotNoise=hSpectraNotNoise.begin(); ithSpectraNotNoise!=hSpectraNotNoise.end(); ++ithSpectraNotNoise){
+      ithSpectraNotNoise->second.WriteExt(true);
+    }
+    RootOutputHist->cd("IndividualCellsNoise");
+    for(ithSpectraNoise=hSpectraNoise.begin(); ithSpectraNoise!=hSpectraNoise.end(); ++ithSpectraNoise){
+      ithSpectraNoise->second.WriteExt(true);
+    }
+    RootOutputHist->cd("IndividualCellsLocalTrigg");
+    for(ithSpectraLocalTrigg=hSpectraLocalTrigg.begin(); ithSpectraLocalTrigg!=hSpectraLocalTrigg.end(); ++ithSpectraLocalTrigg){
+      ithSpectraLocalTrigg->second.WriteExt(true);
+    }
   RootOutputHist->Close();
+  
   //**********************************************************************
   //********************* Plotting ***************************************
   //**********************************************************************
@@ -4554,6 +4924,10 @@ bool Analyses::Calibrate(void){
     PlotSimple2D( canvas2DCorr, hTOACorrNsVsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOACorrNsvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
     PlotSimple2D( canvas2DCorr, hSampleTOAVsCellID, (double)it->second.samples,setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleTOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
     
+    PlotSimple2D( canvas2DCorr, hspectraEnergyTotvsNCellsST, -10000, -10000, textSizeRel, Form("%s/EnergyTotalVsNCellsSingleTile.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+    PlotSimple2D( canvas2DCorr, hspectraEnergyTotvsNCellsNoNoise, -10000, -10000, textSizeRel, Form("%s/EnergyTotalVsNCellsNoNoise.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+
+    
     for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
       for (int h = 0; h< 2; h++){      
           PlotSimple2D( canvas2DCorr, h2DToAvsnSample[ro][h],(double)it->second.samples, -10000, textSizeRel,
@@ -4581,6 +4955,10 @@ bool Analyses::Calibrate(void){
     PlotSimple1D(canvas1DSimple, hSaturatedCellID, -10000, -10000, textSizeRel, Form("%s/SaturatedCellsPerEvent.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
     
     PlotSimple1D(canvas1DSimple, hSampleTOA, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleToA.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+    hspectraNCellsST->Scale(1./evts);
+    
+    hspectraNCellsST->GetYaxis()->SetTitle("counts/event");
+    PlotSimple1D(canvas1DSimple, hspectraNCellsST, -10000, -10000, textSizeRel, Form("%s/NCellsSingleTiles.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT N_{tile} #GT = %.1f",hspectraNCellsST->GetMean() ));
   }
 
   if (ExtPlot > 0){
@@ -4622,6 +5000,15 @@ bool Analyses::Calibrate(void){
                                 Form("%s/ADCTOT",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       panelPlot.PlotSpectra( hSpectra, 4, -100, 4096, 1.2,
                              Form("%s/Spectra_Tot" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+      panelPlot.PlotMipWithFits( hSpectra, hSpectraLocalTrigg, 1, -20, maxADC, 1.2, 
+                                  Form("%s/SpectraWithMipTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+      panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 1, -20, 100, 1.2, 
+                                Form("%s/NoiseTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+      panelPlot.Plot3SpectraOverlay(hSpectra, hSpectraNotNoise, hSpectraNoise,
+                                    1, -20, 1024, 1.2, 
+                                Form("%s/NotNoiseTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+      panelPlot.PlotTriggerPrim( hSpectraLocalTrigg, averageScalePerTile, factorMinTrigg, factorMaxTrigg, 0, 200, 1.2,
+                                Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
     }
   }
   return true;

@@ -27,6 +27,7 @@
 #include "PlotHelper_2MLayer.h"
 #include "PlotHelper_1MLayer.h"
 #include "PlotHelper_2ModLayer.h"
+#include "PlotHelper_MediumTBLFHCal.h"
 #include "PlotHelper_AsicLFHCal.h"
 
   //__________________________________________________________________________________________________________
