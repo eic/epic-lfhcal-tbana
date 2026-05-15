@@ -454,23 +454,51 @@ TString PrintRunRecData( runRecData info, bool simple = false){
       histo->GetYaxis()->SetTitleOffset(yTitleOffset);
       histo->GetYaxis()->SetNdivisions(yNDivisions,kTRUE);
   }
-  
+ 
+  //__________________________________________________________________________________________________________
+  inline TLegend *GetAndSetLegend2(  Double_t positionX,
+                              Double_t positionY,
+                              Double_t positionXRight,
+                              Double_t positionYUp,
+                              Size_t textSize,
+                              Int_t columns               = 1,
+                              TString header              = "",
+                              Font_t textFont             = 43,
+                              Double_t margin             = 0
+  ){
+
+      TLegend *legend = new TLegend(positionX,positionY,positionXRight,positionYUp);
+      legend->SetNColumns(columns);
+      legend->SetLineColor(0);
+      legend->SetLineWidth(0);
+      legend->SetFillColor(0);
+      legend->SetFillStyle(0);
+      legend->SetLineStyle(0);
+      legend->SetBorderSize(0);
+      legend->SetTextFont(textFont);
+      legend->SetTextSize(textSize);
+      if (margin != 0) legend->SetMargin(margin);
+      if (header.CompareTo("")!= 0) legend->SetHeader(header);
+      return legend;
+  }
+
+  // 
   //__________________________________________________________________________________________________________
   // Plot Corr with Fits for Full layer
   //__________________________________________________________________________________________________________
   void PlotTrending (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
-                              TGraph* graph, Double_t xPMin, Double_t xPMax, TString nameOutput){
+                              TGraph* graph, Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, TString nameOutput){
                               //, RunInfo currRunInfo){
-                                  
-    Double_t minY = 0;
-    Double_t maxY = 1.05;
-    
+                                    
     canvas2Panel->cd();
     if (!graph) return;;
     TH1D* dummyhist = new TH1D("dummyhist", "", 100, xPMin, xPMax);
     SetStyleHistoTH1ForGraphs( dummyhist, graph->GetXaxis()->GetTitle(), graph->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.02, 510, 510, 43, 63);  
     // if (optionTrend == 6)std::cout << "\t" << graph->GetXaxis()->GetTitle() << "\t" << graph->GetYaxis()->GetTitle() << std::endl;
+    // std::cout << canvas2Panel->GetLogy() << std::endl;
+    if (canvas2Panel->GetLogy() != 0) dummyhist->GetYaxis()->SetTitleOffset(1.2);
     SetMarkerDefaultsTGraph(graph, 20, 1, kBlue+1, kBlue+1);   
+    
     dummyhist->GetYaxis()->SetRangeUser(minY,maxY);
     dummyhist->Draw("axis");
     graph->Draw("pe, same");
@@ -484,8 +512,66 @@ TString PrintRunRecData( runRecData info, bool simple = false){
 //   
     canvas2Panel->SaveAs(nameOutput.Data());
   }
+
+  //__________________________________________________________________________________________________________
+  // Plot Corr with Fits for Full layer
+  //__________________________________________________________________________________________________________
+  void PlotTrendingMultiSpecies (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
+                              TGraph** graph, Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, TString nameOutput){
+                              //, RunInfo currRunInfo){
+                                    
+    canvas2Panel->cd();
+    if (!graph) return;;
+    TH1D* dummyhist = new TH1D("dummyhist", "", 100, xPMin, xPMax);
+    SetStyleHistoTH1ForGraphs( dummyhist, graph[0]->GetXaxis()->GetTitle(), graph[0]->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.02, 510, 510, 43, 63);  
+    // if (optionTrend == 6)std::cout << "\t" << graph->GetXaxis()->GetTitle() << "\t" << graph->GetYaxis()->GetTitle() << std::endl;
+    // std::cout << canvas2Panel->GetLogy() << std::endl;
+    if (canvas2Panel->GetLogy() != 0) dummyhist->GetYaxis()->SetTitleOffset(1.2);
+    
+    SetMarkerDefaultsTGraph(graph[0], 24, 1, kGray+1, kGray+1);   
+    SetMarkerDefaultsTGraph(graph[1], 21, 1, kBlue+1, kBlue+1);   
+    SetMarkerDefaultsTGraph(graph[2], 20, 1, kRed+1, kRed+1);   
+    SetMarkerDefaultsTGraph(graph[3], 33, 1, kGreen+2, kGreen+2);   
+    SetMarkerDefaultsTGraph(graph[4], 34, 1, kOrange+7, kOrange+7);   
+    
+    dummyhist->GetYaxis()->SetRangeUser(minY,maxY);
+    dummyhist->Draw("axis");
+    Int_t nSpecies = 0;
+    for (Int_t i = 0; i < 5; i++){
+      if (graph[i]->GetN() >0 ){
+        graph[i]->Draw("pe, same");
+        nSpecies++;
+      } 
+    }
+    Double_t legX = 0.72;
+    TString titleX = (TString)(graph[0]->GetXaxis()->GetTitle());
+    if ( titleX.Contains("#var") == 1) 
+      legX = 0.12;
+    
+    TLegend* legend = GetAndSetLegend2( legX, 0.14, legX+0.15, 0.14+nSpecies*0.85*relSizeP,0.85*relSizeP, 1, "", 42,0.4);
+    if (graph[0]->GetN() >0 )legend->AddEntry(graph[0], "pedestal","p");
+    if (graph[1]->GetN() >0 )legend->AddEntry(graph[1], "#mu","p");
+    if (graph[2]->GetN() >0 )legend->AddEntry(graph[2], "e","p");
+    if (graph[3]->GetN() >0 )legend->AddEntry(graph[3], "#pi","p");
+    if (graph[4]->GetN() >0 )legend->AddEntry(graph[4], "p","p");
+    legend->Draw();
+//     TString lab1 = Form("#it{#bf{LFHCal TB:}} %s", GetStringFromRunInfo(currRunInfo, 9).Data());
+//     TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
+//     TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
+//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-1*0.85*relSizeP, lab1, true, 0.85*textSizePixel, 43);
+//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-2*0.85*relSizeP, lab2, true, 0.85*textSizePixel, 43);
+//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-3*0.85*relSizeP, lab3, true, 0.85*textSizePixel, 43);
 //   
+    
+    
+    
+    canvas2Panel->SaveAs(nameOutput.Data());
+  }
+  
+  //   
 //   //  
+  
+  
   
   
 //__________________________________________________________________________________________________________
@@ -515,8 +601,28 @@ void EvaluateRecoEffiHGCROC( TString configFileName     = "",
         return;
     }
 
-    TGraph* graphRecEffi = new TGraph();
+    TGraph* graphRecEffi          = new TGraph();
+    TGraph* graphRecEffiVsNAttemp = new TGraph();
+    TGraph* graphRecEffiSpecies[5];   // 0: pedestal
+                                      // 1: muon
+                                      // 2: e+/e-
+                                      // 3: pi+/pi-
+                                      // 3: p/anti-p
+    TGraph* graphRecEffiNAttSpecies[5];   // 0: pedestal
+                                      // 1: muon
+                                      // 2: e+/e-
+                                      // 3: pi+/pi-
+                                      // 3: p/anti-p                                      
+    for (int i = 0; i < 5; i++){
+      graphRecEffiSpecies[i]      = new TGraph();
+      graphRecEffiNAttSpecies[i]  = new TGraph();
+    }
+    
+    double maxTrigg               = 0;
     std::map<int,RunInfo>::iterator it;
+    double minEffi                = 10;
+    double maxEffi                = -10;
+    int nZeroEff                  = 0;
     
     for( TString tempLine; tempLine.ReadLine(in, kTRUE); ) {
       // check if line should be considered
@@ -604,13 +710,47 @@ void EvaluateRecoEffiHGCROC( TString configFileName     = "",
         tempRunRec.inProgEventsPerFPGA[f]   = histEventPerFPGA[f]->GetBinContent(4);
       }
       
-      if(tempRunRec.triggers!= 0)graphRecEffi->AddPoint(temprun,tempRunRec.recEffi);
-
+      if(tempRunRec.triggers!= 0){
+        graphRecEffi->AddPoint(temprun,tempRunRec.recEffi);
+        graphRecEffiVsNAttemp->AddPoint(tempRunRec.recEffi,tempRunRec.triggers);
+        if (maxTrigg < tempRunRec.triggers)
+          maxTrigg = tempRunRec.triggers;
+        if (maxEffi < tempRunRec.recEffi)
+          maxEffi = tempRunRec.recEffi;
+        if (minEffi > tempRunRec.recEffi && minEffi > 0)
+          minEffi = tempRunRec.recEffi;
+        if (tempRunRec.recEffi <= 0.)
+          nZeroEff++;
+        
+        // species dependent graphs
+        std::cout << tempRunRec.pid << std::endl;
+        if (tempRunRec.pid == 0){ // pedestal
+          graphRecEffiSpecies[0]->AddPoint(temprun,tempRunRec.recEffi);
+          graphRecEffiNAttSpecies[0]->AddPoint(tempRunRec.recEffi,tempRunRec.triggers);
+        }
+        if (tempRunRec.pid == -13 || tempRunRec.pid == 13 ){ // muon
+          graphRecEffiSpecies[1]->AddPoint(temprun,tempRunRec.recEffi);
+          graphRecEffiNAttSpecies[1]->AddPoint(tempRunRec.recEffi,tempRunRec.triggers);
+        }
+        if (tempRunRec.pid == -11 || tempRunRec.pid == 11 ){ // electron
+          graphRecEffiSpecies[2]->AddPoint(temprun,tempRunRec.recEffi);
+          graphRecEffiNAttSpecies[2]->AddPoint(tempRunRec.recEffi,tempRunRec.triggers);
+        }
+        if (tempRunRec.pid == 211 || tempRunRec.pid == -211){ // charged pion
+          graphRecEffiSpecies[3]->AddPoint(temprun,tempRunRec.recEffi);
+          graphRecEffiNAttSpecies[3]->AddPoint(tempRunRec.recEffi,tempRunRec.triggers);
+        }
+        if (tempRunRec.pid == 2212 || tempRunRec.pid == -2212){ // proton
+          graphRecEffiSpecies[4]->AddPoint(temprun,tempRunRec.recEffi);
+          graphRecEffiNAttSpecies[4]->AddPoint(tempRunRec.recEffi,tempRunRec.triggers);
+        }
+      }
       
       std::cout << (TString)(PrintRunRecData(tempRunRec, false)).Data() << std::endl;
       rED[temprun] = tempRunRec;
     } 
-
+    std::cout << "runs completely unreconstructable" << nZeroEff << std::endl; 
+    
     for (const auto& run : rED){
       std::cout << (TString)(PrintRunRecData(run.second, true)).Data();
     }
@@ -618,14 +758,38 @@ void EvaluateRecoEffiHGCROC( TString configFileName     = "",
     graphRecEffi->Sort();
     graphRecEffi->GetXaxis()->SetTitle("Run Nr.");
     graphRecEffi->GetYaxis()->SetTitle("#varepsilon_{rec}");
+    graphRecEffiVsNAttemp->Sort();
+    graphRecEffiVsNAttemp->GetYaxis()->SetTitle("#N_{trigg received}");
+    graphRecEffiVsNAttemp->GetXaxis()->SetTitle("#varepsilon_{rec}");
+    for (int i = 0; i < 5; i++){
+      graphRecEffiSpecies[i]->Sort();
+      graphRecEffiSpecies[i]->GetXaxis()->SetTitle("Run Nr.");
+      graphRecEffiSpecies[i]->GetYaxis()->SetTitle("#varepsilon_{rec}");
+      graphRecEffiNAttSpecies[i]->Sort();
+      graphRecEffiNAttSpecies[i]->GetYaxis()->SetTitle("#N_{trigg received}");
+      graphRecEffiNAttSpecies[i]->GetXaxis()->SetTitle("#varepsilon_{rec}");
+    }
     
     TCanvas* canvas = new TCanvas("canvas","",0,0,800,600);
     DrawCanvasSettings( canvas,0.08, 0.01, 0.01, 0.1);
-
+    TCanvas* canvas2 = new TCanvas("canvas2","",0,0,800,600);
+    DrawCanvasSettings( canvas2,0.10, 0.01, 0.01, 0.1);
+    canvas2->SetLogy(1);
+    
     PlotTrending (canvas, 0.95,  0.95, 0.035, 30, 
-                  graphRecEffi, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, Form("%s/RecEffi.pdf",outputDir.Data()) );
+                  graphRecEffi, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, minEffi*0.8, 1.05, Form("%s/RecEffi.pdf",outputDir.Data()) );
+    PlotTrendingMultiSpecies (canvas, 0.95,  0.95, 0.035, 30, 
+                  graphRecEffiSpecies, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, minEffi*0.8, 1.05, Form("%s/RecEffiSpecies.pdf",outputDir.Data()) );
     PlotTrending (canvas, 0.95,  0.95, 0.035, 30, 
-                  graphRecEffi, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, Form("%s/RecEffi.png",outputDir.Data()) );
+                  graphRecEffi, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, minEffi*0.8, 1.05, Form("%s/RecEffi.png",outputDir.Data()) );
+    PlotTrending (canvas2, 0.95,  0.95, 0.035, 30, 
+                  graphRecEffiVsNAttemp, minEffi*0.95 , 1, 1e3, maxTrigg*2, Form("%s/RecEffiVsAttempTriggers.pdf",outputDir.Data()) );
+    PlotTrendingMultiSpecies (canvas2, 0.95,  0.95, 0.035, 30, 
+                  graphRecEffiNAttSpecies, minEffi*0.95 , 1, 1e3, maxTrigg*2, Form("%s/RecEffiVsAttempTriggersSpecies.pdf",outputDir.Data()) );
+    PlotTrending (canvas2, 0.95,  0.95, 0.035, 30, 
+                  graphRecEffiVsNAttemp, minEffi*0.95 , 1, 1e3, maxTrigg*2, Form("%s/RecEffiVsAttempTriggers.png",outputDir.Data()) );
+    
+    
   
 //     std::cout<<"=============================================================="<<std::endl;
 //     std::vector<runInfo> compRuns;

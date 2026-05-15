@@ -331,24 +331,25 @@
   inline Double_t ReturnRFValue(int rf, int debug = 0){
     if (debug) std::cout << "RF:  " << rf ;
     Double_t rfOhm = 0;
+    Double_t ohmBit[4]  = {100., 66.66, 50., 25.}; 
     if ((rf - 8) >= 0){
-      rfOhm = rfOhm+25;
+      rfOhm = rfOhm+1/ohmBit[3];
       rf = rf-8;
     }  
     if ((rf - 4) >= 0){
-      rfOhm = rfOhm+50;
+      rfOhm = rfOhm+1/ohmBit[2];
       rf = rf-4;
     }  
     if ((rf - 2) >= 0){
-      rfOhm = rfOhm+66.66;
+      rfOhm = rfOhm+1/ohmBit[1];
       rf = rf-2;
     }  
     if ((rf - 1) == 0){
-      rfOhm = rfOhm+100;
+      rfOhm = rfOhm+1/ohmBit[0];
       rf = rf-1;
     }
     if (debug) std::cout << "\t" << rfOhm << " kOhm" << std::endl;
-    return rfOhm;
+    return 1./rfOhm;
   }
   
   inline Double_t ReturnCFValue(int cf, int debug = 0){

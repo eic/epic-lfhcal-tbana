@@ -104,6 +104,7 @@ bool Setup::Initialize(TString file, int debug){
     if (debug > 10)std::cout <<AROunit<< "\t" << AROchannel << "\t"<< Alayer << "\t"<< Anassembly << "\t"<< AROlayer << "\t"<< Arow << "\t"<< Acolumn << "\t"<< Amod << segSize<< std::endl;
     if (debug > 1)std::cout << "registered cell: " << DecodeCellID(Akey).Data() << std::endl;
   }
+    
   input.close();
   isInit=true;
   return isInit;
@@ -315,7 +316,17 @@ int Setup::GetChannelInLayerFull(int cellID) const{
   int row     = GetRow(cellID);
   int column  = GetColumn(cellID);
   int mod     = GetModule(cellID);
-  int absChL  = mod*((nMaxColumn+1)*(nMaxRow+1))+row*(nMaxColumn+1)+column;
+  int absChL  = -1;
+  
+  if (GetDetectorConfig() == DetConf::Type::Dual8M){
+    absChL    = mod*((nMaxColumn+1)*(nMaxRow+1))+row*(nMaxColumn+1)+column;
+  } else if (GetDetectorConfig() == DetConf::Type::MediumTB){
+    if (mod%2 == 0){
+      absChL = mod%2*((nMaxColumn+1) *(nMaxRow+1))+row*(nMaxColumn+1)*2+column+(int)mod/2*16;
+    } else {
+      absChL = (mod%2-1)*((nMaxColumn+1) *(nMaxRow+1))+row*(nMaxColumn+1)*2+column+(int)(mod-1)/2*16 + (nMaxColumn+1);
+    }
+  }
   return absChL;
 }
 
@@ -439,29 +450,42 @@ float Setup::GetCellDepth() const{
   return cellD;
 }
 
+
+
 DetConf::Type Setup::GetDetectorConfig() const{
+  DetConf::Type type;
   if (GetNMaxModule()+1 == 2){
     if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
-    return DetConf::Type::Dual8M;
+      type = DetConf::Type::Dual8M;
+    else 
+      type = DetConf::Type::Undef;
   } else if (GetNMaxModule()+1 == 8){
     if(GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
-      return DetConf::Type::LargeTB;
+      type = DetConf::Type::LargeTB;
+    else 
+      type = DetConf::Type::Undef;
   } else if (GetNMaxModule()+1 == 6){
     if(GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
-      return DetConf::Type::MediumTB;
+      type = DetConf::Type::MediumTB;
+    else 
+      type = DetConf::Type::Undef;
   } else if (GetNMaxModule()+1 == 1){
     if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
-      return DetConf::Type::Single8M;
+      type = DetConf::Type::Single8M;
     else if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 2)
-      return DetConf::Type::Single4M;
+      type = DetConf::Type::Single4M;
     else if (GetNMaxRow()+1 == 1 && GetNMaxColumn()+1 == 2)
-      return DetConf::Type::Single2MH;
+      type = DetConf::Type::Single2MH;
     else if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 1)
-      return DetConf::Type::Single2MV;
+      type = DetConf::Type::Single2MV;
     else if (GetNMaxRow()+1 == 1 && GetNMaxColumn()+1 == 1)
-      return DetConf::Type::SingleTile;
-  } 
-  return DetConf::Type::Undef;
+      type = DetConf::Type::SingleTile;
+    else 
+      type = DetConf::Type::Undef;
+  } else {
+    type = DetConf::Type::Undef;
+  }
+  return type;
 }
 
 bool Setup::ContainedInSetup(int cellID) const{
