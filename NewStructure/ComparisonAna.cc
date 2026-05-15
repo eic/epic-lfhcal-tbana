@@ -47,8 +47,8 @@ bool ComparisonAna::CheckAndOpenIO(void){
     
     int goodsetup;
     int goodcalib;
-    while(dummyTxt.good()){
-      std::cout << dummyRootCalibName.data() << "\t" << dummyRootHistName.data() << std::endl;
+    while(dummyTxt.good()){	
+      //std::cout << dummyRootCalibName.data() << "\t" << dummyRootHistName.data() << std::endl;
       
       // check that files exist and can be opened
       TFile dummyRootCalib=TFile(dummyRootCalibName.c_str(),"READ");
@@ -205,14 +205,14 @@ bool ComparisonAna::ProcessAna(void){
 
     it = ri.find(calib.GetRunNumber());
     Xvalue=calib.GetRunNumber();
-  
+
     // TODO: Change id from run number, look at constructor ()
     AnaSummary aSum = AnaSummary(nRun, calib.GetRunNumber(),calib.GetVop(),it->second.energy, it->second.pdg);
 
     TH1D* hTimeDiff = nullptr;
     TFile* tempFile = nullptr;
     if (nRun < (int)RootInputNames.size()){
-      //std::cerr << "names: " << RootInputNames[nRun].Data() << std::endl;
+     // std::cerr << "names: " << RootInputNames[nRun].Data() << std::endl;
       tempFile      = new TFile(RootInputNames[nRun].Data(),"READ");   
       TH1D* hTimeDiff   = (TH1D*)tempFile->Get("hDeltaTime");
       aSum.SetDeltaTimeHist(hTimeDiff);
@@ -237,12 +237,13 @@ bool ComparisonAna::ProcessAna(void){
   Int_t textSizePixel   = 30;
   Float_t textSizeRel   = 0.04;  
   TCanvas* canvasDeltaTime = new TCanvas("canvasDeltaTime","",0,0,1450,1300);  // gives the page size
-  DefaultCanvasSettings( canvasDeltaTime,  0.08, 0.02, 0.025, 0.09);
+  DefaultCanvasSettings( canvasDeltaTime,  0.08, 0.03, 0.025, 0.09);
   canvasDeltaTime->SetLogy(1);
   PlotAnalysisComparison( canvasDeltaTime, 0, sumCalibs, textSizeRel, 
                       Form("%s/TimeDiff_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug);
-  PlotAnalysisComparison( canvasDeltaTime, 1, sumCalibs, textSizeRel, 
-                      Form("%s/Energy_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,2,"", debug);
+  
+	PlotAnalysisComparison( canvasDeltaTime, 1, sumCalibs, textSizeRel, 
+                      Form("%s/Energy_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,eoLabelOpt,"", debug);
   PlotAnalysisComparison( canvasDeltaTime, 2, sumCalibs, textSizeRel, 
                       Form("%s/NCells_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,2, "", debug);
   return true;

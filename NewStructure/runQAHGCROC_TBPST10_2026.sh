@@ -17,7 +17,14 @@ else
 	exit
 fi
 
-if [ $2 == "FullSetC" ]; then
+if [ $2 == "HVScan1" ]; then
+	echo "running calibrate for muon HV scan 1"
+	runs='Muon_HVScan_42V Muon_HVScan_42_5V Muon_HVScan_43V Muon_HVScan_43_5V Muon_HVScan_44V Muon_HVScan_44_5V Muon_HVScan_45V Muon_HVScan_45_5V Muon_HVScan_46V'
+	for runNr in $runs; do
+		QARun $3 $dataDirOut $runNr $PlotBaseDir
+	done;
+
+elif [ $2 == "FullSetC" ]; then
 	echo "running calibrate for 44V runs, summing board V2, campaign C"
 	runs='Muon_FullSetC_1 Muon_FullSetC_2 pi-_1GeV_FullSetC pi-_2GeV_FullSetC pi-_3GeV_FullSetC pi-_4GeV_FullSetC pi-_5GeV_FullSetC pi-_6GeV_FullSetC pi-_7GeV_FullSetC pi-_8GeV_FullSetC pi-_9GeV_FullSetC pi-_10GeV_FullSetC Had+_1GeV_FullSetC Had+_2GeV_FullSetC Had+_3GeV_FullSetC Had+_4GeV_FullSetC Had+_5GeV_FullSetC Had+_6GeV_FullSetC Had+_7GeV_FullSetC Had+_8GeV_FullSetC Had+_9GeV_FullSetC Had+_10GeV_FullSetC'
 	for runNr in $runs; do

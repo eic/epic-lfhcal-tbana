@@ -981,12 +981,19 @@
       }
       double startLegend = 0.55;
       int columns  = 5;
+			double xright = 0.95;
       double columnwidth = 0.35;
       if (labelOpt == 2){
         columns     = 4;
         startLegend = 0.45;
         columnwidth = 0.17;
       }
+			else if (labelOpt == 3) {
+				columns			= 2;
+				startLegend = 0.65;
+				columnwidth = 0.17;
+				xright = 0.9;
+			}
 
       double lineBottom  = 6;
       if (nruns < columns+1) lineBottom = 1;
@@ -995,7 +1002,7 @@
       else if (nruns < 4*columns+1) lineBottom = 4;
       else if (nruns < 5*columns+1) lineBottom = 5;
 
-      TLegend* legend = GetAndSetLegend2( startLegend, 0.88-lineBottom*textSizeRel, 0.95, 0.88,
+      TLegend* legend = GetAndSetLegend2( startLegend, 0.88-lineBottom*textSizeRel, xright, 0.88,
                                           0.75*textSizeRel, columns, "",42,columnwidth);;
       int currRun = 0;
       for(itrun=sumRuns.begin(); (itrun!=sumRuns.end()) && (currRun < 30); ++itrun){
@@ -1022,7 +1029,11 @@
         if (labelOpt == 2){
           TString species = GetSpeciesStringFromPDG(itrun->second.GetPDG());
           legend->AddEntry(histos[currRun],Form("%s %1.f GeV",species.Data(), itrun->second.GetEnergy()),"l");
-        } else {
+        } 
+				else if (labelOpt == 3) { // put Vop in legend
+					legend->AddEntry(histos[currRun],Form("%2.1f V", itrun->second.GetVoltage()), "l");
+				}
+				else {
           legend->AddEntry(histos[currRun],Form("%d",itrun->second.GetRunNumber()),"l");
         }
         currRun++;  

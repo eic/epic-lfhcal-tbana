@@ -55,7 +55,8 @@ class ComparisonAna{
   inline void SetTrendingAxis(int i)             {Xaxis=i;};
   inline void SetRunListInput(TString name)      {RunListInputName=name;};
   inline void SetMaxPlotLayer(int i)             {maxLayerPlot=i;};
-  
+ 	inline void SetLegendLabelOpt(int i)					 {eoLabelOpt=i;};
+
   //General methods
   bool CreateOutputRootFile(void);
   bool CheckAndOpenIO(void);
@@ -77,7 +78,8 @@ class ComparisonAna{
   int yearData                =-1;        // data taking year externally set
   int Xaxis                   =0;         // Trending dependence 0: run nr, 1: Voltage
   int maxLayerPlot            =100;       // option restrict individual layer plotting
-  RootSetupWrapper rsw;                   // Wrapper singleton class for setup
+  int eoLabelOpt							=2;					// Legend label option for EnergyOverlay 2: beam E, 3: Vop
+	RootSetupWrapper rsw;                   // Wrapper singleton class for setup
   RootSetupWrapper* rswptr;               // Pointer to wrapper for singleton class for setup
   Setup* setup;                           // geometry setup
   Calib calib;                            // calibration object
