@@ -8,16 +8,17 @@
 class RootSetupWrapper;
 
 namespace DetConf{
-  enum Type { Undef, 
-              Single8M, 
-              Single4M, 
-              Single2MH, 
-              Single2MV, 
-              SingleTile, 
-              Dual8M, 
+  enum Type { Undef,
+              Unset,
+              Single8M,
+              Single4M,
+              Single2MH,
+              Single2MV,
+              SingleTile,
+              Dual8M,
               MediumTB,
               LargeTB,
-              Asic
+              Asic,
             };
 }
 
@@ -114,7 +115,8 @@ class Setup{
   float cellW = 5.;/*cm, width*/
   float cellH = 5.;/*cm, height*/
   float cellD = 2.;/*cm, depth*/
-  int sumOpt  = 0;
+  int sumOpt  = 0;  
+  
   ClassDef(Setup,3)
 };
 
