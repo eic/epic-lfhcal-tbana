@@ -9,6 +9,7 @@ class Setup;
 
 class RootSetupWrapper{
   
+  
  public:
   RootSetupWrapper(){};
   RootSetupWrapper(Setup* s);

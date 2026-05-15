@@ -1,0 +1,3 @@
+#module Nr  layer   row     column  BC flag
+1   7  1   3   0
+2   7  0   0   0

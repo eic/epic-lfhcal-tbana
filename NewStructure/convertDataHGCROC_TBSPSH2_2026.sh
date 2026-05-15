@@ -52,12 +52,41 @@ runList=../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
 if [ $2 = "InitMuon" ]; then 	
   if [ $3 = "convert" ]; then 
 #     runs='001 002 003'
-    runs='004 005 006 007 008 009 010 011 012 013 014 015 016'
-#     runs='001 002 003 004 005 006 007 008 009 010 011 012 013 014 015 016 017'
+#     runs='004 005 006 007 008 009 010 011 012 013 014 015 016'
+#       runs='046 047 017 018 019 020 021 022 '  #046 047
+#       runs='023 024 025 026 027 028 029 030 031 032 033 034 035 036 037 038 039 '  
+#       runs='017 018 019 020 021 022 '  
+#       runs='048 049 '  
+#       runs='050 051 '  
+#       runs='052'  
+      # fixed mapping starting with 52
+#       runs='052 053 054 055 056 057 058 059 060 '  
+#       runs='048 049 061 062 063 064 065 066 067 068 069 070 '  
+        runs='030 031 032 033 034 035 036 037 038 039 040 041 042 043 044 045 046 047'
     for runNr in $runs; do 
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done
   elif [ $3 = "merge" ]; then  
     echo "not defined yet"
   fi
+# 43 V, summing board V2, Preamp settings 9 7 10 1?
+elif [ $2 = "FullSetB" ]; then 
+  if [ $3 = "convert" ]; then 
+#     runs='' #full list
+#         runs='071 072 073 074 075 076 077 078 079 080 081 082 083 084' #full list
+#       runs='071' #pedestals
+#       runs='072 073 074 075 076 077 078 079 080 081 082 083 084' #muons set 1
+      runs=' 085 086 067 088 089 089 090' #e-
+    #   runs='091 092 093 094 095 096 097' #e+
+    #   runs='' #pi-
+    #   runs='' #h+
+    for runNr in $runs; do 
+      ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
+    done
+  elif [ $3 = "merge" ]; then 
+    runs='072 073 074 075 076 077 078 079 080 081 082 083 084' # set 1
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_FullSetB_1  #ok
+  fi
+  
 fi
