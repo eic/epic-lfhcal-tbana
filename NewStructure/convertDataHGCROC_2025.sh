@@ -23,10 +23,10 @@ echo "username $1"
 echo "run option $2"
 
 # different mapping files for layering
-mapConDef=../configs/TB2025/mapping_HGCROC_PSTB2025_default.txt   # layers 0-32 equipped
-mapCon2=../configs/TB2025/mapping_HGCROC_PSTB2025_config2.txt     # layers 0-24, 33-40 equipped
-mapCon3=../configs/TB2025/mapping_HGCROC_PSTB2025_config3.txt     # layers 0-16, 25-32, 41-49
-mapCon4=../configs/TB2025/mapping_HGCROC_PSTB2025_config4.txt     # layers 0-16, 33-40, 50-58
+mapConDef=../configs/TB2025/mapping_HGCROC_PSTB2025_default_wSegments.txt   # layers 0-32 equipped
+mapCon2=../configs/TB2025/mapping_HGCROC_PSTB2025_config2_wSegments.txt     # layers 0-24, 33-40 equipped
+mapCon3=../configs/TB2025/mapping_HGCROC_PSTB2025_config3_wSegments.txt     # layers 0-16, 25-32, 41-49
+mapCon4=../configs/TB2025/mapping_HGCROC_PSTB2025_config4_wSegments.txt     # layers 0-16, 33-40, 50-58
 
 
 if [ $1 = "fbockTB" ]; then 
@@ -40,6 +40,10 @@ elif [ $1 = "egpott" ]; then
 elif [ $1 = "ehagen" ]; then 
 	dataRaw=/Volumes/UWU/25_TB_Data
 	dataDir=/Volumes/UWU/25_TB_Data
+
+elif [ $1 = "yale" ]; then
+	dataRaw=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/raw/TBMain2025
+	dataDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/rawroot_new
 
 fi
   
@@ -212,6 +216,96 @@ elif [ $2 = "hadrons" ]; then
 	for runNr in $runs; do 
 		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
 	done
+
+elif [ $2 = "FullSetA" ]; then
+	if [ $3 = "convert" ]; then	
+		# not including 013, 076, 164 - (0,0) runs from first muon set
+		runs='024 070 071 072 027 073 074 025 069 026 075 161 201 202 203 204 206 205 207 208 165 166 191 167 192 168 169 193 170 194 171 172 196 200 173 199 174 198 175 197 176 177 178 179 180 181 182 183 184 185 186 187 188'
+		for runNr in $runs; do
+			./Convert -d 2 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+		done
+
+	elif [ $3 = "merge" ]; then
+		# muons (not including the (0,0) runs from 1st set)
+		runs='024 070 071 072 027 073 074 025 069 026 075' # 013 076 164'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt Muon_FullSetA_1
+		runs='201 202 203 204 206 205'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt Muon_FullSetA_2
+
+		# electrons
+		runs='165'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt e-_1GeV_FullSetA 
+		runs='166 191'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt e-_2GeV_FullSetA
+		runs='167 192'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt e-_3GeV_FullSetA
+		runs='168 169 193'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt e-_4GeV_FullSetA
+		runs='170 194'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt e-_5GeV_FullSetA
+		# positrons
+		runs='171'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt e+_1GeV_FullSetA 
+		runs='172 196 200'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt e+_2GeV_FullSetA
+		runs='173 199'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt e+_3GeV_FullSetA
+		runs='174 198'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt e+_4GeV_FullSetA
+		runs='175 197'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt e+_5GeV_FullSetA
+		# negative hadrons
+		runs='176'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h-_3GeV_FullSetA 
+		runs='177'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h-_5GeV_FullSetA
+		runs='178 179'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h-_8GeV_FullSetA
+		runs='180'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h-_10GeV_FullSetA
+		runs='181'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h-_12GeV_FullSetA
+		runs='182'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h-_15GeV_FullSetA
+		# positive hadrons
+		runs='183'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h+_3GeV_FullSetA 
+		runs='184'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h+_5GeV_FullSetA
+		runs='185'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h+_8GeV_FullSetA
+		runs='186'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h+_10GeV_FullSetA
+		runs='187'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h+_12GeV_FullSetA
+		runs='188'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h+_15GeV_FullSetA
+	fi
+
 
 	# Hadron set 1 
 #   runs='277 278 279 280 281 282 283 284 285 286 287 288'

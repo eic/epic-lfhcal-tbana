@@ -29,6 +29,10 @@ elif [ $1 = "egpott" ]; then
   dataDirRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
   dataDirOut=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
   PlotBaseDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/plots
+elif [ $1 = "yale" ]; then
+	dataDirRaw=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202604_PST10/rawroot_new
+	dataDirOut=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202604_PST10/rawroot_new
+	PlotBaseDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202604_PST10/plots_new
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -79,15 +83,33 @@ if [ $2 = "pedestal" ]; then
   done
 fi
 
-if [ $2 = "toaPhase" ]; then   
-  if [ $3 = "FullSetE_1" ]; then
+if [ $2 = "toaPhase" ]; then 
+	if [ $3 = "FullSetC" ]; then
+		runNrPed='130'
+		if [ $4 = "Hadron" ]; then
+			runs='157'
+		elif [ $4 = "Muon" ]; then
+			runs='134'
+		fi
+	elif [ $3 = "FullSetD" ]; then
+		runNrPed='238'
+		if [ $4 = "Hadron" ]; then
+			runs='259'
+		elif [ $4 = "Muon" ]; then
+			runs='242'
+		fi
+  elif [ $3 = "FullSetE_1" ]; then
     runNrPed='287'
     if [ $4 = "Hadron" ]; then 
       runs='304'
     elif [ $4 = "Muon" ]; then 
       runs='' # 1st HV scan
     fi
+	elif [ $3 = "HVScan1" ]; then
+		runNrPed='231'
+		runs='232'
   fi
+
   if [ $4 = "Hadron" ]; then 
     for runNr in $runs; do 
       ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirOut/rawHGCROC_wPed_$runNrPed.root #-F png
@@ -123,40 +145,57 @@ if [ $2 == "calibMuon" ]; then
     runPed='39'
     runs='FMuon_-5_-5 FMuon_0_5 FMuon_5_-5 FMuon_5_5 FMuon_5_0 FMuonCent'
   elif [ $4 = "HVScan42" ]; then
-    runPed='70'
+    runPed='070'
     runs='Muon_HVScan_42V'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_HVScan1.csv'
   elif [ $4 = "HVScan42_5" ]; then
-    runPed='66'
+    runPed='066'
     runs='Muon_HVScan_42_5V'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_HVScan1.csv'
   elif [ $4 = "HVScan43" ]; then
-    runPed='39'
+    runPed='039'
     runs='Muon_HVScan_43V'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_HVScan1.csv'
   elif [ $4 = "HVScan43_5" ]; then
-    runPed='80'
+    runPed='080'
     runs='Muon_HVScan_43_5V'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_HVScan1.csv'
   elif [ $4 = "HVScan44" ]; then
-    runPed='82'
+    runPed='082'
     runs='Muon_HVScan_44V'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_HVScan1.csv'
   elif [ $4 = "HVScan44_5" ]; then
     runPed='221'
     runs='Muon_HVScan_44_5V'
+		toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_HVScan1.csv'
   elif [ $4 = "HVScan45" ]; then
     runPed='225'
     runs='Muon_HVScan_45V'
-  elif [ $4 = "HVScan45" ]; then
-    runPed='225'
-    runs='Muon_HVScan_45V'
-  elif [ $4 = "HVScan45_5" ]; then
+		toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_HVScan1.csv'
+	elif [ $4 = "HVScan45_5" ]; then
     runPed='228'
     runs='Muon_HVScan_45_5V'
+		toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_HVScan1.csv'
   elif [ $4 = "HVScan46" ]; then
     runPed='231'
     runs='Muon_HVScan_46V'
+		toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_HVScan1.csv'
+	elif [ $4 = "FullSetC_1" ]; then
+		runPed='130'
+		runs='Muon_FullSetC_1'
+		toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_FullSetC.csv'
+	elif [ $4 = "FullSetC_2" ]; then
+		runPed='171'
+		runs='Muon_FullSetC_2'
+		toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_FullSetC.csv'
+	elif [ $4 = "FullSetD_1" ]; then
+		runPed='238'
+		runs='Muon_FullSetD_1'
+		toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_FullSetD.csv'
+	elif [ $4 = "FullSetD_2" ]; then
+		runPed='265'
+		runs='Muon_FullSetD_2'
+		toaPhaseOffset='../configs/TB2026/ToAOffsets_TB2026_FullSetD.csv'
   elif [ $4 = "FullSetE_1" ]; then
     runPed='287'
     runs='Muon_FullSetE_1'

@@ -24,7 +24,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
       std::cout << "No mapping file specified" << std::endl;
       // return 1;
     }
-    analysis->setup->Initialize(analysis->MapInputName.Data(), analysis->debug);
+		analysis->setup->Initialize(analysis->MapInputName.Data(), analysis->debug);
     
     // Check run list file - Used to get run parameters automatically
     if (analysis->RunListInputName.IsNull()) {

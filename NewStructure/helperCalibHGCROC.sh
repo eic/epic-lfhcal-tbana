@@ -1,6 +1,6 @@
 #! /bin/bash
 #runNrFile=""
-runList=$runNrFile
+runList=""
 PlotBaseDir=""
 
 function MuonCalibHGCROC()
@@ -21,6 +21,7 @@ function MuonCalibHGCROC()
 		echo "ToAPhase-Offset:" $8
 	fi
 	printf -v runNrPed "%03d" "$2"
+	runNrPed=$2
 	runNrMuon=$3
 	echo "run list:" $runList
 	
