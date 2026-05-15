@@ -47,6 +47,7 @@ void PrintHelp(char* exe){
   std::cout<<"-r rrr   Name of run list file  2024 PS TB [../configs/DataTakingDB_202409_CAEN.csv] "<<std::endl;
   std::cout<<"-R       Trending plots versus run #"<<std::endl;
   std::cout<<"-V       Trending plots versus Vop"<<std::endl;
+	std::cout<<"-s			 Flag HV scan (put Vop in EnergyOverlay legend)"<<std::endl;
   //std::cout<<"-t       Trending plots versus BoR time"<<std::endl;
   std::cout<<"-h       this help"<<std::endl<<std::endl;
   std::cout<<"Examples:"<<std::endl;
@@ -87,7 +88,7 @@ int main(int argc, char* argv[]){
  //pick Ana or Calib
    //if(E_value == 4){
     int c;
-    while((c=getopt(argc,argv,"d:e:E:fF:i:I:L:o:O:r:RVth"))!=-1){
+    while((c=getopt(argc,argv,"d:e:E:fF:i:I:L:o:O:r:RVsth"))!=-1){
       switch(c){
       case 'd':
         std::cout<<"Compare: enable debug " << optarg <<std::endl;
@@ -190,6 +191,12 @@ int main(int argc, char* argv[]){
         it=std::find(RootRegexp.begin(),RootRegexp.end(),"-V");
         RootRegexp.erase(it);
         break;
+			case 's':
+				std::cout<<"Compare: Plotting for HV scan"<<std::endl;
+				CompAnalysis2.SetLegendLabelOpt(3); // put Vop in legend of EnergyOverlay
+				it=std::find(RootRegexp.begin(),RootRegexp.end(),"-s");
+				RootRegexp.erase(it);
+				break;
       //case 't':
       //  std::cout<<"Trending plots versus BoR time"<<std::endl;
       //  CompAnalysis2.SetTrendingAxis(2);
