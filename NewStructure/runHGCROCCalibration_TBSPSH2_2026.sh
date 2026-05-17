@@ -14,24 +14,28 @@ dataDirRaw=""
 dataDirOut=""
 
 if [ $1 = "fbockTB" ]; then 
-	dataDirRaw=/media/fbock/Lennard4TB/202605_SPSH2/HGCROCData
-	dataDirOut=/media/fbock/Lennard4TB/202605_SPSH2/HGCROCData
-	PlotBaseDir=/media/fbock/Lennard4TB/202605_SPSH2/
+  dataDirRaw=/media/fbock/Lennard4TB/202605_SPSH2/HGCROCData
+  dataDirOut=/media/fbock/Lennard4TB/202605_SPSH2/HGCROCData
+  PlotBaseDir=/media/fbock/Lennard4TB/202605_SPSH2/
 elif [ $1 = "atamis" ]; then 
-	dataDirRaw=/home/drewtam20/Documents/eic/LFHCALDATA/Converted
-	dataDirOut=/home/drewtam20/Documents/eic/LFHCALDATA/Converted
-	PlotBaseDir=/home/drewtam20/Documents/eic/LFHCALDATA/Plots
+  dataDirRaw=/home/drewtam20/Documents/eic/LFHCALDATA/Converted
+  dataDirOut=/home/drewtam20/Documents/eic/LFHCALDATA/Converted
+  PlotBaseDir=/home/drewtam20/Documents/eic/LFHCALDATA/Plots
 elif [ $1 = "ehagen" ]; then 
-	dataDirRaw=/Users/hagen/Githubs/TB_data
-	dataDirOut=/Users/hagen/Githubs/TB_data
-	PlotBaseDir=/Users/hagen/Githubs/TB_data/plots
+  dataDirRaw=/Users/hagen/Githubs/TB_data
+  dataDirOut=/Users/hagen/Githubs/TB_data
+  PlotBaseDir=/Users/hagen/Githubs/TB_data/plots
 elif [ $1 = "egpott" ]; then
   dataDirRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
   dataDirOut=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
   PlotBaseDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/plots
+elif [ $1 = "Preet" ]; then
+  dataDirRaw=/home/lfhcal/HGCROCData
+  dataDirOut=/home/lfhcal/HGCROCData
+  PlotBaseDir=/home/lfhcal/HGCROCData/plots
 else
-	echo "Please select a known user name, otherwise I don't know where the data is"
-	exit
+  echo "Please select a known user name, otherwise I don't know where the data is"
+  exit
 fi
 
 # run pedest extraction for different run numbers
@@ -49,6 +53,11 @@ if [ $2 = "pedestal" ]; then
   elif [ $3 = "FullSetC" ]; then
 #     runs='134 135 137' #pedestals
     runs='135' #pedestals
+    # runs='71' #pedestals
+ elif [ $3 = "HVScan" ]; then
+    runs='188' #pedestals
+  elif [ $3 = "HadronScan" ]; then
+    runs='207' #pedestals
   fi
   for runNr in $runs; do 
     printf -v runNrPed "%03d" "$runNr"
@@ -65,6 +74,11 @@ if [ $2 = "toaPhase" ]; then
     elif [ $4 = "Muon" ]; then 
       runs='072' # 1st 0,0
     fi
+  elif [ $3 = "HVScan" ]; then
+    runNrPed='188'
+    if [ $4 = "Muon" ]; then
+      runs='202' # 1st 0,0
+    fi
   fi
   if [ $4 = "Hadron" ]; then 
     for runNr in $runs; do 
@@ -73,20 +87,20 @@ if [ $2 = "toaPhase" ]; then
   elif [ $4 = "Muon" ]; then 
     for runNr in $runs; do 
       echo $runNr
-			./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_wPed_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_wPed_$runNrPed.root
+      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_wPed_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_wPed_$runNrPed.root
       #./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runList -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
     done
   fi
 
 fi
 
-if [ $2 = "wave" ]; then  
+if [ $2 = "wave" ]; then  /Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/plots
   echo "Add runnumbers before you try this & remove exit"
   exit
   runs=''
-	for runNr in $runs; do 
-		WaveformHGCROC $3 $runNr $dataDirRaw Run_$runNr
-	done
+  for runNr in $runs; do
+    WaveformHGCROC $3 $runNr $dataDirRaw Run_$runNr
+  done
 fi
 
 
@@ -114,14 +128,22 @@ if [ $2 == "calibMuon" ]; then
     runPed='071'
     runs='125'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetB.csv'
+  elif [ $4 = "HadronScan" ]; then
+    runPed='207'
+    runs='207'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetB.csv'
+  elif [ $4 = "HVScan" ]; then
+    runPed='188'
+    runs='194 195 196 197 198 199 200 201 202'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetB.csv'
   else 
     echo "No run selected, exiting..."
     exit
   fi
 
-	badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_dummy.txt
-	
-	for runNr in $runs; do 
+  badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_dummy.txt
+
+  for runNr in $runs; do
     echo "$runNr   $runPed"
     MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset 	
   done
