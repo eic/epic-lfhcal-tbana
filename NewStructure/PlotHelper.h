@@ -937,7 +937,8 @@
                             std::map<int, AnaSummary> sumRuns, 
                             Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
                             int labelOpt = 1,
-                            TString additionalLabel = "", int debug = 0
+                            TString additionalLabel = "", int debug = 0, Double_t eoXmax=0,
+														int colorByEV=0
                             ){
     //hardcode max X
     Double_t minY         = 0.1;
@@ -969,6 +970,9 @@
       }
       nruns++;
     }
+		if (eoXmax != 0) {	
+			maxX = eoXmax;
+		}
     std::cout << "min X\t"  << minX << "\t max X \t" << maxX << std::endl;
     std::cout << "min Y\t"  << minY << "\t max Y \t" << maxY << std::endl;
     
@@ -1016,7 +1020,20 @@
         }
         SetStyleHistoTH1ForGraphs( histos[currRun], histos[currRun]->GetXaxis()->GetTitle(), histos[currRun]->GetYaxis()->GetTitle(), 0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.95, 1.02);  
         SetLineDefaults(histos[currRun], GetColorLayer(currRun), 4, GetLineStyleLayer(currRun));   
-        if(currRun == 0){
+        if (colorByEV == 1) { // set line color according to beam energy
+					int thisbei = (int)itrun->second.GetEnergy()-1;
+					SetLineDefaults(histos[currRun], GetColorLayer(thisbei), 4, GetLineStyleLayer(currRun));
+				}
+				if (colorByEV == 2) { // set line color according to Vop
+					// only works for Vop=42, 42.5, 43, ..., 46 V.
+					double thisvop = itrun->second.GetVoltage();
+					if (thisvop<42 || thisvop>46) colorByEV=0;
+					else {
+						thisvop = (thisvop - 42)*2;
+						SetLineDefaults(histos[currRun], GetColorLayer((int)thisvop), 4, GetLineStyleLayer(currRun));
+					}
+				}
+				if(currRun == 0){
           histos[currRun]->GetXaxis()->SetRangeUser(minX-5*histos[currRun]->GetBinWidth(1),maxX+5*histos[currRun]->GetBinWidth(1));
           if (option == 1)
             histos[currRun]->GetYaxis()->SetRangeUser(minY*4,maxY*4.4);
