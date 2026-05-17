@@ -142,8 +142,8 @@ elif [ $2 = "FullSetD" ]; then
 #       runs='208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224' #muons set 1
       # runs='225 226 227 228 229 231' #e-
       # runs='232 233 234 235 236 237' #e+
-      runs='238'
-    #   runs='238 239 240 241 242 243 244 245 246 247 248 249' #pi-
+    #  runs='238'
+       runs='238 239 240 241 242 243 244 245 246 247 248 249' #pi-
     #   runs='250 251 252 253 ' #h+
     for runNr in $runs; do
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
