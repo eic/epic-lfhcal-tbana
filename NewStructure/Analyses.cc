@@ -2015,7 +2015,10 @@ bool Analyses::TransferCalib(void){
       PlotSimple2D( canvas2DSigQA, hTOACorrNsVsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOACorrNsvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
       PlotSimple2D( canvas2DSigQA, hSampleTOAVsCellID, (double)it->second.samples,setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleTOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
 
-      
+      PlotSimple2D( canvas2DSigQA, hspectraTOTvsCellID, 4096, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOTvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+      PlotSimple2D( canvas2DSigQA, hspectraTOAvsCellID, 1024, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+      PlotSimple2D( canvas2DSigQA, hspectraADCvsCellID,  1024, setup->GetMaxCellID()+1, textSizeRel, Form("%s/ADCvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+
       canvas2DSigQA->SetLogz(1);
       PlotSimple2DZRange( canvas2DSigQA, hHighestADCAbovePedVsLayer, -10000, -10000, 0.1, 20000, textSizeRel, Form("%s/MaxADCAboveNoise_vsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, "colz", true);    
       
@@ -2345,7 +2348,7 @@ bool Analyses::GetScaling(void){
       runNr = event.GetRunNumber();
       typeRO = event.GetROtype();
       if (typeRO != ReadOut::Type::Caen)
-        evtDeb = 400;
+        evtDeb = 2500;
       std::cout<< "Total number of events: " << evts << std::endl;
       std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
       calib.SetRunNumberMip(runNr);
