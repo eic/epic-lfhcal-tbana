@@ -44,7 +44,11 @@ if [ $2 = "pedestal" ]; then
     runs='48' #pedestals
   # Full Scan B
   elif [ $3 = "FullSetB" ]; then
-    runs='71' #pedestals
+#     runs='71' #pedestals
+    runs='126' #pedestals
+  elif [ $3 = "FullSetC" ]; then
+#     runs='134 135 137' #pedestals
+    runs='135' #pedestals
   fi
   for runNr in $runs; do 
     printf -v runNrPed "%03d" "$runNr"
@@ -88,31 +92,38 @@ fi
 
 if [ $2 == "calibMuon" ]; then
   toaPhaseOffset=''
-  if [ $4 = "FullSetB_1" ]; then
-    runPed='71'
+  if [ $4 = "FullSetB_A" ]; then
+    runPed='071'
     runs='072'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetB.csv'
     
-  elif [ $4 = "FullSetB" ]; then
-    runPed='71'
-    runs='Muon_FullSetB'
+  elif [ $4 = "FullSetB_1" ]; then
+    runPed='071'
+    runs='Muon_FullSetB_1'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetB.csv'
   elif [ $4 = "FullSetB_ele" ]; then
-    runPed='71'
+    runPed='071'
     runs='085'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetB.csv'
+  elif [ $4 = "FullSetB_pi" ]; then
+    runPed='071'
+#     runs='113'
+    runs='114 115 116 117 118 119 120 121 122 123 124'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetB.csv'
+  elif [ $4 = "FullSetB_piMax" ]; then
+    runPed='071'
+    runs='125'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetB.csv'
   else 
-    #Muon positions scan Full Scan 43 V
-    runPed='85'
-    runs='Muon_-5_-5 Muon_-5_0 Muon_0_5 Muon_5_5'
+    echo "No run selected, exiting..."
+    exit
   fi
 
 	badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_dummy.txt
 	
 	for runNr in $runs; do 
     echo "$runNr   $runPed"
-		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset # -EP 2026/2/15
-		#MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
-	done
+    MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset 	
+  done
 fi
 
