@@ -29,7 +29,7 @@ mapConDefV1=../configs/TB2026/mapping_HGCROC_PST10TB_sumV1_default_inv.csv   # v
 
 if [ $1 = "fbockTB" ]; then 
 	dataRaw=/media/fbock/Lennard4TB/202605_SPSH2/raw/      # source directory for output files from DAQ system
-	dataDir=/media/fbock/Lennard4TB/202605_SPSH2/HGCROCData           # base directory for root trees  fi
+	dataDir=/media/fbock/ALICE2-4TB/202605_SPSH2/HGCROCData           # base directory for root trees  fi
 elif [ $1 = "egpott" ]; then # bla bla bla test test test
 	dataRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/raw
 	dataDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
