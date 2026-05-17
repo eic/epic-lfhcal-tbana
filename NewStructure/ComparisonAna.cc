@@ -240,12 +240,12 @@ bool ComparisonAna::ProcessAna(void){
   DefaultCanvasSettings( canvasDeltaTime,  0.08, 0.03, 0.025, 0.09);
   canvasDeltaTime->SetLogy(1);
   PlotAnalysisComparison( canvasDeltaTime, 0, sumCalibs, textSizeRel, 
-                      Form("%s/TimeDiff_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug);
+                      Form("%s/TimeDiff_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV);
   
 	PlotAnalysisComparison( canvasDeltaTime, 1, sumCalibs, textSizeRel, 
-                      Form("%s/Energy_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,eoLabelOpt,"", debug);
+                      Form("%s/Energy_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,eoLabelOpt,"", debug, eoXmax, colorByEV);
   PlotAnalysisComparison( canvasDeltaTime, 2, sumCalibs, textSizeRel, 
-                      Form("%s/NCells_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,2, "", debug);
+                      Form("%s/NCells_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,eoLabelOpt, "", debug, 0, colorByEV);
   return true;
 }
 
