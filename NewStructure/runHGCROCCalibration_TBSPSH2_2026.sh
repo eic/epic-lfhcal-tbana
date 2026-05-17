@@ -94,7 +94,7 @@ if [ $2 = "toaPhase" ]; then
 
 fi
 
-if [ $2 = "wave" ]; then  /Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/plots
+if [ $2 = "wave" ]; then
   echo "Add runnumbers before you try this & remove exit"
   exit
   runs=''
