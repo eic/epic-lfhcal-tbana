@@ -29,8 +29,7 @@ mapConDefV1=../configs/TB2026/mapping_HGCROC_PST10TB_sumV1_default_inv.csv   # v
 
 if [ $1 = "fbockTB" ]; then 
 	dataRaw=/media/fbock/Lennard4TB/202605_SPSH2/raw/      # source directory for output files from DAQ system
-	dataDir=/media/fbock/Lennard4TB/202605_SPSH2/HGCROCData           # base directory for root trees
-
+	dataDir=/media/fbock/Lennard4TB/202605_SPSH2/HGCROCData           # base directory for root trees  fi
 elif [ $1 = "egpott" ]; then # bla bla bla test test test
 	dataRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/raw
 	dataDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
@@ -42,8 +41,17 @@ elif [ $1 = "ehagen" ]; then
 elif [ $1 = "atamis" ]; then 
 	dataRaw=/home/drewtam20/Documents/eic/LFHCALDATA/Runs
 	dataDir=/home/drewtam20/Documents/eic/LFHCALDATA/Converted
+
+elif [ $1 = "Preet" ]; then
+	dataRaw=/home/lfhcal/Data # source directory for output files from DAQ system
+	dataDir=/home/lfhcal/HGCROCData # base directory for root trees
+elif [ $1 = "kchandra" ]; then
+	dataRaw=/run/media/lfhcal/Howard4TB/202605_SPSH2/raw # source directory for output files from DAQ system
+	dataDir=/run/media/lfhcal/Howard4TB/202605_SPSH2/HGCROCData # base directory for root trees
 fi
-  
+
+
+
 # global run list for 2026 SPS TB
 runList=../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
 
@@ -124,5 +132,40 @@ elif [ $2 = "FullSetC" ]; then
     MergeMuonsFileList $dataDir runList.txt Muon_FullSetC_1  #ok
   fi
   
-  
+# 45 V, summing board V2, Preamp settings 9 7 10 4?
+elif [ $2 = "FullSetD" ]; then
+  if [ $3 = "convert" ]; then
+    # runs='206 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224' #full list
+      # runs='206' #pedestals
+#       runs='208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224' #muons set 1
+      # runs='225 226 227 228 229 231' #e-
+      # runs='232 233 234 235 236 237' #e+
+    #  runs='238'
+       runs='238 239 240 241 242 243 244 245 246 247 248 249' #pi-
+    #   runs='250 251 252 253 ' #h+
+    for runNr in $runs; do
+      ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
+    done
+  elif [ $3 = "merge" ]; then
+    runs='072 073 074 075 076 077 078 079 080 081 082 083 084' # set 1
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_FullSetB_1  #ok
+  fi
+
+
+elif [ $2 = "HVScan" ]; then
+  if [ $3 = "convert" ]; then
+    # runs='194 195 196 197 198 199 200 201 202' #mu
+    runs='188'
+    for runNr in $runs; do
+      ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
+    done
+  fi
+
+  elif [ $2 = "HadronScan" ]; then
+  if [ $3 = "convert" ]; then
+      runs=' 207 ' #e-
+    for runNr in $runs; do
+      ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
+    done
 fi
