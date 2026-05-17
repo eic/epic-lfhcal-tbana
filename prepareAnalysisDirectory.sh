@@ -8,6 +8,8 @@ elif [ $1 = "kmaret" ]; then
     LFHCALTBDIR=/mnt/d/work
 elif [ $1 = "ehagen" ]; then
      LFHCALTBDIR=/Users/hagen/Githubs/epic-lfhcal-tbana/TB_Data
+elif [$1 = "demjana"]; then
+     LFHCALTBDIR = /home/jana/LFHCalTB/data
 else 
     echo "Please add your user name to the script and define the location of the TBAnalysisSoftware"
     exit
@@ -38,3 +40,4 @@ if [ $2 = "new" ]; then
     ln -sf $LFHCALTBDIR/NewStructure/HGCROC_Conversion NewStructure/
     ln -sf $LFHCALTBDIR/NewStructure/*.sh NewStructure/
 fi
+
