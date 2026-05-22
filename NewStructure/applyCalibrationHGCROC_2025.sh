@@ -12,13 +12,19 @@ if [ $1 = "fbockTB" ]; then
 	dataDirIn=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
 	dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
 	PlotBaseDir=/media/fbock/Lennard4TB/202511_PST09/
+
+elif [ $1 = "yale" ]; then
+	dataDirCal=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/calibrated_new
+	dataDirIn=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/rawroot_new
+	dataDirOut=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/rawroot_new
+	PlotBaseDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/rawroot_new
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
 fi
 
 # apply calibration
-if [ $2 == "FullScanA" ]; then
+if [ $2 == "FullSetA" ]; then
 	calibFile1=$dataDirCal/calib_FullSetA1.root
 	calibFile2=$dataDirCal/calib_FullSetA2.root
 	toaPhaseOffset=../configs/TB2025/ToAOffsets_TB2025_HadRun.csv
@@ -26,11 +32,24 @@ if [ $2 == "FullScanA" ]; then
   badChannelMap="../configs/TB2025/badChannel_HGCROC_PSTB2025_default.txt"
 	
 	#muon runs
-# 	Calib $3 $calibFile1 $dataDirIn $dataDirOut FullSetA_1 $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
-# 	Calib $3 $calibFile2 $dataDirIn $dataDirOut FullSetA_2 $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
+ 	Calib $3 $calibFile1 $dataDirIn $dataDirOut Muon_FullSetA_1 $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
+ 	Calib $3 $calibFile2 $dataDirIn $dataDirOut Muon_FullSetA_2 $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
 
-  badChannelMap="../configs/TB2025/badChannel_HGCROC_PSTB2025_layer0.txt"
+	# hadron runs
+	runs='h-_3GeV_FullSetA h-_5GeV_FullSetA h-_8GeV_FullSetA h-_10GeV_FullSetA h-_12GeV_FullSetA h-_15GeV_FullSetA h+_3GeV_FullSetA h+_5GeV_FullSetA h+_8GeV_FullSetA h+_10GeV_FullSetA h+_12GeV_FullSetA h+_15GeV_FullSetA'
+	for runNr in $runs; do
+		Calib $3 $calibFile1 $dataDirIn $dataDirOut $runNr $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
+	done;
+
 	# electron runs
+	runs='e-_1GeV_FullSetA e-_2GeV_FullSetA e-_3GeV_FullSetA e-_4GeV_FullSetA e-_5GeV_FullSetA e+_1GeV_FullSetA e+_2GeV_FullSetA e+_3GeV_FullSetA e+_4GeV_FullSetA e+_5GeV_FullSetA'
+	for runNr in $runs; do
+		Calib $3 $calibFile1 $dataDirIn $dataDirOut $runNr $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
+	done;
+
+
+
+# electron runs
 # 	runs='166'	
 # 	runs='169'
 # 	runs='165 166 167 168 169 170' 
@@ -48,13 +67,12 @@ if [ $2 == "FullScanA" ]; then
 # 
 # 	#hadron runs
 #   runs='176 178 179 180 181 182 187 188'
-  runs='184 188'
+#  runs='184 188'
 #   runs='176 177 178 179 180 181 182 183 184 185 186 187 188'
 #   runs='176 177 178 179 180 181 182 183 185 186 187'
-	for runNr in $runs; do 
-		Calib $3 $calibFile1 $dataDirIn $dataDirOut $runNr $PlotBaseDir HGCROC_PlotsCalibrated/Run_ $badChannelMap $toaPhaseOffset
-	done;
-elif [ $2 == "FullScanB" ]; then
+
+
+elif [ $2 == "FullSetB" ]; then
 	calibFile1=$dataDirCal/calib_FullSetB1.root
 	calibFile2=$dataDirCal/calib_FullSetB2.root
 	toaPhaseOffset=../configs/TB2025/ToAOffsets_TB2025_HadRun.csv
