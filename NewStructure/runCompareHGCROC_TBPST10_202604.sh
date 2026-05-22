@@ -33,7 +33,7 @@ if [ $2 == "calib" ]; then
 elif [ $2 == "ana" ]; then
 	if [[ $4 == *"HVScan"* ]]; then
 		./CompareAna -F pdf -e 1 -d 0 -f -$3 -x 600 -s -I $anaFileList -o $dirOut/TrendingAllAna_$plotNameSuff.root -O $PlotBaseDir -r $runList
-	elif [[ $4 == *"FullSetC_OG"* ]]; then
+	elif [ $4 == "FullSetC_OG" || $4 == "FullSetC_OG_pions" || $4 == "FullSetC_OG_hadrons"]; then
 		./CompareAna -F pdf -e 1 -d 0 -f -$3 -x 150 -c -I $anaFileList -o $dirOut/TrendingAllAna_$plotNameSuff.root -O $PlotBaseDir -r $runList
 	elif [ $4 == "FullSetC" ]; then
 		./CompareAna -F pdf -e 1 -d 0 -f -$3 -x 700 -c -I $anaFileList -o $dirOut/TrendingAllAna_$plotNameSuff.root -O $PlotBaseDir -r $runList
@@ -41,6 +41,10 @@ elif [ $2 == "ana" ]; then
 		./CompareAna -F pdf -e 1 -d 0 -f -$3 -x 700 -c -I $anaFileList -o $dirOut/TrendingAllAna_$plotNameSuff.root -O $PlotBaseDir -r $runList
 	elif [ $4 == "FullSetC_hadrons" ]; then
 		./CompareAna -F pdf -e 1 -d 0 -f -$3 -x 700 -c -I $anaFileList -o $dirOut/TrendingAllAna_$plotNameSuff.root -O $PlotBaseDir -r $runList
+	elif [ $4 == "FullSetC_OG_piHad" ]; then
+		./CompareAna -F pdf -e 1 -d 0 -f -$3 -C 6 -I $anaFileList -o $dirOut/TrendingAllAna_$plotNameSuff.root -O $PlotBaseDir -r $runList
+	elif [ $4 == "FullSetD_piHad" ]; then
+		./CompareAna -F pdf -e 1 -d 0 -f -$3 -C 6 -I $anaFileList -o $dirOut/TrendingAllAna_$plotNameSuff.root -O $PlotBaseDir -r $runList
 	else
 		./CompareAna -F pdf -e 1 -d 0 -f -$3 -I $anaFileList -o $dirOut/TrendingAllAna_$plotNameSuff.root -O $PlotBaseDir -r $runList
 	fi

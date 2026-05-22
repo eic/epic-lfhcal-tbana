@@ -32,10 +32,12 @@ elif [ $2 == "HVScan1" ]; then
 	./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_Muon_HVScan_45_5V.root -A $dataDirOut/calib_HVScan1_45_5V.root
 	./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_Muon_HVScan_46V.root -A $dataDirOut/calib_HVScan1_46V.root
 
-# Make sure you've already run applyCalibrations!
+
 elif [ $2 == "FullSetC" ]; then
 	#./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_Muon_FullSetC_1.root -A $dataDirOut/calib_FullSetC1.root
 	#./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_Muon_FullSetC_2.root -A $dataDirOut/calib_FullSetC2.root
+
+# Make sure you've already run applyCalibrations!
 	./DataPrep -a -i $dataDirIn/calibratedHGCROC_Run_pi-_1GeV_FullSetC.root -A $dataDirOut/calib_pi-_1GeV_FullSetC.root
 	./DataPrep -a -i $dataDirIn/calibratedHGCROC_Run_pi-_2GeV_FullSetC.root -A $dataDirOut/calib_pi-_2GeV_FullSetC.root
 	./DataPrep -a -i $dataDirIn/calibratedHGCROC_Run_pi-_3GeV_FullSetC.root -A $dataDirOut/calib_pi-_3GeV_FullSetC.root

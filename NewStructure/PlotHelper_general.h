@@ -151,7 +151,21 @@
   }
 
   //__________________________________________________________________________________________________________  
-  inline Style_t GetMarkerLayer(int l, bool full = false){
+  inline TColor* GetColorEmily(int l){
+		// https://immunobiology.duke.edu/sites/default/files/2023-04/Colorblind-Palette.pdf
+		TColor *myIndigo = new TColor(9000, 51/255., 34/255., 136/255.);
+		TColor *myCyan = new TColor(9001, 51/255., 187/255., 238/255.);
+		TColor *myTeal = new TColor(9002, 0, 153/255., 136/255.);
+		TColor *myOrange = new TColor(9003, 238/255., 119/255., 51/255.);
+		TColor *myRose = new TColor(9004, 204/255., 102/255., 119/255.);
+		TColor *myPurple = new TColor(9005, 170/255., 68/255., 153/255.);
+		TColor *myOlive = new TColor(9006, 153/255., 153/255., 51/255.);
+    TColor* colors[7] = {myIndigo, myTeal, myRose, myCyan, myOlive, myOrange, myPurple};
+    return colors[l%7];
+  }
+
+  //__________________________________________________________________________________________________________  
+	inline Style_t GetMarkerLayer(int l, bool full = false){
     Style_t styles[10]      = {24, 25, 28, 30, 44, 46, 42, 27, 76, 89};
     Style_t stylesFull[10]  = {20, 21, 34, 29, 45, 47, 43, 33, 41, 48};
     if (full)

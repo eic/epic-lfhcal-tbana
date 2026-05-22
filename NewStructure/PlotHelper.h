@@ -979,24 +979,34 @@
     TString label2          = Form("Common V_{op} = %2.1f V", commanVoltage);
     canvas2D->cd();  
       TH1D* histos[30];
+			std::string specDat[30];
+			float beEn[30];
       if (debug > 0){
         if (nruns > 30) std::cout << "more than 30 runs are included in this, only 30 will be plotted, currently " << nruns << "\t runs were requested" << std::endl;
         else std::cout << nruns << " will be plotted" << std::endl;
       }
       double startLegend = 0.55;
       int columns  = 5;
+			double legy = 0.88;
 			double xright = 0.95;
       double columnwidth = 0.35;
-      if (labelOpt == 2){
+      if (labelOpt == 2 && colorByEV <= 3){
         columns     = 4;
         startLegend = 0.45;
         columnwidth = 0.17;
+			}
+			else if (labelOpt==2 && colorByEV > 3) {	
+				columns = 2;
+				startLegend = 0.65;
+				columnwidth = 0.3;
+				xright = 0.95;
       }
 			else if (labelOpt == 3) {
 				columns			= 2;
 				startLegend = 0.65;
-				columnwidth = 0.17;
-				xright = 0.9;
+				columnwidth = 0.3;
+				legy = 0.85;
+				xright = 0.955555;
 			}
 
       double lineBottom  = 6;
@@ -1006,11 +1016,11 @@
       else if (nruns < 4*columns+1) lineBottom = 4;
       else if (nruns < 5*columns+1) lineBottom = 5;
 
-      TLegend* legend = GetAndSetLegend2( startLegend, 0.88-lineBottom*textSizeRel, xright, 0.88,
+      TLegend* legend = GetAndSetLegend2( startLegend, legy-lineBottom*textSizeRel, xright, legy,
                                           0.75*textSizeRel, columns, "",42,columnwidth);;
       int currRun = 0;
       for(itrun=sumRuns.begin(); (itrun!=sumRuns.end()) && (currRun < 30); ++itrun){
-        histos[currRun] = nullptr;
+        histos[currRun] = nullptr;	
         if (option==0) histos[currRun] = itrun->second.GetDeltaTimeHist();
         else if (option==1){
           histos[currRun] = itrun->second.GetEnergyHist();
@@ -1024,13 +1034,22 @@
 					int thisbei = (int)itrun->second.GetEnergy()-1;
 					SetLineDefaults(histos[currRun], GetColorLayer(thisbei), 4, GetLineStyleLayer(currRun));
 				}
-				if (colorByEV == 2) { // set line color according to Vop
+				else if (colorByEV == 2) { // set line color according to Vop
 					// only works for Vop=42, 42.5, 43, ..., 46 V.
 					double thisvop = itrun->second.GetVoltage();
 					if (thisvop<42 || thisvop>46) colorByEV=0;
 					else {
 						thisvop = (thisvop - 42)*2;
 						SetLineDefaults(histos[currRun], GetColorLayer((int)thisvop), 4, GetLineStyleLayer(currRun));
+					}
+				}
+				else if (colorByEV > 2) { // quick and dirty custom colors/styles
+					int specNum = (int)colorByEV/2;
+					if (currRun < specNum){
+						SetLineDefaults(histos[currRun], GetColorEmily(currRun)->GetNumber(), 4, 1);
+					}
+					else {
+						SetLineDefaults(histos[currRun], GetColorEmily(currRun)->GetNumber(), 4, 1);
 					}
 				}
 				if(currRun == 0){
@@ -1043,7 +1062,7 @@
         } else {
           histos[currRun]->Draw("same,hist");
         }
-        if (labelOpt == 2){
+        if (labelOpt == 2 && colorByEV <= 3){
           TString species = GetSpeciesStringFromPDG(itrun->second.GetPDG());
           legend->AddEntry(histos[currRun],Form("%s %1.f GeV",species.Data(), itrun->second.GetEnergy()),"l");
         } 
@@ -1051,17 +1070,32 @@
 					legend->AddEntry(histos[currRun],Form("%2.1f V", itrun->second.GetVoltage()), "l");
 				}
 				else {
-          legend->AddEntry(histos[currRun],Form("%d",itrun->second.GetRunNumber()),"l");
+					if (colorByEV > 3) {
+          	TString species = GetSpeciesStringFromPDG(itrun->second.GetPDG());
+						specDat[currRun] = species.Data();
+						beEn[currRun] = itrun->second.GetEnergy();
+					}
+					else legend->AddEntry(histos[currRun],Form("%d",itrun->second.GetRunNumber()),"l");
         }
         currRun++;  
-      }  
+      } // end loop over runs  
       histos[0]->DrawCopy("axis,same");
+
+			// my very silly fix to draw the legend column-wise instead of row-wise
+			if (colorByEV > 3) {	
+				int halfway = (int)colorByEV/2;
+				legy = legy-0.4; // for drawing label2
+				for (int i = 0; i < halfway; i++) {		
+					TLegendEntry *tle1 = legend->AddEntry(histos[i],Form("%s %1.f GeV",specDat[i].c_str(), beEn[i]), "l");
+					TLegendEntry *tle2 = legend->AddEntry(histos[i+halfway],Form("%s %1.f GeV",specDat[i+halfway].c_str(),beEn[i+halfway]), "l");		
+				}
+			}
       legend->Draw();
       
       DrawLatex(0.95, 0.92, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(currRunInfo,7).Data()), true, 0.85*textSizeRel, 42);
       DrawLatex(0.95, 0.885, GetStringFromRunInfo(currRunInfo,8), true, 0.85*textSizeRel, 42);
       if (isSameVoltage)
-        DrawLatex(0.95, 0.88-0.5*0.85*textSizeRel-lineBottom*textSizeRel , label2, true, 0.85*textSizeRel, 42);
+        DrawLatex(0.95, legy-0.5*0.85*textSizeRel-lineBottom*textSizeRel , label2, true, 0.85*textSizeRel, 42);
       
     canvas2D->SaveAs(nameOutput.Data());
   }  
