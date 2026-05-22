@@ -49,6 +49,7 @@ void PrintHelp(char* exe){
   std::cout<<"-V       Trending plots versus Vop"<<std::endl;
 	std::cout<<"-s			 Flag HV scan (put Vop in EnergyOverlay legend)"<<std::endl;
   std::cout<<"-x nnn	 Set max x-axis value for EnergyOverlay"<<std::endl;
+	std::cout<<"-C i		 Set total number of files (for overlay plotting style) to i"<<std::endl;			 
 	std::cout<<"-c			 Set line colors of overlay plots according to beam energy"<<std::endl;
 	//std::cout<<"-t       Trending plots versus BoR time"<<std::endl;
   std::cout<<"-h       this help"<<std::endl<<std::endl;
@@ -90,7 +91,7 @@ int main(int argc, char* argv[]){
  //pick Ana or Calib
    //if(E_value == 4){
     int c;
-    while((c=getopt(argc,argv,"d:e:E:fF:i:I:L:o:O:r:x:RVcsth"))!=-1){
+    while((c=getopt(argc,argv,"d:e:E:fF:i:I:L:o:O:r:x:C:RVcsth"))!=-1){
       switch(c){
       case 'd':
         std::cout<<"Compare: enable debug " << optarg <<std::endl;
@@ -185,6 +186,15 @@ int main(int argc, char* argv[]){
 				std::cout<<"Compare: Set EnergyOverlay x-axis max to "<<optarg<<std::endl;
 				CompAnalysis2.SetXmaxEO((double)atof(optarg));
 				it=std::find(RootRegexp.begin(),RootRegexp.end(),"-x");
+				RootRegexp.erase(it);
+				it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
+				RootRegexp.erase(it);
+				break;
+			case 'C':
+				std::cout<<"Compare: Plotting "<<optarg<<" files"<<std::endl;
+				CompAnalysis2.SetPlotColors(atoi(optarg));
+				CompAnalysis2.SetLegendLabelOpt(2);
+				it=std::find(RootRegexp.begin(),RootRegexp.end(),"-C");
 				RootRegexp.erase(it);
 				it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
 				RootRegexp.erase(it);
