@@ -117,8 +117,9 @@ class Analyses{
   inline void SetExternalBadChannelMap(TString name)     {ExternalBadChannelMap =name;};
   inline void SetExternalCalibFile(TString name)     {ExternalCalibFile =name;};
   inline void SetExternalToACalibOffSetFile(TString name)     {ExternalToACalibOffSetFile =name;};  
-  inline void SetMaxEvents(int n)                 {maxEvents = n;};
-  inline void OverwriteMinMipFrac(double min)    {minMipFrac = min;};
+  inline void SetMaxEvents(int n)                       {maxEvents = n;};
+  inline void OverwriteMinMipFrac(double min)          {minMipFrac = min;};
+  inline void OverwriteMinFracTriggThre(double min)    {minFracTriggThre = min;};
   
   //General methods
   bool CreateOutputRootFile(void);
@@ -176,6 +177,8 @@ class Analyses{
   int yearData                =-1;        // data taking year externally set
   bool truncateHGCROC         =false;     // flag to enable the truncation of the HGCROC data to 8 bit (masking the 2 least significant bits)
   double minMipFrac           = 0.3;
+  double minFracTriggThre     = 3.;
+  
   RootSetupWrapper rsw;                   // Wrapper singleton class for setup
   RootSetupWrapper* rswptr;               // Pointer to wrapper for singleton class for setup
   Setup* setup;                           // geometry setup

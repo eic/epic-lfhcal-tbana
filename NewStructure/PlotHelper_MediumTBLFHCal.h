@@ -62,7 +62,7 @@
         for (int m = 0; m < nMod; m++){
           canvas->cd();
           int tempCellID = setupT->GetCellID(r,c, layer, m);
-          int p = setupT->GetChannelInLayerFull(tempCellID);
+          int p = setupT->GetChannelInLayerFull(tempCellID, DetConf::Type::MediumTB);
           pads[p]->Draw();
           pads[p]->cd();
           pads[p]->SetLogy();
@@ -163,7 +163,7 @@
         for (int m = 0; m < nMod; m++){
           canvas->cd();
           int tempCellID = setupT->GetCellID(r,c, layer, m);
-          int p = setupT->GetChannelInLayerFull(tempCellID);
+          int p = setupT->GetChannelInLayerFull(tempCellID, DetConf::Type::MediumTB);
           pads[p]->Draw();
           pads[p]->cd();
           pads[p]->SetLogy();
@@ -279,7 +279,7 @@
         for (int m = 0; m < nMod; m++){
           canvas->cd();
           int tempCellID = setupT->GetCellID(r,c, layer, m);
-          int p = setupT->GetChannelInLayerFull(tempCellID);
+          int p = setupT->GetChannelInLayerFull(tempCellID, DetConf::Type::MediumTB);
           pads[p]->Draw();
           pads[p]->cd();
           pads[p]->SetLogy();
@@ -425,7 +425,7 @@
         for (int m = 0; m < nMod; m++){
           canvas->cd();
           int tempCellID = setupT->GetCellID(r,c, layer, m);
-          int p = setupT->GetChannelInLayerFull(tempCellID);
+          int p = setupT->GetChannelInLayerFull(tempCellID, DetConf::Type::MediumTB);
           pads[p]->Draw();
           pads[p]->cd();
           pads[p]->SetLogy();
@@ -547,7 +547,7 @@
         for (int m = 0; m < nMod; m++){
           canvas->cd();
           int tempCellID = setupT->GetCellID(r,c, layer, m);
-          int p = setupT->GetChannelInLayerFull(tempCellID);
+          int p = setupT->GetChannelInLayerFull(tempCellID, DetConf::Type::MediumTB);
           pads[p]->Draw();
           pads[p]->cd();
           pads[p]->SetLogy();
@@ -633,7 +633,7 @@
         for (int m = 0; m < nMod; m++){
           canvas->cd();
           int tempCellID = setupT->GetCellID(r,c, layer, m);
-          int p = setupT->GetChannelInLayerFull(tempCellID);
+          int p = setupT->GetChannelInLayerFull(tempCellID, DetConf::Type::MediumTB);
           pads[p]->Draw();
           pads[p]->SetLogy(0);
           pads[p]->cd();
@@ -746,7 +746,7 @@
         for (int m = 0; m < nMod; m++){
           canvas->cd();
           int tempCellID = setupT->GetCellID(r,c, layer, m);
-          int p     = setupT->GetChannelInLayerFull(tempCellID);
+          int p     = setupT->GetChannelInLayerFull(tempCellID, DetConf::Type::MediumTB);
           int roCh  = setupT->GetROchannel(tempCellID);
           if (roCh == triggCh){
             std::cout << (setupT->DecodeCellID(tempCellID)).Data() << std::endl;
@@ -924,7 +924,7 @@
         for (int m = 0; m < nMod; m++){
           canvas->cd();
           int tempCellID = setupT->GetCellID(r,c, layer, m);
-          int p = setupT->GetChannelInLayerFull(tempCellID);
+          int p = setupT->GetChannelInLayerFull(tempCellID, DetConf::Type::MediumTB);
 
           TString label           = Form("r:%d c:%d m:%d", r, c, m);
           TString label2          = Form("Common V_{op} = %2.1f V", commonVoltage);
@@ -1073,7 +1073,7 @@
         for (int m = 0; m < nMod; m++){
           canvas->cd();
           int tempCellID = setupT->GetCellID(r,c, layer, m);
-          int p = setupT->GetChannelInLayerFull(tempCellID);
+          int p = setupT->GetChannelInLayerFull(tempCellID, DetConf::Type::MediumTB);
           pads[p]->Draw();
           pads[p]->cd();
           pads[p]->SetLogy(1);
@@ -1201,7 +1201,7 @@
         for (int m = 0; m < nMod; m++){
           canvas->cd();
           int tempCellID = setupT->GetCellID(r,c, layer, m);
-          int p = setupT->GetChannelInLayerFull(tempCellID);
+          int p = setupT->GetChannelInLayerFull(tempCellID, DetConf::Type::MediumTB);
           pads[p]->Draw();
           pads[p]->cd();
           pads[p]->SetLogy(0);
@@ -1362,7 +1362,7 @@
         for (int m = 0; m < nMod; m++){
           canvas->cd();
           int tempCellID = setupT->GetCellID(r,c, layer, m);
-          int p = setupT->GetChannelInLayerFull(tempCellID);
+          int p = setupT->GetChannelInLayerFull(tempCellID, DetConf::Type::MediumTB);
           pads[p]->Draw();
           pads[p]->cd();
           pads[p]->SetLogy();
