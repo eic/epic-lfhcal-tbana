@@ -920,6 +920,9 @@ bool Analyses::ConvertOldRootFile2Root(void){
 bool Analyses::GetPedestal(void){
   std::cout<<"GetPedestal for maximium "<< setup->GetMaxCellID() << " cells" <<std::endl;
   
+  // Find detector config 
+  DetConf::Type detConf = setup->GetDetectorConfig();
+  
   std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
   
   int maxChannelPerLayer          = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
@@ -1089,7 +1092,7 @@ bool Analyses::GetPedestal(void){
     }
     int cellID    = ithSpectra->second.GetCellID();
     int layer     = setup->GetLayer(cellID);
-    int chInLayer = setup->GetChannelInLayerFull(cellID);
+    int chInLayer = setup->GetChannelInLayerFull(cellID, detConf);
 
     hMeanPedHGvsCellID->SetBinContent(hMeanPedHGvsCellID->FindBin(cellID), parameters[4]);
     hMeanPedHGvsCellID->SetBinError  (hMeanPedHGvsCellID->FindBin(cellID), parameters[6]);
@@ -1226,11 +1229,9 @@ bool Analyses::GetPedestal(void){
     PlotSimple2D( canvas2DCorr, hspectraLGMeanVsLayer, -10000, -10000, textSizeRel, Form("%s/PedWave_NoiseMean.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 5, kFALSE, "colz", true, Form("#LT#mu_{wave}#GT = %2.2f", averagePedMeanLG));
   }
   
-  
-  //***********************************************************************************************************
-  // Find detector config for plotting
-  //***********************************************************************************************************
-  DetConf::Type detConf = setup->GetDetectorConfig();
+  // *********************************************************************************************************
+  // Set up ranges for multipanel plotting
+  // *********************************************************************************************************
   Int_t textSizePixel = 30;
   double minADCRange = 0; 
   double maxADCRange = 275;
@@ -1618,6 +1619,9 @@ bool Analyses::TransferCalib(void){
   std::map<int, TileSpectra>::iterator ithSpectra;
   std::map<int,TileSpectra> hSpectraTrigg;
   std::map<int, TileSpectra>::iterator ithSpectraTrigg;
+
+  // Find detector config
+  DetConf::Type detConf = setup->GetDetectorConfig();
   
   // initialize calib
   TcalibIn->GetEntry(0);
@@ -1814,7 +1818,7 @@ bool Analyses::TransferCalib(void){
         
         // obtain integrated tile quantities for histo filling
         int layer     = setup->GetLayer(cellID);
-        int chInLayer = setup->GetChannelInLayerFull(cellID);
+        int chInLayer = setup->GetChannelInLayerFull(cellID, detConf);
         double adc = aTile->GetIntegratedADC();
         double tot = aTile->GetRawTOT();
         double toa = aTile->GetRawTOA();
@@ -1973,7 +1977,7 @@ bool Analyses::TransferCalib(void){
       
       // histo filling
       int layer     = setup->GetLayer(cellID);
-      int chInLayer = setup->GetChannelInLayerFull(cellID);
+      int chInLayer = setup->GetChannelInLayerFull(cellID,detConf);
       if (debug > 0 && bc > -1 && bc < 3)
         std::cout << "\t" << cellID << "\t" << layer << "\t" << setup->GetRow(cellID) << "\t" << setup->GetColumn(cellID)<< "\t" << setup->GetModule(cellID) << " - quality flag: " << bc << "\t" << calib.GetBadChannel(cellID) << "\t ped H: " << calib.GetPedestalMeanH(cellID) << "\t ped L: " << calib.GetPedestalMeanL(cellID)<< std::endl;
 
@@ -2046,10 +2050,8 @@ bool Analyses::TransferCalib(void){
     calib.PrintGlobalInfo();  
     
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-    // Find detector config for plotting
+    // Multi panel plotting
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++      
-    DetConf::Type detConf = setup->GetDetectorConfig();
-    
     MultiCanvas panelPlot(detConf, "Transfer");
     bool init1D = panelPlot.Initialize(1);
     MultiCanvas panelPlot2D(detConf, "Transfer2D");
@@ -2140,6 +2142,9 @@ bool Analyses::TransferCalib(void){
 bool Analyses::VisualizeWaveform(void){
   std::cout<<"Visualize Waveform"<<std::endl;
   int evts=TdataIn->GetEntries();
+
+  // Find detector config
+  DetConf::Type detConf = setup->GetDetectorConfig();
 
   std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
   
@@ -2254,7 +2259,6 @@ bool Analyses::VisualizeWaveform(void){
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
   // plot single layers 
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-  DetConf::Type detConf = setup->GetDetectorConfig();
   MultiCanvas panelPlot(detConf, "VisuWave");
   bool init1D = panelPlot.Initialize(1);
   MultiCanvas panelPlot2D(detConf, "VisuWave2D");
@@ -2304,6 +2308,7 @@ bool Analyses::VisualizeWaveform(void){
 //***********************************************************************************************
 bool Analyses::GetScaling(void){ 
   std::cout<<"GetScaling"<<std::endl;
+  auto start = std::chrono::steady_clock::now();
   
   std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
   
@@ -2314,7 +2319,34 @@ bool Analyses::GetScaling(void){
 
   ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2", "Migrad");  
   CreateOutputRootHistFile();
-    
+
+  // reading calib from file
+  TcalibIn->GetEntry(0);
+  // check whether calib should be overwritten based on external text file
+  if (OverWriteCalib){
+    calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
+  }
+  
+  // reading first event in tree to extract runnumber & RO-type
+  TdataIn->GetEntry(0);
+  int evts=TdataIn->GetEntries();
+  Int_t runNr           = event.GetRunNumber();
+  ReadOut::Type typeRO  = event.GetROtype();
+  std::cout<< "Total number of events: " << evts << std::endl;
+  std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+  // reseting run numbers for Mip calib
+  calib.SetRunNumberMip(runNr);
+  calib.SetBeginRunTimeMip(event.GetBeginRunTimeAlt());
+  std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;  // Get run info object
+  std::map<int,RunInfo>::iterator it=ri.find(runNr);
+  // set year of data taking in case adjustments are necessary
+  SetYear(it->second.year);
+  
+  
+  
+  // find detector config
+  DetConf::Type detConf   = setup->GetDetectorConfig();
+  
   //==================================================================================
   // first pass over tree to extract spectra 
   //==================================================================================
@@ -2322,14 +2354,6 @@ bool Analyses::GetScaling(void){
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->cd("IndividualCells");
 
-  TcalibIn->GetEntry(0);
-  // check whether calib should be overwritten based on external text file
-  if (OverWriteCalib){
-    calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
-  }
-  
-  int evts=TdataIn->GetEntries();
-  int runNr = -1;
   if (maxEvents == -1){
     maxEvents = evts;
   } else {
@@ -2338,24 +2362,21 @@ bool Analyses::GetScaling(void){
     std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
   }
   ReadOut::Type typeRO = ReadOut::Type::Caen;
+  // set debug frequency
   int evtDeb = 5000;
+  if (typeRO != ReadOut::Type::Caen)
+    evtDeb = 2500;
+  
   for(int i=0; i<evts && i < maxEvents; i++){ // GetScaling() first pass through tree
     TdataIn->GetEntry(i);
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // reset calib object info 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    if (i == 0){
-      runNr = event.GetRunNumber();
-      typeRO = event.GetROtype();
-      if (typeRO != ReadOut::Type::Caen)
-        evtDeb = 2500;
-      std::cout<< "Total number of events: " << evts << std::endl;
-      std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
-      calib.SetRunNumberMip(runNr);
-      calib.SetBeginRunTimeMip(event.GetBeginRunTimeAlt());
-      std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+    if (i%evtDeb == 0 && i > 0 && debug > 0){
+            auto end = std::chrono::steady_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+      std::cout << "Step 0: Reading " <<  i << " / " << evts << " events"  << " duration: " << duration.count() << " seconds"<< std::endl;
     }
-    if (i%evtDeb == 0 && i > 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
     if (i == 0 && debug > 2) std::cout << "decoding cell IDs" << std::endl ;
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // process tiles in event
@@ -2397,9 +2418,9 @@ bool Analyses::GetScaling(void){
         double tot = aTile->GetRawTOT();
         double toa = aTile->GetRawTOA();
 
-				// for CalibSummary:
-				// get voltage for the run (Setup?) event.GetVop()
-				// run number is runNr
+        // for CalibSummary:
+        // get voltage for the run (Setup?) event.GetVop()
+        // run number is runNr
         
         // fill spectra histos    
         if(ithSpectra!=hSpectra.end()){
@@ -2490,6 +2511,10 @@ bool Analyses::GetScaling(void){
                                             400, -1., 1.);
   hHGLGCorr->SetDirectory(0);
 
+  TH1D* hNPosTrigg            = new TH1D( "hNPosTrigg","Positions triggered ;# Pos_{trig} (arb. units) ; counts ", 
+                                          maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
+  hNPosTrigg->SetDirectory(0);
+  
   
   // fit pedestal
   double* parameters    = new double[6];
@@ -2516,7 +2541,7 @@ bool Analyses::GetScaling(void){
     // fill cross-check histos
     long cellID   = ithSpectra->second.GetCellID();
     int layer     = setup->GetLayer(cellID);
-    int chInLayer = setup->GetChannelInLayerFull(cellID);
+    int chInLayer = setup->GetChannelInLayerFull(cellID, detConf);
     hMeanPedHGvsCellID->SetBinContent(hMeanPedHGvsCellID->FindBin(cellID), calib.GetPedestalMeanH(cellID));
     hMeanPedLGvsCellID->SetBinContent(hMeanPedLGvsCellID->FindBin(cellID), calib.GetPedestalMeanL(cellID));
     hMeanPedHG->Fill(calib.GetPedestalMeanH(cellID));
@@ -2529,11 +2554,11 @@ bool Analyses::GetScaling(void){
     hspectraLGSigmaVsLayer->SetBinContent(bin2D, calib.GetPedestalSigL(cellID));
 
     if (isGood){
-			// get uncertainty on HG Max
-			double rel_err_L_MPV = parErrAndRes[1]/parameters[1]; // Landau MPV error / MPV
-			double sigma_Max = rel_err_L_MPV * parameters[4]; // relative MPV err * Max ADC value
+      // get uncertainty on HG Max
+      double rel_err_L_MPV = parErrAndRes[1]/parameters[1]; // Landau MPV error / MPV
+      double sigma_Max = rel_err_L_MPV * parameters[4]; // relative MPV err * Max ADC value
       hspectraHGMaxVsLayer1st->SetBinContent(bin2D, parameters[4]);
-			hspectraHGMaxVsLayer1st->SetBinError(bin2D, sigma_Max);
+      hspectraHGMaxVsLayer1st->SetBinError(bin2D, sigma_Max);
       hspectraHGFWHMVsLayer1st->SetBinContent(bin2D, parameters[5]);
       hspectraHGLMPVVsLayer1st->SetBinContent(bin2D, parameters[1]);
       hspectraHGLMPVVsLayer1st->SetBinError(bin2D, parErrAndRes[1]);
@@ -2572,7 +2597,7 @@ bool Analyses::GetScaling(void){
   //==================================================================================
   // setup additional monitoring histos
   //==================================================================================  
-  TH1D* hHGTileSum[20];
+  TH1D* hHGTileSum[100]; // ATTENTION this array needs to be large enough to fit an entire plane 
   for (int c = 0; c < maxChannelPerLayer; c++ ){
     hHGTileSum[c] = new TH1D( Form("hHGTileSum_absChB%d",c),"av ADC surrounding cells ; ADC (arb. units); counts ",
                               4000, -0.5, 4000-0.5);
@@ -2586,11 +2611,12 @@ bool Analyses::GetScaling(void){
   Int_t localTriggerTiles = 4;
   double factorMinTrigg   = 0.5;
   double factorMaxTrigg   = 4.;
-  if (yearData == 2023){
-    localTriggerTiles = 6;
-    factorMaxTrigg    = 3.;
-  }
-  if (typeRO == ReadOut::Type::Hgcroc){
+  if (typeRO == ReadOut::Type::Caen){
+    if (yearData == 2023){
+      localTriggerTiles = 6;
+      factorMaxTrigg    = 3.;
+    }
+  } else if (typeRO == ReadOut::Type::Hgcroc){
     localTriggerTiles = 6;
     factorMinTrigg    = 0.3;
   }
@@ -2605,6 +2631,8 @@ bool Analyses::GetScaling(void){
   int actChIalt                  = 0;
   double averageNTilesI          = 0.;
   double averageScalePerTile     = calib.GetAverageScaleHighPerSingleLayer(actChIalt, averageNTilesI);
+  
+  double meanPedSign  = calib.GetAveragePedestalSigHigh();
   double meanFWHMHG   = calib.GetAverageScaleWidthHigh();
   double avHGLGCorr   = calib.GetAverageHGLGCorr();
   double avHGLGOffCorr= calib.GetAverageHGLGCorrOff();
@@ -2616,15 +2644,62 @@ bool Analyses::GetScaling(void){
     std::cout << "average mip: " << averageScale << " per tile mip: "<< averageScalePerTile << "\t act. ch: "<< actCh1st << "\t av tiles/seg "<< averageNTilesI << std::endl;
   }
   
+  std::map<int,int> mapNActiveLayers;
+  std::map<int,double> chargeTotChInLayer;
+  
+  for (int k = 0; k < maxChannelPerLayer;k++){
+    mapNActiveLayers[k] = 0;
+  }
+  int eventsNoClearTrigg = 0;
+  
   for(int i=0; i<evts && i < maxEvents; i++){ // loop over events
     TdataIn->GetEntry(i);
-    if (i%evtDeb == 0 && i > 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
+    if (i%evtDeb == 0 && i > 0 && debug > 0){
+      auto end = std::chrono::steady_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+      std::cout << "1st step: Reading " <<  i << " / " << evts << " events"  << " duration: " << duration.count() << " seconds"<< std::endl;
+    }
+
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // find likely trigger region
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    if (typeRO == ReadOut::Type::Hgcroc) {
+      for (int k = 0; k < maxChannelPerLayer;k++){
+        chargeTotChInLayer[k] = 0;
+      }
+      for(int j=0; j<event.GetNTiles(); j++){
+        Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
+        double adc      = aTile->GetIntegratedADC();
+        int chInLayer   = setup->GetChannelInLayerFull(aTile->GetCellID(), detConf);
+        if (i == 0){
+          if (calib.GetBCCalib()){
+            if(calib.GetBadChannel(aTile->GetCellID())>1) 
+              mapNActiveLayers[chInLayer]= mapNActiveLayers[chInLayer]+1;
+          } else {
+            mapNActiveLayers[chInLayer]= mapNActiveLayers[chInLayer]+1;
+          }
+        }
+        if (calib.GetBCCalib() && calib.GetBadChannel(aTile->GetCellID())>1){
+          chargeTotChInLayer[chInLayer] = chargeTotChInLayer[chInLayer]+adc;
+        } else if (!calib.GetBCCalib()){
+          chargeTotChInLayer[chInLayer] = chargeTotChInLayer[chInLayer]+adc;
+        }
+      }
+      int nPosTrigg  = 0;
+      for (int k = 0; k < maxChannelPerLayer;k++){
+        chargeTotChInLayer[k] = chargeTotChInLayer[k]/(double)mapNActiveLayers[k];
+        if (chargeTotChInLayer[k] > minFracTriggThre* meanPedSign)
+          nPosTrigg++;
+      }
+      hNPosTrigg->Fill(nPosTrigg);
+      if (nPosTrigg == 0){
+        continue;
+        eventsNoClearTrigg++;
+      }
+    }
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // process tiles in event
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
-    
-    
-    
     for(int j=0; j<event.GetNTiles(); j++){
       //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       // histo filling for CAEN specific things
@@ -2642,6 +2717,7 @@ bool Analyses::GetScaling(void){
         aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, currCellID, localTriggerTiles, avLGHGCorr));
         // estimate local muon trigger
         bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScalePerTile, factorMinTrigg, factorMaxTrigg);
+<<<<<<< HEAD
         int chInLayer       = setup->GetChannelInLayerFull(currCellID);
         
 				// bandaid to stop seg fault
@@ -2649,6 +2725,10 @@ bool Analyses::GetScaling(void){
 				if (chInLayer<0 || chInLayer>sizeof(hHGTileSum)/sizeof(*hHGTileSum)) continue;	
 				
 				hHGTileSum[chInLayer]->Fill(aTile->GetLocalTriggerPrimitive());
+=======
+        int chInLayer       = setup->GetChannelInLayerFull(currCellID, detConf);
+        hHGTileSum[chInLayer]->Fill(aTile->GetLocalTriggerPrimitive());
+>>>>>>> 3fa1192 (make calib code faster)
         
         if(ithSpectraTrigg!=hSpectraTrigg.end()){
           ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
@@ -2679,27 +2759,35 @@ bool Analyses::GetScaling(void){
         double adc = aTile->GetIntegratedADC();
         double tot = aTile->GetRawTOT();
         double toa = aTile->GetRawTOA();
-
-        aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, currCellID, localTriggerTiles, 0));
-        // estimate local muon trigger
-        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScalePerTile, factorMinTrigg, factorMaxTrigg);
-        int chInLayer       = setup->GetChannelInLayerFull(currCellID);
-        hHGTileSum[chInLayer]->Fill(aTile->GetLocalTriggerPrimitive());
-        
-        if(ithSpectraTrigg!=hSpectraTrigg.end()){
-          ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
+        int chInLayer       = setup->GetChannelInLayerFull(currCellID, detConf);
+        double triggPrim    = -50.;
+        bool localMuonTrigg = false;
+        if (chargeTotChInLayer[chInLayer] > minFracTriggThre* meanPedSign){
+          triggPrim = event.CalculateLocalMuonTrigg(calib, rand, currCellID, localTriggerTiles, 0);
+          aTile->SetLocalTriggerPrimitive(triggPrim);
+          localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScalePerTile, factorMinTrigg, factorMaxTrigg);
         } else {
-          RootOutputHist->cd("IndividualCellsTrigg");
-          hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
-          hSpectraTrigg[currCellID].FillTrigger(aTile->GetLocalTriggerPrimitive());;
-          RootOutput->cd();
+          aTile->SetLocalTriggerPrimitive(triggPrim);
         }
-        // only fill tile spectra if 4 surrounding tiles on average are compatible with muon response
-        if (localMuonTrigg){
-          aTile->SetLocalTriggerBit(1);
-          ithSpectraTrigg=hSpectraTrigg.find(aTile->GetCellID());
-          ithSpectraTrigg->second.FillHGCROC(adc,toa,tot);
-          
+        // estimate local muon trigger
+        if (triggPrim != -50.){
+          hHGTileSum[chInLayer]->Fill(aTile->GetLocalTriggerPrimitive());
+        
+          if(ithSpectraTrigg!=hSpectraTrigg.end()){
+            ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
+          } else {
+            RootOutputHist->cd("IndividualCellsTrigg");
+            hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+            hSpectraTrigg[currCellID].FillTrigger(aTile->GetLocalTriggerPrimitive());;
+            RootOutput->cd();
+          }
+          // only fill tile spectra if 4 surrounding tiles on average are compatible with muon response
+          if (localMuonTrigg){
+            aTile->SetLocalTriggerBit(1);
+            ithSpectraTrigg=hSpectraTrigg.find(aTile->GetCellID());
+            ithSpectraTrigg->second.FillHGCROC(adc,toa,tot);
+            
+          }
         }
       }
     }
@@ -2707,6 +2795,12 @@ bool Analyses::GetScaling(void){
     TdataOut->Fill();
   } // end loop over events
   TdataOut->Write();
+  
+  if (eventsNoClearTrigg > 0){
+      std::cout << "*********************************************************" << std::endl;
+      std::cout << "SKIPPED " << eventsNoClearTrigg << " as no clear trigger present" << std::endl;
+      std::cout << "*********************************************************" << std::endl;
+  }
   
   //==================================================================================
   // Monitoring histos for fits results of 2nd iteration 
@@ -2822,7 +2916,7 @@ bool Analyses::GetScaling(void){
     // fill cross-check histos
 		double redChi2  = parErrAndRes[4] / parErrAndRes[5]; // chi2/ndf
     int layer       = setup->GetLayer(cellID);
-    int chInLayer   = setup->GetChannelInLayerFull(cellID);
+    int chInLayer   = setup->GetChannelInLayerFull(cellID, detConf);
 		int row					= setup->GetRow(cellID);
 		int col					= setup->GetColumn(cellID);
 		int mod					= setup->GetModule(cellID);
@@ -2851,33 +2945,33 @@ bool Analyses::GetScaling(void){
     double SB_NoiseR  = (B_NoiseR != 0.) ? S_NoiseR/B_NoiseR : 0;
     double SB_SigR    = (B_SigR != 0.) ? S_SigR/B_SigR : 0;
     
-		double SNR_trigg = (S_NoiseR != 0.) ? S_SigR/S_NoiseR : 0;
+    double SNR_trigg = (S_NoiseR != 0.) ? S_SigR/S_NoiseR : 0;
 
     hmipTriggers->SetBinContent(bin2D, ithSpectraTrigg->second.GetHG()->GetEntries());
     hSuppresionNoise->SetBinContent(bin2D, SB_NoiseR);
     hSuppresionSignal->SetBinContent(bin2D, SB_SigR);
-		hSNRTriggVsLayer->SetBinContent(bin2D, SNR_trigg);
+    hSNRTriggVsLayer->SetBinContent(bin2D, SNR_trigg);
 
-		// get 2D and 3D beam profiles -EP
-		int thisbinx = col + 1; // the +1s are due to the 0th bin in root being underflow
-		int thisbiny = (mod*2) + row + 1;
-		int thisbinz = layer + 1;
-		int numMipTrig = ithSpectraTrigg->second.GetHG()->GetEntries();
-		hMipTriggXY->SetBinContent(thisbinx, thisbiny, hMipTriggXY->GetBinContent(thisbinx, thisbiny) + numMipTrig);
-		hMipTriggXYZ->SetBinContent(thisbinx, thisbinz, thisbiny, numMipTrig);
+    // get 2D and 3D beam profiles -EP
+    int thisbinx = col + 1; // the +1s are due to the 0th bin in root being underflow
+    int thisbiny = (mod*2) + row + 1;
+    int thisbinz = layer + 1;
+    int numMipTrig = ithSpectraTrigg->second.GetHG()->GetEntries();
+    hMipTriggXY->SetBinContent(thisbinx, thisbiny, hMipTriggXY->GetBinContent(thisbinx, thisbiny) + numMipTrig);
+    hMipTriggXYZ->SetBinContent(thisbinx, thisbinz, thisbiny, numMipTrig);
 
-		// estimate separation between noise and mip peaks
-		//double peaksep = parameters[1]-ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG); 
+    // estimate separation between noise and mip peaks
+    //double peaksep = parameters[1]-ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG); 
 
     if (isGood){
-			// get uncertainty on HG Max
-			double rel_err_L_MPV = parErrAndRes[1]/parameters[1]; // Landau MPV error / MPV
-			double sigma_Max = rel_err_L_MPV * parameters[4]; // relative MPV err * Max ADC value
+      // get uncertainty on HG Max
+      double rel_err_L_MPV = parErrAndRes[1]/parameters[1]; // Landau MPV error / MPV
+      double sigma_Max = rel_err_L_MPV * parameters[4]; // relative MPV err * Max ADC value
       hspectraHGMaxVsLayer2nd->SetBinContent(bin2D, parameters[4]);
-			hspectraHGMaxVsLayer2nd->SetBinError(bin2D, sigma_Max);
-			hMPVvsNoisePeak->Fill(ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG), parameters[1]);
-			hHGscaleChi2VsLayer->SetBinContent(bin2D, redChi2);	
-			hspectraHGFWHMVsLayer2nd->SetBinContent(bin2D, parameters[5]);
+      hspectraHGMaxVsLayer2nd->SetBinError(bin2D, sigma_Max);
+      hMPVvsNoisePeak->Fill(ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG), parameters[1]);
+      hHGscaleChi2VsLayer->SetBinContent(bin2D, redChi2);	
+      hspectraHGFWHMVsLayer2nd->SetBinContent(bin2D, parameters[5]);
       hspectraHGLMPVVsLayer2nd->SetBinContent(bin2D, parameters[1]);
       hspectraHGLMPVVsLayer2nd->SetBinError(bin2D, parErrAndRes[1]);
       hspectraHGLSigmaVsLayer2nd->SetBinContent(bin2D, parameters[0]);
@@ -2971,6 +3065,7 @@ bool Analyses::GetScaling(void){
   RootOutputHist->cd();
     hMeanPedHGvsCellID->Write();
     hMeanPedHG->Write();
+    hNPosTrigg->Write();
     
     hspectraHGMeanVsLayer->Write();
     hspectraHGSigmaVsLayer->Write();
@@ -3017,7 +3112,7 @@ bool Analyses::GetScaling(void){
     }
     // trigger effectiveness summary histos
     for (int c = 0; c< maxChannelPerLayer; c++)
-      hHGTileSum[c]->Write();
+      if (hHGTileSum[c]) hHGTileSum[c]->Write();
     hmipTriggers->Write();
     hSuppresionNoise->Write();
     hSuppresionSignal->Write();
@@ -3042,15 +3137,16 @@ bool Analyses::GetScaling(void){
   Double_t textSizeRel = 0.035;
   StyleSettingsBasics("pdf");
   SetPlotStyle();
-  // find detector config for plotting
-  DetConf::Type detConf   = setup->GetDetectorConfig();
-  
   //==================================================================================
   // Create canvases for channel overview plotting
   //==================================================================================
-  TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
-  DefaultCanvasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
+  TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
+  DefaultCanvasSettings( canvas1DSimple, 0.08, 0.03, 0.03, 0.07);
+  PlotSimple1D(canvas1DSimple, hNPosTrigg, -10000, maxChannelPerLayer, textSizeRel, Form("%s/NPosTriggers.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);        
 
+
+  TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
+  DefaultCanvasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);  
   canvas2DCorr->SetLogz(0);
   PlotSimple2D( canvas2DCorr, hspectraHGMeanVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_NoiseMean.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraHGSigmaVsLayer,-10000, -10000, textSizeRel, Form("%s/HG_NoiseSigma.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1,  kFALSE, "colz", true);
@@ -3064,9 +3160,9 @@ bool Analyses::GetScaling(void){
   PlotSimple2D( canvas2DCorr, hspectraHGLMPVVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/HG_LandMPVMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraHGLSigmaVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/HG_LandSigMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraHGGSigmaVsLayer2nd, -10000, -10000, textSizeRel, Form("%s/HG_GaussSigMip_2nd.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
- PlotSimple2D( canvas2DCorr, hSNRTriggVsLayer, -10000, -10000, textSizeRel, Form("%s/SNRTriggVsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
- PlotSimple2D( canvas2DCorr, hHGscaleChi2VsLayer, -10000, -10000, textSizeRel, Form("%s/HGscaleChi2VsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
- PlotSimple2D( canvas2DCorr, hMipTriggXY, -10000, -10000, textSizeRel, Form("%s/MipTriggXY.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DCorr, hSNRTriggVsLayer, -10000, -10000, textSizeRel, Form("%s/SNRTriggVsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DCorr, hHGscaleChi2VsLayer, -10000, -10000, textSizeRel, Form("%s/HGscaleChi2VsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DCorr, hMipTriggXY, -10000, -10000, textSizeRel, Form("%s/MipTriggXY.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   canvas2DCorr->SetLogz(1);
   TString drawOpt = "colz";
   if (yearData == 2023)
@@ -3096,13 +3192,15 @@ bool Analyses::GetScaling(void){
   calib.PrintGlobalInfo();  
   // setup plotting ranges
   Int_t textSizePixel = 30;
+  Double_t minSpec = -100;
   Double_t maxHG = ReturnMipPlotRangeDepVov(calib.GetVov(),true, typeRO);
   Double_t maxLG = ReturnMipPlotRangeDepVov(calib.GetVov(),false, typeRO);
   std::cout << "plotting single layers" << std::endl;
   Double_t maxTriggPPlot = maxHG*2;
-  if (typeRO != ReadOut::Type::Caen)
+  if (typeRO != ReadOut::Type::Caen){
     maxTriggPPlot = 150;
-
+    minSpec = -20;
+  }
 
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
   // Single layer plotting
@@ -3114,20 +3212,20 @@ bool Analyses::GetScaling(void){
     
   std::cout << "plotting single layers" << std::endl;
   if (ExtPlot > 0){
-    panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 1, -100, maxHG, 1.2, 
+    panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 1, minSpec, maxHG, 1.2, 
                                Form("%s/MIP_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
     panelPlot.PlotTriggerPrim( hSpectraTrigg, averageScalePerTile, factorMinTrigg, factorMaxTrigg, 0, maxTriggPPlot, 1.2,
                              Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
 
     if (typeRO == ReadOut::Type::Caen) {
-      panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 0, -100, maxLG, 1.2, 
+      panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 0, minSpec, maxLG, 1.2, 
                                  Form("%s/MIP_LG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       panelPlot2D.PlotCorrWithFits( hSpectra, 0, -20, 800, 0., 3900,
                                     Form("%s/LGHG_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
     }
   }
   if (ExtPlot > 1 && typeRO == ReadOut::Type::Caen){
-      panelPlot2D.PlotCorrWithFits( hSpectra, 1, -100, 4000, 0, 340,
+      panelPlot2D.PlotCorrWithFits( hSpectra, 1, minSpec, 4000, 0, 340,
                                     Form("%s/HGLG_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
   }
   std::cout << "done plotting" << std::endl;
@@ -3155,18 +3253,46 @@ bool Analyses::GetImprovedScaling(void){
    
   // setup general fitting options 
   ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2", "Migrad");
+  
+  // reading first event in tree to extract runnumber & RO-type
+  TdataIn->GetEntry(0);
+  int evts=TdataIn->GetEntries();
+  Int_t runNr           = event.GetRunNumber();
+  ReadOut::Type typeRO  = event.GetROtype();
+  std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+  // Get run info object
+  std::map<int,RunInfo>::iterator it=ri.find(runNr);
+  // set year of data taking in case adjustments are necessary
+  SetYear(it->second.year);
+  
   // setup trigger sel
   double factorMinTrigg   = 0.8;
   double factorMaxTrigg   = 2.5;
-  if (yearData == 2023){
-    factorMinTrigg    = 0.9;
-    factorMaxTrigg    = 2.;
+  
+  if (  typeRO == ReadOut::Type::Caen ){
+    if (yearData == 2023){
+      factorMinTrigg    = 0.9;
+      factorMaxTrigg    = 2.;
+    } 
+  } else if (  typeRO == ReadOut::Type::Hgcroc ){
+    if (yearData == 2024){
+      factorMinTrigg    = 0.5;
+    } else if (yearData == 2025){
+      factorMinTrigg    = 0.5;
+    } else if (yearData == 2026){
+      factorMinTrigg    = 0.8;
+    }
   }
+  std::cout << "trigger limits set to: " << factorMinTrigg <<"\t" << factorMaxTrigg << std::endl;
+
   
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->mkdir("IndividualCellsTrigg");
   RootOutputHist->cd("IndividualCellsTrigg");  
 
+  // find detector config for plotting
+  DetConf::Type detConf   = setup->GetDetectorConfig();
+  
   //==================================================================================
   // extract spectra per tile from event tree
   //==================================================================================
@@ -3176,20 +3302,9 @@ bool Analyses::GetImprovedScaling(void){
     calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
   }
   
-  int evts=TdataIn->GetEntries();
-  
-  // reading first event in tree to extract runnumber & RO-type
-  TdataIn->GetEntry(0);
-  Int_t runNr           = event.GetRunNumber();
-  ReadOut::Type typeRO  = event.GetROtype();
-  std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
-
   int evtDeb = 5000;
   if (typeRO != ReadOut::Type::Caen){
-    evtDeb = 2500;
-    factorMinTrigg    = 0.5;
-    std::cout << "reseting lower trigger factor limit to: " << factorMinTrigg << std::endl;
-    
+    evtDeb = 2500;    
   }
   
   if (maxEvents == -1){
@@ -3441,8 +3556,8 @@ bool Analyses::GetImprovedScaling(void){
     // HGCROC data has unphysical bin-to-bin jumps add XX% sys on top of individual for fitting
     double relSysF  = 0.10;
     if (typeRO == ReadOut::Type::Hgcroc){
-      ithSpectra->second.GetHG()->Rebin(2);
-      ithSpectraTrigg->second.GetHG()->Rebin(2);
+      // ithSpectra->second.GetHG()->Rebin(2);
+      // ithSpectraTrigg->second.GetHG()->Rebin(2);
       for (Int_t b = 1; b < ithSpectraTrigg->second.GetHG()->GetNbinsX()+1; b++){
         double errWithSys= TMath::Sqrt(relSysF*relSysF+TMath::Power(ithSpectra->second.GetHG()->GetBinError(b)/ithSpectra->second.GetHG()->GetBinContent(b),2))*ithSpectra->second.GetHG()->GetBinContent(b);
         double errWithSysT= TMath::Sqrt(relSysF*relSysF+TMath::Power(ithSpectraTrigg->second.GetHG()->GetBinError(b)/ithSpectraTrigg->second.GetHG()->GetBinContent(b),2))*ithSpectraTrigg->second.GetHG()->GetBinContent(b);
@@ -3456,20 +3571,20 @@ bool Analyses::GetImprovedScaling(void){
       parErrAndRes[p] = 0;
     }
     
-		isGood=ithSpectraTrigg->second.FitMipHG(parameters, parErrAndRes, debug, yearData, true, calib.GetVov(), averageScale);
-   
-		tileSum.Fill(ithSpectraTrigg->second.GetCalib());
-		
-		// get reduced chi^2 from mip peak fit
-		double redChi2 = parErrAndRes[4] / parErrAndRes[5]; // chi2/ndf
+    isGood=ithSpectraTrigg->second.FitMipHG(parameters, parErrAndRes, debug, yearData, true, calib.GetVov(), averageScale);
+  
+    tileSum.Fill(ithSpectraTrigg->second.GetCalib());
+    
+    // get reduced chi^2 from mip peak fit
+    double redChi2 = parErrAndRes[4] / parErrAndRes[5]; // chi2/ndf
 
     int layer       = setup->GetLayer(cellID);
-    int chInLayer   = setup->GetChannelInLayerFull(cellID);
-		int row				  = setup->GetRow(cellID);
-		int col				  = setup->GetColumn(cellID);
-		int mod				  = setup->GetModule(cellID);
+    int chInLayer   = setup->GetChannelInLayerFull(cellID, detConf);
+    int row         = setup->GetRow(cellID);
+    int col         = setup->GetColumn(cellID);
+    int mod         = setup->GetModule(cellID);
     int bin2D       = hspectraHGMaxVsLayer->FindBin(layer,chInLayer);
-	
+  
     double pedSigHG = calib.GetPedestalSigH(cellID);
     double maxBin   = 0;
     if (typeRO == ReadOut::Type::Caen){ 
@@ -3641,10 +3756,7 @@ bool Analyses::GetImprovedScaling(void){
 
   //==================================================================================
   // Set up general plotting variables
-  //==================================================================================
-  // Get run info object
-  std::map<int,RunInfo>::iterator it=ri.find(runNr);
-  
+  //==================================================================================  
   // create directory for plot output
   TString outputDirPlots  = GetPlotOutputDir();
   gSystem->Exec("mkdir -p "+outputDirPlots);
@@ -3652,9 +3764,6 @@ bool Analyses::GetImprovedScaling(void){
   Double_t textSizeRel = 0.035;
   StyleSettingsBasics("pdf");
   SetPlotStyle();  
-  // find detector config for plotting
-  DetConf::Type detConf   = setup->GetDetectorConfig();
-
   //==================================================================================
   // Create canvases for channel overview plotting
   //==================================================================================
@@ -3667,10 +3776,10 @@ bool Analyses::GetImprovedScaling(void){
   PlotSimple2D( canvas2DCorr, hspectraHGLMPVVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_LandMPVMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraHGLSigmaVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_LandSigMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraHGGSigmaVsLayer, -10000, -10000, textSizeRel, Form("%s/HG_GaussSigMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
- PlotSimple2D( canvas2DCorr, hSNRTriggVsLayer, -10000, -10000, textSizeRel, Form("%s/SNRTriggVsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
- PlotSimple2D( canvas2DCorr, hHGscaleChi2VsLayer, -10000, -10000, textSizeRel, Form("%s/HGscaleChi2VsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
- PlotSimple2D( canvas2DCorr, hMipTriggXY, -10000, -10000, textSizeRel, Form("%s/MipTriggXY.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
- 
+  PlotSimple2D( canvas2DCorr, hSNRTriggVsLayer, -10000, -10000, textSizeRel, Form("%s/SNRTriggVsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DCorr, hHGscaleChi2VsLayer, -10000, -10000, textSizeRel, Form("%s/HGscaleChi2VsLayer.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DCorr, hMipTriggXY, -10000, -10000, textSizeRel, Form("%s/MipTriggXY.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  
   canvas2DCorr->SetLogz(1);
   TString drawOpt = "colz";
   if (yearData == 2023)
@@ -3745,7 +3854,9 @@ bool Analyses::GetImprovedScaling(void){
 //***********************************************************************************************
 bool Analyses::GetNoiseSampleAndRefitPedestal(void){
   std::cout<<"GetNoiseSampleAndRefitPedestal"<<std::endl;
-  
+  // find detector config
+  DetConf::Type detConf = setup->GetDetectorConfig();
+
   std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
   
   std::map<int,TileSpectra> hSpectra;
@@ -3767,7 +3878,6 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
   TH2D* hspectraLGvsCellID      = new TH2D( "hNoiseTriggeredSpectraLG_vsCellID","Noise trigg ADC spectrum Low Gain vs CellID; cell ID; ADC_{LG} (arb. units)  ",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4000,0,4000);
   hspectraLGvsCellID->SetDirectory(0);
-
   
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->mkdir("IndividualCellsTrigg");
@@ -3890,7 +4000,7 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
     hMeanPedLGvsCellID->SetBinError  (hMeanPedLGvsCellID->FindBin(ithSpectraTrigg->second.GetCellID()), parameters[2]);
     
     int layer           = setup->GetLayer(ithSpectraTrigg->second.GetCellID());
-    int chInLayer       = setup->GetChannelInLayerFull(ithSpectraTrigg->second.GetCellID());
+    int chInLayer       = setup->GetChannelInLayerFull(ithSpectraTrigg->second.GetCellID(),detConf);
     hspectraHGMeanVsLayer->SetBinContent(hspectraHGMeanVsLayer->FindBin(layer,chInLayer), parameters[4]);
     hspectraHGMeanVsLayer->SetBinError(hspectraHGMeanVsLayer->FindBin(layer,chInLayer), parameters[5]);
     hspectraHGSigmaVsLayer->SetBinContent(hspectraHGSigmaVsLayer->FindBin(layer,chInLayer), parameters[6]);
@@ -3972,10 +4082,8 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
   PlotSimple2D( canvas2DCorr, hnoiseTriggers, -10000, -10000, textSizeRel, Form("%s/LG_Noise.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form( "evt. coll = %d", evts));
   
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-  // Find detector config for plotting
+  // Multipanel plotting
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-  DetConf::Type detConf = setup->GetDetectorConfig();
-
   MultiCanvas panelPlot(detConf, "NoiseSample");
   bool init1D = panelPlot.Initialize(1);
     
@@ -3993,6 +4101,9 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
 bool Analyses::RunEvalLocalTriggers(void){
   std::cout<<"EvalLocalTriggers"<<std::endl;
 
+  // find detector config
+  DetConf::Type detConf   = setup->GetDetectorConfig();
+  
   // read full run list
   std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
 
@@ -4142,7 +4253,7 @@ bool Analyses::RunEvalLocalTriggers(void){
           hMipTriggersGvsCellID->Fill(currCellID);
           
           int layer       = setup->GetLayer(currCellID);
-          int chInLayer   = setup->GetChannelInLayerFull(currCellID);
+          int chInLayer   = setup->GetChannelInLayerFull(currCellID,detConf);
           int row         = setup->GetRow(currCellID);
           int col         = setup->GetColumn(currCellID);
           int mod         = setup->GetModule(currCellID);
@@ -4226,8 +4337,6 @@ bool Analyses::RunEvalLocalTriggers(void){
   Double_t textSizeRel = 0.035;
   StyleSettingsBasics("pdf");
   SetPlotStyle();  
-  // find detector config for plotting
-  DetConf::Type detConf   = setup->GetDetectorConfig();
 
   Double_t maxHG          = ReturnMipPlotRangeDepVov(calib.GetVov(),true, typeRO);
   Double_t minHG          = ReturnMipMinPlotRangeDepVov(calib.GetVov(),true, typeRO);
@@ -4303,6 +4412,9 @@ bool Analyses::Calibrate(void){
   std::cout<<"Calibrate"<<std::endl;
 
   std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
+
+  // Find detector config
+  DetConf::Type detConf = setup->GetDetectorConfig();
   
   //=============================================================================================
   // Reset calibs if necessary
@@ -4972,10 +5084,6 @@ bool Analyses::Calibrate(void){
   }
 
   if (ExtPlot > 0){
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-    // Find detector config for plotting
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-    DetConf::Type detConf = setup->GetDetectorConfig();
     calib.PrintGlobalInfo();  
     double maxADC = 4096;
     if (typeRO == ReadOut::Type::Hgcroc)

@@ -197,11 +197,20 @@
         tempRun.posY    = ((TString)((TObjString*)tempArr->At(9))->GetString()).Atoi();
         if (specialData == 1) tempRun.assemblyNr = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atoi();
         
-        tempRun.rf        = 12;
-        tempRun.cf        = 10;
-        tempRun.cc        = 12;
-        tempRun.cfcomp    = 10;
-        tempRun.temp      = -1.;
+        if (tempRun.year > 2025){
+          tempRun.temp      = ((TString)((TObjString*)tempArr->At(14))->GetString()).Atof();
+          tempRun.rf        = ((TString)((TObjString*)tempArr->At(15))->GetString()).Atoi();
+          tempRun.cf        = ((TString)((TObjString*)tempArr->At(16))->GetString()).Atoi();
+          tempRun.cc        = ((TString)((TObjString*)tempArr->At(17))->GetString()).Atoi();
+          tempRun.cfcomp    = ((TString)((TObjString*)tempArr->At(18))->GetString()).Atoi();
+        } else {
+          tempRun.temp      = -1.;
+          tempRun.rf        = 12;
+          tempRun.cf        = 10;
+          tempRun.cc        = 12;
+          tempRun.cfcomp    = 10;
+        }
+        
         tempRun.injMode   = -1;
         tempRun.injDAC    = -1;
        
@@ -331,7 +340,8 @@
   inline Double_t ReturnRFValue(int rf, int debug = 0){
     if (debug) std::cout << "RF:  " << rf ;
     Double_t rfOhm = 0;
-    Double_t ohmBit[4]  = {100., 66.66, 50., 25.}; 
+    Double_t ohmBit[4]  = {80., 40., 20., 10.}; // documentation version SiPM H2GCROC3b
+    // Double_t ohmBit[4]  = {100., 66.66, 50., 25.}; // documentation version 1_4
     if ((rf - 8) >= 0){
       rfOhm = rfOhm+1/ohmBit[3];
       rf = rf-8;

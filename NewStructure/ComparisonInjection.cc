@@ -323,9 +323,10 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
       if (commonCFcomp != itrend->second.GetCFComp(rc))    isSameCFcomp = false;
       if (commonCC != itrend->second.GetCC(rc))        isSameCC = false;
     }
-    std::cout << itrend->second.GetRunNr(rc) << "\t" <<  itrend->second.GetRF(rc) << "\t" << itrend->second.GetCF(rc) << "\t" << itrend->second.GetCC(rc) << "\t" << itrend->second.GetCFComp(rc) << std::endl;
+    std::cout << itrend->second.GetRunNr(rc) << "\t" <<  itrend->second.GetRF(rc) << "\t" << itrend->second.GetCF(rc) << "\t" << itrend->second.GetCC(rc) << "\t" << itrend->second.GetCFComp(rc) << "\tRF calc:"<< ReturnRFValue(itrend->second.GetRF(rc))<< std::endl;
     
   }
+  std::cout << "Show all common settings" << std::endl;
   std::cout << "Common Voltage: "<< isSameVoltage << "\t"  << commonVoltage
             << "\t RF: " << isSameRF << "\t"  << commonRF
             << "\t CF: " << isSameCF << "\t"  << commonCF 

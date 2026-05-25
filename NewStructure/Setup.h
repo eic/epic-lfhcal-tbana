@@ -41,7 +41,7 @@ class Setup{
   int     GetCellID    (int /**/, int /**/, int /**/, int /**/)const;
   int     GetColumn    (int /**/) const;
   int     GetChannelInLayer(int /**/) const;
-  int     GetChannelInLayerFull(int /**/) const;
+  int     GetChannelInLayerFull(int cellID /**/, DetConf::Type type = DetConf::Type::Unset ) const;
   int     GetMaxChannelInLayerFull(void) const;
   int     GetNActiveLayers(void) const;
   int     GetNActiveCells(void) const;
