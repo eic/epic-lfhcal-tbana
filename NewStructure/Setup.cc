@@ -312,15 +312,19 @@ int Setup::GetChannelInLayer(int cellID) const{
   return absChL;
 }
 
-int Setup::GetChannelInLayerFull(int cellID) const{
+int Setup::GetChannelInLayerFull(int cellID, DetConf::Type type) const{
   int row     = GetRow(cellID);
   int column  = GetColumn(cellID);
   int mod     = GetModule(cellID);
   int absChL  = -1;
   
-  if (GetDetectorConfig() == DetConf::Type::Dual8M){
+  if (type == DetConf::Type::Unset){
+    type = GetDetectorConfig();
+  }
+  
+  if ( type == DetConf::Type::Dual8M){
     absChL    = mod*((nMaxColumn+1)*(nMaxRow+1))+row*(nMaxColumn+1)+column;
-  } else if (GetDetectorConfig() == DetConf::Type::MediumTB){
+  } else if ( type == DetConf::Type::MediumTB){
     if (mod%2 == 0){
       absChL = mod%2*((nMaxColumn+1) *(nMaxRow+1))+row*(nMaxColumn+1)*2+column+(int)mod/2*16;
     } else {

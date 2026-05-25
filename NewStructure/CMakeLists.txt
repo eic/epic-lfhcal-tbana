@@ -176,8 +176,8 @@ add_executable(CompareCalib CompareCalib.cc ComparisonCalib.cc)
 target_link_libraries(CompareCalib LFHCAL ${ROOT_LIBRARIES})
 
 # CompareCalib executable
-#add_executable(CompareInjection CompareInjection.cc ComparisonInjection.cc)
-#target_link_libraries(CompareInjection LFHCAL ${ROOT_LIBRARIES})
+add_executable(CompareInjection CompareInjection.cc ComparisonInjection.cc)
+target_link_libraries(CompareInjection LFHCAL ${ROOT_LIBRARIES})
 
 
 # CompareAna executable
