@@ -85,21 +85,22 @@ elif [ $2 = "FullSetB" ]; then
      echo "started conversion"
 #     runs='' #full list
 #         runs='071 072 073 074 075 076 077 078 079 080 081 082 083 084' #full list
-      runs='071 126' #pedestals
+#       runs='071 126' #pedestals
 #       runs='072 073 074 075 076 077 078 079 080 081 082 083 084' #muons set 1
 #       runs='130 131 132 133' #muons set 2
-#       runs='085 086 067 088 089 089 090' #e-
+#       runs='085 086 087 088 089 089 090' #e-
 #       runs='091 092 093 094 095 096 097 ' #e+
 #       runs='113 114 115 116     runs='195' #mu117 118 119 120 121 122 123 124 125' #pi-
 #       runs='098 099 100 101 102 103 104 105 106 107 108 109 110 111 112' #h+
 #       runs='100 101 102 103 104 105 106 107 108 109 110 111 112' #h+
+    runs='127 128 129 136 087' #additional runs
     for runNr in $runs; do 
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done
   elif [ $3 = "merge" ]; then 
-#     runs='072 073 074 075 076 077 078 079 080 081 082 083 084' # set 1
-#     echo $runs > runList.txt
-#     MergeMuonsFileList $dataDir runList.txt Muon_FullSetB_1  #ok
+    runs='072 073 074 075 076 077 078 079 080 081 082 083 084' # set 1
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_FullSetB_1  #ok
     runs='130 131 132 133' # set 1
     echo $runs > runList.txt
     MergeMuonsFileList $dataDir runList.txt Muon_FullSetB_2  #ok
@@ -166,12 +167,13 @@ elif [ $2 = "FullSetE" ]; then
 #       runs='372 420' #pedestals
 #       runs='374 375 376 377 378' #muons set 1
 #       runs='421 422 423 425 424' #muons set 2
-      runs='473 474 477 478 481 482' #muons set 3
+#       runs='473 474 477 478 481 482' #muons set 3
 #       runs='379 380 381 382 383 384 391 392' #e-
 #       runs='379 380' #e-
 #       runs='385 386 387 388 389 390' #e+
 #       runs='393 394 395 396 397 398 399 400 401 402 403 404' #pi-
 #       runs='405 406 407 408 409 410 411 412 413 414 415 416 417 418 419' #h+
+    runs='371 373' #additional runs
     for runNr in $runs; do 
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done
@@ -195,9 +197,9 @@ elif [ $2 = "FullSetF" ]; then
 #       runs='426 427 428 429 430' #muons set 1
 #       runs='472 475 476 479 480 483' #muons set 2
 #       runs='432 433 434 435 436 437' #e-
-      runs='438 439 440 441 442 443' #e+
+#       runs='438 439 440 441 442 443' #e+
 #       runs='444 445 446 447 448 449 450 451 452 453 454 455' #pi-
-#       runs='456 457 458 459 460 461 462 463 464 465 466 467 468 469 470' #h+
+      runs='456 457 458 459 460 461 462 463 464 465 466 467 468 469 470' #h+
     for runNr in $runs; do 
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done
@@ -220,8 +222,9 @@ elif [ $2 = "FullSetG" ]; then
 #       runs='517 519 521 523 525 527' #e-
 #       runs='518 520 522 524 526 528' #e+
 #       runs='492 494 496 498 500 502 504 506 508 510 512 514 ' #pi-
-#       runs='493 495 497 499 501 503 505 507 509 511 513 515' #h+
+      runs='493 495 497 499 501 503 505 507 509 511 513 515' #h+
     for runNr in $runs; do 
+      echo $runNr
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done
   elif [ $3 = "merge" ]; then 
