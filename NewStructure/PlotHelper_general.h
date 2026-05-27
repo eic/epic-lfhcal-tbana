@@ -165,6 +165,31 @@
   }
 
   //__________________________________________________________________________________________________________  
+  inline Color_t GetColorEmily2(int l){
+		Color_t colors[12] = {kViolet-6, kViolet+1, kBlue-4, kAzure+1, kCyan+2, kCyan-3, kGreen+1, kGreen, kOrange+1, kOrange, kPink-2, kRed-9};  
+    return colors[l%12];
+  }
+
+  //__________________________________________________________________________________________________________  
+  inline Color_t GetColorEmily3(int l){	
+		// 2026 PS, FullSetC, pi 1-10, had 6-10 GeV
+		Color_t colors[15] = {kBlack, kViolet+2, kBlue-5, kAzure+1, kCyan-7,
+													kGreen+1, kYellow-3, kOrange+1, kPink-2, kMagenta,
+													kTeal-6, kYellow+2, kOrange+2, kPink-8, kMagenta-3};
+
+		return colors[l%15];
+
+		// 2025, FullSetA
+		// e- 1,2,3,4,5 GeV
+		// had- 3,5,8,10,12,15 GeV
+		// had+ 3,5,8,10,12,15 GeV
+		//Color_t colors[17] = {kBlack, kViolet+2, kBlue-4, kAzure+1, kCyan-7,
+		//											kViolet-6, kCyan+2, kTeal-6, kOrange+2, kPink-8, kMagenta-3,
+		//											kViolet+8, kCyan+1, kGreen+1, kOrange+1, kPink-2, kMagenta}; 
+		//return colors[l%17];
+  }
+
+  //__________________________________________________________________________________________________________  
 	inline Style_t GetMarkerLayer(int l, bool full = false){
     Style_t styles[10]      = {24, 25, 28, 30, 44, 46, 42, 27, 76, 89};
     Style_t stylesFull[10]  = {20, 21, 34, 29, 45, 47, 43, 33, 41, 48};

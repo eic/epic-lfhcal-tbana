@@ -113,6 +113,15 @@ elif [ $1 = "egpott" ]; then
 	dataDirOutH=/Users/egpott/rhig/lfhcal/data/outfiles/ElectronRuns
 	PlotBaseDir=/Users/egpott/rhig/lfhcal/data/outfiles/plots
 
+elif [ $1 = "yale" ]; then
+	dataDirRaw=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/rawroot
+	dataDirRawE=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/rawroot
+	dataDirRawH=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/rawroot
+	dataDirOut=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/rawroot
+	dataDirOutE=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/rawroot
+	dataDirOutH=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/rawroot
+	PlotBaseDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/plots
+
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -130,7 +139,7 @@ runList=../configs/TB2024/DataTakingDB_202409_CAEN.csv
 # pedestalRuns='271 277 303 306 308 311 315 332 369 377 404 420 454 465 476 492 505 521 528 552 553 ' # all pedestal runs
 #pedestalRuns='303 306 308 311 315 420 553 332 369 377 404 465 476 492 505 521' # all pedestal runs
 # pedestalRuns='271 277 454 528 552' # pedestal runs 45V
-# pedestalRuns='377 404'
+pedestalRuns='332 369'
 if [ $2 = "pedestal" ]; then
 
   if [ $3 = "FullSetA" ]; then
@@ -146,26 +155,33 @@ fi
 
 if [ $2 == "mergemuons" ]; then
 
-
-	hadd -f $dataDirRaw/raw_muonScanA1_45V.root $dataDirRaw/raw_244.root $dataDirRaw/raw_250.root
-# 	hadd -f $dataDirRaw/raw_muonScanA2_45V.root $dataDirRaw/raw_283.root $dataDirRaw/raw_282.root
-
-	# hadd -f $dataDirRaw/raw_muonScanD1_45V.root $dataDirRaw/raw_412.root $dataDirRaw/raw_417.root
-# 	hadd -f $dataDirRaw/raw_muonScanD2_45V.root $dataDirRaw/raw_460.root $dataDirRaw/raw_456.root $dataDirRaw/raw_457.root
-# 	hadd -f $dataDirRaw/raw_muonScanH1_45V.root $dataDirRaw/raw_526.root $dataDirRaw/raw_527.root
-# 	hadd -f $dataDirRaw/raw_muonScanH2_45V.root $dataDirRaw/raw_554.root $dataDirRaw/raw_559.root
-# 	hadd -f $dataDirRaw/raw_muonScanC1_43_5V.root $dataDirRaw/raw_376.root $dataDirRaw/raw_375.root
-# 	hadd -f $dataDirRaw/raw_muonScanC2_43_5V.root $dataDirRaw/raw_405.root $dataDirRaw/raw_410.root $dataDirRaw/raw_408.root
-#	hadd -f $dataDirRaw/raw_muonScanE1_40V.root $dataDirRaw/raw_464.root $dataDirRaw/raw_463.root
-#	hadd -f $dataDirRaw/raw_muonScanE2_40V.root $dataDirRaw/raw_481.root $dataDirRaw/raw_478.root
-#	hadd -f $dataDirRaw/raw_muonScanF1_41V.root $dataDirRaw/raw_486.root $dataDirRaw/raw_489.root
-#	hadd -f $dataDirRaw/raw_muonScanF2_41V.root $dataDirRaw/raw_507.root $dataDirRaw/raw_506.root
-#	hadd -f $dataDirRaw/raw_muonScanG_46V.root $dataDirRaw/raw_508.root $dataDirRaw/raw_510.root $dataDirRaw/raw_511.root $dataDirRaw/raw_525.root
+# 
+#   hadd -f $dataDirRaw/raw_muonScanA1_45V.root $dataDirRaw/raw_244.root $dataDirRaw/raw_250.root
+#   hadd -f $dataDirRaw/raw_muonScanA2_45V.root $dataDirRaw/raw_283.root $dataDirRaw/raw_282.root
+#   hadd -f $dataDirRaw/raw_muonScanD1_45V.root $dataDirRaw/raw_412.root $dataDirRaw/raw_417.root
+#   hadd -f $dataDirRaw/raw_muonScanD2_45V.root $dataDirRaw/raw_460.root $dataDirRaw/raw_456.root $dataDirRaw/raw_457.root
+#   hadd -f $dataDirRaw/raw_muonScanH1_45V.root $dataDirRaw/raw_526.root $dataDirRaw/raw_527.root
+#   hadd -f $dataDirRaw/raw_muonScanH2_45V.root $dataDirRaw/raw_554.root $dataDirRaw/raw_559.root
+#   hadd -f $dataDirRaw/raw_muonScanC1_43_5V.root $dataDirRaw/raw_376.root $dataDirRaw/raw_375.root
+#   hadd -f $dataDirRaw/raw_muonScanC2_43_5V.root $dataDirRaw/raw_405.root $dataDirRaw/raw_410.root $dataDirRaw/raw_408.root
+#   hadd -f $dataDirRaw/raw_muonScanE1_40V.root $dataDirRaw/raw_464.root $dataDirRaw/raw_463.root
+#   hadd -f $dataDirRaw/raw_muonScanE2_40V.root $dataDirRaw/raw_481.root $dataDirRaw/raw_478.root
+#   hadd -f $dataDirRaw/raw_muonScanF1_41V.root $dataDirRaw/raw_486.root $dataDirRaw/raw_489.root
+#   hadd -f $dataDirRaw/raw_muonScanF2_41V.root $dataDirRaw/raw_507.root $dataDirRaw/raw_506.root
+#   hadd -f $dataDirRaw/raw_muonScanG_46V.root $dataDirRaw/raw_508.root $dataDirRaw/raw_510.root $dataDirRaw/raw_511.root $dataDirRaw/raw_525.root
 fi
 
 
 badChannelMap='../configs/TB2024/badChannelMap_TBSetup_CAEN_202408.txt'
 # # muon runs different scans in groups with separate pedestal
+
+FullScanB_muon1='muonB1'
+FullScanB_ped1='332'
+if [ $2 == "muoncalibB" ]; then
+	MuonCalib $3 $FullScanB_ped1 $FullScanB_muon1 $dataDirRaw $dataDirOut muonB1 $badChannelMap
+fi
+
+
 #50.3 events
 muonHVScan_44V='305'
 pedHVScan_44V='303'
