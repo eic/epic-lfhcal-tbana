@@ -27,6 +27,9 @@ elif [ $1 = "rjh78" ]; then
 elif [ $1 = "egpott" ]; then
 	dataDir=/Users/egpott/rhig/lfhcal/data/outfiles
 	dataRaw=/Users/egpott/rhig/lfhcal/data/rawfiles/aug2024_fullScanC
+elif [ $1 = "yale" ]; then
+	dataRaw=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/rawroot
+	dataDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/CAEN_Sept24_TB_PS
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit

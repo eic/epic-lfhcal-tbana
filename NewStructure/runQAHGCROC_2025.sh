@@ -22,14 +22,18 @@ PlotBaseDir=..
 if [ $1 = "fbockTB" ]; then 
 	dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
 	PlotBaseDir=/media/fbock/Lennard4TB/202511_PST09/
+elif [ $1 = "yale" ]; then
+	dataDirOut=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/HGCROCData
+	PlotBaseDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/plots
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
 fi
 
-if [ $2 == "FullScanA" ]; then
-	echo "running calibrate for 44V runs, campaing A1"
-		runs='FullSetA_1' 
+if [ $2 == "FullSetA" ]; then
+	echo "running calibrate for 44V runs, campaign A"
+#		runs='Muon_FullSetA_1 Muon_FullSetA_2 e+_1GeV_FullSetA e+_2GeV_FullSetA e+_3GeV_FullSetA e+_4GeV_FullSetA e+_5GeV_FullSetA e-_1GeV_FullSetA e-_2GeV_FullSetA e-_3GeV_FullSetA e-_4GeV_FullSetA e-_5GeV_FullSetA h+_3GeV_FullSetA h+_5GeV_FullSetA h+_8GeV_FullSetA h+_10GeV_FullSetA h+_12GeV_FullSetA h+_15GeV_FullSetA h-_3GeV_FullSetA h-_5GeV_FullSetA h-_8GeV_FullSetA h-_10GeV_FullSetA h-_12GeV_FullSetA h-_15GeV_FullSetA' 
+		runs='e+_1GeV_FullSetA e+_2GeV_FullSetA e+_3GeV_FullSetA e+_4GeV_FullSetA e+_5GeV_FullSetA e-_1GeV_FullSetA e-_2GeV_FullSetA e-_3GeV_FullSetA e-_4GeV_FullSetA e-_5GeV_FullSetA h+_3GeV_FullSetA h+_5GeV_FullSetA h+_8GeV_FullSetA h+_10GeV_FullSetA h+_12GeV_FullSetA h+_15GeV_FullSetA h-_3GeV_FullSetA h-_5GeV_FullSetA h-_8GeV_FullSetA h-_10GeV_FullSetA h-_12GeV_FullSetA h-_15GeV_FullSetA' 
 # 	runs='165 166 167 168 169 170 FullSetA_1' 
 # 	runs='175 FullSetA_2 168_169'
 # 	runs='183'

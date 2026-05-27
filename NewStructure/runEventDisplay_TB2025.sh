@@ -7,6 +7,9 @@ if [ $1 = "eglimos" ]; then
 elif [ $1 = "fbockTB" ]; then 
     dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
     plotDir=/media/fbock/Lennard4TB/202511_PST09/EventDisplay
+elif [ $1 = "yale" ]; then
+	dataDirOut=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/HGCROCData
+	plotDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/EventDisplay
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -15,10 +18,13 @@ fi
 runNrFile='../configs/TB2025/DataTakingDB_202511_HGCROC.csv'
 
 # runs='FullSetA_2 175 177'
-runs='167 168 169 170'
+#runs='167 168 169 170'
 # runs='FullSetA_1'
 # runs='167'
 # runs='165 166 167 168 169 211 170'
+#		runs='e+_1GeV_FullSetA e+_2GeV_FullSetA e+_3GeV_FullSetA e+_4GeV_FullSetA e+_5GeV_FullSetA e-_1GeV_FullSetA e-_2GeV_FullSetA e-_3GeV_FullSetA e-_4GeV_FullSetA e-_5GeV_FullSetA h+_3GeV_FullSetA h+_5GeV_FullSetA h+_8GeV_FullSetA h+_10GeV_FullSetA h+_12GeV_FullSetA h+_15GeV_FullSetA h-_3GeV_FullSetA h-_5GeV_FullSetA h-_8GeV_FullSetA h-_10GeV_FullSetA h-_12GeV_FullSetA h-_15GeV_FullSetA' 
+runs='h-_5GeV_FullSetA'
+#runs='FullSetA_1'
 for runNr in $runs; do 
     if [[ $2 = "tot" ]]; then
 	    ./Display -i $dataDirOut/rawHGCROC_wPed_$runNr.root -r $runNrFile -P $plotDir/Run_$runNr/ToT -d 0 -F pdf -N $3 -o

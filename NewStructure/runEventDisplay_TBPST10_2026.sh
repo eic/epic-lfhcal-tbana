@@ -7,6 +7,9 @@ if [ $1 = "eglimos" ]; then
 elif [ $1 = "fbockTB" ]; then 
     dataDirOut=/media/fbock/Lennard4TB/202604_PST10/HGCROCData/
     plotDir=/media/fbock/Lennard4TB/202604_PST10/EventDisplay/
+elif [ $1 = "yale" ]; then
+	dataDirOut=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202604_PST10/rawroot_new
+	plotDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202604_PST10/EventDisplay
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -14,7 +17,7 @@ fi
 
 runNrFile='../configs/TB2026/DataTakingDB_TBPST10_202604_HGCROC.csv'
 
-runs='Muon_FullSetE_1'
+runs='Had+_10GeV_FullSetC'
 
 for runNr in $runs; do 
     if [[ $2 = "tot" ]]; then

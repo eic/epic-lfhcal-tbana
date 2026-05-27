@@ -9,8 +9,8 @@ elif [ $1 == "egpott" ]; then
 		dataDirOut=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/calibrated
 
 elif [ $1 == "yale" ]; then	
-	dataDirIn=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/rawroot_new
-	dataDirOut=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/calibrated_new
+	dataDirIn=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/HGCROCData
+	dataDirOut=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/calibrated
 fi
 
   
