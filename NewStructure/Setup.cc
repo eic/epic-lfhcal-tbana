@@ -69,8 +69,11 @@ bool Setup::Initialize(TString file, int debug){
       delete tempArr;
       continue;
     }
-   	
-    AROunit     = ((TString)((TObjString*)tempArr->At(0))->GetString()).Atoi();
+   
+	 
+
+
+		AROunit     = ((TString)((TObjString*)tempArr->At(0))->GetString()).Atoi();
     AROchannel  = ((TString)((TObjString*)tempArr->At(1))->GetString()).Atoi();
     Alayer      = ((TString)((TObjString*)tempArr->At(2))->GetString()).Atoi();
     Anassembly  = ((TString)((TObjString*)tempArr->At(3))->GetString());
@@ -80,9 +83,10 @@ bool Setup::Initialize(TString file, int debug){
     Amod        = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
     float AmodX = ((TString)((TObjString*)tempArr->At(8))->GetString()).Atof();
     float AmodY = ((TString)((TObjString*)tempArr->At(9))->GetString()).Atof(); 
-    segSize     = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atoi(); 
+    segSize     = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atoi(); 	
 
-    // Try to set map for mod pos
+
+		// Try to set map for mod pos
     ModPos[Amod]=std::make_pair(AmodX,AmodY);
     //std::cerr<< "modnr: "<< Amod <<std::endl;
 

@@ -27,6 +27,9 @@ elif [ $1 = "rjh78" ]; then
 elif [ $1 = "egpott" ]; then
 	dataDir=/Users/egpott/rhig/lfhcal/data/outfiles
 	dataRaw=/Users/egpott/rhig/lfhcal/data/rawfiles/aug2024_fullScanC
+elif [ $1 = "yale" ]; then
+	dataRaw=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/rawroot
+	dataDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/CAEN_Sept24_TB_PS
 else
 	echo "Please select a known user name, otherwise I don't know where the data is"
 	exit
@@ -39,6 +42,14 @@ if [ $2 == "single" ]; then
   for runNr in $runs; do 
     Convert -c $dataDir/Run$runNr\_list.txt -o $dataRaw/MuonRuns/raw_$runNr.root -d 1 -f -m $configdir/TB2024/mappingFile_202409_CAEN.txt -r $configdir/TB2024/DataTakingDB_202409_CAEN.csv
   done;
+
+elif [ $2 == "SetB" ]; then
+	runs='338 346 360 332 369 331 332 371 374'
+
+	for runNr in $runs; do	
+    ./Convert -c $dataDir/Run$runNr\_list.txt -o $dataRaw/raw_$runNr.root -d 1 -f -m $configdir/TB2024/mappingFile_202409_CAEN.txt -r $configdir/TB2024/DataTakingDB_202409_CAEN.csv
+	done;
+
 elif [ $2 == "mockUpSmallStack" ]; then 
 #   runs='244'
 #   runs='271 277 244 250 282 283'

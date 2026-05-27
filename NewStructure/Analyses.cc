@@ -2638,7 +2638,12 @@ bool Analyses::GetScaling(void){
         // estimate local muon trigger
         bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScalePerTile, factorMinTrigg, factorMaxTrigg);
         int chInLayer       = setup->GetChannelInLayerFull(currCellID);
-        hHGTileSum[chInLayer]->Fill(aTile->GetLocalTriggerPrimitive());
+        
+				// bandaid to stop seg fault
+				// TODO: 2024 data, chInLayer is -1. Fix this.
+				if (chInLayer<0 || chInLayer>sizeof(hHGTileSum)/sizeof(*hHGTileSum)) continue;	
+				
+				hHGTileSum[chInLayer]->Fill(aTile->GetLocalTriggerPrimitive());
         
         if(ithSpectraTrigg!=hSpectraTrigg.end()){
           ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
@@ -2765,7 +2770,7 @@ bool Analyses::GetScaling(void){
 	//TH2D* hChi2VsNMipTrigg = new TH2D( "hChi2VsNMipTrigg", "HG MIP fit by stats; Number of MIP triggers; #chi^{2}/ndf; ", 50, 0, 10000, 80, 0, 20); // -EP
 	//hChi2VsNMipTrigg->SetDirectory(0);
 
-	// 2D beam profile -EP
+	// 2D beam profile -EP	
 	int thisbinxmax = setup->GetNMaxColumn()+1;	
 	int thisbinymax = (int)(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
 	TH2D* hMipTriggXY = new TH2D( "hMipTriggXY", "MIP Triggers summed over layers; X (col); Y (row); Num triggers", thisbinxmax, -0.5, thisbinxmax-0.5, thisbinymax, -0.5, thisbinymax-0.5); 
