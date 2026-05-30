@@ -76,13 +76,13 @@ if [ $1 = "fbock" ]; then
 	dataDirOutH=/home/fbock/EIC/Analysis/LFHCalTB2024/CAENdata/HadronRuns
 	PlotBaseDir=..
 elif [ $1 = "fbockExt" ]; then 
-	dataDirRaw=/media/fbock/LFHCal2/202408_PST09/CAENData/MuonRuns
-	dataDirRawE=/media/fbock/LFHCal2/202408_PST09/CAENData/ElectronRuns
-	dataDirRawH=/media/fbock/LFHCal2/202408_PST09/CAENData/HadronRuns
-	dataDirOut=/media/fbock/LFHCal2/202408_PST09/CAENData/MuonRuns
-	dataDirOutE=/media/fbock/LFHCal2/202408_PST09/CAENData/ElectronRuns
-	dataDirOutH=/media/fbock/LFHCal2/202408_PST09/CAENData/HadronRuns
-	PlotBaseDir=/media/fbock/LFHCal2/202408_PST09
+	dataDirRaw=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENData/
+	dataDirRawE=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENData/
+	dataDirRawH=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENData/
+	dataDirOut=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENData/
+	dataDirOutE=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENData/
+	dataDirOutH=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENData/
+	PlotBaseDir=/media/fbock/T7/LFHCalTBData/202408_PST09/ReanlysisCAEN
 elif [ $1 = "eglimos" ]; then
 	dataDirRaw=/home/ewa/EIC/test_beam2024/fullScanC
 	dataDirRawE=/home/ewa/EIC/test_beam2024/fullScanC
@@ -91,15 +91,6 @@ elif [ $1 = "eglimos" ]; then
 	dataDirOutE=/home/ewa/EIC/test_beam2024/fullScanC/Output/ElectronRuns
 	dataDirOutH=/home/ewa/EIC/test_beam2024/fullScanC/Output/HadronRuns
 	PlotBaseDir=..
-elif [ $1 = "kmaret" ]; then
-	dataDirRaw=/mnt/d/202408_PST9_converted/MuonRuns
-	dataDirRawE=/mnt/d/202408_PST9_converted
-	dataDirRawH=/mnt/d/202408_PST9_converted
-	dataDirOut=/mnt/d/202408_PST9_converted/MuonRuns
-	dataDirOutE=/mnt/d/202408_PST9_converted
-	dataDirOutH=/mnt/d/202408_PST9_converted
-	PlotBaseDir=/mnt/d/202408_PST9_converted/MuonRuns
-
 elif [ $1 = "rjh78" ]; then
 	dataDirRaw=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles/MuonRuns
 	dataDirRawE=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles/ElectronRuns
@@ -123,34 +114,39 @@ else
 	exit
 fi
 
+runList=../configs/TB2024/DataTakingDB_202409_CAEN.csv
+
 # *-- Enable lines for the runs of interest 
 # pedestal runs 
 # pedestalRuns='271 277 303 306 308 311 315 332 369 377 404 420 454 465 476 492 505 521 528 552 553 ' # all pedestal runs
 #pedestalRuns='303 306 308 311 315 420 553 332 369 377 404 465 476 492 505 521' # all pedestal runs
 # pedestalRuns='271 277 454 528 552' # pedestal runs 45V
-pedestalRuns='377 404'
+# pedestalRuns='377 404'
 if [ $2 = "pedestal" ]; then
+
+  if [ $3 = "FullSetA" ]; then
+    pedestalRuns='277 271'
+  elif [ $3 = "FullSetB" ]; then
+    pedestalRuns='332 369'
+  fi
+
 	for runNr in $pedestalRuns; do
-		./DataPrep -d 1 -p -i $dataDirRaw/raw_$runNr.root -f -o $dataDirOut/PedestalCalib_$runNr.root -O $PlotBaseDir/CAEN_PlotsPedestal_2024/Run$runNr -r ../configs/TB2024/DataTakingDB_202409_CAEN.csv
+		./DataPrep -d 1 -p -i $dataDirRaw/raw_$runNr.root -f -o $dataDirOut/PedestalCalib_$runNr.root -O $PlotBaseDir/CAEN_PlotsPedestal_2024/Run$runNr -r $runList
 	done;
 fi
 
 if [ $2 == "mergemuons" ]; then
 
- 	hadd -f $dataDirRaw/raw_muonScanA1_45V.root $dataDirRaw/raw_244.root $dataDirRaw/raw_250.root
- 	hadd -f $dataDirRaw/raw_muonScanA2_45V.root $dataDirRaw/raw_283.root $dataDirRaw/raw_282.root
 
-# 	hadd -f $dataDirRaw/raw_muonScanA1_45V.root $dataDirRaw/raw_244.root $dataDirRaw/raw_250.root
+	hadd -f $dataDirRaw/raw_muonScanA1_45V.root $dataDirRaw/raw_244.root $dataDirRaw/raw_250.root
 # 	hadd -f $dataDirRaw/raw_muonScanA2_45V.root $dataDirRaw/raw_283.root $dataDirRaw/raw_282.root
 
 	# hadd -f $dataDirRaw/raw_muonScanD1_45V.root $dataDirRaw/raw_412.root $dataDirRaw/raw_417.root
 # 	hadd -f $dataDirRaw/raw_muonScanD2_45V.root $dataDirRaw/raw_460.root $dataDirRaw/raw_456.root $dataDirRaw/raw_457.root
 # 	hadd -f $dataDirRaw/raw_muonScanH1_45V.root $dataDirRaw/raw_526.root $dataDirRaw/raw_527.root
 # 	hadd -f $dataDirRaw/raw_muonScanH2_45V.root $dataDirRaw/raw_554.root $dataDirRaw/raw_559.root
-#	hadd -f $dataDirRaw/raw_muonScanB1_42V.root $dataDirRaw/raw_331.root $dataDirRaw/raw_322.root
-#	hadd -f $dataDirRaw/raw_muonScanB2_42V.root $dataDirRaw/raw_370.root $dataDirRaw/raw_371.root $dataDirRaw/raw_374.root
-	hadd -f $dataDirRaw/raw_muonScanC1_43_5V.root $dataDirRaw/raw_376.root $dataDirRaw/raw_375.root
-	hadd -f $dataDirRaw/raw_muonScanC2_43_5V.root $dataDirRaw/raw_405.root $dataDirRaw/raw_410.root $dataDirRaw/raw_408.root
+# 	hadd -f $dataDirRaw/raw_muonScanC1_43_5V.root $dataDirRaw/raw_376.root $dataDirRaw/raw_375.root
+# 	hadd -f $dataDirRaw/raw_muonScanC2_43_5V.root $dataDirRaw/raw_405.root $dataDirRaw/raw_410.root $dataDirRaw/raw_408.root
 #	hadd -f $dataDirRaw/raw_muonScanE1_40V.root $dataDirRaw/raw_464.root $dataDirRaw/raw_463.root
 #	hadd -f $dataDirRaw/raw_muonScanE2_40V.root $dataDirRaw/raw_481.root $dataDirRaw/raw_478.root
 #	hadd -f $dataDirRaw/raw_muonScanF1_41V.root $dataDirRaw/raw_486.root $dataDirRaw/raw_489.root

@@ -330,6 +330,8 @@ int Setup::GetChannelInLayerFull(int cellID, DetConf::Type type) const{
     } else {
       absChL = (mod%2-1)*((nMaxColumn+1) *(nMaxRow+1))+row*(nMaxColumn+1)*2+column+(int)(mod-1)/2*16 + (nMaxColumn+1);
     }
+  } else if ( type == DetConf::Type::Single8M){
+    absChL = row*(nMaxColumn+1)+column;
   }
   return absChL;
 }
