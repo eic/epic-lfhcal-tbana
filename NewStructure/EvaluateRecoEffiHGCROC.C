@@ -510,7 +510,8 @@ TString PrintRunRecData( runRecData info, bool simple = false){
 //     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-2*0.85*relSizeP, lab2, true, 0.85*textSizePixel, 43);
 //     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-3*0.85*relSizeP, lab3, true, 0.85*textSizePixel, 43);
 //   
-    canvas2Panel->SaveAs(nameOutput.Data());
+    canvas2Panel->SaveAs(Form("%s.pdf",nameOutput.Data()));
+    canvas2Panel->SaveAs(Form("%s.png",nameOutput.Data()));
   }
 
   //__________________________________________________________________________________________________________
@@ -563,16 +564,9 @@ TString PrintRunRecData( runRecData info, bool simple = false){
 //     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-3*0.85*relSizeP, lab3, true, 0.85*textSizePixel, 43);
 //   
     
-    
-    
-    canvas2Panel->SaveAs(nameOutput.Data());
+    canvas2Panel->SaveAs(Form("%s.pdf",nameOutput.Data()));
+    canvas2Panel->SaveAs(Form("%s.png",nameOutput.Data()));
   }
-  
-  //   
-//   //  
-  
-  
-  
   
 //__________________________________________________________________________________________________________
 //_____________________MAIN function !!! ___________________________________________________________________
@@ -777,17 +771,13 @@ void EvaluateRecoEffiHGCROC( TString configFileName     = "",
     canvas2->SetLogy(1);
     
     PlotTrending (canvas, 0.95,  0.95, 0.035, 30, 
-                  graphRecEffi, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, minEffi*0.8, 1.05, Form("%s/RecEffi.pdf",outputDir.Data()) );
+                  graphRecEffi, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, minEffi*0.8, 1.05, Form("%s/RecEffi",outputDir.Data()) );
     PlotTrendingMultiSpecies (canvas, 0.95,  0.95, 0.035, 30, 
-                  graphRecEffiSpecies, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, minEffi*0.8, 1.05, Form("%s/RecEffiSpecies.pdf",outputDir.Data()) );
-    PlotTrending (canvas, 0.95,  0.95, 0.035, 30, 
-                  graphRecEffi, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, minEffi*0.8, 1.05, Form("%s/RecEffi.png",outputDir.Data()) );
+                  graphRecEffiSpecies, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, minEffi*0.8, 1.05, Form("%s/RecEffiSpecies",outputDir.Data()) );
     PlotTrending (canvas2, 0.95,  0.95, 0.035, 30, 
-                  graphRecEffiVsNAttemp, minEffi*0.95 , 1, 1e3, maxTrigg*2, Form("%s/RecEffiVsAttempTriggers.pdf",outputDir.Data()) );
+                  graphRecEffiVsNAttemp, minEffi*0.95 , 1, 1e3, maxTrigg*2, Form("%s/RecEffiVsAttempTriggers",outputDir.Data()) );
     PlotTrendingMultiSpecies (canvas2, 0.95,  0.95, 0.035, 30, 
-                  graphRecEffiNAttSpecies, minEffi*0.95 , 1, 1e3, maxTrigg*2, Form("%s/RecEffiVsAttempTriggersSpecies.pdf",outputDir.Data()) );
-    PlotTrending (canvas2, 0.95,  0.95, 0.035, 30, 
-                  graphRecEffiVsNAttemp, minEffi*0.95 , 1, 1e3, maxTrigg*2, Form("%s/RecEffiVsAttempTriggers.png",outputDir.Data()) );
+                  graphRecEffiNAttSpecies, minEffi*0.95 , 1, 1e3, maxTrigg*2, Form("%s/RecEffiVsAttempTriggersSpecies",outputDir.Data()) );
     
     
   

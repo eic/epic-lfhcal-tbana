@@ -72,7 +72,8 @@ if [ $2 = "InitMuon" ]; then
 #       runs='048 049 061 062 063 064 065 066 067 068 069 070 '  
 #         runs='030 031 032 033 034 035 036 037 038 039 040 041 042 043 044 045 046 047'
 #     runs='017 018 019 020 021 022'
-    runs='023 024 025 026 027 028 029'
+#     runs='023 024 025 026 027 028 029'
+    runs='017'
     for runNr in $runs; do 
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done
@@ -215,14 +216,14 @@ elif [ $2 = "FullSetF" ]; then
 # 45 V, summing board V1, Preamp settings 12 7 3 1
 elif [ $2 = "FullSetG" ]; then 
   if [ $3 = "convert" ]; then 
-#       runs='485 529 484 486 487 488 489 490 491 530 531 532 533 534 535 536 537 517 519 521 523 525 527 518 520 522 524 526 528 492 494 496 498 500 502 504 506 508 510 512 514 493 495 497 499 501 503 505 507 509 511 513 515' #full list
+      runs='485 529 484 486 487 488 489 490 491 530 531 532 533 534 535 536 537 517 519 521 523 525 527 518 520 522 524 526 528 492 494 496 498 500 502 504 506 508 510 512 514 493 495 497 499 501 503 505 507 509 511 513 515 516' #full list
 #       runs='485 529 ' #pedestals
 #       runs='484 486 487 488 489 490 491' #muons set 1
 #       runs='530 531 532 533 534 535 536 537' #muons set 2
 #       runs='517 519 521 523 525 527' #e-
 #       runs='518 520 522 524 526 528' #e+
 #       runs='492 494 496 498 500 502 504 506 508 510 512 514 ' #pi-
-      runs='493 495 497 499 501 503 505 507 509 511 513 515' #h+
+#       runs='493 495 497 499 501 503 505 507 509 511 513 515 516' #h+
     for runNr in $runs; do 
       echo $runNr
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
@@ -238,7 +239,7 @@ elif [ $2 = "FullSetG" ]; then
   
 elif [ $2 = "ParameterScan" ]; then
   if [ $3 = "convert" ]; then
-#       runs='294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 328 329 330 310 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369' #full list
+    runs='294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 328 329 330 310 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369' #full list
     for runNr in $runs; do
       echo $runNr
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
@@ -246,7 +247,7 @@ elif [ $2 = "ParameterScan" ]; then
   fi
 elif [ $2 = "HVScan" ]; then
   if [ $3 = "convert" ]; then
-#     runs='194 195 196 197 198 199 200 201 202' #mu
+    runs='194 195 196 197 198 199 200 201 202' #mu
 #     runs='188' #pedestal
     for runNr in $runs; do
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList

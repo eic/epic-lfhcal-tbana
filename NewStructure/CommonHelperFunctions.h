@@ -178,12 +178,16 @@
         tempRun.energy   = ((TString)((TObjString*)tempArr->At(3))->GetString()).Atof();
         tempRun.vop      = ((TString)((TObjString*)tempArr->At(4))->GetString()).Atof();
         tempRun.vbr      = ((TString)((TObjString*)tempArr->At(5))->GetString()).Atof();
+        tempRun.temp      = -1.; // set default (might be overwritten)
         
         if (readout.CompareTo("CAEN") == 0){
           tempRun.hgSet    = ((TString)((TObjString*)tempArr->At(6))->GetString()).Atoi();
           tempRun.lgSet    = ((TString)((TObjString*)tempArr->At(7))->GetString()).Atoi();
-          if (tempArr->GetEntries() > 10){
-          tempRun.shapetime = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atof();
+          if (tempArr->GetEntries() > 10 & tempRun.year < 2024){
+            tempRun.shapetime = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atof();
+          } else {
+            tempRun.temp      = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atof();
+            tempRun.shapetime = ((TString)((TObjString*)tempArr->At(11))->GetString()).Atof();
           }
         } else {
           tempRun.trigDelay = ((TString)((TObjString*)tempArr->At(6))->GetString()).Atoi();
@@ -204,7 +208,6 @@
           tempRun.cc        = ((TString)((TObjString*)tempArr->At(17))->GetString()).Atoi();
           tempRun.cfcomp    = ((TString)((TObjString*)tempArr->At(18))->GetString()).Atoi();
         } else {
-          tempRun.temp      = -1.;
           tempRun.rf        = 12;
           tempRun.cf        = 10;
           tempRun.cc        = 12;
