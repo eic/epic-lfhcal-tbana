@@ -85,7 +85,7 @@ class MultiCanvas{
   void PlotCorrWithFits(   std::map<int,TileSpectra> spectra, int option, 
                             Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, 
                             TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, 
-                            int debug = 1);
+                            int skiplayers = 0, int debug = 1);
   
   void PlotSpectra(  std::map<int,TileSpectra> spectra, int option, 
                      Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
@@ -94,13 +94,12 @@ class MultiCanvas{
   
   void PlotMipWithFits( std::map<int,TileSpectra> spectra, std::map<int,TileSpectra> spectraTrigg, 
                         int option, Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
-                        TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int debug= 1 );
+                        TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int skiplayers = 0, int debug= 1 );
 
   void PlotTriggerPrim(  std::map<int,TileSpectra> spectra, 
                          double avMip, double facLow, double facHigh,
                          Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
-                         TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, 
-                         int debug = 1);
+                         TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int skiplayers = 0, int debug = 1);
   
   void PlotRunOverlayProfile( std::map<int,TileTrend>  trend, int nrun, int option,
                               Double_t xPMin, Double_t xPMax, Double_t yMin, Double_t yMax,

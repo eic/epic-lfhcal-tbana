@@ -57,9 +57,9 @@ elif [ $2 == "FullSetA" ]; then
       ./Convert -c $dataRaw/Run$runNr\_list.txt -o $dataDir/raw_$runNr.root -d 1 -f -m $mappingFile -r $runList
     done;
   elif [ $3 == "merge" ]; then
-    echo "mergeing muon runs for Full Set B"
-    hadd -f $dataDirRaw/raw_muonScanA1_45V.root $dataDirRaw/raw_244.root $dataDirRaw/raw_250.root
-    hadd -f $dataDirRaw/raw_muonScanA2_45V.root $dataDirRaw/raw_283.root $dataDirRaw/raw_282.root
+    echo "mergeing muon runs for Full Set A"
+    hadd -f $dataDir/raw_muonScanA1_45V.root $dataDir/raw_244.root $dataDir/raw_250.root
+    hadd -f $dataDir/raw_muonScanA2_45V.root $dataDir/raw_283.root $dataDir/raw_282.root
 
   fi
 elif [ $2 == "FullSetB" ]; then 

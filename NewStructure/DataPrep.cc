@@ -43,6 +43,7 @@ void PrintHelp(char* exe){
   std::cout<<"-G GGG   use external ToA phase calib from GGG file "<<std::endl;
   std::cout<<"-i uuu   Input file in root format"<<std::endl;
   std::cout<<"-k kkk   enabling overwriting of calib file using external calib txt file"<<std::endl;
+  std::cout<<"-l [0-n] skip plotting of single layers except multiples of defined number"<<std::endl;
   std::cout<<"-L LLL   enable testing with only limited number of events"<<std::endl;
   std::cout<<"-m mmm   Name of mapping file  2024 PS TB [../configs/mappingFile_202409_CAEN.txt] "<<std::endl;
   std::cout<<"-M       save mip triggered cells only"<<std::endl;
@@ -79,7 +80,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"aA:bB:c:C:d:eE:fF:g:G:hi:k:L:m:MnNo:O:pP:r:R:sStT:uwXy:"))!=-1){
+  while((c=getopt(argc,argv,"aA:bB:c:C:d:eE:fF:g:G:hi:k:l:L:m:MnNo:O:pP:r:R:sStT:uwXy:"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"DataPrep: printing calib object to file"<<std::endl;
@@ -145,6 +146,10 @@ int main(int argc, char* argv[]){
       std::cout<<"DataPrep: enable overwrite from external text file: "<< optarg <<std::endl;
       AnAnalysis.SetExternalCalibFile(optarg);
       AnAnalysis.SetOverWriteCalib(true);
+      break;
+    case 'l':
+      std::cout<<"DataPrep: SetSkipLayer plotting processed:"<<optarg<<std::endl;
+      AnAnalysis.SetPlotSkipLayer(atoi(optarg));
       break;
     case 'L':
       std::cout<<"DataPrep: SetMaxEvents processed:"<<optarg<<std::endl;
