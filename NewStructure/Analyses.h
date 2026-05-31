@@ -113,6 +113,7 @@ class Analyses{
   inline void SetRootOutput(TString name)        {RootOutputName =name;};
   inline void SetRootOutputHists(TString name)   {RootOutputNameHist =name;};
   inline void SetPlotOutputDir(TString name)     {OutputNameDirPlots =name;};
+  inline void SetPlotSkipLayer(int skip)         {skipPlotLayer =skip;};
   inline void SetPlotExtension(TString name)     {plotSuffix = name;};
   inline void SetExternalBadChannelMap(TString name)     {ExternalBadChannelMap =name;};
   inline void SetExternalCalibFile(TString name)     {ExternalCalibFile =name;};
@@ -174,6 +175,7 @@ class Analyses{
   short ExtPlot               =0;         // Enable extended plotting
   bool Overwrite              =false;     // Flag to overwrite outputs
   int debug                   =0;         // debug level 
+  int skipPlotLayer           = 0;        // allow for skipping layers
   int yearData                =-1;        // data taking year externally set
   bool truncateHGCROC         =false;     // flag to enable the truncation of the HGCROC data to 8 bit (masking the 2 least significant bits)
   double minMipFrac           = 0.3;

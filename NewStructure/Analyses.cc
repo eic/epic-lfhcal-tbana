@@ -3255,20 +3255,20 @@ bool Analyses::GetScaling(void){
   std::cout << "plotting single layers" << std::endl;
   if (ExtPlot > 0){
     panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 1, minSpec, maxHG, 1.2, 
-                               Form("%s/MIP_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                               Form("%s/MIP_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
     panelPlot.PlotTriggerPrim( hSpectraTrigg, averageScalePerTile, factorMinTrigg, factorMaxTrigg, 0, maxTriggPPlot, 1.2,
-                             Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                             Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
 
     if (typeRO == ReadOut::Type::Caen) {
       panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 0, minSpec, maxLG, 1.2, 
-                                 Form("%s/MIP_LG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                                 Form("%s/MIP_LG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
       panelPlot2D.PlotCorrWithFits( hSpectra, 0, -20, 800, 0., 3900,
-                                    Form("%s/LGHG_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                                    Form("%s/LGHG_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
     }
   }
   if (ExtPlot > 1 && typeRO == ReadOut::Type::Caen){
       panelPlot2D.PlotCorrWithFits( hSpectra, 1, minSpec, 4000, 0, 340,
-                                    Form("%s/HGLG_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                                    Form("%s/HGLG_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
   }
   std::cout << "done plotting" << std::endl;
 
@@ -3301,6 +3301,17 @@ bool Analyses::GetImprovedScaling(void){
   int evts=TdataIn->GetEntries();
   Int_t runNr           = event.GetRunNumber();
   ReadOut::Type typeRO  = event.GetROtype();
+  
+  // reading calib from file
+  TcalibIn->GetEntry(0);
+  //==================================================================================
+  // extract spectra per tile from event tree
+  //==================================================================================
+  // check whether calib should be overwritten based on external text file
+  if (OverWriteCalib){
+    calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
+  }
+  // read run numbers from calib tree
   std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
   // Get run info object
   std::map<int,RunInfo>::iterator it=ri.find(runNr);
@@ -3335,14 +3346,6 @@ bool Analyses::GetImprovedScaling(void){
   // find detector config for plotting
   DetConf::Type detConf   = setup->GetDetectorConfig();
   
-  //==================================================================================
-  // extract spectra per tile from event tree
-  //==================================================================================
-  TcalibIn->GetEntry(0);
-  // check whether calib should be overwritten based on external text file
-  if (OverWriteCalib){
-    calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
-  }
   
   int evtDeb = 5000;
   if (typeRO != ReadOut::Type::Caen){
@@ -3855,12 +3858,12 @@ bool Analyses::GetImprovedScaling(void){
     
   std::cout << "plotting single layers" << std::endl;
   panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 1, minHG, maxHG, 1.2, 
-                              Form("%s/MIP_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                              Form("%s/MIP_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
   panelPlot.PlotTriggerPrim( hSpectraTrigg, averageScalePerTile, factorMinTrigg, factorMaxTrigg, 0, maxTriggPPlot, 1.2,
-                             Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                             Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
   if (typeRO == ReadOut::Type::Caen){
     panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 0, -20, maxLG, 1.2, 
-                              Form("%s/MIP_LG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                              Form("%s/MIP_LG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer );
   }
   std::cout << "done plotting" << std::endl;
  
@@ -5297,7 +5300,10 @@ bool Analyses::SaveMuonTriggersOnly(void){
   if (OverWriteCalib){
     calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
   }
+  // Print calib info
+  calib.PrintGlobalInfo();  
 
+  
   ReadOut::Type typeRO = ReadOut::Type::Caen;
 
   int evts=TdataIn->GetEntries();
@@ -5337,6 +5343,11 @@ bool Analyses::SaveMuonTriggersOnly(void){
     calib.PrintCalibToFile(fileCalibPrint);
   }
 
+  // Print calib info
+  calib.PrintGlobalInfo();  
+
+  
+  
   TcalibOut->Fill();
   TcalibOut->Write();
   RootOutput->Close();
