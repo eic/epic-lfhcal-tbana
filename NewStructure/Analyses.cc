@@ -1665,8 +1665,8 @@ bool Analyses::TransferCalib(void){
   //==================================================================================
   CreateOutputRootHistFile();
 
-  int maxChannelPerLayer             = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
-  int maxChannelPerLayerSingleMod    = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+  int maxChanneTransferCaliblPerLayer       = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
+  int maxChannelPerLayerSingleMod           = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
 
   // HGCROC specific histo creation
   TH2D* hspectraADCvsCellID         = nullptr;
@@ -1696,7 +1696,7 @@ bool Analyses::TransferCalib(void){
     hspectraADCPedvsCellID->SetDirectory(0);
     
     hHighestADCAbovePedVsLayer   = new TH2D( "hHighestEAbovePedVsLayer","Highest ADC above PED; layer; brd channel; #Sigma(ADC) (arb. units) ",
-                                              setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
+                                              setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChanneTransferCaliblPerLayer, -0.5, maxChanneTransferCaliblPerLayer-0.5);
     hHighestADCAbovePedVsLayer->SetDirectory(0);
     hHighestADCAbovePedVsLayer->Sumw2();
     hspectraTOTvsCellID      = new TH2D( "hspectraTOTvsCellID","TOT spectrums CellID; cell ID; TOT (arb. units) ",
@@ -4661,6 +4661,9 @@ bool Analyses::Calibrate(void){
   if (evts < 10000)
     outCount                  = 500;
   
+  int nLocalNoiseTriggs       = 0;
+  int nLocalMuonTriggs        = 0;
+  
   //==================================================================================
   // setup waveform builder for HGCROC data
   //==================================================================================
@@ -4734,6 +4737,7 @@ bool Analyses::Calibrate(void){
           if (localMuonTrigg) aTile->SetLocalTriggerBit(1);
         }
         
+        
         hspectraHGvsCellID->Fill(aTile->GetCellID(), aTile->GetADCHigh());
         hspectraLGvsCellID->Fill(aTile->GetCellID(), aTile->GetADCLow());
         hspectraHGCorrvsCellID->Fill(aTile->GetCellID(), corrHG);
@@ -4754,6 +4758,7 @@ bool Analyses::Calibrate(void){
         }
 
         if (localMuonTrigg){
+          nLocalMuonTriggs++;
           ithSpectraLocalTrigg=hSpectraLocalTrigg.find(aTile->GetCellID());
           if(ithSpectraLocalTrigg!=hSpectraLocalTrigg.end()){
             ithSpectraLocalTrigg->second.FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
@@ -4765,6 +4770,7 @@ bool Analyses::Calibrate(void){
           }
         }
         if (localNoiseTrigg){
+          nLocalNoiseTriggs++;
           ithSpectraNoise=hSpectraNoise.find(aTile->GetCellID());
           if(ithSpectraNoise!=hSpectraNoise.end()){
             ithSpectraNoise->second.FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
@@ -4912,6 +4918,8 @@ bool Analyses::Calibrate(void){
           RootOutput->cd();
         }
 
+        if(localMuonTrigg) nLocalMuonTriggs++;
+        
         ithSpectraLocalTrigg=hSpectraLocalTrigg.find(aTile->GetCellID());
         if(ithSpectraLocalTrigg!=hSpectraLocalTrigg.end()){
           if (localMuonTrigg) ithSpectraLocalTrigg->second.FillHGCROC(adc,toa,tot);
@@ -4925,6 +4933,7 @@ bool Analyses::Calibrate(void){
         }
       
         if (localNoiseTrigg){
+          nLocalNoiseTriggs++;
           ithSpectraNoise=hSpectraNoise.find(aTile->GetCellID());
           if(ithSpectraNoise!=hSpectraNoise.end()){
             ithSpectraNoise->second.FillHGCROC(adc,toa,tot);
@@ -4972,6 +4981,11 @@ bool Analyses::Calibrate(void){
     TdataOut->Fill();
   }
 
+  std::cout << "=======================================================" << std::endl;
+  std::cout << "Total events processed " << maxEvents << std::endl;
+  std::cout << "Local muon triggered " << nLocalMuonTriggs << std::endl;
+  std::cout << "Local noise triggered " << nLocalNoiseTriggs << std::endl;
+  std::cout << "=======================================================" << std::endl;
   //*********************************************************************************************
   // Write Output tree
   //*********************************************************************************************  
@@ -5085,14 +5099,14 @@ bool Analyses::Calibrate(void){
     PlotSimple2D( canvas2DCorr, hspectraLGCorrvsCellID, 200, -10000, textSizeRel, Form("%s/LGCorr_zoomed.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   } else if (typeRO == ReadOut::Type::Hgcroc){
     PlotSimple2D( canvas2DCorr, hspectraTotvsCellID, -10000, -10000, textSizeRel, Form("%s/Tot.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-    PlotSimple2D( canvas2DCorr, hspectraTotvsCellIDNoise, -50, 200, -10000, textSizeRel, Form("%s/Tot_Noise.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, "Local Noise triggered");
+    if(nLocalNoiseTriggs > 1) PlotSimple2D( canvas2DCorr, hspectraTotvsCellIDNoise, -50, 200, -10000, textSizeRel, Form("%s/Tot_Noise.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, "Local Noise triggered");
     
     PlotSimple2D( canvas2DCorr, hTOANsVsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOANsvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
     PlotSimple2D( canvas2DCorr, hTOACorrNsVsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOACorrNsvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
     PlotSimple2D( canvas2DCorr, hSampleTOAVsCellID, (double)it->second.samples,setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleTOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
     
     PlotSimple2D( canvas2DCorr, hspectraEnergyTotvsNCellsST, -10000, -10000, textSizeRel, Form("%s/EnergyTotalVsNCellsSingleTile.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
-    PlotSimple2D( canvas2DCorr, hspectraEnergyTotvsNCellsNoNoise, -10000, -10000, textSizeRel, Form("%s/EnergyTotalVsNCellsNoNoise.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+    if(nLocalNoiseTriggs > 1) PlotSimple2D( canvas2DCorr, hspectraEnergyTotvsNCellsNoNoise, -10000, -10000, textSizeRel, Form("%s/EnergyTotalVsNCellsNoNoise.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
 
     
     for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
@@ -5147,15 +5161,15 @@ bool Analyses::Calibrate(void){
                            Form("%s/Spectra_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
  
     if (typeRO == ReadOut::Type::Caen) {
-      panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 1, -50, 100, 1.2, 
-                                     Form("%s/NoiseTrigg_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
-      panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 0, -50, 100, 1.2, 
-                                     Form("%s/NoiseTrigg_LG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+      if(nLocalNoiseTriggs > 1) panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 1, -50, 100, 1.2, 
+                                                              Form("%s/NoiseTrigg_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+      if(nLocalNoiseTriggs > 1) panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 0, -50, 100, 1.2, 
+                                                               Form("%s/NoiseTrigg_LG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       panelPlot.PlotSpectra( hSpectra, 2, -2, 100, 1.2, 
                              Form("%s/Spectra_Comb" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       panelPlot2D.PlotCorrWithFits( hSpectra, 0, -20, 800, 0., 50.,
                                     Form("%s/LGHG_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
-      panelPlot2D.PlotCorrWithFits( hSpectra, 0, -20, 800, 0., 50.,
+      panelPlot2D.PlotCorrWithFits( hSpectra, 2, -20, 800, 0., 50.,
                                     Form("%s/LGLGhgeq_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       
     } else if (typeRO == ReadOut::Type::Hgcroc) {
@@ -5165,11 +5179,11 @@ bool Analyses::Calibrate(void){
                              Form("%s/Spectra_Tot" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       panelPlot.PlotMipWithFits( hSpectra, hSpectraLocalTrigg, 1, -20, maxADC, 1.2, 
                                   Form("%s/SpectraWithMipTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
-      panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 1, -20, 100, 1.2, 
-                                Form("%s/NoiseTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
-      panelPlot.Plot3SpectraOverlay(hSpectra, hSpectraNotNoise, hSpectraNoise,
-                                    1, -20, 1024, 1.2, 
-                                Form("%s/NotNoiseTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+      if(nLocalNoiseTriggs > 1) panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 1, -20, 100, 1.2, 
+                                                               Form("%s/NoiseTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+      if(nLocalNoiseTriggs > 1) panelPlot.Plot3SpectraOverlay(hSpectra, hSpectraNotNoise, hSpectraNoise,
+                                                              1, -20, 1024, 1.2, 
+                                                              Form("%s/NotNoiseTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       panelPlot.PlotTriggerPrim( hSpectraLocalTrigg, averageScalePerTile, factorMinTrigg, factorMaxTrigg, 0, 200, 1.2,
                                 Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
     }
