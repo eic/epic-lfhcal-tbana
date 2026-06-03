@@ -5,10 +5,15 @@ if [ $1 = "fbockExt2" ]; then
 	dataDirInE=/media/fbock/T7/202408_PST09/CAENdata/ElectronRuns
 	dataDirInH=/media/fbock/T7/202408_PST09/CAENdata/HadronRuns
 	dataDirOut=/media/fbock/T7/202408_PST09/CAENdata
+elif [ $1 = "fbockExtCAEN" ]; then 
+	dataDirInM=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENData
+	dataDirInE=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENData
+	dataDirInH=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENData
+	dataDirOut=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENData
 fi  
   
 
-if [ $2 == "BaseCalibs" ]; then
+if [ $2 == "BaseCalibsCAEN" ]; then
 
 # 	./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp3rd_muonScanA1_45V.root -A $dataDirOut/calib_muonScanA1_45V.root
 # 	./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp3rd_muonScanA2_45V.root -A $dataDirOut/calib_muonScanA2_45V.root
@@ -22,13 +27,14 @@ if [ $2 == "BaseCalibs" ]; then
 # 	./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp4th_312.root -A $dataDirOut/calib_312_41V.root
 # 	./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp6th_316.root -A $dataDirOut/calib_316_40V.root
 # 
-# 	./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp2nd_muonScanB1_42V.root -A $dataDirOut/calib_muonScanB1_42V.root
+# 
+	./DataPrep -a -i $dataDirInM/rawPedAndMuonImp4th_red_muonScanB1_42V.root -A $dataDirOut/calib_muonScanB1_42V_V2.root
 # 	./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp2nd_muonScanB2_42V.root -A $dataDirOut/calib_muonScanB2_42V.root
 # 	./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp6th_muonScanE1_40V.root -A $dataDirOut/calib_muonScanE1_40V.root
 # 	./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp6th_muonScanE2_40V.root -A $dataDirOut/calib_muonScanE2_40V.root
 # 	./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp6th_muonScanF1_41V.root -A $dataDirOut/calib_muonScanF1_41V.root
 # 	./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp6th_muonScanF2_41V.root -A $dataDirOut/calib_muonScanF2_41V.root
-	./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp4th_muonScanG_46V.root -A $dataDirOut/calib_muonScanG_46V.root
+# 	./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp4th_muonScanG_46V.root -A $dataDirOut/calib_muonScanG_46V.root
 elif [ $2 == "ScanA" ]; then
 	# 192K events
 	echo "running calibrate for 45V runs, campaing A1"

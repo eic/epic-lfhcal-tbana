@@ -119,7 +119,7 @@
     std::ifstream runListFile;
     runListFile.open(runListFileName,std::ios_base::in);
     if (!runListFile) {
-      std::cout << "ERROR: file " << runListFileName.Data() << " not found!" << std::endl;
+      std::cout << "ERROR:  runlist file " << runListFileName.Data() << " not found!" << std::endl;
       return runs;
     }
 
