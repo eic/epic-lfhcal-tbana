@@ -70,10 +70,7 @@ bool Setup::Initialize(TString file, int debug){
       continue;
     }
    
-	 
-
-
-		AROunit     = ((TString)((TObjString*)tempArr->At(0))->GetString()).Atoi();
+    AROunit     = ((TString)((TObjString*)tempArr->At(0))->GetString()).Atoi();
     AROchannel  = ((TString)((TObjString*)tempArr->At(1))->GetString()).Atoi();
     Alayer      = ((TString)((TObjString*)tempArr->At(2))->GetString()).Atoi();
     Anassembly  = ((TString)((TObjString*)tempArr->At(3))->GetString());
@@ -86,7 +83,7 @@ bool Setup::Initialize(TString file, int debug){
     segSize     = ((TString)((TObjString*)tempArr->At(10))->GetString()).Atoi(); 	
 
 
-		// Try to set map for mod pos
+        // Try to set map for mod pos
     ModPos[Amod]=std::make_pair(AmodX,AmodY);
     //std::cerr<< "modnr: "<< Amod <<std::endl;
 
