@@ -3,36 +3,36 @@ configdir=../configs
 pwd=$PWD
 dataDir=""
 if [ $1 = "fbock" ]; then 
-	dataRaw=/media/fbock/Samsung_T5/LFHCAL_TB/202408_PST09/CAENdata/MuonRuns
-	dataDir=/home/fbock/EIC/Analysis/LFHCalTB2024/CAENdata/MuonRuns
+  dataRaw=/media/fbock/Samsung_T5/LFHCAL_TB/202408_PST09/CAENdata/MuonRuns
+  dataDir=/home/fbock/EIC/Analysis/LFHCalTB2024/CAENdata/MuonRuns
 elif [ $1 = "fbockExt" ]; then 
-	dataRaw=/media/fbock/T7/LFHCalTBData/202408_PST09/rawCAEN
-	dataDir=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENdata
+  dataRaw=/media/fbock/T7/LFHCalTBData/202408_PST09/rawCAEN
+  dataDir=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENdata
 elif [ $1 = "fbockTB" ]; then 
-	dataRaw=/media/fbock/LFHCal2/CAEN_Sept24_TB_PS
-	dataDir=/media/fbock/LFHCal2/202408_PST09/CAENData
+  dataRaw=/media/fbock/LFHCal2/CAEN_Sept24_TB_PS
+  dataDir=/media/fbock/LFHCal2/202408_PST09/CAENData
 elif [ $1 = "eglimos" ]; then 
-	dataRaw=/home/ewa/EIC/test_beam2024/fullScanC
-	dataDir=/home/ewa/EIC/test_beam2024/fullScanC
+  dataRaw=/home/ewa/EIC/test_beam2024/fullScanC
+  dataDir=/home/ewa/EIC/test_beam2024/fullScanC
 elif [ $1 = "vandrieu" ]; then
   dataDir=/home/vandrieu/cernbox/ePIC_2024_PStestbeam/CAEN_RO
 elif [ $1 = "ahill" ]; then
-	configdir=/home/Aidan/WorkStuff/eic/epic-lfhcal-tbana/configs
-	dataRaw=/home/Aidan/WorkStuff/eic/data
+  configdir=/home/Aidan/WorkStuff/eic/epic-lfhcal-tbana/configs
+  dataRaw=/home/Aidan/WorkStuff/eic/data
   dataDir=$PWD/data_converted
   mkdir -p $dataRaw
 elif [ $1 = "rjh78" ]; then
   dataDir=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/outfiles 
   dataRaw=/Users/ryanhamilton/Documents/Research/data.nosync/202408_PST09/CAENData/rawfiles
 elif [ $1 = "egpott" ]; then
-	dataDir=/Users/egpott/rhig/lfhcal/data/outfiles
-	dataRaw=/Users/egpott/rhig/lfhcal/data/rawfiles/aug2024_fullScanC
+  dataDir=/Users/egpott/rhig/lfhcal/data/outfiles
+  dataRaw=/Users/egpott/rhig/lfhcal/data/rawfiles/aug2024_fullScanC
 elif [ $1 = "yale" ]; then
-	dataRaw=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/rawroot
-	dataDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/CAEN_Sept24_TB_PS
+  dataRaw=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/rawroot
+  dataDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/2024_PST9/CAEN_Sept24_TB_PS
 else
-	echo "Please select a known user name, otherwise I don't know where the data is"
-	exit
+  echo "Please select a known user name, otherwise I don't know where the data is"
+  exit
 fi
 
 # mappingFile=$configdir/TB2024/$configdir/TB2024/mappingFile_202409_CAEN.txt
@@ -77,7 +77,7 @@ elif [ $2 == "FullSetB" ]; then
     done;
   elif [ $3 == "merge" ]; then
     echo "mergeing muon runs for Full Set B"
-  	hadd -f $dataDir/raw_muonScanB1_42V.root $dataDir/raw_331.root $dataDir/raw_322.root
+    hadd -f $dataDir/raw_muonScanB1_42V.root $dataDir/raw_331.root $dataDir/raw_322.root
     hadd -f $dataDir/raw_muonScanB2_42V.root $dataDir/raw_370.root $dataDir/raw_371.root $dataDir/raw_374.root
   fi
 elif [ $2 == "calibC" ]; then

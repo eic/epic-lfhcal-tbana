@@ -10,12 +10,12 @@ function MergeMuonsFileList(){
   if [ -f listMerge.txt ]; then
     rm listMerge.txt
   fi
-	for runNr in $runs; do 
-		ls $1/rawHGCROC_$runNr.root  >> listMerge.txt
-	done
-	cat listMerge.txt
-	fileList=`cat listMerge.txt`
-	hadd -f $1/rawHGCROC_$3.root $fileList
+  for runNr in $runs; do 
+    ls $1/rawHGCROC_$runNr.root  >> listMerge.txt
+  done
+  cat listMerge.txt
+  fileList=`cat listMerge.txt`
+  hadd -f $1/rawHGCROC_$3.root $fileList
   rm listMerge.txt
 }
 
@@ -28,26 +28,26 @@ mapConDefV1=../configs/TB2026/mapping_HGCROC_PST10TB_sumV1_default_inv.csv   # v
 
 
 if [ $1 = "fbockTB" ]; then 
-	dataRaw=/media/fbock/Lennard4TB/202605_SPSH2/raw/      # source directory for output files from DAQ system
-	dataDir=/media/fbock/ALICE2-4TB/202605_SPSH2/HGCROCData           # base directory for root trees  fi
+  dataRaw=/media/fbock/Lennard4TB/202605_SPSH2/raw/      # source directory for output files from DAQ system
+  dataDir=/media/fbock/ALICE2-4TB/202605_SPSH2/HGCROCData           # base directory for root trees  fi
 elif [ $1 = "egpott" ]; then # bla bla bla test test test
-	dataRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/raw
-	dataDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
+  dataRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/raw
+  dataDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
 
 elif [ $1 = "ehagen" ]; then 
-	dataRaw=/Users/hagen/Githubs/TB_data
-	dataDir=/Users/hagen/Githubs/TB_data
-	
+  dataRaw=/Users/hagen/Githubs/TB_data
+  dataDir=/Users/hagen/Githubs/TB_data
+  
 elif [ $1 = "atamis" ]; then 
-	dataRaw=/home/drewtam20/Documents/eic/LFHCALDATA/Runs
-	dataDir=/home/drewtam20/Documents/eic/LFHCALDATA/Converted
+  dataRaw=/home/drewtam20/Documents/eic/LFHCALDATA/Runs
+  dataDir=/home/drewtam20/Documents/eic/LFHCALDATA/Converted
 
 elif [ $1 = "Preet" ]; then
-	dataRaw=/home/lfhcal/Data # source directory for output files from DAQ system
-	dataDir=/home/lfhcal/HGCROCData # base directory for root trees
+  dataRaw=/home/lfhcal/Data # source directory for output files from DAQ system
+  dataDir=/home/lfhcal/HGCROCData # base directory for root trees
 elif [ $1 = "kchandra" ]; then
-	dataRaw=/run/media/lfhcal/Howard4TB/202605_SPSH2/raw # source directory for output files from DAQ system
-	dataDir=/run/media/lfhcal/Howard4TB/202605_SPSH2/HGCROCData # base directory for root trees
+  dataRaw=/run/media/lfhcal/Howard4TB/202605_SPSH2/raw # source directory for output files from DAQ system
+  dataDir=/run/media/lfhcal/Howard4TB/202605_SPSH2/HGCROCData # base directory for root trees
 fi
 
 
@@ -83,7 +83,7 @@ if [ $2 = "InitMuon" ]; then
 # 43 V, summing board V2, Preamp settings 9 7 10 1?
 elif [ $2 = "FullSetB" ]; then 
   if [ $3 = "convert" ]; then 
-     echo "started conversion"
+    echo "started conversion"
 #     runs='' #full list
 #         runs='071 072 073 074 075 076 077 078 079 080 081 082 083 084' #full list
 #       runs='071 126' #pedestals

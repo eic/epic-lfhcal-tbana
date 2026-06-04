@@ -10,12 +10,12 @@ function MergeMuonsFileList(){
   if [ -f listMerge.txt ]; then
     rm listMerge.txt
   fi
-	for runNr in $runs; do 
-		ls $1/rawHGCROC_$runNr.root  >> listMerge.txt
-	done
-	cat listMerge.txt
-	fileList=`cat listMerge.txt`
-	hadd -f $1/rawHGCROC_$3.root $fileList
+  for runNr in $runs; do 
+    ls $1/rawHGCROC_$runNr.root  >> listMerge.txt
+  done
+  cat listMerge.txt
+  fileList=`cat listMerge.txt`
+  hadd -f $1/rawHGCROC_$3.root $fileList
   rm listMerge.txt
 }
 
@@ -28,24 +28,24 @@ mapConDefV1=../configs/TB2026/mapping_HGCROC_PST10TB_sumV1_default_inv.csv   # v
 
 
 if [ $1 = "fbockTB" ]; then 
-	dataRaw=/media/fbock/Lennard4TB/202604_PST10/raw/      # source directory for output files from DAQ system
-	dataDir=/media/fbock/Lennard4TB/202604_PST10/HGCROCData           # base directory for root trees
+  dataRaw=/media/fbock/Lennard4TB/202604_PST10/raw/      # source directory for output files from DAQ system
+  dataDir=/media/fbock/Lennard4TB/202604_PST10/HGCROCData           # base directory for root trees
 
 elif [ $1 = "egpott" ]; then # bla bla bla test test test
-	dataRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/raw
-	dataDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
+  dataRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/raw
+  dataDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/rawroot
 
 elif [ $1 = "ehagen" ]; then 
-	dataRaw=/Users/hagen/Githubs/TB_data
-	dataDir=/Users/hagen/Githubs/TB_data
-	
+  dataRaw=/Users/hagen/Githubs/TB_data
+  dataDir=/Users/hagen/Githubs/TB_data
+  
 elif [ $1 = "atamis" ]; then 
-	dataRaw=/home/drewtam20/Documents/eic/LFHCALDATA/Runs
-	dataDir=/home/drewtam20/Documents/eic/LFHCALDATA/Converted
+  dataRaw=/home/drewtam20/Documents/eic/LFHCALDATA/Runs
+  dataDir=/home/drewtam20/Documents/eic/LFHCALDATA/Converted
 
 elif [ $1 = "yale" ]; then
-	dataRaw=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202604_PST10/raw
-	dataDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202604_PST10/rawroot_new
+  dataRaw=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202604_PST10/raw
+  dataDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202604_PST10/rawroot_new
 fi
   
 # global run list for 2026 PS TB
@@ -55,7 +55,7 @@ runList=../configs/TB2026/DataTakingDB_TBPST10_202604_HGCROC.csv
 #V2 summing board, initial preamp settings 
 if [ $2 = "HVScan1" ]; then 	
   if [ $3 = "convert" ]; then 
-     runs='039 066 070 079 080 082 064 065 067 068 069 071 072 073 074 075 076 077 081 083 084 221 223 224 225 226 227 228 230 229 231 232 233' # first scan
+    runs='039 066 070 079 080 082 064 065 067 068 069 071 072 073 074 075 076 077 081 083 084 221 223 224 225 226 227 228 230 229 231 232 233' # first scan
 #     runs='039 066 070 079 080 082 064 065 067 068 069 071 072 073 074 075 076 077 081 083 084' #part 2
 #     runs='221 223 224 225 226 227 228 230 229 231 232 233' #part 2
 #    runs='232 233' #part 2
@@ -63,9 +63,9 @@ if [ $2 = "HVScan1" ]; then
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done
   elif [ $3 = "merge" ]; then  
-     runs='071 072 073 074' # HV 42V
-     echo $runs > runList.txt
-     MergeMuonsFileList $dataDir runList.txt Muon_HVScan_42V  #ok
+    runs='071 072 073 074' # HV 42V
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_HVScan_42V  #ok
 #     runs='071 072' # HV 42V
 #     echo $runs > runList.txt
 #     MergeMuonsFileList $dataDir runList.txt Muon_HVScan_42V_bottom  #ok
@@ -73,47 +73,47 @@ if [ $2 = "HVScan1" ]; then
 #     echo $runs > runList.txt
 #     MergeMuonsFileList $dataDir runList.txt Muon_HVScan_42V_top  #ok
 # 
-     runs='067 068 069' # HV 42.5V
-     echo $runs > runList.txt
-     MergeMuonsFileList $dataDir runList.txt Muon_HVScan_42_5V  #ok
+    runs='067 068 069' # HV 42.5V
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_HVScan_42_5V  #ok
 #     cp $dataDir/rawHGCROC_062.root $dataDir/rawHGCROC_Muon_HVScan_42_5V_bottom.root #ok  
 #     runs='068 069' # HV 42V
 #     echo $runs > runList.txt
 #     MergeMuonsFileList $dataDir runList.txt Muon_HVScan_42_5V_top  #ok
 #     
-     runs='064 065' # HV 43V
-     echo $runs > runList.txt
-     MergeMuonsFileList $dataDir runList.txt Muon_HVScan_43V  #ok
+    runs='064 065' # HV 43V
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_HVScan_43V  #ok
 #     cp $dataDir/rawHGCROC_065.root $dataDir/rawHGCROC_Muon_HVScan_43V_bottom.root #ok  
 #     cp $dataDir/rawHGCROC_064.root $dataDir/rawHGCROC_Muon_HVScan_43V_top.root #ok  
 #     
-     runs='077 081' # HV 43.5V
-     echo $runs > runList.txt
-     MergeMuonsFileList $dataDir runList.txt Muon_HVScan_43_5V  #ok
+    runs='077 081' # HV 43.5V
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_HVScan_43_5V  #ok
 #     cp $dataDir/rawHGCROC_077.root $dataDir/rawHGCROC_Muon_HVScan_43_5V_bottom.root #ok  
 #     cp $dataDir/rawHGCROC_081.root $dataDir/rawHGCROC_Muon_HVScan_43_5V_top.root #ok  
 #     
-     runs='084 083' # HV 44V
-     echo $runs > runList.txt
-     MergeMuonsFileList $dataDir runList.txt Muon_HVScan_44V  #ok
+    runs='084 083' # HV 44V
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_HVScan_44V  #ok
 #     cp $dataDir/rawHGCROC_084.root $dataDir/rawHGCROC_Muon_HVScan_44V_bottom.root #ok  
 #     cp $dataDir/rawHGCROC_083.root $dataDir/rawHGCROC_Muon_HVScan_44V_top.root #ok  
 # 
-     runs='223 224' # HV 44_5V
-     echo $runs > runList.txt
-     MergeMuonsFileList $dataDir runList.txt Muon_HVScan_44_5V  #ok
+    runs='223 224' # HV 44_5V
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_HVScan_44_5V  #ok
 #     cp $dataDir/rawHGCROC_224.root $dataDir/rawHGCROC_Muon_HVScan_44_5V_bottom.root #ok  
 #     cp $dataDir/rawHGCROC_223.root $dataDir/rawHGCROC_Muon_HVScan_44_5V_top.root #ok  
 # 
-     runs='226 227' # HV 45V
-     echo $runs > runList.txt
-     MergeMuonsFileList $dataDir runList.txt Muon_HVScan_45V  #ok
+    runs='226 227' # HV 45V
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_HVScan_45V  #ok
 #     cp $dataDir/rawHGCROC_226.root $dataDir/rawHGCROC_Muon_HVScan_45V_bottom.root #ok  
 #     cp $dataDir/rawHGCROC_227.root $dataDir/rawHGCROC_Muon_HVScan_45V_top.root #ok  
 # 
-     runs='230 229' # HV 45.5V
-     echo $runs > runList.txt
-     MergeMuonsFileList $dataDir runList.txt Muon_HVScan_45_5V  #ok
+    runs='230 229' # HV 45.5V
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_HVScan_45_5V  #ok
 #     cp $dataDir/rawHGCROC_230.root $dataDir/rawHGCROC_Muon_HVScan_45_5V_bottom.root #ok  
 #     cp $dataDir/rawHGCROC_229.root $dataDir/rawHGCROC_Muon_HVScan_45_5V_top.root #ok  
 
@@ -265,7 +265,7 @@ elif [ $2 = "FullSetC" ]; then
     echo $runs > runList.txt
     MergeMuonsFileList $dataDir runList.txt Muon_FullSetC_1  #ok
     
-		runs='177 179 178 181 182 180 183 184' # set 2
+    runs='177 179 178 181 182 180 183 184' # set 2
     echo $runs > runList.txt
     MergeMuonsFileList $dataDir runList.txt Muon_FullSetC_2  #ok
     
@@ -300,11 +300,11 @@ elif [ $2 = "FullSetC" ]; then
     MergeMuonsFileList $dataDir runList.txt pi-_10GeV_FullSetC  #ok
     
     # had merge
-		cp $dataDir/rawHGCROC_153.root $dataDir/rawHGCROC_Had+_1GeV_FullSetC.root
-		cp $dataDir/rawHGCROC_154.root $dataDir/rawHGCROC_Had+_2GeV_FullSetC.root
-		cp $dataDir/rawHGCROC_155.root $dataDir/rawHGCROC_Had+_3GeV_FullSetC.root
-		cp $dataDir/rawHGCROC_156.root $dataDir/rawHGCROC_Had+_4GeV_FullSetC.root
-		cp $dataDir/rawHGCROC_157.root $dataDir/rawHGCROC_Had+_5GeV_FullSetC.root
+    cp $dataDir/rawHGCROC_153.root $dataDir/rawHGCROC_Had+_1GeV_FullSetC.root
+    cp $dataDir/rawHGCROC_154.root $dataDir/rawHGCROC_Had+_2GeV_FullSetC.root
+    cp $dataDir/rawHGCROC_155.root $dataDir/rawHGCROC_Had+_3GeV_FullSetC.root
+    cp $dataDir/rawHGCROC_156.root $dataDir/rawHGCROC_Had+_4GeV_FullSetC.root
+    cp $dataDir/rawHGCROC_157.root $dataDir/rawHGCROC_Had+_5GeV_FullSetC.root
     runs='149 168'
     echo $runs > runList.txt
     MergeMuonsFileList $dataDir runList.txt Had+_6GeV_FullSetC  #ok
@@ -315,8 +315,8 @@ elif [ $2 = "FullSetC" ]; then
     echo $runs > runList.txt
     MergeMuonsFileList $dataDir runList.txt Had+_8GeV_FullSetC  
 
-		cp $dataDir/rawHGCROC_158.root $dataDir/rawHGCROC_Had+_9GeV_FullSetC.root
-		cp $dataDir/rawHGCROC_159.root $dataDir/rawHGCROC_Had+_10GeV_FullSetC.root
+    cp $dataDir/rawHGCROC_158.root $dataDir/rawHGCROC_Had+_9GeV_FullSetC.root
+    cp $dataDir/rawHGCROC_159.root $dataDir/rawHGCROC_Had+_10GeV_FullSetC.root
   fi  
 
 # 44V, summing board V2, new preamp settings 
@@ -340,29 +340,29 @@ elif [ $2 = "FullSetD" ]; then
     echo $runs > runList.txt
     MergeMuonsFileList $dataDir runList.txt Muon_FullSetD_2  #ok   
     
-		#pi- merge 
-		cp $dataDir/rawHGCROC_245.root $dataDir/rawHGCROC_pi-_1GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_246.root $dataDir/rawHGCROC_pi-_2GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_247.root $dataDir/rawHGCROC_pi-_3GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_248.root $dataDir/rawHGCROC_pi-_4GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_249.root $dataDir/rawHGCROC_pi-_5GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_250.root $dataDir/rawHGCROC_pi-_6GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_251.root $dataDir/rawHGCROC_pi-_7GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_252.root $dataDir/rawHGCROC_pi-_8GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_253.root $dataDir/rawHGCROC_pi-_9GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_254.root $dataDir/rawHGCROC_pi-_10GeV_FullSetD.root
+    #pi- merge 
+    cp $dataDir/rawHGCROC_245.root $dataDir/rawHGCROC_pi-_1GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_246.root $dataDir/rawHGCROC_pi-_2GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_247.root $dataDir/rawHGCROC_pi-_3GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_248.root $dataDir/rawHGCROC_pi-_4GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_249.root $dataDir/rawHGCROC_pi-_5GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_250.root $dataDir/rawHGCROC_pi-_6GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_251.root $dataDir/rawHGCROC_pi-_7GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_252.root $dataDir/rawHGCROC_pi-_8GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_253.root $dataDir/rawHGCROC_pi-_9GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_254.root $dataDir/rawHGCROC_pi-_10GeV_FullSetD.root
   
-		#had+ merge 
-		cp $dataDir/rawHGCROC_255.root $dataDir/rawHGCROC_Had+_1GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_256.root $dataDir/rawHGCROC_Had+_2GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_257.root $dataDir/rawHGCROC_Had+_3GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_258.root $dataDir/rawHGCROC_Had+_4GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_259.root $dataDir/rawHGCROC_Had+_5GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_260.root $dataDir/rawHGCROC_Had+_6GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_261.root $dataDir/rawHGCROC_Had+_7GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_262.root $dataDir/rawHGCROC_Had+_8GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_263.root $dataDir/rawHGCROC_Had+_9GeV_FullSetD.root
-		cp $dataDir/rawHGCROC_264.root $dataDir/rawHGCROC_Had+_10GeV_FullSetD.root
+    #had+ merge 
+    cp $dataDir/rawHGCROC_255.root $dataDir/rawHGCROC_Had+_1GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_256.root $dataDir/rawHGCROC_Had+_2GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_257.root $dataDir/rawHGCROC_Had+_3GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_258.root $dataDir/rawHGCROC_Had+_4GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_259.root $dataDir/rawHGCROC_Had+_5GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_260.root $dataDir/rawHGCROC_Had+_6GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_261.root $dataDir/rawHGCROC_Had+_7GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_262.root $dataDir/rawHGCROC_Had+_8GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_263.root $dataDir/rawHGCROC_Had+_9GeV_FullSetD.root
+    cp $dataDir/rawHGCROC_264.root $dataDir/rawHGCROC_Had+_10GeV_FullSetD.root
   fi
 
 # 43V, summing board V2, new preamp settings 

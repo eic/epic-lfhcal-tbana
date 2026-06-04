@@ -80,7 +80,7 @@ class ComparisonCalib{
   int Xaxis                   =0;         // Trending dependence 0: run nr, 1: Voltage
   int maxLayerPlot            =100;       // option restrict individual layer plotting
   bool isHGCROC               =false;     // option to switch to HGCROC comparison
-	int eoLabelOpt							=1; // 1: run number, 2: beam E (NOT IMPLEMENTED), 3: Vop
+  int eoLabelOpt              =1; // 1: run number, 2: beam E (NOT IMPLEMENTED), 3: Vop
   RootSetupWrapper rsw;                   // Wrapper singleton class for setup
   RootSetupWrapper* rswptr;               // Pointer to wrapper for singleton class for setup
   Setup* setup;                           // geometry setup

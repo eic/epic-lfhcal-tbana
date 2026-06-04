@@ -3,8 +3,8 @@ echo "username $1"
 echo "run option $2"
 
 if [ $1 = "fbockTB" ]; then 
-	dataRaw=/media/fbock/Lennard4TB/LongboardTesting/raw                   # source directory for output files from DAQ system
-	dataDir=/media/fbock/Lennard4TB/LongboardTesting/HGCROCData            # base directory for root trees
+  dataRaw=/media/fbock/Lennard4TB/LongboardTesting/raw                   # source directory for output files from DAQ system
+  dataDir=/media/fbock/Lennard4TB/LongboardTesting/HGCROCData            # base directory for root trees
 fi
 
 
@@ -25,32 +25,32 @@ if [ $2 = "LBTests" ]; then
   mapCon7=../configs/LocalTesting/mapping_HGCROC_ORNL_Cosmics_LB_Config7.txt   # runs 180-182
   
   mkdir -p $dataDir/
-	runs='158 159 160'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon1 -r $runList
-	done
-	runs='161 162 163'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon2 -r $runList
-	done
-	runs='164 165'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon3 -r $runList
-	done
-	runs='166 167'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon4 -r $runList
-	done
-	runs='170 171 172'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon5 -r $runList
-	done
-	runs='173 175 176 177 178 179'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon6 -r $runList
-	done
-	runs='180 181 182'
-	for runNr in $runs; do 
-		./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon7 -r $runList
-	done
+  runs='158 159 160'
+  for runNr in $runs; do 
+    ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon1 -r $runList
+  done
+  runs='161 162 163'
+  for runNr in $runs; do 
+    ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon2 -r $runList
+  done
+  runs='164 165'
+  for runNr in $runs; do 
+    ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon3 -r $runList
+  done
+  runs='166 167'
+  for runNr in $runs; do 
+    ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon4 -r $runList
+  done
+  runs='170 171 172'
+  for runNr in $runs; do 
+    ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon5 -r $runList
+  done
+  runs='173 175 176 177 178 179'
+  for runNr in $runs; do 
+    ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon6 -r $runList
+  done
+  runs='180 181 182'
+  for runNr in $runs; do 
+    ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapCon7 -r $runList
+  done
 fi
