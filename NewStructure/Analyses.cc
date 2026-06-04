@@ -2902,34 +2902,33 @@ bool Analyses::GetScaling(void){
                                             400, -0.5, 400-0.5);
   hMaxLG2nd->SetDirectory(0);
 
+  TH2D* hHGscaleChi2VsLayer = new TH2D( "hHGscaleChi2VsLayer", "HG MiP fit #chi^{2}/NDF; layer; brd channel; #chi^{2}/ndf ",	
+  setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5); // -EP
+  hHGscaleChi2VsLayer->SetDirectory(0); 
 
-	TH2D* hHGscaleChi2VsLayer = new TH2D( "hHGscaleChi2VsLayer", "HG MiP fit #chi^{2}/NDF; layer; brd channel; #chi^{2}/ndf ",	
-	setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5); // -EP
-	hHGscaleChi2VsLayer->SetDirectory(0); 
+  TH2D* hSNRTriggVsLayer = new TH2D( "hSNRTriggVsLayer", "HG Triggered S/N; layers; brd channel; SNR ",
+                                setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5); // -EP
+  hSNRTriggVsLayer->SetDirectory(0);
 
-	TH2D* hSNRTriggVsLayer = new TH2D( "hSNRTriggVsLayer", "HG Triggered S/N; layers; brd channel; SNR ",
-																setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5); // -EP
-	hSNRTriggVsLayer->SetDirectory(0);
+  //TH2D* hChi2VsNMipTrigg = new TH2D( "hChi2VsNMipTrigg", "HG MIP fit by stats; Number of MIP triggers; #chi^{2}/ndf; ", 50, 0, 10000, 80, 0, 20); // -EP
+  //hChi2VsNMipTrigg->SetDirectory(0);
 
-	//TH2D* hChi2VsNMipTrigg = new TH2D( "hChi2VsNMipTrigg", "HG MIP fit by stats; Number of MIP triggers; #chi^{2}/ndf; ", 50, 0, 10000, 80, 0, 20); // -EP
-	//hChi2VsNMipTrigg->SetDirectory(0);
+  // 2D beam profile -EP	
+  int thisbinxmax = setup->GetNMaxColumn()+1;	
+  int thisbinymax = (int)(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
+  TH2D* hMipTriggXY = new TH2D( "hMipTriggXY", "MIP Triggers summed over layers; X (col); Y (row); Num triggers", thisbinxmax, -0.5, thisbinxmax-0.5, thisbinymax, -0.5, thisbinymax-0.5); 
+  hMipTriggXY->SetDirectory(0);
 
-	// 2D beam profile -EP	
-	int thisbinxmax = setup->GetNMaxColumn()+1;	
-	int thisbinymax = (int)(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
-	TH2D* hMipTriggXY = new TH2D( "hMipTriggXY", "MIP Triggers summed over layers; X (col); Y (row); Num triggers", thisbinxmax, -0.5, thisbinxmax-0.5, thisbinymax, -0.5, thisbinymax-0.5); 
-	hMipTriggXY->SetDirectory(0);
+  // 3D beam profile -EP
+  int thisbinzmax = (int)setup->GetNMaxLayer()+1;
+  TH3D *hMipTriggXYZ = new TH3D( "hMipTriggXYZ", "MIP Triggers; X (col); Z (layer); Y (row); Num triggers", thisbinxmax, -0.5, thisbinxmax-0.5, thisbinzmax, -0.5, thisbinzmax-0.5, thisbinymax, -0.5, thisbinymax-0.5);
+  hMipTriggXYZ->SetDirectory(0);
 
-	// 3D beam profile -EP
-	int thisbinzmax = (int)setup->GetNMaxLayer()+1;
-	TH3D *hMipTriggXYZ = new TH3D( "hMipTriggXYZ", "MIP Triggers; X (col); Z (layer); Y (row); Num triggers", thisbinxmax, -0.5, thisbinxmax-0.5, thisbinzmax, -0.5, thisbinzmax-0.5, thisbinymax, -0.5, thisbinymax-0.5);
-	hMipTriggXYZ->SetDirectory(0);
+  TH2D* hMPVvsNoisePeak = new TH2D( "hMPVvsNoisePeak", "Signal to noise peak ADC; noise peak (ADC); MiP MPV (ADC); ", 20, -5, 10, 20, 0, 50); // -EP
+  hMPVvsNoisePeak->SetDirectory(0);
 
-	TH2D* hMPVvsNoisePeak = new TH2D( "hMPVvsNoisePeak", "Signal to noise peak ADC; noise peak (ADC); MiP MPV (ADC); ", 20, -5, 10, 20, 0, 50); // -EP
-	hMPVvsNoisePeak->SetDirectory(0);
-
-	//TH1D* hPeakSeparation = new TH1D("hPeakSeparation", "Signal-noise peak separation; MPV - noise peak (ADC); counts", 35, 0, 35); // -EP
-	//hPeakSeparation->SetDirectory(0);
+  //TH1D* hPeakSeparation = new TH1D("hPeakSeparation", "Signal-noise peak separation; MPV - noise peak (ADC); counts", 35, 0, 35); // -EP
+  //hPeakSeparation->SetDirectory(0);
 
 
   //==================================================================================
@@ -2939,10 +2938,10 @@ bool Analyses::GetScaling(void){
   if ( debug > 0)
     std::cout << "============================== starting fitting 2nd iteration" << std::endl;
   
-	// define CalibSummary object for this run -EP
-	CalibSummary tileSum = CalibSummary(calib.GetRunNumber(), calib.GetRunNumber(), calib.GetVop());
+  // define CalibSummary object for this run -EP
+  CalibSummary tileSum = CalibSummary(calib.GetRunNumber(), calib.GetRunNumber(), calib.GetVop());
 
-	for(ithSpectraTrigg=hSpectraTrigg.begin(); ithSpectraTrigg!=hSpectraTrigg.end(); ++ithSpectraTrigg){ // loop over spectra for 2nd iteration
+  for(ithSpectraTrigg=hSpectraTrigg.begin(); ithSpectraTrigg!=hSpectraTrigg.end(); ++ithSpectraTrigg){ // loop over spectra for 2nd iteration
     if (currCells%20 == 0 && currCells > 0 && debug > 0)
       std::cout << "============================== cell " <<  currCells << " / " << hSpectraTrigg.size() << " cells" << std::endl;
     currCells++;
@@ -2954,17 +2953,16 @@ bool Analyses::GetScaling(void){
     // fit MIP for CAEN HG/ HGCROC ADC 
     isGood=ithSpectraTrigg->second.FitMipHG(parameters, parErrAndRes, debug, yearData, false, calib.GetVov(), averageScale);
 
-		long cellID = ithSpectraTrigg->second.GetCellID();
-
-		tileSum.Fill(ithSpectraTrigg->second.GetCalib()); // fill tileSum with this tile's TileCalib -EP
+    long cellID = ithSpectraTrigg->second.GetCellID();
+    tileSum.Fill(ithSpectraTrigg->second.GetCalib()); // fill tileSum with this tile's TileCalib -EP
 
     // fill cross-check histos
-		double redChi2  = parErrAndRes[4] / parErrAndRes[5]; // chi2/ndf
+    double redChi2  = parErrAndRes[4] / parErrAndRes[5]; // chi2/ndf
     int layer       = setup->GetLayer(cellID);
     int chInLayer   = setup->GetChannelInLayerFull(cellID, detConf);
-		int row					= setup->GetRow(cellID);
-		int col					= setup->GetColumn(cellID);
-		int mod					= setup->GetModule(cellID);
+    int row					= setup->GetRow(cellID);
+    int col					= setup->GetColumn(cellID);
+    int mod					= setup->GetModule(cellID);
     int bin2D       = hspectraHGMeanVsLayer->FindBin(layer,chInLayer);
     
     double pedSigHG = calib.GetPedestalSigH(cellID);
@@ -3129,13 +3127,13 @@ bool Analyses::GetScaling(void){
     hspectraHGGSigmaVsLayer2nd->Write();
     hMaxHG2nd->Write();
 
-		hHGscaleChi2VsLayer->Write();
-		//hChi2VsNMipTrigg->Write();	
-		hMPVvsNoisePeak->Write();
-		hSNRTriggVsLayer->Write();
-		//hPeakSeparation->Write();
-		hMipTriggXY->Write();
-		hMipTriggXYZ->Write();
+    hHGscaleChi2VsLayer->Write();
+    //hChi2VsNMipTrigg->Write();	
+    hMPVvsNoisePeak->Write();
+    hSNRTriggVsLayer->Write();
+    //hPeakSeparation->Write();
+    hMipTriggXY->Write();
+    hMipTriggXYZ->Write();
     // CAEN specific histos
     if (typeRO == ReadOut::Type::Caen) {
       hMeanPedLGvsCellID->Write();
@@ -3544,37 +3542,37 @@ bool Analyses::GetImprovedScaling(void){
                                             400, -0.5, 400-0.5);
   hMaxLG->SetDirectory(0);
 
-	
-	TH2D* hHGscaleChi2VsLayer = new TH2D( "hHGscaleChi2VsLayer", "HG MIP fit #chi^{2}/NDF; layer; brd channel; #chi^{2}/ndf ", 
-																		setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5); // -EP
-	hHGscaleChi2VsLayer->SetDirectory(0); 
+  
+  TH2D* hHGscaleChi2VsLayer = new TH2D( "hHGscaleChi2VsLayer", "HG MIP fit #chi^{2}/NDF; layer; brd channel; #chi^{2}/ndf ", 
+                                    setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5); // -EP
+  hHGscaleChi2VsLayer->SetDirectory(0); 
 
-	TH2D* hSNRTriggVsLayer = new TH2D( "hSNRTriggVsLayer", "HG Triggered S/N; layers; brd channel; SNR ", 
-																		setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5); // -EP
-	hSNRTriggVsLayer->SetDirectory(0);
+  TH2D* hSNRTriggVsLayer = new TH2D( "hSNRTriggVsLayer", "HG Triggered S/N; layers; brd channel; SNR ", 
+                                    setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5); // -EP
+  hSNRTriggVsLayer->SetDirectory(0);
 
-	//TH2D* hChi2VsNMipTrigg = new TH2D( "hChi2VsNMipTrigg", "HG MiP fit by stats; Number of MIP triggers; #chi^{2}/ndf; ", 50, 0, 10000, 80, 0, 20); // -EP
-	//hChi2VsNMipTrigg->SetDirectory(0);
+  //TH2D* hChi2VsNMipTrigg = new TH2D( "hChi2VsNMipTrigg", "HG MiP fit by stats; Number of MIP triggers; #chi^{2}/ndf; ", 50, 0, 10000, 80, 0, 20); // -EP
+  //hChi2VsNMipTrigg->SetDirectory(0);
 
-	//TH1D *hSNRTrigg = new TH1D("hSNRTrigg", "Signal to Noise Ratio; SNR; counts", 100, 0, 50); // -EP
-	//hSNRTrigg->SetDirectory(0);
+  //TH1D *hSNRTrigg = new TH1D("hSNRTrigg", "Signal to Noise Ratio; SNR; counts", 100, 0, 50); // -EP
+  //hSNRTrigg->SetDirectory(0);
 
-	// 2D beam profile -EP 
-	int thisbinxmax = setup->GetNMaxColumn()+1;
-	int thisbinymax = (int)(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
-	TH2D* hMipTriggXY = new TH2D( "hMipTriggXY", "MIP Triggers summed over layers; X (col); Y (row); Num triggers", thisbinxmax, -0.5, thisbinxmax-0.5, thisbinymax, -0.5, thisbinymax-0.5);
-	hMipTriggXY->SetDirectory(0);
+  // 2D beam profile -EP 
+  int thisbinxmax = setup->GetNMaxColumn()+1;
+  int thisbinymax = (int)(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
+  TH2D* hMipTriggXY = new TH2D( "hMipTriggXY", "MIP Triggers summed over layers; X (col); Y (row); Num triggers", thisbinxmax, -0.5, thisbinxmax-0.5, thisbinymax, -0.5, thisbinymax-0.5);
+  hMipTriggXY->SetDirectory(0);
 
-	// 3D beam profile -EP
-	int thisbinzmax = (int)setup->GetNMaxLayer()+1;
-	TH3D *hMipTriggXYZ = new TH3D( "hMipTriggXYZ", "MIP Triggers; X (col); Z (layer); Y (row); Num triggers", thisbinxmax, -0.5, thisbinxmax-0.5, thisbinzmax, -0.5, thisbinzmax-0.5, thisbinymax, -0.5, thisbinymax-0.5);
-	hMipTriggXYZ->SetDirectory(0);
+  // 3D beam profile -EP
+  int thisbinzmax = (int)setup->GetNMaxLayer()+1;
+  TH3D *hMipTriggXYZ = new TH3D( "hMipTriggXYZ", "MIP Triggers; X (col); Z (layer); Y (row); Num triggers", thisbinxmax, -0.5, thisbinxmax-0.5, thisbinzmax, -0.5, thisbinzmax-0.5, thisbinymax, -0.5, thisbinymax-0.5);
+  hMipTriggXYZ->SetDirectory(0);
 
-	TH2D* hMPVvsNoisePeak = new TH2D( "hMPVvsNoisePeak", "Signal to noise peak ADC; noise peak (ADC); MIP MPV (ADC); ", 20, -5, 10, 20, 0, 50); // -EP
-	hMPVvsNoisePeak->SetDirectory(0);
+  TH2D* hMPVvsNoisePeak = new TH2D( "hMPVvsNoisePeak", "Signal to noise peak ADC; noise peak (ADC); MIP MPV (ADC); ", 20, -5, 10, 20, 0, 50); // -EP
+  hMPVvsNoisePeak->SetDirectory(0);
 
-	//TH1D* hPeakSeparation = new TH1D("hPeakSeparation", "Signal-noise peak separation; MPV - noise peak (ADC); counts", 35, 0, 35); // -EP
-	///hPeakSeparation->SetDirectory(0);
+  //TH1D* hPeakSeparation = new TH1D("hPeakSeparation", "Signal-noise peak separation; MPV - noise peak (ADC); counts", 35, 0, 35); // -EP
+  ///hPeakSeparation->SetDirectory(0);
 
   //==================================================================================
   // mip fitting spectra for each cell
@@ -3588,9 +3586,9 @@ bool Analyses::GetImprovedScaling(void){
   if ( debug > 0){
     std::cout << "============================== start fitting improved iteration" << std::endl;  
   }
- 
+
   // define CalibSummary object for this run -EP
-	CalibSummary tileSum = CalibSummary(calib.GetRunNumber(), calib.GetRunNumber(), calib.GetVop());
+  CalibSummary tileSum = CalibSummary(calib.GetRunNumber(), calib.GetRunNumber(), calib.GetVop());
 
   for(ithSpectraTrigg=hSpectraTrigg.begin(); ithSpectraTrigg!=hSpectraTrigg.end(); ++ithSpectraTrigg){ // GetImprovedScaling() spectra loop
     if (currCells%20 == 0 && currCells > 0 && debug > 0)
@@ -3655,38 +3653,38 @@ bool Analyses::GetImprovedScaling(void){
     meanSB_NoiseR += SB_NoiseR;
     meanSB_SigR += SB_SigR;
 
-		double SNR_trigg = (S_NoiseR != 0.) ? S_SigR/S_NoiseR : 0;
+    double SNR_trigg = (S_NoiseR != 0.) ? S_SigR/S_NoiseR : 0;
 
     hmipTriggers->SetBinContent(bin2D, ithSpectraTrigg->second.GetHG()->GetEntries());
     hSuppresionNoise->SetBinContent(bin2D, SB_NoiseR);
     hSuppresionSignal->SetBinContent(bin2D, SB_SigR);
-		hSNRTriggVsLayer->SetBinContent(bin2D, SNR_trigg);
-	
-		// get 2D and 3D beam profiles -EP
-		// TODO: put this in PlotHelper or something
-		int thisbinx = col + 1; // the +1s are due to the 0th bin in root being underflow
-		int thisbiny = (mod*2) + row + 1;
-		int thisbinz = layer + 1;
-		int numMipTrig = ithSpectraTrigg->second.GetHG()->GetEntries();
-		hMipTriggXY->SetBinContent(thisbinx, thisbiny, hMipTriggXY->GetBinContent(thisbinx, thisbiny) + numMipTrig);
-		hMipTriggXYZ->SetBinContent(thisbinx, thisbinz, thisbiny, numMipTrig);
-	
-		// estimate separation between noise and mip peaks
-		//double peaksep = parameters[1]-ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG);
+    hSNRTriggVsLayer->SetBinContent(bin2D, SNR_trigg);
+  
+    // get 2D and 3D beam profiles -EP
+    // TODO: put this in PlotHelper or something
+    int thisbinx = col + 1; // the +1s are due to the 0th bin in root being underflow
+    int thisbiny = (mod*2) + row + 1;
+    int thisbinz = layer + 1;
+    int numMipTrig = ithSpectraTrigg->second.GetHG()->GetEntries();
+    hMipTriggXY->SetBinContent(thisbinx, thisbiny, hMipTriggXY->GetBinContent(thisbinx, thisbiny) + numMipTrig);
+    hMipTriggXYZ->SetBinContent(thisbinx, thisbinz, thisbiny, numMipTrig);
+  
+    // estimate separation between noise and mip peaks
+    //double peaksep = parameters[1]-ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG);
 
     if (isGood){
-			hMPVvsNoisePeak->Fill(ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG), parameters[1]);
-			//hPeakSeparation->Fill(peaksep);
-			//hSNRTrigg->Fill(SNR_trigg);
-			hHGscaleChi2VsLayer->SetBinContent(bin2D, redChi2);
-			//hChi2VsNMipTrigg->Fill(numMipTrig, redChi2);     
-			
-			// get uncertainty on HG Max
-			double rel_err_L_MPV = parErrAndRes[1]/parameters[1]; // Landau MPV error / MPV
-			double sigma_Max = rel_err_L_MPV * parameters[4]; // relative MPV err * Max ADC value
-			hspectraHGMaxVsLayer->SetBinContent(bin2D, parameters[4]);
+      hMPVvsNoisePeak->Fill(ithSpectraTrigg->second.GetMaxXInRangeHG(-1*pedSigHG, 3*pedSigHG), parameters[1]);
+      //hPeakSeparation->Fill(peaksep);
+      //hSNRTrigg->Fill(SNR_trigg);
+      hHGscaleChi2VsLayer->SetBinContent(bin2D, redChi2);
+      //hChi2VsNMipTrigg->Fill(numMipTrig, redChi2);     
+      
+      // get uncertainty on HG Max
+      double rel_err_L_MPV = parErrAndRes[1]/parameters[1]; // Landau MPV error / MPV
+      double sigma_Max = rel_err_L_MPV * parameters[4]; // relative MPV err * Max ADC value
+      hspectraHGMaxVsLayer->SetBinContent(bin2D, parameters[4]);
       hspectraHGMaxVsLayer->SetBinError(bin2D, sigma_Max);
-			hspectraHGFWHMVsLayer->SetBinContent(bin2D, parameters[5]);
+      hspectraHGFWHMVsLayer->SetBinContent(bin2D, parameters[5]);
       hspectraHGLMPVVsLayer->SetBinContent(bin2D, parameters[1]);
       hspectraHGLMPVVsLayer->SetBinError(bin2D, parErrAndRes[1]);
       hspectraHGLSigmaVsLayer->SetBinContent(bin2D, parameters[0]);
@@ -3772,14 +3770,14 @@ bool Analyses::GetImprovedScaling(void){
     hspectraHGLSigmaVsLayer->Write();
     hspectraHGGSigmaVsLayer->Write();
     hMaxHG->Write();
-		hHGscaleChi2VsLayer->Write();
-		//hChi2VsNMipTrigg->Write();
-		hMPVvsNoisePeak->Write();
-		hSNRTriggVsLayer->Write();
-		//hPeakSeparation->Write();
-		//hSNRTrigg->Write();
-		hMipTriggXY->Write();
-		hMipTriggXYZ->Write();
+    hHGscaleChi2VsLayer->Write();
+    //hChi2VsNMipTrigg->Write();
+    hMPVvsNoisePeak->Write();
+    hSNRTriggVsLayer->Write();
+    //hPeakSeparation->Write();
+    //hSNRTrigg->Write();
+    hMipTriggXY->Write();
+    hMipTriggXYZ->Write();
     if (typeRO == ReadOut::Type::Caen){
       hspectraLGMaxVsLayer->Write();
       hspectraLGFWHMVsLayer->Write();
@@ -3860,13 +3858,13 @@ bool Analyses::GetImprovedScaling(void){
   panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 1, minHG, maxHG, 1.2, 
                               Form("%s/MIP_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
   panelPlot.PlotTriggerPrim( hSpectraTrigg, averageScalePerTile, factorMinTrigg, factorMaxTrigg, 0, maxTriggPPlot, 1.2,
-                             Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
+                            Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
   if (typeRO == ReadOut::Type::Caen){
     panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 0, -20, maxLG, 1.2, 
                               Form("%s/MIP_LG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer );
   }
   std::cout << "done plotting" << std::endl;
- 
+
   //==================================================================================
   // Single tile plotting
   //==================================================================================
@@ -3977,7 +3975,7 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
 
         RootOutput->cd();
       }
-     
+    
       // only fill tile spectra if X surrounding tiles on average are compatible with pure noise
       if (localNoiseTrigg){
         aTile->SetLocalTriggerBit(2);
@@ -4219,19 +4217,19 @@ bool Analyses::RunEvalLocalTriggers(void){
   // 2D beam profile -EP
   int maxChannelPerLayer          = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
   int maxChannelPerLayerSingleMod = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
-	int thisbinxmax = setup->GetNMaxColumn()+1;	
-	int thisbinymax = (int)(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
+  int thisbinxmax = setup->GetNMaxColumn()+1;	
+  int thisbinymax = (int)(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
   int thisbinzmax = (int)setup->GetNMaxLayer()+1;
   
   RootOutputHist->cd();
   // 2D beam profile front view
   TH2D* hMipTriggXY               = new TH2D( "hMipTriggXY", "MIP Triggers summed over layers; X (col); Y (row); Num triggers", 
                                               thisbinxmax, -0.5, thisbinxmax-0.5, thisbinymax, -0.5, thisbinymax-0.5); 
-	hMipTriggXY->SetDirectory(0);
-	// 3D beam profile -EP
-	TH3D *hMipTriggXYZ              = new TH3D( "hMipTriggXYZ", "MIP Triggers; X (col); Z (layer); Y (row); Num triggers", 
-                                               thisbinxmax, -0.5, thisbinxmax-0.5, thisbinzmax, -0.5, thisbinzmax-0.5, thisbinymax, -0.5, thisbinymax-0.5);
-	hMipTriggXYZ->SetDirectory(0);
+  hMipTriggXY->SetDirectory(0);
+  // 3D beam profile -EP
+  TH3D *hMipTriggXYZ              = new TH3D( "hMipTriggXYZ", "MIP Triggers; X (col); Z (layer); Y (row); Num triggers", 
+                                              thisbinxmax, -0.5, thisbinxmax-0.5, thisbinzmax, -0.5, thisbinzmax-0.5, thisbinymax, -0.5, thisbinymax-0.5);
+  hMipTriggXYZ->SetDirectory(0);
   // monitoring trigger 
   TH2D* hmipTriggers              = new TH2D( "hmipTriggers","muon triggers; layer; brd channel; counts ",
                                             setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
@@ -4240,7 +4238,7 @@ bool Analyses::RunEvalLocalTriggers(void){
   TH1D* hMipTriggersGvsCellID     = new TH1D( "hMipTriggersGvsCellID","mip Triggers vs CellID ; cell ID; Nr. mip trigg ",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5);
   hMipTriggersGvsCellID->SetDirectory(0);
- 
+
   // create tileSpectra objects
   std::map<int,TileSpectra> hSpectra;
   std::map<int,TileSpectra> hSpectraTrigg;
@@ -4401,7 +4399,7 @@ bool Analyses::RunEvalLocalTriggers(void){
   panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 1, minHG, maxHG, 1.2, 
                               Form("%s/MIP_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
   panelPlot.PlotTriggerPrim( hSpectraTrigg, averageScalePerTile, factorMinTrigg, factorMaxTrigg, 0, maxTriggPPlot, 1.2,
-                             Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                            Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
   std::cout << "done plotting" << std::endl;
 
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
@@ -4418,12 +4416,12 @@ bool Analyses::RunEvalLocalTriggers(void){
   PlotSimple2D( canvas2DCorr, hMipTriggXY, -10000, -10000, textSizeRel, 
                 Form("%s/MipTriggerXY.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple1D(canvas1DSimple, hMipTriggersGvsCellID, -10000, -10000, textSizeRel, 
-               Form("%s/MuonTriggVsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+              Form("%s/MuonTriggVsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
   TH1D* hMipTriggersGvsCellIDPerEvt = (TH1D*)hMipTriggersGvsCellID->Clone("hMipTriggersGvsCellIDPerEvt");
   hMipTriggersGvsCellIDPerEvt->Scale(1./evts);
   hMipTriggersGvsCellIDPerEvt->GetYaxis()->SetTitle("#mu triggers/event");
   PlotSimple1D(canvas1DSimple, hMipTriggersGvsCellIDPerEvt, -10000, -10000, textSizeRel, 
-               Form("%s/MuonTriggPerEventVsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+              Form("%s/MuonTriggPerEventVsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
 
   //==================================================================================
   // Write output hist file
@@ -4793,8 +4791,8 @@ bool Analyses::Calibrate(void){
         }
         
         if (!localNoiseTrigg){
-         EtotNoNoise  = EtotNoNoise+energy; 
-         nCellsNoNoise++;
+        EtotNoNoise  = EtotNoNoise+energy; 
+        nCellsNoNoise++;
         }
         // reject cell if not above minimum threshold
         if(energy > minMipFrac){ 
@@ -4957,8 +4955,8 @@ bool Analyses::Calibrate(void){
         }
         
         if (!localNoiseTrigg){
-         EtotNoNoise  = EtotNoNoise+energy; 
-         nCellsNoNoise++;
+        EtotNoNoise  = EtotNoNoise+energy; 
+        nCellsNoNoise++;
         }
         
         // only save if energy is larger minMip fraction
@@ -5158,15 +5156,15 @@ bool Analyses::Calibrate(void){
       
     
     panelPlot.PlotSpectra( hSpectra, 0, -100, maxADC, 1.2, 
-                           Form("%s/Spectra_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
- 
+                          Form("%s/Spectra_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+
     if (typeRO == ReadOut::Type::Caen) {
       if(nLocalNoiseTriggs > 1) panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 1, -50, 100, 1.2, 
                                                               Form("%s/NoiseTrigg_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       if(nLocalNoiseTriggs > 1) panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 0, -50, 100, 1.2, 
-                                                               Form("%s/NoiseTrigg_LG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                                                              Form("%s/NoiseTrigg_LG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       panelPlot.PlotSpectra( hSpectra, 2, -2, 100, 1.2, 
-                             Form("%s/Spectra_Comb" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                            Form("%s/Spectra_Comb" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       panelPlot2D.PlotCorrWithFits( hSpectra, 0, -20, 800, 0., 50.,
                                     Form("%s/LGHG_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       panelPlot2D.PlotCorrWithFits( hSpectra, 2, -20, 800, 0., 50.,
@@ -5176,11 +5174,11 @@ bool Analyses::Calibrate(void){
       panelPlot2D.PlotCorr2DLayer(hSpectra, 4, 0, 4096, 0, 1024.,
                                 Form("%s/ADCTOT",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       panelPlot.PlotSpectra( hSpectra, 4, -100, 4096, 1.2,
-                             Form("%s/Spectra_Tot" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                            Form("%s/Spectra_Tot" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       panelPlot.PlotMipWithFits( hSpectra, hSpectraLocalTrigg, 1, -20, maxADC, 1.2, 
                                   Form("%s/SpectraWithMipTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       if(nLocalNoiseTriggs > 1) panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 1, -20, 100, 1.2, 
-                                                               Form("%s/NoiseTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                                                              Form("%s/NoiseTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       if(nLocalNoiseTriggs > 1) panelPlot.Plot3SpectraOverlay(hSpectra, hSpectraNotNoise, hSpectraNoise,
                                                               1, -20, 1024, 1.2, 
                                                               Form("%s/NotNoiseTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
@@ -5429,7 +5427,7 @@ bool Analyses::SkimHGCROCData(void){
   TsetupIn->CloneTree()->Write();
   
   std::cout << "Evts in: " << maxEvents << "\t skimmed: " << evtTrigg << std::endl;
-   
+  
   if (IsCalibSaveToFile()){
     TString fileCalibPrint = RootOutputName;
     fileCalibPrint         = fileCalibPrint.ReplaceAll(".root","_calib.txt");

@@ -14,25 +14,25 @@ dataDirRaw=""
 dataDirOut=""
 
 if [ $1 = "fbockTB" ]; then 
-	dataDirRaw=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
-	dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
-	PlotBaseDir=/media/fbock/Lennard4TB/202511_PST09/
+  dataDirRaw=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
+  dataDirOut=/media/fbock/Lennard4TB/202511_PST09/HGCROCData
+  PlotBaseDir=/media/fbock/Lennard4TB/202511_PST09/
 elif [ $1 = "ehagen" ]; then 
-	dataDirRaw=/Users/hagen/Githubs/epic-lfhcal-tbana/TB_Data
-	dataDirOut=/Users/hagen/Githubs/epic-lfhcal-tbana/TB_Data
-	PlotBaseDir=/Users/hagen/Githubs/epic-lfhcal-tbana/plots
+  dataDirRaw=/Users/hagen/Githubs/epic-lfhcal-tbana/TB_Data
+  dataDirOut=/Users/hagen/Githubs/epic-lfhcal-tbana/TB_Data
+  PlotBaseDir=/Users/hagen/Githubs/epic-lfhcal-tbana/plots
 elif [ $1 = "egpott" ]; then
   dataDirRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan2/rawroot
   dataDirOut=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan2/rawroot
   PlotBaseDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan2/plots
-	PlotDirCompCal=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan2/plots/CompareCalib
+  PlotDirCompCal=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan2/plots/CompareCalib
 elif [ $1 = "yale" ]; then
-	dataDirRaw=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/rawroot_new
-	dataDirOut=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/rawroot_new
-	PlotBaseDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/plots_new
+  dataDirRaw=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/rawroot_new
+  dataDirOut=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/rawroot_new
+  PlotBaseDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/plots_new
 else
-	echo "Please select a known user name, otherwise I don't know where the data is"
-	exit
+  echo "Please select a known user name, otherwise I don't know where the data is"
+  exit
 fi
 
 # run pedest extraction for different run numbers
@@ -46,8 +46,8 @@ if [ $2 = "pedestal" ]; then
 #     runs='68 208 210 259 381'
     runs='270'
   elif [ $3 = "FullSetA" ]; then
-		runs='161 207 208'
-	# muon runs
+    runs='161 207 208'
+  # muon runs
   elif [ $3 = "Muon" ]; then
   #   runs='69 70 71 72 73 74 75 76 164' # Full Set A - muon set 1
   #   runs='201 202 203 204 205 206' # Full Set A - muon set 2
@@ -61,7 +61,7 @@ if [ $2 = "pedestal" ]; then
     runs='381 382 383 384 385 386 387 388 389 390 391 395'              #E scan 
   #   runs='33 28 29 30 31 32'                           #1st HV scan
   #     runs='382 383 384 385'              #E scan 
-  	  runs='28 29 30 31 32 33 34 35'			# 1st HV scan
+      runs='28 29 30 31 32 33 34 35'			# 1st HV scan
   #  runs='260 261 262 263 264 265 266 267 268 271 272' #2nd HV scan 
   # electron runs
   elif [ $3 = "Electron" ]; then
@@ -88,9 +88,9 @@ if [ $2 = "toaPhase" ]; then
   elif [ $3 = "Muon" ]; then 
     #runs='028 029 030 031 032 033 034 035' # 1st HV scan
     runNrPed='161'
-		runs='070'
-		for runNr in $runs; do 
-			./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_wPed_$runNrPed.root
+    runs='070'
+    for runNr in $runs; do 
+      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_wPed_$runNrPed.root
       #./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
     done
   fi
@@ -103,30 +103,30 @@ if [ $2 = "wave" ]; then
 #   runs='165'
 #   runs='184'
   runs='FullSetA_2'
-	runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
-	for runNr in $runs; do 
-		WaveformHGCROC $3 $runNr $dataDirRaw Run_$runNr
-	done
+  runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
+  for runNr in $runs; do 
+    WaveformHGCROC $3 $runNr $dataDirRaw Run_$runNr
+  done
 fi
 
 
 if [ $2 == "calibMuon" ]; then
-	runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
+  runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
 
-	if [ $4 == "FullSetA_1" ]; then
-		runPed='161'
-		runs='Muon_FullSetA_1'
-		badChannelMap=../configs/TB2025/badChannel_HGCROC_PSTB2025_default.txt
-		toaPhaseOffset=../configs/TB2025/ToAOffsets_TB2025_HadRun.csv
-	elif [ $4 == "FullSetA_2" ]; then
-		runPed='207'
-		runs='Muon_FullSetA_2'
-		badChannelMap=../configs/TB2025/badChannel_HGCROC_PSTB2025_default.txt
-		toaPhaseOffset=../configs/TB2025/ToAOffsets_TB2025_HadRun.csv
-	fi
-	for runNr in $runs; do 
-		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset 
-	done
+  if [ $4 == "FullSetA_1" ]; then
+    runPed='161'
+    runs='Muon_FullSetA_1'
+    badChannelMap=../configs/TB2025/badChannel_HGCROC_PSTB2025_default.txt
+    toaPhaseOffset=../configs/TB2025/ToAOffsets_TB2025_HadRun.csv
+  elif [ $4 == "FullSetA_2" ]; then
+    runPed='207'
+    runs='Muon_FullSetA_2'
+    badChannelMap=../configs/TB2025/badChannel_HGCROC_PSTB2025_default.txt
+    toaPhaseOffset=../configs/TB2025/ToAOffsets_TB2025_HadRun.csv
+  fi
+  for runNr in $runs; do 
+    MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset 
+  done
 fi
 
 if [ $2 == "calibMuon2" ]; then
@@ -137,27 +137,27 @@ if [ $2 == "calibMuon2" ]; then
 #   runPed='210'
 # 	runs='FullSetB_1'
   runPed='259'
-	runs='FullSetB_2'
-	badChannelMap=../configs/TB2025/badChannel_HGCROC_PSTB2025_default.txt
-	runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
-	toaPhaseOffset=../configs/TB2025/ToAOffsets_TB2025_HadRun.csv
-	for runNr in $runs; do 
-		MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
-	done
+  runs='FullSetB_2'
+  badChannelMap=../configs/TB2025/badChannel_HGCROC_PSTB2025_default.txt
+  runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
+  toaPhaseOffset=../configs/TB2025/ToAOffsets_TB2025_HadRun.csv
+  for runNr in $runs; do 
+    MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset
+  done
 fi
 
 if [ $2 == "compareCalib" ]; then
-	# currently set up for extended file list read-in where each line in the txt file has (separated by a space):
-	#  - calibration file (produced by stripCalib_2025.sh)
-	#  - hist file from improved mip fit
-	inputFileList=calibFileList_TB2025_HVscan1.txt # include relative path if not in NewStructure
-	outFileName=compareCalib_28_33.root
-	trendingPlotsX=V # =V: plot as function of Vop. =R: plot as function of run number
-	runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
-	# -e 1 --> do extended plotting
-	# -d 0 --> debug level 0
-	# -f   --> force to write output if already exist
-	# -H   --> use HGCROC (instead of CAEN)
-	# -I   --> extended input file list
-	./CompareCalib -e 1 -d 0 -f -H -$trendingPlotsX -I $inputFileList -o $outFileName -O $PlotDirCompCal -r $runNrFile
+  # currently set up for extended file list read-in where each line in the txt file has (separated by a space):
+  #  - calibration file (produced by stripCalib_2025.sh)
+  #  - hist file from improved mip fit
+  inputFileList=calibFileList_TB2025_HVscan1.txt # include relative path if not in NewStructure
+  outFileName=compareCalib_28_33.root
+  trendingPlotsX=V # =V: plot as function of Vop. =R: plot as function of run number
+  runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
+  # -e 1 --> do extended plotting
+  # -d 0 --> debug level 0
+  # -f   --> force to write output if already exist
+  # -H   --> use HGCROC (instead of CAEN)
+  # -I   --> extended input file list
+  ./CompareCalib -e 1 -d 0 -f -H -$trendingPlotsX -I $inputFileList -o $outFileName -O $PlotDirCompCal -r $runNrFile
 fi

@@ -47,11 +47,11 @@ void PrintHelp(char* exe){
   std::cout<<"-r rrr   Name of run list file  2024 PS TB [../configs/DataTakingDB_202409_CAEN.csv] "<<std::endl;
   std::cout<<"-R       Trending plots versus run #"<<std::endl;
   std::cout<<"-V       Trending plots versus Vop"<<std::endl;
-	std::cout<<"-s			 Flag HV scan (put Vop in EnergyOverlay legend)"<<std::endl;
-  std::cout<<"-x nnn	 Set max x-axis value for EnergyOverlay"<<std::endl;
-	std::cout<<"-C i		 Set total number of files (for overlay plotting style) to i"<<std::endl;			 
-	std::cout<<"-c			 Set line colors of overlay plots according to beam energy"<<std::endl;
-	//std::cout<<"-t       Trending plots versus BoR time"<<std::endl;
+  std::cout<<"-s       Flag HV scan (put Vop in EnergyOverlay legend)"<<std::endl;
+  std::cout<<"-x nnn   Set max x-axis value for EnergyOverlay"<<std::endl;
+  std::cout<<"-C i     Set total number of files (for overlay plotting style) to i"<<std::endl;			 
+  std::cout<<"-c       Set line colors of overlay plots according to beam energy"<<std::endl;
+  //std::cout<<"-t       Trending plots versus BoR time"<<std::endl;
   std::cout<<"-h       this help"<<std::endl<<std::endl;
   std::cout<<"Examples:"<<std::endl;
   std::cout<<exe<<" (-f) -o TrendingOutput.root -i input_list.txt (-f to overwrite existing output)"<<std::endl;
@@ -182,24 +182,24 @@ int main(int argc, char* argv[]){
         it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
         RootRegexp.erase(it);
         break;
-			case 'x':
-				std::cout<<"Compare: Set EnergyOverlay x-axis max to "<<optarg<<std::endl;
-				CompAnalysis2.SetXmaxEO((double)atof(optarg));
-				it=std::find(RootRegexp.begin(),RootRegexp.end(),"-x");
-				RootRegexp.erase(it);
-				it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
-				RootRegexp.erase(it);
-				break;
-			case 'C':
-				std::cout<<"Compare: Plotting "<<optarg<<" files"<<std::endl;
-				CompAnalysis2.SetPlotColors(atoi(optarg));
-				CompAnalysis2.SetLegendLabelOpt(2);
-				it=std::find(RootRegexp.begin(),RootRegexp.end(),"-C");
-				RootRegexp.erase(it);
-				it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
-				RootRegexp.erase(it);
-				break;
-			case 'R':
+      case 'x':
+        std::cout<<"Compare: Set EnergyOverlay x-axis max to "<<optarg<<std::endl;
+        CompAnalysis2.SetXmaxEO((double)atof(optarg));
+        it=std::find(RootRegexp.begin(),RootRegexp.end(),"-x");
+        RootRegexp.erase(it);
+        it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
+        RootRegexp.erase(it);
+        break;
+      case 'C':
+        std::cout<<"Compare: Plotting "<<optarg<<" files"<<std::endl;
+        CompAnalysis2.SetPlotColors(atoi(optarg));
+        CompAnalysis2.SetLegendLabelOpt(2);
+        it=std::find(RootRegexp.begin(),RootRegexp.end(),"-C");
+        RootRegexp.erase(it);
+        it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
+        RootRegexp.erase(it);
+        break;
+      case 'R':
         std::cout<<"Compare: Trending plots versus run #"<<std::endl;
         CompAnalysis2.SetTrendingAxis(0);
         it=std::find(RootRegexp.begin(),RootRegexp.end(),"-R");
@@ -211,19 +211,19 @@ int main(int argc, char* argv[]){
         it=std::find(RootRegexp.begin(),RootRegexp.end(),"-V");
         RootRegexp.erase(it);
         break;
-			case 's':
-				std::cout<<"Compare: Plotting for HV scan"<<std::endl;
-				CompAnalysis2.SetLegendLabelOpt(3); // put Vop in legend of EnergyOverlay
-				CompAnalysis2.SetPlotColors(2); // set overlay line colors by Vop
-				it=std::find(RootRegexp.begin(),RootRegexp.end(),"-s");
-				RootRegexp.erase(it);
-				break;
-			case 'c':
-				std::cout<<"Compare: Setting overlay line color according to beam energy"<<std::endl;
-				CompAnalysis2.SetPlotColors(1);
-				it=std::find(RootRegexp.begin(),RootRegexp.end(),"-c");
-				RootRegexp.erase(it);
-				break;
+      case 's':
+        std::cout<<"Compare: Plotting for HV scan"<<std::endl;
+        CompAnalysis2.SetLegendLabelOpt(3); // put Vop in legend of EnergyOverlay
+        CompAnalysis2.SetPlotColors(2); // set overlay line colors by Vop
+        it=std::find(RootRegexp.begin(),RootRegexp.end(),"-s");
+        RootRegexp.erase(it);
+        break;
+      case 'c':
+        std::cout<<"Compare: Setting overlay line color according to beam energy"<<std::endl;
+        CompAnalysis2.SetPlotColors(1);
+        it=std::find(RootRegexp.begin(),RootRegexp.end(),"-c");
+        RootRegexp.erase(it);
+        break;
       //case 't':
       //  std::cout<<"Trending plots versus BoR time"<<std::endl;
       //  CompAnalysis2.SetTrendingAxis(2);
