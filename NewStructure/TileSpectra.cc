@@ -912,7 +912,7 @@ TF1* TileSpectra::GetCorrModel( int opt ){
 
 void TileSpectra::Write( bool wFits = true){
   // write correct histos for CAEN output
-  if (ROType != ReadOut::Type::Caen){
+  if (ROType == ReadOut::Type::Caen){
     hspectraHG.Write(hspectraHG.GetName(), kOverwrite);
     hspectraLG.Write(hspectraLG.GetName(), kOverwrite);
     hspectraLGHG.Write(hspectraLGHG.GetName(), kOverwrite);
@@ -927,7 +927,7 @@ void TileSpectra::Write( bool wFits = true){
       if(bcorrHGLG)HGLGcorr.Write(HGLGcorr.GetName(), kOverwrite);
     }  
   // write correct histos for HGCROC output
-  } else if (ROType != ReadOut::Type::Hgcroc) {
+  } else if (ROType == ReadOut::Type::Hgcroc) {
     hspectraHG.Write(hspectraHG.GetName(), kOverwrite);
     hspectraTOT.Write(hspectraTOT.GetName(), kOverwrite);
     hspectraTOA.Write(hspectraTOA.GetName(), kOverwrite);
@@ -946,7 +946,7 @@ void TileSpectra::Write( bool wFits = true){
 
 void TileSpectra::WriteExt( bool wFits = true){
   // write correct histos for CAEN output
-  if (ROType != ReadOut::Type::Caen){
+  if (ROType == ReadOut::Type::Caen){
     hspectraHG.Write(hspectraHG.GetName(), kOverwrite);
     hspectraLG.Write(hspectraLG.GetName(), kOverwrite);
     hspectraLGHG.Write(hspectraLGHG.GetName(), kOverwrite);  
@@ -964,7 +964,7 @@ void TileSpectra::WriteExt( bool wFits = true){
       if(bcorrLGHG)LGHGcorr.Write(LGHGcorr.GetName(), kOverwrite);
     }
   // write correct histos for HGCROC output
-  } else if (ROType != ReadOut::Type::Hgcroc) {
+  } else if (ROType == ReadOut::Type::Hgcroc) {
     hspectraHG.Write(hspectraHG.GetName(), kOverwrite);
     if (extend > 1 ) hcorr.Write(hcorr.GetName(), kOverwrite);  
     

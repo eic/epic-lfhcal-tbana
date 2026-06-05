@@ -1259,15 +1259,15 @@ bool Analyses::GetPedestal(void){
   bool init2D = panelPlot2D.Initialize(2);
   
   panelPlot.PlotNoiseWithFits(hSpectra, 0, minADCRange, maxADCRange, 1.2, 
-                              Form("%s/Noise_HG",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+                              Form("%s/Noise_HG",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer );
   if (typeRO == ReadOut::Type::Caen){
     panelPlot.PlotNoiseWithFits(hSpectra, 1, minADCRange, maxADCRange, 1.2, 
-                              Form("%s/Noise_LG",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );    
+                              Form("%s/Noise_LG",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);    
   } else if (typeRO == ReadOut::Type::Hgcroc){
     panelPlot.PlotNoiseWithFits(hSpectra, 1, minADCRange, maxADCRange, 1.2, 
-                              Form("%s/AllSampleADC",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+                              Form("%s/AllSampleADC",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer );
     panelPlot2D.PlotCorr2DLayer(hSpectra, 1, 0, it->second.samples+1, 0, 300, 
-                                Form("%s/Waveform",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+                                Form("%s/Waveform",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer );
   }
   
   return true;
@@ -1710,7 +1710,7 @@ bool Analyses::TransferCalib(void){
     hSampleTOAVsCellID->SetDirectory(0);
     hSampleTOA                = new TH1D( "hSampleTOA","#sample ToA; #sample TOA",
                                               it->second.samples,0,it->second.samples);
-
+    hSampleTOA->SetDirectory(0);
     hTOANsVsCellID            = new TH2D( "hTOANsVsCellID","ToA (ns); cell ID; ToA (ns)",
                                       setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 500,-250,0);
     hTOANsVsCellID->SetDirectory(0);
@@ -1742,7 +1742,7 @@ bool Analyses::TransferCalib(void){
   }
   
   RootOutputHist->mkdir("IndividualCells");
-  RootOutputHist->mkdir("IndividualCellsTrigg");
+  if(typeRO == ReadOut::Type::Hgcroc) RootOutputHist->mkdir("IndividualCellsTrigg");
   RootOutputHist->cd("IndividualCells");
   
   ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2", "Migrad");  
@@ -1800,7 +1800,7 @@ bool Analyses::TransferCalib(void){
           ithSpectra->second.FillExtCAEN(lgCorr,hgCorr, 0., 0.);
         } else {
           RootOutputHist->cd("IndividualCells");
-          hSpectra[aTile->GetCellID()]=TileSpectra("ped",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+          hSpectra[aTile->GetCellID()]=TileSpectra("All",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
           hSpectra[aTile->GetCellID()].FillExtCAEN(lgCorr,hgCorr, 0., 0.);
           RootOutput->cd();
         }
@@ -1889,7 +1889,7 @@ bool Analyses::TransferCalib(void){
           ithSpectra->second.FillWaveform(aTile->GetADCWaveform(),0);
         } else {
           RootOutputHist->cd("IndividualCells");
-          hSpectra[cellID]=TileSpectra("ped",2,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+          hSpectra[cellID]=TileSpectra("All",2,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
           hSpectra[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
           hSpectra[cellID].FillWaveform(aTile->GetADCWaveform(),0);
           RootOutput->cd();
@@ -2017,11 +2017,68 @@ bool Analyses::TransferCalib(void){
     PlotSimple2DZRange( canvas2DCorr, hBCVsLayer, -10000, -10000, -0.1, 3.1, textSizeRel, Form("%s/BadChannelMap.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, "colz", true);    
     calib.SetBCCalib(true);
   }
+  
+  //==================================================================================
+  // write calib output to root-tree output file
+  //==================================================================================  
+  RootOutput->cd();
+  // print calib file to text file
+  std::cout<<"What is the value? <ped mean high>: "<<calib.GetAveragePedestalMeanHigh() << "\t good channels: " << calib.GetNumberOfChannelsWithBCflag(3) <<std::endl;
+  if (IsCalibSaveToFile()){
+    TString fileCalibPrint = RootOutputName;
+    fileCalibPrint         = fileCalibPrint.ReplaceAll(".root","_calib.txt");
+    calib.PrintCalibToFile(fileCalibPrint);
+  }
+  // write calib output to 
+  TcalibOut->Fill();
+  TcalibOut->Write();
+  // close file
+  RootOutput->Close();
+
+  //==================================================================================
+  // write histo output to file as cross check
+  //==================================================================================    
+  RootOutputHist->cd();
+  if (typeRO == ReadOut::Type::Hgcroc){
+    hSampleTOA->Write();
+    hSampleTOAVsCellID->Write();
+    hTOANsVsCellID->Write();
+    hTOACorrNsVsCellID->Write();
+    hspectraADCvsCellID->Write();
+    hspectraADCPedvsCellID->Write();
+    hspectraTOTvsCellID->Write();
+    hspectraTOAvsCellID->Write();
+    hHighestADCAbovePedVsLayer->Write();
+    hNCellsWmADCVsTotADC->Write();
+    hNCellsWTOAVsTotADC->Write();
+    for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
+      for (int h = 0; h< 2; h++){
+        h2DToAvsnSample[ro][h]->Write();
+        h2DWaveFormHalfAsicAll[ro][h]->Write();
+        hWaveFormHalfAsicAll[ro][h]->Write();
+      }
+    }
+  }
+  // save individual cell spectra
+  RootOutputHist->cd("IndividualCells");
+  for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
+    ithSpectra->second.WriteExt(true);
+  }
+  if (typeRO == ReadOut::Type::Hgcroc){
+    RootOutputHist->cd("IndividualCellsTrigg");
+    for(ithSpectraTrigg=hSpectraTrigg.begin(); ithSpectraTrigg!=hSpectraTrigg.end(); ++ithSpectraTrigg){
+      ithSpectraTrigg->second.WriteExt(true);
+    }
+  }
+  // close root histo output file
+  RootOutputHist->Close();
+  // close root input file
+  RootInput->Close();
+  
   //==================================================================================
   // Create plots in case extended plotting is enabled for waveforms
   //==================================================================================
   if (ExtPlot > 0){
-    
     if (typeRO == ReadOut::Type::Hgcroc){
       TCanvas* canvas2DSigQA = new TCanvas("canvas2DSigQA","",0,0,1450,1300);  // gives the page size
       DefaultCanvasSettings( canvas2DSigQA, 0.08, 0.13, 0.045, 0.07);
@@ -2070,80 +2127,24 @@ bool Analyses::TransferCalib(void){
     
     if (typeRO == ReadOut::Type::Caen) {
       panelPlot2D.PlotCorr2DLayer(hSpectra, 0, -20, 340, 0, 4000,
-                                  Form("%s/LGHG2D_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+                                  Form("%s/LGHG2D_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer );
     } else {
       panelPlot2D.PlotCorr2DLayer(hSpectra, 1, 0, it->second.samples+1, 0, 1000,
-                                  Form("%s/Waveform",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+                                  Form("%s/Waveform",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer );
       panelPlot2D.PlotCorr2DLayer(hSpectraTrigg, 1, 0, it->second.samples+1, 0, 1000,
-                                  Form("%s/WaveformSignal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );  
+                                  Form("%s/WaveformSignal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer );  
     }
         
     if (ExtPlot > 1){
       panelPlot.PlotNoiseWithFits(hSpectra, 0, -100, maxHG, 1.2, 
-                                Form("%s/SpectraWithNoiseFit_HG",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+                                Form("%s/SpectraWithNoiseFit_HG",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
       if (typeRO == ReadOut::Type::Caen){
         panelPlot.PlotNoiseWithFits(hSpectra, 1, -20, maxLG, 1.2, 
-                                Form("%s/SpectraWithNoiseFit_LG",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );        
+                                Form("%s/SpectraWithNoiseFit_LG",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);        
       }
     }
   }
   
-  //==================================================================================
-  // write calib output to root-tree output file
-  //==================================================================================  
-  RootOutput->cd();
-  // print calib file to text file
-  std::cout<<"What is the value? <ped mean high>: "<<calib.GetAveragePedestalMeanHigh() << "\t good channels: " << calib.GetNumberOfChannelsWithBCflag(3) <<std::endl;
-  if (IsCalibSaveToFile()){
-    TString fileCalibPrint = RootOutputName;
-    fileCalibPrint         = fileCalibPrint.ReplaceAll(".root","_calib.txt");
-    calib.PrintCalibToFile(fileCalibPrint);
-  }
-  // write calib output to 
-  TcalibOut->Fill();
-  TcalibOut->Write();
-  // close file
-  RootOutput->Close();
-
-  //==================================================================================
-  // write histo output to file as cross check
-  //==================================================================================    
-  RootOutputHist->cd();
-  if (typeRO == ReadOut::Type::Hgcroc){
-    hSampleTOA->Write();
-    hSampleTOAVsCellID->Write();
-    hTOANsVsCellID->Write();
-    hTOACorrNsVsCellID->Write();
-    hspectraADCvsCellID->Write();
-    hspectraADCPedvsCellID->Write();
-    hspectraTOTvsCellID->Write();
-    hspectraTOAvsCellID->Write();
-    hHighestADCAbovePedVsLayer->Write();
-    hNCellsWmADCVsTotADC->Write();
-    hNCellsWTOAVsTotADC->Write();
-    for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
-      for (int h = 0; h< 2; h++){
-        h2DToAvsnSample[ro][h]->Write();
-        h2DWaveFormHalfAsicAll[ro][h]->Write();
-        hWaveFormHalfAsicAll[ro][h]->Write();
-      }
-    }
-  }
-  // save individual cell spectra
-  RootOutputHist->cd("IndividualCells");
-  for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
-    ithSpectra->second.WriteExt(true);
-  }
-  RootOutputHist->cd("IndividualCellsTrigg");
-  if (typeRO == ReadOut::Type::Hgcroc){
-    for(ithSpectraTrigg=hSpectraTrigg.begin(); ithSpectraTrigg!=hSpectraTrigg.end(); ++ithSpectraTrigg){
-      ithSpectraTrigg->second.WriteExt(true);
-    }
-  }
-  // close root histo output file
-  RootOutputHist->Close();
-  // close root input file
-  RootInput->Close();
   return true;
 } // end Analyses::TransferCalib()
 
@@ -2276,17 +2277,17 @@ bool Analyses::VisualizeWaveform(void){
   bool init2D = panelPlot2D.Initialize(2);
     
   panelPlot2D.PlotCorr2DLayer(hSpectra, 1, -25000, (it->second.samples)*25000, 0, 300,
-                              Form("%s/Waveform",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+                              Form("%s/Waveform",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer  );
   panelPlot2D.PlotCorr2DLayer(hSpectra, 2, 0, 1024, 0, 300,
-                              Form("%s/TOA_ADC",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+                              Form("%s/TOA_ADC",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer );
   panelPlot2D.PlotCorr2DLayer(hSpectra, 3, 0, 1024, 0, it->second.samples,
-                              Form("%s/TOA_Sample",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+                              Form("%s/TOA_Sample",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer );
   panelPlot2D.PlotCorr2DLayer(hSpectraTrigg, 1, -25000, (it->second.samples)*25000, 0, 300,
-                              Form("%s/WaveformSignal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+                              Form("%s/WaveformSignal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer );
   panelPlot2D.PlotCorr2DLayer(hSpectraTrigg, 2, 0, 1024, 0, 300,
-                              Form("%s/TOA_ADC_Signal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+                              Form("%s/TOA_ADC_Signal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer );
   panelPlot2D.PlotCorr2DLayer(hSpectraTrigg, 3, 0, 1024, 0, it->second.samples,
-                              Form("%s/TOA_Sample_Signal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+                              Form("%s/TOA_Sample_Signal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer );
   if (ExtPlot > 1){
     panelPlot.PlotSpectra( hSpectra, 0, -100, 1024, 1.2, 
                            Form("%s/Spectra_ADC" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
@@ -5172,7 +5173,7 @@ bool Analyses::Calibrate(void){
       
     } else if (typeRO == ReadOut::Type::Hgcroc) {
       panelPlot2D.PlotCorr2DLayer(hSpectra, 4, 0, 4096, 0, 1024.,
-                                Form("%s/ADCTOT",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                                Form("%s/ADCTOT",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer);
       panelPlot.PlotSpectra( hSpectra, 4, -100, 4096, 1.2,
                             Form("%s/Spectra_Tot" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
       panelPlot.PlotMipWithFits( hSpectra, hSpectraLocalTrigg, 1, -20, maxADC, 1.2, 

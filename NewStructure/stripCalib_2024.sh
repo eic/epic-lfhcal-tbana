@@ -28,8 +28,8 @@ if [ $2 == "BaseCalibsCAEN" ]; then
 #  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp6th_316.root -A $dataDirOut/calib_316_40V.root
 # 
 # 
-	./DataPrep -a -i $dataDirInM/rawPedAndMuonImp4th_red_muonScanB1_42V.root -A $dataDirOut/calib_muonScanB1_42V_V2.root
-#  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp2nd_muonScanB2_42V.root -A $dataDirOut/calib_muonScanB2_42V.root
+  ./DataPrep -a -i $dataDirInM/rawPedAndMuonImp4th_red_muonScanB1_42V.root -A $dataDirOut/calib_muonScanB1_42V_V2.root
+  ./DataPrep -a -i $dataDirInM/rawPedAndMuonImp3rd_red_muonScanB2_42V.root -A $dataDirOut/calib_muonScanB2_42V_V2.root
 #  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp6th_muonScanE1_40V.root -A $dataDirOut/calib_muonScanE1_40V.root
 #  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp6th_muonScanE2_40V.root -A $dataDirOut/calib_muonScanE2_40V.root
 #  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp6th_muonScanF1_41V.root -A $dataDirOut/calib_muonScanF1_41V.root
