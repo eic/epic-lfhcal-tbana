@@ -728,13 +728,19 @@ void MultiCanvas::DefaultPadSettings( TPad* pad1,
 
 void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int option, 
                         Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
-                        TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int debug ){
+                        TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int skiplayers, int debug ){
   
   std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
   Setup* setup = Setup::GetInstance();
   if (detType ==  DetConf::Type::SingleTile){
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (skiplayers > 0){
+          if  (l%skiplayers != 0){
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            continue;
+          }
+        }
         if (l%5 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         if (!setup->IsLayerOn(l,m)){
@@ -749,6 +755,12 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
   } else if (detType ==  DetConf::Type::Single2MH){    
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (skiplayers > 0){
+          if  (l%skiplayers != 0){
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            continue;
+          }
+        }
         if (l%5 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         if (!setup->IsLayerOn(l,m)){
@@ -764,6 +776,12 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
   } else if (detType ==  DetConf::Type::Single8M){
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (skiplayers > 0){
+          if  (l%skiplayers != 0){
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            continue;
+          }
+        }
         if (l%5 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         if (!setup->IsLayerOn(l,m)){
@@ -777,6 +795,12 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
     }
   } else if (detType ==  DetConf::Type::Dual8M){  
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (skiplayers > 0){
+        if  (l%skiplayers != 0){
+          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          continue;
+        }
+      }
       if (l%5 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
       if (!setup->IsLayerOn(l,-1)){
@@ -796,6 +820,13 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
   // 2x3 8M module plotting - 2026 TB setup
   } else if ( detType == DetConf::Type::MediumTB){
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (skiplayers > 0){
+        if  (l%skiplayers != 0){
+          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          continue;
+        }
+      }
+
       if (l%5 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
       if (!setup->IsLayerOn(l,-1)){
@@ -817,6 +848,12 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
     std::cout << "PlotNoiseWithFits: this option hasn't been implemented yet!" << std::endl;
     return;
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (skiplayers > 0){
+        if  (l%skiplayers != 0){
+          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          continue;
+        }
+      }
       if (l%5 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
       if (!setup->IsLayerOn(l,-1)){
@@ -844,7 +881,7 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
 void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int option, 
                                     Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, 
                                     TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, 
-                                    int noCalib, int triggerCha, int debug ){
+                                    int noCalib, int triggerCha, int skiplayers, int debug ){
   
   std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
   Setup* setup = Setup::GetInstance();
@@ -852,6 +889,12 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
   if (detType ==  DetConf::Type::SingleTile){
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (skiplayers > 0){
+          if  (l%skiplayers != 0){
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            continue;
+          }
+        }
         if (l%5 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         if (!setup->IsLayerOn(l,m)){
@@ -872,6 +915,12 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
   } else if (detType ==  DetConf::Type::Single2MH){    
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (skiplayers > 0){
+          if  (l%skiplayers != 0){
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            continue;
+          }
+        }
         if (l%5 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         if (!setup->IsLayerOn(l,m)){
@@ -890,6 +939,12 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
   } else if (detType ==  DetConf::Type::Single8M){
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (skiplayers > 0){
+          if  (l%skiplayers != 0){
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            continue;
+          }
+        }
         if (l%5 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         if (!setup->IsLayerOn(l,m)){
@@ -904,6 +959,12 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
   // Dual 8M plotting - 2025 TB setup
   } else if (detType ==  DetConf::Type::Dual8M){  
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (skiplayers > 0){
+        if  (l%skiplayers != 0){
+          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          continue;
+        }
+      }
       if (l%5 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
       if (!setup->IsLayerOn(l,-1)){
@@ -922,6 +983,12 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
   // 2x3 8M module plotting - 2026 TB setup
   } else if ( detType == DetConf::Type::MediumTB){
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (skiplayers > 0){
+        if  (l%skiplayers != 0){
+          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          continue;
+        }
+      }
       if (l%5 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
       if (!setup->IsLayerOn(l,-1)){

@@ -888,18 +888,17 @@
       else if (nruns < 16) lineBottom = 3;
       else if (nruns < 21) lineBottom = 4;
       else if (nruns < 26) lineBottom = 5;
-			
-			int columns = 5;
-			double startLegend = 0.60;
-			double colwidth = 0.25;
-			
-			if (labelOpt == 3) {
-				columns = 2;
-				startLegend = 0.65;
-				lineBottom = 5;
-			}	
-
-			
+      
+      int columns = 5;
+      double startLegend = 0.60;
+      double colwidth = 0.25;
+      
+      if (labelOpt == 3) {
+        columns = 2;
+        startLegend = 0.65;
+        lineBottom = 5;
+      }
+      
       TLegend* legend = GetAndSetLegend2( startLegend, 0.88-lineBottom*textSizeRel, 0.95, 0.88,
                                           0.70*textSizeRel, columns, "",42,colwidth);;
       int currRun = 0;
@@ -921,11 +920,7 @@
         SetStyleHistoTH1ForGraphs( histos[currRun], histos[currRun]->GetXaxis()->GetTitle(), histos[currRun]->GetYaxis()->GetTitle(), 0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.95, 1.02);  
         SetLineDefaults(histos[currRun], GetColorLayer(currRun), 4, GetLineStyleLayer(currRun));   
         
-				// DELETE!!!! temporary
-				if (currRun==1) SetLineDefaults(histos[currRun], kViolet+2, 7, GetLineStyleLayer(currRun));
-				if (currRun==7) SetLineDefaults(histos[currRun], kMagenta, 7, GetLineStyleLayer(currRun));
-
-				if(currRun == 0){
+        if(currRun == 0){
           histos[currRun]->GetXaxis()->SetRangeUser(minX-5*histos[currRun]->GetBinWidth(1),maxX+5*histos[currRun]->GetBinWidth(1));
           histos[currRun]->GetYaxis()->SetRangeUser(minY,maxY*1.1);
           histos[currRun]->Draw("hist");
@@ -933,13 +928,13 @@
           histos[currRun]->Draw("same,hist");
         }
 
-				if (labelOpt == 3) {
-					legend->AddEntry(histos[currRun],Form("%2.1f V", itrun->second.GetVoltage()), "l");
-				}
-				else {
-        	legend->AddEntry(histos[currRun],Form("%d",itrun->second.GetRunNumber()),"l");
+        if (labelOpt == 3) {
+          legend->AddEntry(histos[currRun],Form("%2.1f V", itrun->second.GetVoltage()), "l");
         }
-				currRun++;  
+        else {
+          legend->AddEntry(histos[currRun],Form("%d",itrun->second.GetRunNumber()),"l");
+        }
+        currRun++;  
       }  
       histos[0]->DrawCopy("axis,same");
       legend->Draw();
@@ -960,7 +955,7 @@
                             Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
                             int labelOpt = 1,
                             TString additionalLabel = "", int debug = 0, Double_t eoXmax=0,
-														int colorByEV=0
+                            int colorByEV=0
                             ){
     //hardcode max X
     Double_t minY         = 0.1;
@@ -992,49 +987,49 @@
       }
       nruns++;
     }
-		if (eoXmax != 0) {	
-			maxX = eoXmax;
-		}
+    if (eoXmax != 0) {	
+      maxX = eoXmax;
+    }
     std::cout << "min X\t"  << minX << "\t max X \t" << maxX << std::endl;
     std::cout << "min Y\t"  << minY << "\t max Y \t" << maxY << std::endl;
     
     TString label2          = Form("Common V_{op} = %2.1f V", commanVoltage);
     canvas2D->cd();  
       TH1D* histos[30];
-			std::string specDat[30];
-			float beEn[30];
+      std::string specDat[30];
+      float beEn[30];
       if (debug > 0){
         if (nruns > 30) std::cout << "more than 30 runs are included in this, only 30 will be plotted, currently " << nruns << "\t runs were requested" << std::endl;
         else std::cout << nruns << " will be plotted" << std::endl;
       }
       double startLegend = 0.55;
       int columns  = 5;
-			double legy = 0.88;
-			double xright = 0.95;
+      double legy = 0.88;
+      double xright = 0.95;
       double columnwidth = 0.35;
       if (labelOpt == 2 && colorByEV < 3){
         columns     = 4;
         startLegend = 0.45;
         columnwidth = 0.17;
-			}
-			else if (labelOpt==2 && colorByEV == 3){
-				columns = 3;
-				startLegend = 0.55;
-				columnwidth=0.2;
-			}
-			else if (labelOpt==2 && colorByEV > 3) {	
-				columns = 2;
-				startLegend = 0.65;
-				columnwidth = 0.3;
-				xright = 0.95;
       }
-			else if (labelOpt == 3) {
-				columns			= 2;
-				startLegend = 0.65;
-				columnwidth = 0.3;
-				legy = 0.85;
-				xright = 0.955555;
-			}
+      else if (labelOpt==2 && colorByEV == 3){
+        columns = 3;
+        startLegend = 0.55;
+        columnwidth=0.2;
+      }
+      else if (labelOpt==2 && colorByEV > 3) {	
+        columns = 2;
+        startLegend = 0.65;
+        columnwidth = 0.3;
+        xright = 0.95;
+      }
+      else if (labelOpt == 3) {
+        columns			= 2;
+        startLegend = 0.65;
+        columnwidth = 0.3;
+        legy = 0.85;
+        xright = 0.955555;
+      }
 
       double lineBottom  = 6;
       if (nruns < columns+1) lineBottom = 1;
@@ -1058,41 +1053,41 @@
         SetStyleHistoTH1ForGraphs( histos[currRun], histos[currRun]->GetXaxis()->GetTitle(), histos[currRun]->GetYaxis()->GetTitle(), 0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.95, 1.02);  
         SetLineDefaults(histos[currRun], GetColorLayer(currRun), 4, GetLineStyleLayer(currRun));   
         if (colorByEV == 1) { // set line color according to beam energy
-					int thisbei = (int)itrun->second.GetEnergy()-1;
-					SetLineDefaults(histos[currRun], GetColorLayer(thisbei), 4, GetLineStyleLayer(currRun));
-				}
-				else if (colorByEV == 2) { // set line color according to Vop
-					// only works for Vop=42, 42.5, 43, ..., 46 V.
-					double thisvop = itrun->second.GetVoltage();
-					if (thisvop<42 || thisvop>46) colorByEV=0;
-					else {
-						thisvop = (thisvop - 42)*2;
-						SetLineDefaults(histos[currRun], GetColorLayer((int)thisvop), 4, GetLineStyleLayer(currRun));
-					}
-				}
-				else if (colorByEV == 3) {
-					SetLineDefaults(histos[currRun], GetColorEmily3(currRun), 3, 1);
-					/*if (currRun < 5) // e-
-						SetLineDefaults(histos[currRun], GetColorEmily2(currRun), 3, 1);	
-					else if (currRun>10) // had-
-						SetLineDefaults(histos[currRun], GetColorEmily2(currRun-6), 3, 1);
-					else // had+
-						SetLineDefaults(histos[currRun], GetColorEmily2(currRun), 3, 1);
-				*/
-				}
-				else if (colorByEV > 3) { // quick and dirty custom colors/styles
-					if (colorByEV < 10) SetLineDefaults(histos[currRun], GetColorEmily(currRun)->GetNumber(), 3, 1);
-					else {
-						int specNum = (int)colorByEV/2;
-						if (currRun < specNum){
-							SetLineDefaults(histos[currRun], GetColorEmily2(currRun*2), 3, 1);
-						}
-						else {
-							SetLineDefaults(histos[currRun], GetColorEmily2((currRun-specNum)*2 +1), 3, 1);
-						}
-					}
-				}
-				if(currRun == 0){
+          int thisbei = (int)itrun->second.GetEnergy()-1;
+          SetLineDefaults(histos[currRun], GetColorLayer(thisbei), 4, GetLineStyleLayer(currRun));
+        }
+        else if (colorByEV == 2) { // set line color according to Vop
+          // only works for Vop=42, 42.5, 43, ..., 46 V.
+          double thisvop = itrun->second.GetVoltage();
+          if (thisvop<42 || thisvop>46) colorByEV=0;
+          else {
+            thisvop = (thisvop - 42)*2;
+            SetLineDefaults(histos[currRun], GetColorLayer((int)thisvop), 4, GetLineStyleLayer(currRun));
+          }
+        }
+        else if (colorByEV == 3) {
+          SetLineDefaults(histos[currRun], GetColorEmily3(currRun), 3, 1);
+          /*if (currRun < 5) // e-
+            SetLineDefaults(histos[currRun], GetColorEmily2(currRun), 3, 1);	
+          else if (currRun>10) // had-
+            SetLineDefaults(histos[currRun], GetColorEmily2(currRun-6), 3, 1);
+          else // had+
+            SetLineDefaults(histos[currRun], GetColorEmily2(currRun), 3, 1);
+        */
+        }
+        else if (colorByEV > 3) { // quick and dirty custom colors/styles
+          if (colorByEV < 10) SetLineDefaults(histos[currRun], GetColorEmily(currRun)->GetNumber(), 3, 1);
+          else {
+            int specNum = (int)colorByEV/2;
+            if (currRun < specNum){
+              SetLineDefaults(histos[currRun], GetColorEmily2(currRun*2), 3, 1);
+            }
+            else {
+              SetLineDefaults(histos[currRun], GetColorEmily2((currRun-specNum)*2 +1), 3, 1);
+            }
+          }
+        }
+        if(currRun == 0){
           histos[currRun]->GetXaxis()->SetRangeUser(minX-5*histos[currRun]->GetBinWidth(1),maxX+5*histos[currRun]->GetBinWidth(1));
           if (option == 1)
             histos[currRun]->GetYaxis()->SetRangeUser(minY*4,maxY*4.4);
@@ -1106,56 +1101,56 @@
           TString species = GetSpeciesStringFromPDG(itrun->second.GetPDG());
           legend->AddEntry(histos[currRun],Form("%s %1.f GeV",species.Data(), itrun->second.GetEnergy()),"l");
         } 
-				else if (labelOpt == 3) { // put Vop in legend
-					legend->AddEntry(histos[currRun],Form("%2.1f V", itrun->second.GetVoltage()), "l");
-				}
-				else {
-					if (colorByEV > 2) {
-          	TString species = GetSpeciesStringFromPDG(itrun->second.GetPDG());
-						specDat[currRun] = species.Data();
-						beEn[currRun] = itrun->second.GetEnergy();
-					}
-					else legend->AddEntry(histos[currRun],Form("%d",itrun->second.GetRunNumber()),"l");
+        else if (labelOpt == 3) { // put Vop in legend
+          legend->AddEntry(histos[currRun],Form("%2.1f V", itrun->second.GetVoltage()), "l");
+        }
+        else {
+          if (colorByEV > 2) {
+            TString species = GetSpeciesStringFromPDG(itrun->second.GetPDG());
+            specDat[currRun] = species.Data();
+            beEn[currRun] = itrun->second.GetEnergy();
+          }
+          else legend->AddEntry(histos[currRun],Form("%d",itrun->second.GetRunNumber()),"l");
         }
         currRun++;  
       } // end loop over runs 
 
-			if (colorByEV < 3) histos[0]->DrawCopy("axis,same");
+      if (colorByEV < 3) histos[0]->DrawCopy("axis,same");
 
-			// now I'm just being obnoxious. Custom for TB2025/2026PS energy overlay
-			if (colorByEV == 3) {
-				histos[0]->Draw("hist");
+      // now I'm just being obnoxious. Custom for TB2025/2026PS energy overlay
+      if (colorByEV == 3) {
+        histos[0]->Draw("hist");
 
-				int drawOrder[15] = {0,1,2,3,4,10,5,11,6,12,7,13,8,14,9}; // 2026PS
-				//int drawOrder[17] = {0,1,2,5,11,3,4,6,12,7,13,8,14,9,15,10,16}; // 2025
-				for (int i = 1; i < (int)sizeof(drawOrder)/sizeof(*drawOrder); i++){
-					histos[drawOrder[i]]->Draw("same,hist");
-				}
-				histos[0]->DrawCopy("axis,same");	
-				
-				int legOrder[15] = {0,5,10,1,6,11,2,7,12,3,8,12,4,9,14}; // 2026PS
-				//int legOrder[18] = {0,11,5,1,12,6,2,13,7,3,14,8,4,15,9,-1,16,10}; // 2025
-				for (int i=0; i < (int)sizeof(legOrder)/sizeof(*legOrder); i++) {
-					int rnum = legOrder[i];
-					if (rnum == -1) legend->AddEntry((TObject*)0, "", "");
-					else legend->AddEntry(histos[rnum],Form("%s %1.f GeV",specDat[rnum].c_str(), beEn[rnum]), "l");
-				}
-				
-			}
+        int drawOrder[15] = {0,1,2,3,4,10,5,11,6,12,7,13,8,14,9}; // 2026PS
+        //int drawOrder[17] = {0,1,2,5,11,3,4,6,12,7,13,8,14,9,15,10,16}; // 2025
+        for (int i = 1; i < (int)sizeof(drawOrder)/sizeof(*drawOrder); i++){
+          histos[drawOrder[i]]->Draw("same,hist");
+        }
+        histos[0]->DrawCopy("axis,same");	
+        
+        int legOrder[15] = {0,5,10,1,6,11,2,7,12,3,8,12,4,9,14}; // 2026PS
+        //int legOrder[18] = {0,11,5,1,12,6,2,13,7,3,14,8,4,15,9,-1,16,10}; // 2025
+        for (int i=0; i < (int)sizeof(legOrder)/sizeof(*legOrder); i++) {
+          int rnum = legOrder[i];
+          if (rnum == -1) legend->AddEntry((TObject*)0, "", "");
+          else legend->AddEntry(histos[rnum],Form("%s %1.f GeV",specDat[rnum].c_str(), beEn[rnum]), "l");
+        }
+        
+      }
 
-			// my very silly fix to draw the legend column-wise instead of row-wise
-			if (colorByEV > 3) {
-				int halfway = (int)colorByEV/2;
-				legy = legy-0.01; // for drawing label2
-				histos[0]->Draw("hist");
-				for (int i = 0; i < halfway; i++) {
-					histos[i]->Draw("same,hist");
-					histos[i+halfway]->Draw("same,hist");
-					TLegendEntry *tle1 = legend->AddEntry(histos[i],Form("%s %1.f GeV",specDat[i].c_str(), beEn[i]), "l");
-					TLegendEntry *tle2 = legend->AddEntry(histos[i+halfway],Form("%s %1.f GeV",specDat[i+halfway].c_str(),beEn[i+halfway]), "l");		
-				}
-				histos[0]->DrawCopy("axis,same");
-			}
+      // my very silly fix to draw the legend column-wise instead of row-wise
+      if (colorByEV > 3) {
+        int halfway = (int)colorByEV/2;
+        legy = legy-0.01; // for drawing label2
+        histos[0]->Draw("hist");
+        for (int i = 0; i < halfway; i++) {
+          histos[i]->Draw("same,hist");
+          histos[i+halfway]->Draw("same,hist");
+          TLegendEntry *tle1 = legend->AddEntry(histos[i],Form("%s %1.f GeV",specDat[i].c_str(), beEn[i]), "l");
+          TLegendEntry *tle2 = legend->AddEntry(histos[i+halfway],Form("%s %1.f GeV",specDat[i+halfway].c_str(),beEn[i+halfway]), "l");		
+        }
+        histos[0]->DrawCopy("axis,same");
+      }
 
       legend->Draw();
       

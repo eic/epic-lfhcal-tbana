@@ -67,7 +67,7 @@ class MultiCanvas{
 
   void PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int option, 
                           Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
-                          TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int debug = 1 );
+                          TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int skiplayers = 0, int debug = 1 );
   void PlotNoiseAdvWithFits(  std::map<int,TileSpectra> spectra, std::map<int,TileSpectra> spectraNoise, int option, 
                               Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
                               TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int debug = 1);
@@ -81,7 +81,7 @@ class MultiCanvas{
   void PlotCorr2DLayer(   std::map<int,TileSpectra> spectra, int option, 
                           Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, 
                           TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, 
-                          int noCalib = 0, int triggerCha = -1, int debug = 1);
+                          int noCalib = 0, int triggerCha = -1, int skiplayers = 0,  int debug = 1);
   void PlotCorrWithFits(   std::map<int,TileSpectra> spectra, int option, 
                             Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, 
                             TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, 
