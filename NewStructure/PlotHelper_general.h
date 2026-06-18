@@ -145,9 +145,14 @@
   }
   
   //__________________________________________________________________________________________________________  
-  inline Color_t GetColorLayer(int l){
-    Color_t colors[10] = {kBlack, kViolet+4, kBlue-3, kCyan+1, kGreen+1, kYellow-4, kOrange, kRed-4, kPink-5, kMagenta+2 };
-    return colors[l%10];
+  inline Color_t GetColorLayer(int l, int alter = 0){
+    if (alter == 0){
+      Color_t colors[10] = {kBlack, kViolet+4, kBlue-3, kCyan+1, kGreen+1, kYellow-4, kOrange, kRed-4, kPink-5, kMagenta+2 };
+      return colors[l%10];
+    } else {
+      Color_t colors[10] = {kGray+1, kOrange, kBlue-3, kRed-4 , kGreen+1, kYellow-4, kViolet+4, kCyan+1 , kPink-5, kMagenta+2 };
+      return colors[l%10];      
+    }
   }
 
   //__________________________________________________________________________________________________________  
@@ -200,10 +205,15 @@
   }
 
   //__________________________________________________________________________________________________________  
-  inline Style_t GetLineStyleLayer(int l){
-    Style_t styles[7] = {1, 3, 4, 6, 7, 10, 9};
-    int bin = l/10;
-    return styles[bin];
+  inline Style_t GetLineStyleLayer(int l, int alter = 0){
+    if (alter == 0){
+      Style_t styles[7] = {1, 3, 4, 6, 7, 10, 9};
+      int bin = l/10;
+      return styles[bin];
+    } else {
+      Style_t styles[7] = {1, 3, 4, 6, 7, 10, 9};
+      return styles[l%7];
+    }
   }
   
   //__________________________________________________________________________________________________________

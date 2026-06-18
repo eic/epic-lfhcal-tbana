@@ -15,9 +15,16 @@ fi
 
 if [ $2 == "BaseCalibsCAEN" ]; then
 
-#  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp3rd_muonScanA1_45V.root -A $dataDirOut/calib_muonScanA1_45V.root
-#  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp3rd_muonScanA2_45V.root -A $dataDirOut/calib_muonScanA2_45V.root
-#  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp4th_muonScanD2_45V.root -A $dataDirOut/calib_muonScanD2_45V.root
+# redone calibs
+#  ./DataPrep -a -i $dataDirInM/rawPedAndMuonImp3rd_red_muonScanA1_45V.root -A $dataDirOut/calib_muonScanA1_45V_V2.root
+#  ./DataPrep -a -i $dataDirInM/rawPedAndMuonImp3rd_red_muonScanA2_45V.root -A $dataDirOut/calib_muonScanA2_45V_V2.root
+#  ./DataPrep -a -i $dataDirInM/rawPedAndMuonImp4th_red_muonScanB1_42V.root -A $dataDirOut/calib_muonScanB1_42V_V2.root
+#  ./DataPrep -a -i $dataDirInM/rawPedAndMuonImp3rd_red_muonScanB2_42V.root -A $dataDirOut/calib_muonScanB2_42V_V2.root
+#  ./DataPrep -a -i $dataDirInM/rawPedAndMuonImp3rd_red_muonScanC2_43_5V.root  -A $dataDirOut/calib_muonScanC2_43_5V_V2.root
+  ./DataPrep -a -i $dataDirInM/rawPedAndMuonImp3rd_red_muonScanC1_43_5V.root  -A $dataDirOut/calib_muonScanC1_43_5V_V2.root
+
+#old calibs
+ #  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp4th_muonScanD2_45V.root -A $dataDirOut/calib_muonScanD2_45V.root
 #  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp4th_muonScanH1_45V.root -A $dataDirOut/calib_muonScanH1_45V.root
 #  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp4th_muonScanH2_45V.root -A $dataDirOut/calib_muonScanH2_45V.root
 
@@ -28,8 +35,6 @@ if [ $2 == "BaseCalibsCAEN" ]; then
 #  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp6th_316.root -A $dataDirOut/calib_316_40V.root
 # 
 # 
-  ./DataPrep -a -i $dataDirInM/rawPedAndMuonImp4th_red_muonScanB1_42V.root -A $dataDirOut/calib_muonScanB1_42V_V2.root
-  ./DataPrep -a -i $dataDirInM/rawPedAndMuonImp3rd_red_muonScanB2_42V.root -A $dataDirOut/calib_muonScanB2_42V_V2.root
 #  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp6th_muonScanE1_40V.root -A $dataDirOut/calib_muonScanE1_40V.root
 #  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp6th_muonScanE2_40V.root -A $dataDirOut/calib_muonScanE2_40V.root
 #  ./DataPrep -a -i $dataDirInM/rawPedAndMuonWBCImp6th_muonScanF1_41V.root -A $dataDirOut/calib_muonScanF1_41V.root

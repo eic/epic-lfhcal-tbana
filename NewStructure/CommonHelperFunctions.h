@@ -296,8 +296,7 @@
         return "";
     }
   }
-  
-  
+    
   inline Double_t ReturnMipPlotRangeDepVov(double Vov, bool isHG, ReadOut::Type type){
     if (type == ReadOut::Type::Caen){
       if (isHG){

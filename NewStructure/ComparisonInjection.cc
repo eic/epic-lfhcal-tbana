@@ -189,7 +189,7 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
     // Initialize calib summary
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     calib.PrintGlobalInfo();
-    CalibSummary aSum = CalibSummary(nRun, runNumber,calib.GetVop());
+    CalibSummary aSum = CalibSummary(nRun, runNumber,calib.GetVop(), 0);
     
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // Reading additional summary histos from 2nd file
@@ -233,7 +233,7 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
       itrend=trend.find(itcalib->first);
       if(itrend!=trend.end()){
         // fill injection hists
-        itrend->second.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop());
+        itrend->second.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(),0, -10000., -10000.);
         itrend->second.FillInjection(Xvalue,calib.GetPedestalMeanH(itcalib->first),(int)calib.GetRunNumber(), 
                                      profCellWave, profCellTOA, profCellTOT, 
                                      set_rf, set_cf, set_cfcomp, set_cc );
@@ -241,7 +241,7 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
       } else {
         TileTrend atrend=TileTrend(itcalib->first,0, 3);
         // fill injection hists
-        atrend.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop());
+        atrend.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(), 0, -10000., -10000.);
         atrend.FillInjection(Xvalue,calib.GetPedestalMeanH(itcalib->first),(int)calib.GetRunNumber(), 
                              profCellWave, profCellTOA, profCellTOT, 
                              set_rf, set_cf, set_cfcomp, set_cc);

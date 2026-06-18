@@ -177,13 +177,13 @@ class TileTrend: public TObject{
   ~TileTrend(){}
 
   // Fill objects 
-  bool Fill           (double, const TileCalib&, int, double);
+  bool Fill           (double, const TileCalib&, int, double, int, double, double);
   bool FillExtended   (double, int, int, TH1D*, TH1D*, TProfile*);
   void FillMPV        (double, double, double, double, double);
   void FillLSigma     (double, double, double, double, double);
   void FillGSigma     (double, double, double, double, double);
   void FillSB         (double, double, double);
-  void FillCorrOffset (double, double, double, double, double);
+  void FillCorrOffset (double, double, double, double, double);  
   
   bool FillInjection  ( double x, double ped, int runNr, 
                         TProfile* wave, TProfile* toa, TProfile* tot, 
@@ -278,6 +278,7 @@ class TileTrend: public TObject{
   inline int GetFirstRun()        {if (runNrs.size()> 0) return runNrs[0]; else return -1;};
   inline int GetLastRun()         {if (runNrs.size()> 0) return runNrs[runNrs.size()-1]; else return -1;};
   inline int GetRunNr(int i)      {if (runNrs.size()> 0 && i < (int)runNrs.size()) return runNrs[i]; else return -1;}
+  inline int GetPdg(int i)        {if (pdgs.size()> 0 && i < (int)pdgs.size()) return pdgs[i]; else return -1;}
   inline int GetVoltage(int i)    {if (voltages.size()> 0 && i < (int)voltages.size()) return voltages[i]; else return -1;}
   inline int GetRF(int i)         {if (rf.size()> 0 && i < (int)rf.size()) return rf[i]; else return -1;}
   inline int GetCF(int i)         {if (cf.size()> 0 && i < (int)cf.size()) return cf[i]; else return -1;}
@@ -386,6 +387,7 @@ class TileTrend: public TObject{
   double MinHGLGOff  =9999.;
   
   std::vector<int> runNrs;
+  std::vector<int> pdgs;
   std::vector<double> voltages;
   std::vector<double> rf;
   std::vector<double> cf;
@@ -398,7 +400,7 @@ class TileTrend: public TObject{
   std::map<int, TProfile> TOAProf;
   std::map<int, TProfile> TOTProf;
   
-  ClassDef(TileTrend,6);
+  ClassDef(TileTrend,7);
 };
 
 #endif

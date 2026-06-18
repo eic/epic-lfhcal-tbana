@@ -406,6 +406,15 @@ bool Analyses::ConvertASCII2Root(void){
   std::map<int,std::vector<Caen> >::iterator itevent;
   long tempEvtCounter   = 0;
   long writeEvtCounter  = 0;
+  
+  if (maxEvents != -1){
+      std::cout << "**********************************************************************" << std::endl;
+      std::cout << "*************************ATTENTION!************************************" << std::endl;
+      std::cout << "Reconstruction of events will be aborted after " << maxEvents << "!" << std::endl;
+      std::cout << "This was set manually! Make sure its what you desired!" << std::endl;
+      std::cout << "**********************************************************************" << std::endl;
+  }
+  
   while(!ASCIIinput.eof()){                                                     // run till end of file is reached and read line by line
     aline.ReadLine(ASCIIinput);
     if(!ASCIIinput.good()) break;
@@ -506,7 +515,7 @@ bool Analyses::ConvertASCII2Root(void){
           tokens->SetOwner(true);
           Nfields=tokens->GetEntries();
           if(Nfields!=4){
-            std::cout<<"Expecting 4 fields but read "<<Nfields<<std::endl;
+            std::cout<<"Expecting 4 fields but read "<<Nfields << " at event " << tempEvtCounter <<std::endl;
             return -1;
           }
           achannel=((TObjString*)tokens->At(1))->String().Atoi();
@@ -543,6 +552,37 @@ bool Analyses::ConvertASCII2Root(void){
       } else {
         //This is a new event;
         tempEvtCounter++;                                                                   // in crease event counts for monitoring of progress
+        if ( maxEvents != -1 && tempEvtCounter > maxEvents){                                // abort reading of file at fixed number of events
+          std::cout << "Manually aborted reading of file at:  " <<  maxEvents << " events" << std::endl;
+          
+          RootOutput->cd();
+          // setup 
+          RootSetupWrapper rswtmp=RootSetupWrapper(setup);
+          rsw=rswtmp;
+          TsetupOut->Fill();
+          // calib
+          TcalibOut->Fill();
+          TcalibOut->Write();
+          // event data
+          TdataOut->Fill();
+          TsetupOut->Write();
+          TdataOut->Write();
+          
+          double effi = 0;
+          if (tempEvtCounter > 0) 
+            effi = (double)writeEvtCounter/tempEvtCounter;
+          std::cout << "Run nr: " << event.GetRunNumber() << "\t"<< "Events written to file: " << writeEvtCounter << "\t effi: "<< effi<< std::endl;
+          if (writeEvtCounter < 2){
+            std::cout << "ERROR: Only " << writeEvtCounter << " events were written, something didn't go right, please check your mapping file!" << std::endl; 
+          }
+          TH1D* hEvents = new TH1D( "hNEvents","event category; events",  2,-0.5,1.5);
+          hEvents->SetBinContent(1, tempEvtCounter);
+          hEvents->SetBinContent(2, writeEvtCounter);
+          hEvents->Write();
+                    
+          break;                         
+        }
+
         if (tempEvtCounter%5000 == 0 && debug > 0) std::cout << "Converted " <<  tempEvtCounter << " events" << std::endl;
         // if (tempEvtCounter > 1000) continue;
         std::vector<Caen> vCaen;
@@ -557,7 +597,7 @@ bool Analyses::ConvertASCII2Root(void){
           tokens->SetOwner(true);
           Nfields=tokens->GetEntries();
           if(Nfields!=4){
-            std::cout<<"Expecting 4 fields but read "<<Nfields<<std::endl;
+            std::cout<<"Expecting 4 fields but read "<<Nfields<< " at event " << tempEvtCounter <<std::endl;
             return -1;
           }
           achannel=((TObjString*)tokens->At(1))->String().Atoi();
@@ -649,7 +689,7 @@ bool Analyses::ConvertASCII2Root(void){
             
             if(Nfields!=4){
               std::cout<< "Current line :" << aline.Data() << std::endl;
-              std::cout<<"Expecting 4 fields but read "<<Nfields<<std::endl;
+              std::cout<<"Expecting 4 fields but read "<<Nfields << " at event " << tempEvtCounter <<std::endl;
               return -1;
             }
             achannel=((TObjString*)tokens->At(1))->String().Atoi();
@@ -686,6 +726,35 @@ bool Analyses::ConvertASCII2Root(void){
       } else {
         //This is a new event;
         tempEvtCounter++;                                                                   // in crease event counts for monitoring of progress
+        if ( maxEvents != -1 && tempEvtCounter > maxEvents){                                // abort reading of file at fixed number of events
+          std::cout << "Manually aborted reading of file at:  " <<  maxEvents << " events" << std::endl;
+          
+          RootOutput->cd();
+          // setup 
+          RootSetupWrapper rswtmp=RootSetupWrapper(setup);
+          rsw=rswtmp;
+          TsetupOut->Fill();
+          // calib
+          TcalibOut->Fill();
+          TcalibOut->Write();
+          // event data
+          TdataOut->Fill();
+          TsetupOut->Write();
+          TdataOut->Write();
+          
+          double effi = 0;
+          if (tempEvtCounter > 0) 
+            effi = (double)writeEvtCounter/tempEvtCounter;
+          std::cout << "Run nr: " << event.GetRunNumber() << "\t"<< "Events written to file: " << writeEvtCounter << "\t effi: "<< effi<< std::endl;
+          if (writeEvtCounter < 2){
+            std::cout << "ERROR: Only " << writeEvtCounter << " events were written, something didn't go right, please check your mapping file!" << std::endl; 
+          }
+          TH1D* hEvents = new TH1D( "hNEvents","event category; events",  2,-0.5,1.5);
+          hEvents->SetBinContent(1, tempEvtCounter);
+          hEvents->SetBinContent(2, writeEvtCounter);
+          hEvents->Write();
+          break;                         
+        }
         if (tempEvtCounter%5000 == 0 && debug > 0) std::cout << "Converted " <<  tempEvtCounter << " events" << std::endl;
         std::vector<Caen> vCaen;
         
@@ -702,7 +771,7 @@ bool Analyses::ConvertASCII2Root(void){
           Nfields=tokens->GetEntries();
           if(Nfields!=4){
             std::cout<< "Current line :" << aline.Data() << std::endl;
-            std::cout<<"Expecting 4 fields but read "<<Nfields<<std::endl;
+            std::cout<<"Expecting 4 fields but read "<<Nfields << " at event " << tempEvtCounter <<std::endl;
             return -1;
           }
           achannel=((TObjString*)tokens->At(1))->String().Atoi();
@@ -2290,11 +2359,11 @@ bool Analyses::VisualizeWaveform(void){
                               Form("%s/TOA_Sample_Signal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer );
   if (ExtPlot > 1){
     panelPlot.PlotSpectra( hSpectra, 0, -100, 1024, 1.2, 
-                           Form("%s/Spectra_ADC" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                           Form("%s/Spectra_ADC" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
     panelPlot.PlotSpectra( hSpectra, 3, 0, 1024, 1.2, 
-                           Form("%s/TOA" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                           Form("%s/TOA" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
     panelPlot.PlotSpectra( hSpectra, 4, 0, 4096, 1.2, 
-                           Form("%s/TOT" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                           Form("%s/TOT" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
   }
   
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
@@ -2940,7 +3009,7 @@ bool Analyses::GetScaling(void){
     std::cout << "============================== starting fitting 2nd iteration" << std::endl;
   
   // define CalibSummary object for this run -EP
-  CalibSummary tileSum = CalibSummary(calib.GetRunNumber(), calib.GetRunNumber(), calib.GetVop());
+  CalibSummary tileSum = CalibSummary(calib.GetRunNumber(), calib.GetRunNumber(), calib.GetVop(), it->second.pdg );
 
   for(ithSpectraTrigg=hSpectraTrigg.begin(); ithSpectraTrigg!=hSpectraTrigg.end(); ++ithSpectraTrigg){ // loop over spectra for 2nd iteration
     if (currCells%20 == 0 && currCells > 0 && debug > 0)
@@ -3589,7 +3658,7 @@ bool Analyses::GetImprovedScaling(void){
   }
 
   // define CalibSummary object for this run -EP
-  CalibSummary tileSum = CalibSummary(calib.GetRunNumber(), calib.GetRunNumber(), calib.GetVop());
+  CalibSummary tileSum = CalibSummary(calib.GetRunNumber(), calib.GetRunNumber(), calib.GetVop(), it->second.pdg);
 
   for(ithSpectraTrigg=hSpectraTrigg.begin(); ithSpectraTrigg!=hSpectraTrigg.end(); ++ithSpectraTrigg){ // GetImprovedScaling() spectra loop
     if (currCells%20 == 0 && currCells > 0 && debug > 0)
@@ -4398,9 +4467,9 @@ bool Analyses::RunEvalLocalTriggers(void){
     
   std::cout << "plotting single layers" << std::endl;
   panelPlot.PlotMipWithFits( hSpectra, hSpectraTrigg, 1, minHG, maxHG, 1.2, 
-                              Form("%s/MIP_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                              Form("%s/MIP_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
   panelPlot.PlotTriggerPrim( hSpectraTrigg, averageScalePerTile, factorMinTrigg, factorMaxTrigg, 0, maxTriggPPlot, 1.2,
-                            Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                            Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
   std::cout << "done plotting" << std::endl;
 
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
@@ -5157,32 +5226,32 @@ bool Analyses::Calibrate(void){
       
     
     panelPlot.PlotSpectra( hSpectra, 0, -100, maxADC, 1.2, 
-                          Form("%s/Spectra_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                          Form("%s/Spectra_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
 
     if (typeRO == ReadOut::Type::Caen) {
       if(nLocalNoiseTriggs > 1) panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 1, -50, 100, 1.2, 
-                                                              Form("%s/NoiseTrigg_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                                                              Form("%s/NoiseTrigg_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
       if(nLocalNoiseTriggs > 1) panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 0, -50, 100, 1.2, 
-                                                              Form("%s/NoiseTrigg_LG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                                                              Form("%s/NoiseTrigg_LG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
       panelPlot.PlotSpectra( hSpectra, 2, -2, 100, 1.2, 
-                            Form("%s/Spectra_Comb" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                            Form("%s/Spectra_Comb" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
       panelPlot2D.PlotCorrWithFits( hSpectra, 0, -20, 800, 0., 50.,
-                                    Form("%s/LGHG_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                                    Form("%s/LGHG_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
       panelPlot2D.PlotCorrWithFits( hSpectra, 2, -20, 800, 0., 50.,
-                                    Form("%s/LGLGhgeq_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                                    Form("%s/LGLGhgeq_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
       
     } else if (typeRO == ReadOut::Type::Hgcroc) {
       panelPlot2D.PlotCorr2DLayer(hSpectra, 4, 0, 4096, 0, 1024.,
                                 Form("%s/ADCTOT",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer);
       panelPlot.PlotSpectra( hSpectra, 4, -100, 4096, 1.2,
-                            Form("%s/Spectra_Tot" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                            Form("%s/Spectra_Tot" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
       panelPlot.PlotMipWithFits( hSpectra, hSpectraLocalTrigg, 1, -20, maxADC, 1.2, 
-                                  Form("%s/SpectraWithMipTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                                  Form("%s/SpectraWithMipTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
       if(nLocalNoiseTriggs > 1) panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 1, -20, 100, 1.2, 
-                                                              Form("%s/NoiseTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                                                              Form("%s/NoiseTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
       if(nLocalNoiseTriggs > 1) panelPlot.Plot3SpectraOverlay(hSpectra, hSpectraNotNoise, hSpectraNoise,
                                                               1, -20, 1024, 1.2, 
-                                                              Form("%s/NotNoiseTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+                                                              Form("%s/NotNoiseTrigg" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
       panelPlot.PlotTriggerPrim( hSpectraLocalTrigg, averageScalePerTile, factorMinTrigg, factorMaxTrigg, 0, 200, 1.2,
                                 Form("%s/TriggPrimitive" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
     }

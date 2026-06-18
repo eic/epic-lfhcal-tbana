@@ -870,7 +870,7 @@
   //__________________________________________________________________________________________________________
   inline void PlotTrending8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                               std::map<int,TileTrend> trending, int optionTrend, 
-                              Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, bool isSameVoltage, double commanVoltage, 
+                              Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, int isSameVoltage, double commonVoltage, 
                               int layer, int mod,  TString nameOutput, TString nameOutputSummary, RunInfo currRunInfo, Int_t  detailedPlot = 1){
                                   
     Setup* setupT = Setup::GetInstance();
@@ -901,7 +901,11 @@
         int p = setupT->GetChannelInLayer(tempCellID);
 
         TString label           = Form("row %d col %d", r, c);
-        TString label2          = Form("Common V_{op} = %2.1f V", commanVoltage);
+        TString label2          = Form("Common V_{op} = %2.1f V", commonVoltage);
+        if (isSameVoltage > 1) 
+          label2                = label2+Form(",%s", (GetSpeciesStringFromPDG(currRunInfo.pdg).Data()));
+        if (isSameVoltage > 2) 
+          label2                = label2+Form(", Run %d", currRunInfo.runNr);
         if (p == 7){
           label = Form("row %d col %d layer %d", r, c, layer);
         }
@@ -931,7 +935,8 @@
           }
           continue;
         } 
-        TGraphErrors* tempGraph = nullptr;
+        TGraphErrors* tempGraph   = nullptr;
+        TGraphErrors* tempGraph2  = nullptr;
         if (optionTrend == 0)       tempGraph = ithTrend->second.GetHGped();
         else if (optionTrend == 1)  tempGraph = ithTrend->second.GetLGped();
         else if (optionTrend == 2)  tempGraph = ithTrend->second.GetHGScale();            
@@ -951,17 +956,33 @@
         else if (optionTrend == 16) tempGraph = ithTrend->second.GetLGpedwidth();
         else if (optionTrend == 17) tempGraph = ithTrend->second.GetLGHGOff();
         else if (optionTrend == 18) tempGraph = ithTrend->second.GetHGLGOff();
+        else if (optionTrend == 19){
+          tempGraph   = ithTrend->second.GetHGped();
+          tempGraph2  = ithTrend->second.GetLGped();
+        } else if (optionTrend == 20){
+          tempGraph   = ithTrend->second.GetHGpedwidth();
+          tempGraph2  = ithTrend->second.GetLGpedwidth();
+        }
         if (!tempGraph) continue;
+        TString yAxisT  = tempGraph->GetYaxis()->GetTitle();
+        if (tempGraph2){ 
+          yAxisT.ReplaceAll("(arb. units)","");
+          yAxisT        = yAxisT+", "+tempGraph2->GetYaxis()->GetTitle();
+        }
         TH1D* dummyhist = new TH1D("dummyhist", "", 100, xPMin, xPMax);
-        SetStyleHistoTH1ForGraphs( dummyhist, tempGraph->GetXaxis()->GetTitle(), tempGraph->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
+        SetStyleHistoTH1ForGraphs( dummyhist, tempGraph->GetXaxis()->GetTitle(), yAxisT, 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
         // if (optionTrend == 6)std::cout << "\t" << tempGraph->GetXaxis()->GetTitle() << "\t" << tempGraph->GetYaxis()->GetTitle() << std::endl;
         SetMarkerDefaultsTGraphErr(tempGraph, 20, 1, kBlue+1, kBlue+1);   
         dummyhist->GetYaxis()->SetRangeUser(minY,maxY);
         dummyhist->Draw("axis");
         tempGraph->Draw("pe, same");
+        if (tempGraph2){
+          SetMarkerDefaultsTGraphErr(tempGraph2, 25, 1, kRed+1, kRed+1);   
+          tempGraph2->Draw("pe, same");
+        }
                 
         DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p], label, true, 0.85*textSizePixel, 43);
-        if (isSameVoltage && p == 7){
+        if (isSameVoltage > 0 && p == 7){
           DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p]-1*0.85*relSize8P[p], label2, true, 0.85*textSizePixel, 43);
         }
         if (p ==4 ){
@@ -971,6 +992,23 @@
           DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p]-1*0.85*relSize8P[p], lab1, true, 0.85*textSizePixel, 43);
           DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p]-2*0.85*relSize8P[p], lab2, true, 0.85*textSizePixel, 43);
           DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p]-3*0.85*relSize8P[p], lab3, true, 0.85*textSizePixel, 43);
+          if (tempGraph2 ){
+            double startLegY  = topRCornerY[p]-1.2*relSize8P[p]-4*0.85*relSize8P[p];
+            double endLegY    = topRCornerY[p]-1.2*relSize8P[p]-5*0.85*relSize8P[p];
+            TLegend* legend = nullptr;
+            if (currRunInfo.readout == "CAEN"){
+              legend = GetAndSetLegend2(  0.7, startLegY, topRCornerX[p]-0.045/2, endLegY,
+                                      0.85*textSizePixel, 2, "",43,0.22);
+              legend->AddEntry(tempGraph, "HG", "p");
+              legend->AddEntry(tempGraph2, "LG", "p");
+            } else {
+              legend = GetAndSetLegend2(  0.3, startLegY, topRCornerX[p]-0.045/2, endLegY,
+                                      0.85*textSizePixel, 2, "",43,0.12);
+              legend->AddEntry(tempGraph, "0th sample", "p");
+              legend->AddEntry(tempGraph2, "waveform fit", "p");              
+            }
+            legend->Draw();
+          } 
         }
       }
     }
@@ -999,7 +1037,9 @@
     Double_t maxY         = 0.;
     Double_t minY         = 9999.;
     bool isSameVoltage    = true;
-    double commanVoltage  = 0;
+    double commonVoltage  = 0;
+    bool isSameRun        = true;
+    int commonRun         = 0;
     for (int r = 0; r < nRow; r++){
       for (int c = 0; c < nCol; c++){
         int tempCellID = setupT->GetCellID(r,c, layer, mod);
@@ -1015,9 +1055,11 @@
         for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
           if (r == 0 && c == 0){
             if (rc == 0){
-              commanVoltage = ithTrend->second.GetVoltage(rc);
+              commonVoltage = ithTrend->second.GetVoltage(rc);
+              commonRun     = ithTrend->second.GetRunNr(rc);
             } else {
-              if (commanVoltage != ithTrend->second.GetVoltage(rc))  isSameVoltage = false;
+              if (commonVoltage != ithTrend->second.GetVoltage(rc))  isSameVoltage = false;
+              if (commonRun != ithTrend->second.GetRunNr(rc))  isSameRun = false;
             }
           }
         }
@@ -1049,7 +1091,9 @@
         ithTrend=trending.find(tempCellID);
 
         TString label           = Form("row %d col %d", r, c);
-        TString label2          = Form("Common V_{op} = %2.1f V", commanVoltage);
+        TString label2          = Form("Common V_{op} = %2.1f V", commonVoltage);
+        if (isSameRun)
+          label2                = label2+Form("Run %d", commonRun);
         if (p == 7){
           label = Form("row %d col %d layer %d", r, c, layer);
         }
@@ -1144,7 +1188,9 @@
     int skipped = 0;
     
     bool isSameVoltage    = true;
-    double commanVoltage  = 0;
+    double commonVoltage  = 0;
+    bool isSameRun        = true;
+    int commonRun         = 0;
     for (int r = 0; r < nRow; r++){
       for (int c = 0; c < nCol; c++){
         int tempCellID = setupT->GetCellID(r,c, layer, mod);
@@ -1152,9 +1198,11 @@
         for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
           if (r == 0 && c == 0){
             if (rc == 0){
-              commanVoltage = ithTrend->second.GetVoltage(rc);
+              commonVoltage = ithTrend->second.GetVoltage(rc);
+              commonRun     = ithTrend->second.GetRunNr(rc);
             } else {
-              if (commanVoltage != ithTrend->second.GetVoltage(rc))  isSameVoltage = false;
+              if (commonVoltage != ithTrend->second.GetVoltage(rc))  isSameVoltage = false;
+              if (commonRun != ithTrend->second.GetRunNr(rc))  isSameRun = false;
             }
           }
         }
@@ -1181,7 +1229,8 @@
         ithTrend=trending.find(tempCellID);
 
         TString label           = Form("row %d col %d", r, c);
-        TString label2          = Form("Common V_{op} = %2.1f V", commanVoltage);
+        TString label2          = Form("Common V_{op} = %2.1f V", commonVoltage);
+        if (commonRun) label2   = label2+Form(", Run %d", commonRun);
         if (p == 7){   
           label = Form("row %d col %d layer %d", r, c, layer);
         }
@@ -1210,7 +1259,7 @@
                                       0.85*textSizePixel, 5, "",43,0.25);
         }
         
-        TH1D* dummyhist;
+        TH1D* dummyhist = nullptr;
         for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
           int tmpRunNr = ithTrend->second.GetRunNr(rc);
           // std::cout << "run nr: " <<  rc << std::endl;

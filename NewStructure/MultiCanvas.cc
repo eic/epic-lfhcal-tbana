@@ -4,13 +4,16 @@ ClassImp(MultiCanvas);
 
 //==========================================================================
 // Initialize function
+// opt:   1 - 1D for spectra plots
+//        2 - 2D plot
+//        3 - 1D for trending (run depedent) plots
 //==========================================================================
 bool MultiCanvas::Initialize(int opt){
   
   //***********************************************************************
   //**** Create 1D canvas and pads
   //***********************************************************************
-  if (opt == 1){
+  if (opt == 1 || opt == 3){
     if (init){
       std::cout << "1D version of MultiCanvas already initialized for " << addName.Data() << std::endl;
       return init;
@@ -32,7 +35,8 @@ bool MultiCanvas::Initialize(int opt){
       
     // 2M module setup horizontal
     } else if ( detType ==  DetConf::Type::Single2MH){
-      CreateCanvasAndPadsFor2PannelTBPlot(textSize, 0.03, addName);
+      double margin = 0.03;
+      CreateCanvasAndPadsFor2PannelTBPlot(textSize, margin, addName);
       init = true;
       
     // 2M module setup vertical
@@ -47,20 +51,24 @@ bool MultiCanvas::Initialize(int opt){
     
     // 8M module setup
     } else if (detType ==  DetConf::Type::Single8M){
-      CreateCanvasAndPadsFor8PannelTBPlot(textSize, 0.03, addName);
+      double margin = 0.03;
+      if (opt == 3) margin = 0.045;
+      CreateCanvasAndPadsFor8PannelTBPlot(textSize, margin, addName);
       maxPads       = 8;
       std::cout << canvasMulti << std::endl;
       init = true;
       
     // Dual 8M module setup  
     } else if ( detType == DetConf::Type::Dual8M){
-      CreateCanvasAndPadsForDualModTBPlot(textSize, 0.03, addName);        
+      double margin = 0.03;
+      CreateCanvasAndPadsForDualModTBPlot(textSize, margin, addName);        
       maxPads       = 16;
       init = true;
     // medium TB setup 2026 (2x3 8M modules)
     } else if ( detType ==  DetConf::Type::MediumTB){
+      double margin = 0.025;
       std::cout << "Setup-1d: medium sized TB plot " << std::endl;
-      CreateCanvasAndPadsForMediumLFHCalTBPlot( textSize, 0.025, addName);
+      CreateCanvasAndPadsForMediumLFHCalTBPlot( textSize, margin, addName);
       maxPads       = 48;      
       init = true;
     // large TB setup 2028 (2x4 8M modules)
@@ -69,7 +77,8 @@ bool MultiCanvas::Initialize(int opt){
       std::cout << "Setup-1d: this option hasn't been implemented yet!" << std::endl;
     // full asic plot
     } else if ( detType ==  DetConf::Type::Asic){
-      CreateCanvasAndPadsForAsicLFHCalTBPlot( textSize, 0.035, addName);
+      double margin = 0.035;
+      CreateCanvasAndPadsForAsicLFHCalTBPlot( textSize, margin, addName);
       maxPads       = 64;      
       init = true;
     }
@@ -1025,7 +1034,7 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
 //_____________________________________________________________________________________________________________
 void MultiCanvas::PlotNoiseAdvWithFits(  std::map<int,TileSpectra> spectra, std::map<int,TileSpectra> spectraNoise, 
                                          int option, Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
-                                         TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int debug ){
+                                         TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int skiplayers, int debug ){
   
   std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
   Setup* setup = Setup::GetInstance();
@@ -1042,6 +1051,12 @@ void MultiCanvas::PlotNoiseAdvWithFits(  std::map<int,TileSpectra> spectra, std:
   } else if (detType ==  DetConf::Type::Single8M){
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (skiplayers > 0){
+          if  (l%skiplayers != 0){
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            continue;
+          }
+        }
         if (l%5 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         if (!setup->IsLayerOn(l,m)){
@@ -1056,6 +1071,12 @@ void MultiCanvas::PlotNoiseAdvWithFits(  std::map<int,TileSpectra> spectra, std:
   // Dual 8M plotting - 2025 TB setup
   } else if (detType ==  DetConf::Type::Dual8M){  
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (skiplayers > 0){
+        if  (l%skiplayers != 0){
+          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          continue;
+        }
+      }
       if (l%5 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
       if (!setup->IsLayerOn(l,-1)){
@@ -1073,6 +1094,12 @@ void MultiCanvas::PlotNoiseAdvWithFits(  std::map<int,TileSpectra> spectra, std:
   // 2x3 8M module plotting - 2026 TB setup
   } else if (detType ==  DetConf::Type::MediumTB){  
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (skiplayers > 0){
+        if  (l%skiplayers != 0){
+          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          continue;
+        }
+      }
       if (l%5 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
       if (!setup->IsLayerOn(l,-1)){
@@ -1102,7 +1129,7 @@ void MultiCanvas::PlotNoiseAdvWithFits(  std::map<int,TileSpectra> spectra, std:
 //_____________________________________________________________________________________________________________
 void MultiCanvas::Plot3SpectraOverlay(  std::map<int,TileSpectra> spectra, std::map<int,TileSpectra> spectraTrigg, std::map<int,TileSpectra> spectraNoise, 
                                          int option, Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
-                                         TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int debug ){
+                                         TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int skiplayers, int debug ){
   
   std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
   Setup* setup = Setup::GetInstance();
@@ -1121,6 +1148,12 @@ void MultiCanvas::Plot3SpectraOverlay(  std::map<int,TileSpectra> spectra, std::
   // Dual 8M plotting - 2025 TB setup
   } else if (detType ==  DetConf::Type::Dual8M){  
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (skiplayers > 0){
+        if  (l%skiplayers != 0){
+          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          continue;
+        }
+      }
       if (l%5 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
       if (!setup->IsLayerOn(l,-1)){
@@ -1138,6 +1171,12 @@ void MultiCanvas::Plot3SpectraOverlay(  std::map<int,TileSpectra> spectra, std::
   // 2x3 8M module plotting - 2026 TB setup
   } else if ( detType == DetConf::Type::MediumTB){
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (skiplayers > 0){
+        if  (l%skiplayers != 0){
+          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          continue;
+        }
+      }
       if (l%5 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
       if (!setup->IsLayerOn(l,-1)){
@@ -1170,7 +1209,7 @@ void MultiCanvas::Plot3SpectraOverlay(  std::map<int,TileSpectra> spectra, std::
 void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option, 
                                     Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
                                     TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, 
-                                    int debug ){
+                                    int skiplayers, int debug ){
   
   std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
   Setup* setup = Setup::GetInstance();
@@ -1178,6 +1217,12 @@ void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option,
   if (detType ==  DetConf::Type::SingleTile){
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (skiplayers > 0){
+          if  (l%skiplayers != 0){
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            continue;
+          }
+        }        
         if (l%5 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         if (!setup->IsLayerOn(l,m)){
@@ -1197,6 +1242,12 @@ void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option,
   } else if (detType ==  DetConf::Type::Single2MH){    
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (skiplayers > 0){
+          if  (l%skiplayers != 0){
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            continue;
+          }
+        }        
         if (l%5 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         if (!setup->IsLayerOn(l,m)){
@@ -1215,6 +1266,12 @@ void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option,
   } else if (detType ==  DetConf::Type::Single8M){
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+        if (skiplayers > 0){
+          if  (l%skiplayers != 0){
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            continue;
+          }
+        }        
         if (l%5 == 0 && l > 0 && debug > 0)
           std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
         if (!setup->IsLayerOn(l,m)){
@@ -1228,7 +1285,13 @@ void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option,
     }
   // Dual 8M plotting - 2025 TB setup
   } else if (detType ==  DetConf::Type::Dual8M){  
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
+      if (skiplayers > 0){
+        if  (l%skiplayers != 0){
+          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          continue;
+        }
+      }
       if (l%5 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
       if (!setup->IsLayerOn(l,-1)){
@@ -1246,6 +1309,12 @@ void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option,
   // 2x3 8M module plotting - 2026 TB setup
   } else if ( detType == DetConf::Type::MediumTB){
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
+      if (skiplayers > 0){
+        if  (l%skiplayers != 0){
+          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          continue;
+        }
+      }      
       if (l%5 == 0 && l > 0 && debug > 0)
         std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
       if (!setup->IsLayerOn(l,-1)){
@@ -1579,14 +1648,18 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
                                  int debug){
   
   
-  std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
+  std::cout << "plotting: " << nameOutputBase.Data() << "\t"<<  namePlot.Data()<< std::endl;
   // std::cout << avMip << "\t" << facLow << "\t" << facHigh << std::endl;
   // std::cout << xPMin << "\t" << xPMax << "\t" << scaleYMax << std::endl;
   
   Double_t minY = 9999;
   Double_t maxY = 0.;
   bool isSameVoltage    = true;
-  double commanVoltage  = 0;
+  double commonVoltage  = 0;
+  bool isSameRun        = true;
+  int commonRun         = 0;
+  bool isSamePart       = true;
+  int commonPart        = 0;
     
   std::map<int, TileTrend>::iterator itrend;
   for(itrend=trend.begin(); itrend!=trend.end(); ++itrend){      
@@ -1647,16 +1720,37 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
     } else if (option == 18){
       if(minY>itrend->second.GetMinHGLGOffset()) minY=itrend->second.GetMinHGLGOffset();
       if(maxY<itrend->second.GetMaxHGLGOffset()) maxY=itrend->second.GetMaxHGLGOffset();          
+    } else if (option == 19){
+      if(minY>itrend->second.GetMinHGped()) minY=itrend->second.GetMinHGped();
+      if(maxY<itrend->second.GetMaxHGped()) maxY=itrend->second.GetMaxHGped();
+      if(minY>itrend->second.GetMinLGped()) minY=itrend->second.GetMinLGped();
+      if(maxY<itrend->second.GetMaxLGped()) maxY=itrend->second.GetMaxLGped();
+    } else if (option == 20){
+      if(minY>itrend->second.GetMinHGpedwidth()) minY=itrend->second.GetMinHGpedwidth();
+      if(maxY<itrend->second.GetMaxHGpedwidth()) maxY=itrend->second.GetMaxHGpedwidth();          
+      if(minY>itrend->second.GetMinLGpedwidth()) minY=itrend->second.GetMinLGpedwidth();
+      if(maxY<itrend->second.GetMaxLGpedwidth()) maxY=itrend->second.GetMaxLGpedwidth();          
     }
   }
   itrend=trend.begin();
   for (int rc = 0; rc < itrend->second.GetNRuns() && rc < 30; rc++ ){
     if (rc == 0){
-      commanVoltage = itrend->second.GetVoltage(rc);
+      commonVoltage = itrend->second.GetVoltage(rc);
+      commonRun     = itrend->second.GetRunNr(rc);
+      commonPart    = itrend->second.GetPdg(rc);
+      std::cout << itrend->second.GetRunNr(rc) << "\t" << isSameRun<< "\t" << itrend->second.GetVoltage(rc) << "\t" << isSameVoltage<< "\t" << itrend->second.GetPdg(rc)<< "\t" << isSamePart << std::endl;
     } else {
-      if (commanVoltage != itrend->second.GetVoltage(rc))  isSameVoltage = false;
+      if (commonVoltage != itrend->second.GetVoltage(rc))  isSameVoltage = false;
+      if (commonRun != itrend->second.GetRunNr(rc))  isSameRun = false;
+      if (commonPart != itrend->second.GetPdg(rc))  isSamePart = false;
+      std::cout << itrend->second.GetRunNr(rc) << "\t" << isSameRun<< "\t" << itrend->second.GetVoltage(rc) << "\t" << isSameVoltage<< "\t" << itrend->second.GetPdg(rc)<< "\t" << isSamePart << std::endl;
     }
   }    
+  
+  int isSame = 0;
+  if (isSameVoltage) isSame++;
+  if (isSameRun) isSame++;
+  if (isSamePart) isSame++;
   
   std::cout << "resetting  range  "  << minY << "\t"<< maxY << std::endl;
 
@@ -1682,9 +1776,9 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
         }
         
         PlotTrending8MLayer(      canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
-                                  trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commanVoltage, l, m,
+                                  trend, option, xPMin,xPMax, minY, maxY, isSame, commonVoltage, l, m,
                                   Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
-                                  Form("%sTrend%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                  Form("%s/Trend%s" ,nameOutputBase.Data(),namePlot.Data()), 
                                   currRunInfo, ExtPlot);        
       }
     }
@@ -1698,9 +1792,9 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
         continue;
       }    
       PlotTrending2ModLayer (canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
-                             trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commanVoltage, l,
+                             trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commonVoltage, l,
                              Form("%s/SingleLayer/%s_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), l, suffix.Data()), 
-                             Form("%sTrend%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                             Form("%s/Trend%s" ,nameOutputBase.Data(),namePlot.Data()), 
                              currRunInfo, ExtPlot);
     }
   // 2x3 8M module plotting - 2026 TB setup
@@ -1713,9 +1807,9 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
         continue;
       }          
       PlotTrendingMediumTBLayer (canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
-                             trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commanVoltage, l,
+                             trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commonVoltage, l,
                              Form("%s/SingleLayer/%s_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), l, suffix.Data()), 
-                             Form("%sTrend%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                             Form("%s/Trend%s" ,nameOutputBase.Data(),namePlot.Data()), 
                              currRunInfo, ExtPlot);
     } 
   // 2x4 8M module plotting - 2028 TB setup
@@ -1727,9 +1821,9 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
     for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
       std::cout << "====> asic " << a << "\t detailed plot option: " << ExtPlot<< std::endl;
       PlotTrendingAsicLFHCal (canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
-                             trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commanVoltage, a,
+                             trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commonVoltage, a,
                              Form("%s/SingleLayer/%s_Asic%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), a, suffix.Data()), 
-                             Form("%sTrend%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                             Form("%s/Trend%s" ,nameOutputBase.Data(),namePlot.Data()), 
                              currRunInfo, ExtPlot);
     }
   }  
@@ -1758,7 +1852,7 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
     std::cout << "resetting max Y range to: " << yMax << std::endl;
   }
 
-  std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
+  std::cout << "plotting: " << nameOutputBase.Data() << "\t" << namePlot.Data() << std::endl;
   Setup* setup = Setup::GetInstance();
   // Single tile plotting
   if (detType ==  DetConf::Type::SingleTile){
@@ -1774,7 +1868,7 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
         PlotRunOverlayProfile1MLayer( canvasMulti, legPlace_X[0], legPlace_X[0]-0.8, legPlace_Y[0], relTextSize[0], textSize,
                                       trend, nrun, option, xPMin,xPMax, yMin, yMax, l, m,
                                       Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
-                                      Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                      Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
                                       currRunInfo, ExtPlot, scaleInt);        
       }
     }
@@ -1791,7 +1885,7 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
         PlotRunOverlayProfile2MLayer( canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                                       trend, nrun, option, xPMin,xPMax, yMin, yMax, l, m,
                                       Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
-                                      Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                      Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
                                       currRunInfo, ExtPlot, scaleInt);        
 
       }
@@ -1813,7 +1907,7 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
         PlotRunOverlayProfile8MLayer( canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                                       trend, nrun, option, xPMin,xPMax, yMin, yMax, l, m,
                                       Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
-                                      Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                      Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
                                       currRunInfo, ExtPlot, scaleInt);        
       }
     }
@@ -1829,7 +1923,7 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
       PlotRunOverlayProfile2ModLayer( canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                                     trend, nrun, option, xPMin,xPMax, yMin, yMax, l,
                                     Form("%s/SingleLayer/%s_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), l, suffix.Data()), 
-                                    Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                    Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
                                     currRunInfo, ExtPlot, scaleInt);        
     }
   // 2x3 8M module plotting - 2026 TB setup
@@ -1844,7 +1938,7 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
       PlotRunOverlayProfileMediumTBLayer( canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                                     trend, nrun, option, xPMin,xPMax, yMin, yMax, l,
                                     Form("%s/SingleLayer/%s_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), l, suffix.Data()), 
-                                    Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                    Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
                                     currRunInfo, ExtPlot, scaleInt);        
     } 
   // 2x4 8M module plotting - 2028 TB setup
@@ -1858,7 +1952,7 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
       PlotRunOverlayProfileAsicLFHCal (canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                              trend, nrun, option, xPMin,xPMax, yMin, yMax, a,
                              Form("%s/SingleLayer/%s_Asic%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), a, suffix.Data()), 
-                             Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                             Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
                              currRunInfo, ExtPlot, scaleInt);
     }
   }  
@@ -1873,8 +1967,7 @@ void MultiCanvas::PlotRunOverlaySpectra(  std::map<int,TileTrend>  trend, int nr
                                  RunInfo currRunInfo, int ExtPlot,
                                  int debug, bool plotMean){
   
-  
-  std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
+  std::cout << "plotting: " << nameOutputBase.Data() << "\t" << namePlot.Data() << std::endl;
   Setup* setup = Setup::GetInstance();
   // Single tile plotting
   if (detType ==  DetConf::Type::SingleTile){
@@ -1890,7 +1983,7 @@ void MultiCanvas::PlotRunOverlaySpectra(  std::map<int,TileTrend>  trend, int nr
         PlotRunOverlay1MLayer (  canvasMulti, legPlace_X[0], legPlace_X[0]-0.8, legPlace_Y[0], relTextSize[0], textSize,
                                  trend, nrun, option, xPMin,xPMax, l, m,
                                  Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
-                                 Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                 Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
                                  currRunInfo, ExtPlot, plotMean);        
       }
     }
@@ -1907,7 +2000,7 @@ void MultiCanvas::PlotRunOverlaySpectra(  std::map<int,TileTrend>  trend, int nr
         PlotRunOverlay2MLayer (  canvasMulti, padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                                  trend, nrun, option, xPMin,xPMax, l, m,
                                  Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
-                                 Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                 Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
                                  currRunInfo, ExtPlot);        
       }
     }
@@ -1927,7 +2020,7 @@ void MultiCanvas::PlotRunOverlaySpectra(  std::map<int,TileTrend>  trend, int nr
         PlotRunOverlay8MLayer (   canvasMulti, padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                                   trend, nrun, option, xPMin,xPMax, l, m,
                                   Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
-                                  Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                  Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
                                   currRunInfo, ExtPlot);
       }
     }
@@ -1943,7 +2036,7 @@ void MultiCanvas::PlotRunOverlaySpectra(  std::map<int,TileTrend>  trend, int nr
       PlotRunOverlay2ModLayer( canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                                 trend, nrun, option, xPMin,xPMax, l,
                                 Form("%s/SingleLayer/%s_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), l, suffix.Data()), 
-                                Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
                                 currRunInfo, ExtPlot);  
     }
   // 2x3 8M module plotting - 2026 TB setup    
@@ -1958,7 +2051,7 @@ void MultiCanvas::PlotRunOverlaySpectra(  std::map<int,TileTrend>  trend, int nr
       PlotRunOverlayMediumTBLayer( canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                                 trend, nrun, option, xPMin,xPMax, l,
                                 Form("%s/SingleLayer/%s_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), l, suffix.Data()), 
-                                Form("%sOverlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
                                 currRunInfo, ExtPlot);  
     } 
   // 2x4 8M module plotting - 2028 TB setup

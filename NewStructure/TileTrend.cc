@@ -8,7 +8,7 @@ ClassImp(TileTrend);
 // Fill functions for the trending objects
 //************************************************************************
 //===============================================================================
-bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt){
+bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt, int pdg,  double hgmaxerr, double lgmaxerr){
   gTrendLGped   .AddPoint     (x,tc.PedestalMeanL);
   gTrendLGped   .SetPointError(gTrendLGped.GetN()-1,0.,tc.PedestalSigL);
   if(tc.PedestalMeanL<MinLGped && tc.PedestalMeanL > -100) MinLGped=tc.PedestalMeanL;
@@ -30,12 +30,18 @@ bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt){
   if(tc.PedestalSigH>MaxHGpedwidth) MaxHGpedwidth=tc.PedestalSigH;
   
   gTrendLGscale .AddPoint     (x,tc.ScaleL       );
-  gTrendLGscale .SetPointError(gTrendLGscale.GetN()-1,0.,tc.ScaleWidthL);
+  if (lgmaxerr > -10000.)
+    gTrendLGscale .SetPointError(gTrendLGscale.GetN()-1,0.,lgmaxerr);
+  else 
+    gTrendLGscale .SetPointError(gTrendLGscale.GetN()-1,0.,tc.ScaleWidthL);
   if(tc.ScaleL<MinLGscale && tc.ScaleL > 0) MinLGscale=tc.ScaleL;
   if(tc.ScaleL>MaxLGscale) MaxLGscale=tc.ScaleL;
   
   gTrendHGscale .AddPoint     (x,tc.ScaleH       );
-  gTrendHGscale .SetPointError(gTrendHGscale.GetN()-1,0.,tc.ScaleWidthH);
+  if (hgmaxerr > -10000.)
+    gTrendHGscale .SetPointError(gTrendHGscale.GetN()-1,0.,hgmaxerr);
+  else 
+    gTrendHGscale .SetPointError(gTrendHGscale.GetN()-1,0.,tc.ScaleWidthH);
   if(tc.ScaleH<MinHGscale  && tc.ScaleH > 0) MinHGscale=tc.ScaleH;
   if(tc.ScaleH>MaxHGscale) MaxHGscale=tc.ScaleH;
   
@@ -61,6 +67,7 @@ bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt){
   
   voltages.push_back(volt);
   runNrs.push_back(runNr);
+  pdgs.push_back(pdg);
   return true;
 }
 
@@ -96,6 +103,7 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
     }
   }
   if (profLGHG){
+    //std::cout << "setting LG-HG profile " << profLGHG->GetName() << std::endl;
     TProfile temp3 = *profLGHG;
     temp3.SetName(Form("%s_Run%i",profLGHG->GetName(),runNr));
     temp3.SetDirectory(0);
@@ -234,7 +242,6 @@ void TileTrend::FillCorrOffset(double x, double lghgoff, double lghgoff_e, doubl
   if(hglgoff<MinHGLGOff && hglgoff != -10000.) MinHGLGOff  = hglgoff;
   if(hglgoff>MaxHGLGOff && hglgoff != -10000.) MaxHGLGOff  = hglgoff;  
 }
-
 
 //************************************************************************
 // Getter functions for individual run histograms
