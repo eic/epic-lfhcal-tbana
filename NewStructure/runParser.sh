@@ -1,24 +1,24 @@
 #/bin/bash
 
 function ParseRun(){
-  ./ParseCalibSamples -i $1 -d 1 -I -m ../configs/FOCalTest2026/mapping_injectionTest.txt -o testingPlots/calibout_$2.root -r /home/fbock/EIC/Software/epic-LFHCalTB/configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv -n $2 #-p testingPlots/Run$2
+  ./ParseCalibSamples -i $1 -d 1 -I -m ../configs/FOCalTest2026/mapping_injectionTest.txt -o testingPlots/calibout_$2.root -r /home/fbock/EIC/Software/epic-LFHCalTB/configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv -n $2 -p testingPlots/Run$2
 
 }
 
 mainPath=/media/fbock/ALICE2-4TB/202604_PST10/Calibrations/FOCalTests/
 
-run=1
-filePath=$mainPath/FOCALTests-DefSettingsShihai-ORNL04-05/test_wo_detector/302_ToTCalib_Target400/205_Injection_Low/205_Injection_20260424_165941/205_Injection_asic4_injdac250_mg7_pack8_chn76
-ParseRun $filePath $run
+# run=1
+# filePath=$mainPath/FOCALTests-DefSettingsShihai-ORNL04-05/test_wo_detector/302_ToTCalib_Target400/205_Injection_Low/205_Injection_20260424_165941/205_Injection_asic4_injdac250_mg7_pack8_chn76
+# ParseRun $filePath $run
 
-run=2
-filePath=$mainPath/FOCALTests-DefSettingsShihai-ORNL04-05/test_wo_detector/302_ToTCalib_Target400/205_Injection_Low/205_Injection_20260424_153821/205_Injection_asic4_injdac100_mg7_pack8_chn76
-ParseRun $filePath $run
+# run=2
+# filePath=$mainPath/FOCALTests-DefSettingsShihai-ORNL04-05/test_wo_detector/302_ToTCalib_Target400/205_Injection_Low/205_Injection_20260424_153821/205_Injection_asic4_injdac100_mg7_pack8_chn76
+# ParseRun $filePath $run
 
 
-run=3
-filePath=$mainPath/FOCALTests-DefSettingsShihai-ORNL04-05/test_wo_detector/302_ToTCalib_Target400/205_Injection_Low/205_Injection_20260424_153054/205_Injection_asic4_injdac400_mg7_pack8_chn76
-ParseRun $filePath $run
+# run=3
+# filePath=$mainPath/FOCALTests-DefSettingsShihai-ORNL04-05/test_wo_detector/302_ToTCalib_Target400/205_Injection_Low/205_Injection_20260424_153054/205_Injection_asic4_injdac400_mg7_pack8_chn76
+# ParseRun $filePath $run
 
 # mainPath=/media/fbock/Lennard4TB/202604_PST10/Calibrations/modifiedInjections
 # run=4
@@ -116,10 +116,10 @@ ParseRun $filePath $run
 # filePath=$mainPath/FOCALTests-settings_9_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_153858/205_Injection_asic4_injdac250_mg7_pack8_chn76
 # ParseRun $filePath $run
 
-mainPath=/media/fbock/ALICE2-4TB/202604_PST10/Calibrations/FOCalTests/
+mainPath=/media/fbock/ALICE2-4TB/202604_PST10/Calibrations/
 run=35
-filePath=$mainPath/FOCALTests-settings_9_7_9_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_151010/205_Injection_asic4_injdac400_mg7_pack8_chn76
+filePath=$mainPath/FoCalTests072026/Rf_3_Cf_8_cfc_1_cc_5/fpga0_405_InjectionY_Low/405_InjectionY_asic0-2_injdac550_mg7_pack8_chn76
 ParseRun $filePath $run
-run=36
-filePath=$mainPath/FOCALTests-settings_9_7_9_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_150316/205_Injection_asic4_injdac250_mg7_pack8_chn76
-ParseRun $filePath $run
+# run=36
+# filePath=$mainPath/FOCALTests-settings_9_7_9_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_150316/205_Injection_asic4_injdac250_mg7_pack8_chn76
+# ParseRun $filePath $run

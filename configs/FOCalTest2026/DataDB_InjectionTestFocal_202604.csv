@@ -38,5 +38,4 @@ beam-line injection
 32,injection,0,38.3,7,0,1,0,4,7,7,5,1,0,250,FOCALTests-settings_7_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260426_112639/205_Injection_asic4_injdac250_mg7_pack8_chn76,
 33,injection,0,38.3,7,0,1,0,4,9,7,5,1,1,400,FOCALTests-settings_9_7_5_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_154622/205_Injection_asic4_injdac400_mg7_pack8_chn76,
 34,injection,0,38.3,7,0,1,0,4,9,7,5,1,0,250,FOCALTests-settings_9_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_153858/205_Injection_asic4_injdac250_mg7_pack8_chn76,
-35,injection,0,38.3,7,0,1,0,4,9,7,9,1,1,400,FOCALTests-settings_9_7_9_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_151010/205_Injection_asic4_injdac400_mg7_pack8_chn76,
-36,injection,0,38.3,7,0,1,0,4,9,7,9,1,0,250,FOCALTests-settings_9_7_9_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_150316/205_Injection_asic4_injdac250_mg7_pack8_chn76,
+35,injection,0,38.3,7,0,1,0,4,3,8,5,1,1,550,FoCalTests072026/Rf_3_Cf_8_cfc_1_cc_5/fpga0_405_InjectionY_Low/405_InjectionY_asic0-2_injdac550_mg7_pack8_chn76_val0.csv

@@ -410,17 +410,22 @@ bool CalibSampleParser::ParseInjectionCalibX(){
     std::getline( calibSampleCsvTOA, lineTOA ); // skip first line 
     std::getline( calibSampleCsvTOT, lineTOT ); // skip first line 
     
+    std::cout << lineADC.data() << std::endl;
+    int optRead = 0;
+    if (!lineADC.starts_with("#"))
+      optRead = 1;
+    std::cout << "File format: " << optRead << std::endl;
+    
     while (std::getline( calibSampleCsvADC, lineADC )){
+      
+      // read adc values
       std::stringstream sADC(lineADC);
       std::string tokenADC;
       std::vector<std::string> tokensADC;
       while(std::getline(sADC,tokenADC,',')){
         tokensADC.push_back(tokenADC); // tokens[0] - channelNr, remaining token single ADC values
       }
-      int channel = std::stoi(tokensADC[0]);
-      int asic = 0; 
-      std::cout << channel << "\t" << tokensADC.size() << "\t nr. sample*phase max: "<< (it->second.samples+1)*16 << std::endl;
-      
+      // read toa values
       std::getline( calibSampleCsvTOA, lineTOA );
       std::stringstream sTOA(lineTOA);
       std::string tokenTOA;
@@ -428,8 +433,7 @@ bool CalibSampleParser::ParseInjectionCalibX(){
       while(std::getline(sTOA,tokenTOA,',')){
         tokensTOA.push_back(tokenTOA); // tokens[0] - channelNr, remaining token single ADC values
       }
-      int channelToA = std::stoi(tokensTOA[0]);
-      
+      // read tot values
       std::getline( calibSampleCsvTOT, lineTOT );
       std::stringstream sTOT(lineTOT);
       std::string tokenTOT;
@@ -437,7 +441,50 @@ bool CalibSampleParser::ParseInjectionCalibX(){
       while(std::getline(sTOT,tokenTOT,',')){
         tokensTOT.push_back(tokenTOT); // tokens[0] - channelNr, remaining token single ADC values
       }
-      int channelToT = std::stoi(tokensTOT[0]);
+      
+      int channel     = 0;
+      int channelToA  = 0;
+      int channelToT  = 0;
+      int asic        = 0; 
+      if (optRead == 0){
+        channel = std::stoi(tokensADC[0]);
+        asic = 0; 
+        std::cout << channel << "\t" << tokensADC.size() << "\t nr. sample*phase max: "<< (it->second.samples+1)*16 << std::endl;
+        channelToA = std::stoi(tokensTOA[0]);
+        channelToT = std::stoi(tokensTOT[0]);
+      } else {
+        std::stringstream sCADC(tokensADC[0]);
+        std::string cADC;
+        std::vector<std::string> cADCs;
+        while(std::getline(sCADC,cADC,'_')){
+          cADCs.push_back(cADC); //
+        }
+        cADCs[0].replace(0,4,""); //"asic"
+        cADCs[1].replace(0,3,""); //"raw"
+        cADCs[2].replace(0,5,""); //"valid"
+        channel = std::stoi(cADCs[1]);
+        asic    = std::stoi(cADCs[0]);
+        std::stringstream sCTOA(tokensTOA[0]);
+        std::string cTOA;
+        std::vector<std::string> cTOAs;
+        while(std::getline(sCTOA,cTOA,'_')){
+          cTOAs.push_back(cTOA); //
+        }
+        cTOAs[0].replace(0,4,""); //"asic"
+        cTOAs[1].replace(0,3,""); //"raw"
+        cTOAs[2].replace(0,5,""); //"valid"
+        channelToA = std::stoi(cTOAs[1]);
+        std::stringstream sCTOT(tokensTOT[0]);
+        std::string cTOT;
+        std::vector<std::string> cTOTs;
+        while(std::getline(sCTOT,cTOT,'_')){
+          cTOTs.push_back(cTOT); //
+        }
+        cTOTs[0].replace(0,4,""); //"asic"
+        cTOTs[1].replace(0,3,""); //"raw"
+        cTOTs[2].replace(0,5,""); //"valid"
+        channelToT = std::stoi(cTOTs[1]);
+      }
       
       if ((int)channel != channelToA || (int)channel != channelToT ){
         std::cout << "something went really wrong" << std::endl;
@@ -450,11 +497,17 @@ bool CalibSampleParser::ParseInjectionCalibX(){
       if (temp_channel2 == 0){
         std::cout << "skipping 0" << std::endl;
         continue;
+      } else if (temp_channel2 == 19){
+        std::cout << "skipping 19" << std::endl;
+        continue;
       } else if (temp_channel2 == 37){
         std::cout << "skipping 37" << std::endl;
         continue;
       } else if (temp_channel2 == 38){
         std::cout << "skipping 38" << std::endl;
+        continue;
+      } else if (temp_channel2 == 57){
+        std::cout << "skipping 57" << std::endl;
         continue;
       } else if (temp_channel2 == 75){
         std::cout << "skipping 75" << std::endl;
@@ -464,11 +517,15 @@ bool CalibSampleParser::ParseInjectionCalibX(){
       
       channel = channel%76;
       
-      if (temp_channel2 < 37)
+      if (temp_channel2 < 19)
+        channel--;
+      if (temp_channel2 < 37 && temp_channel2 > 19)
         channel--;
       if (temp_channel2 >  37)
         channel--;
-      if (temp_channel2 >  38 && temp_channel2 < 75)
+      if (temp_channel2 >  38 && temp_channel2 < 57)
+        channel--;
+      if (temp_channel2 >  57 && temp_channel2 < 75)
         channel--;
       
       std::cout << "org: "<<  temp_channel2 << "\tchannel mod: " <<  channel << "\t" << asic  <<std::endl;
