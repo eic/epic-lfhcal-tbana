@@ -297,6 +297,12 @@ bool Analyses::Process(void){
   if(ApplyTransferCalib){
     status=TransferCalib();
   }
+
+  // copy existing calibration to other file
+  if(ReextractLGHGCorr){
+    status=ReevaluateLGHGCorr();
+  }
+  
   
   if (IsVisualizeWaveform){
     status=VisualizeWaveform();
@@ -1808,10 +1814,11 @@ bool Analyses::TransferCalib(void){
         h2DWaveFormHalfAsicAll[ro][h]->SetDirectory(0);
       }
     }
-  }
+  } 
   
   RootOutputHist->mkdir("IndividualCells");
   if(typeRO == ReadOut::Type::Hgcroc) RootOutputHist->mkdir("IndividualCellsTrigg");
+  if(typeRO == ReadOut::Type::Caen) RootOutputHist->mkdir("IndividualCellsRejected");
   RootOutputHist->cd("IndividualCells");
   
   ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2", "Migrad");  
@@ -1823,6 +1830,19 @@ bool Analyses::TransferCalib(void){
     std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
   }
   
+  if (EventCleanup == 1){
+    std::cout << "==============================================================================" << std::endl;
+    std::cout << "==============================================================================" << std::endl;
+    if (calib.GetAverageScaleHigh() != -10000 ){
+      std::cout << "resetting rejection thresholds with average HG Scale" << std::endl;
+      cleanupLGTh   =  ((calib.GetAverageScaleHigh()-calib.GetAverageLGHGCorrOff())/calib.GetAverageLGHGCorr() )* 2.5;
+      cleanupHGTh   =  calib.GetAverageScaleHigh()*1.5;
+    }
+    std::cout << "Thresholds for rejections: \t LG: " << cleanupLGTh << "\t HG: " << cleanupHGTh << std::endl;
+    std::cout << "==============================================================================" << std::endl;
+    std::cout << "==============================================================================" << std::endl;
+  }
+  
   //==================================================================================
   // setup waveform builder for HGCROC data
   //==================================================================================
@@ -1832,7 +1852,7 @@ bool Analyses::TransferCalib(void){
   int nCellsAboveTOA  = 0;
   int nCellsAboveMADC = 0;
   double totADCs      = 0.;
-
+  int rejectedEvents  = 0;
   //==================================================================================
   // process events from tree:
   // - fill spectra plots for cross checking
@@ -1848,6 +1868,15 @@ bool Analyses::TransferCalib(void){
     }
     TdataIn->GetEntry(i);
    
+    bool bREvent = false;
+    if (EventCleanup == 1){
+      if (!event.CheckEventIntegrity(calib, cleanupLGTh, cleanupHGTh)){
+        rejectedEvents++;
+        bREvent = true;
+        // continue;
+      }
+    }
+    
     // initialize counters per event
     nCellsAboveTOA  = 0;
     nCellsAboveMADC = 0;
@@ -1861,17 +1890,29 @@ bool Analyses::TransferCalib(void){
       //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       if (typeRO == ReadOut::Type::Caen) {
         Caen* aTile=(Caen*)event.GetTile(j);
-        ithSpectra=hSpectra.find(aTile->GetCellID());
+        ithSpectra      = hSpectra.find(aTile->GetCellID());
+        ithSpectraTrigg = hSpectraTrigg.find(aTile->GetCellID());
         double hgCorr = aTile->GetADCHigh()-calib.GetPedestalMeanH(aTile->GetCellID());
         double lgCorr = aTile->GetADCLow()-calib.GetPedestalMeanL(aTile->GetCellID());
         // fill spectra histos
-        if(ithSpectra!=hSpectra.end()){
-          ithSpectra->second.FillExtCAEN(lgCorr,hgCorr, 0., 0.);
+        if (!bREvent){
+          if(ithSpectra!=hSpectra.end()){
+            ithSpectra->second.FillExtCAEN(lgCorr,hgCorr, 0., 0.);
+          } else {
+            RootOutputHist->cd("IndividualCells");
+            hSpectra[aTile->GetCellID()]=TileSpectra("All",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectra[aTile->GetCellID()].FillExtCAEN(lgCorr,hgCorr, 0., 0.);
+            RootOutput->cd();
+          }
         } else {
-          RootOutputHist->cd("IndividualCells");
-          hSpectra[aTile->GetCellID()]=TileSpectra("All",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
-          hSpectra[aTile->GetCellID()].FillExtCAEN(lgCorr,hgCorr, 0., 0.);
-          RootOutput->cd();
+          if(ithSpectraTrigg!=hSpectraTrigg.end()){
+            ithSpectraTrigg->second.FillExtCAEN(lgCorr,hgCorr, 0., 0.);
+          } else {
+            RootOutputHist->cd("IndividualCellsRejected");
+            hSpectraTrigg[aTile->GetCellID()]=TileSpectra("Rejected",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectraTrigg[aTile->GetCellID()].FillExtCAEN(lgCorr,hgCorr, 0., 0.);
+            RootOutput->cd();
+          }
         }
       //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
       // histo filling for HGCROC specific things & resetting of ped
@@ -1987,12 +2028,19 @@ bool Analyses::TransferCalib(void){
     }
     RootOutput->cd();
     // fill tree
-    TdataOut->Fill();
+    if (!bREvent) TdataOut->Fill();
   }
   // write tree
   TdataOut->Write();
   TsetupIn->CloneTree()->Write();
 
+  if (EventCleanup == 1){
+    std::cout << "****************************************************************************************************"<< std::endl; 
+    std::cout << "****************************************************************************************************"<< std::endl; 
+    std::cout << rejectedEvents<< "\t/" << maxEvents  << " rejected CAEN events due to corrupted data for single channels!"<< std::endl; 
+    std::cout << "****************************************************************************************************"<< std::endl; 
+    std::cout << "****************************************************************************************************"<< std::endl; 
+  }
   //==================================================================================
   // Setup general plotting infos
   //==================================================================================  
@@ -2138,6 +2186,11 @@ bool Analyses::TransferCalib(void){
     for(ithSpectraTrigg=hSpectraTrigg.begin(); ithSpectraTrigg!=hSpectraTrigg.end(); ++ithSpectraTrigg){
       ithSpectraTrigg->second.WriteExt(true);
     }
+  } else if (EventCleanup) {
+    RootOutputHist->cd("IndividualCellsRejected");
+    for(ithSpectraTrigg=hSpectraTrigg.begin(); ithSpectraTrigg!=hSpectraTrigg.end(); ++ithSpectraTrigg){
+      ithSpectraTrigg->second.WriteExt(true);
+    }
   }
   // close root histo output file
   RootOutputHist->Close();
@@ -2197,6 +2250,10 @@ bool Analyses::TransferCalib(void){
     if (typeRO == ReadOut::Type::Caen) {
       panelPlot2D.PlotCorr2DLayer(hSpectra, 0, -20, 340, 0, 4000,
                                   Form("%s/LGHG2D_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer );
+      if (EventCleanup) 
+        panelPlot2D.PlotCorr2DLayer(hSpectraTrigg, 0, -20, 340, 0, 4000,
+                                    Form("%s/LGHG2DRejected_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer );
+      
     } else {
       panelPlot2D.PlotCorr2DLayer(hSpectra, 1, 0, it->second.samples+1, 0, 1000,
                                   Form("%s/Waveform",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer );
@@ -2216,6 +2273,353 @@ bool Analyses::TransferCalib(void){
   
   return true;
 } // end Analyses::TransferCalib()
+
+
+// ****************************************************************************
+// Reevaluate LGHG Corr for CAEN data
+// ****************************************************************************
+bool Analyses::ReevaluateLGHGCorr(void){
+  std::cout<<"Reevaluate LG-HG corr for CAEN data"<<std::endl;
+  int evts=TdataIn->GetEntries();
+
+  // initialize lookup-table run list
+  std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
+  std::map<int,TileSpectra> hSpectra;
+  std::map<int, TileSpectra>::iterator ithSpectra;
+  // Find detector config
+  DetConf::Type detConf = setup->GetDetectorConfig();
+  
+  // initialize calib
+  TcalibIn->GetEntry(0);
+  // check whether calib should be overwritten based on external text file
+  if (OverWriteCalib){
+    calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
+  }
+  std::map<int,short> bcmap;
+  std::map<int,short>::iterator bcmapIte;
+  if (CalcBadChannel == 1)
+    bcmap = ReadExternalBadChannelMap();
+  
+  // intialize run infos & reset calib object to correct run number
+  TdataIn->GetEntry(0);     // use first event to get infos
+  int runNr             = event.GetRunNumber();
+  ReadOut::Type typeRO  = event.GetROtype();
+  std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+  calib.SetRunNumber(runNr);
+  calib.SetBeginRunTime(event.GetBeginRunTimeAlt());
+  std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+  std::map<int,RunInfo>::iterator it=ri.find(runNr);
+
+  if (typeRO !=  ReadOut::Type::Caen){
+    std::cout << "This function is not applicable for the given readout type, aborting ReevaluateLGHGCorr" << std::endl;
+  }
+  
+  std::cout << "*****************************************************************" << std::endl;
+  std::cout << "******************** Original calib *****************************" << std::endl;
+  std::cout << "*****************************************************************" << std::endl;
+  calib.PrintDetailedGlobalInfo();
+  std::cout << "*****************************************************************" << std::endl;
+  double avHGLGCorrOrg   = calib.GetAverageHGLGCorr();
+  double avHGLGOffCorrOrg= calib.GetAverageHGLGCorrOff();
+  double avLGHGCorrOrg   = calib.GetAverageLGHGCorr();
+  double avLGHGOffCorrOrg= calib.GetAverageLGHGCorrOff();
+    
+  //==================================================================================
+  // create additional output hist 
+  //==================================================================================
+  CreateOutputRootHistFile();
+
+  RootOutputHist->mkdir("IndividualCells");
+  RootOutputHist->cd("IndividualCells");
+  
+  ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2", "Migrad");  
+  if (maxEvents == -1){
+    maxEvents = evts;
+  } else {
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+    std::cout << "ATTENTION: YOU ARE RESETTING THE MAXIMUM NUMBER OF EVENTS TO BE PROCESSED TO: " << maxEvents << ". THIS SHOULD ONLY BE USED FOR TESTING!" << std::endl;
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+  }
+  
+  if (EventCleanup == 1){
+    std::cout << "==============================================================================" << std::endl;
+    std::cout << "==============================================================================" << std::endl;
+    if (calib.GetAverageScaleHigh() != -10000 ){
+      std::cout << "resetting rejection thresholds with average HG Scale" << std::endl;
+      cleanupLGTh   =  ((calib.GetAverageScaleHigh()-calib.GetAverageLGHGCorrOff())/calib.GetAverageLGHGCorr() )* 2.5;
+      cleanupHGTh   =  calib.GetAverageScaleHigh()*1.5;
+    }
+    std::cout << "Thresholds for rejections: \t LG: " << cleanupLGTh << "\t HG: " << cleanupHGTh << std::endl;
+    std::cout << "==============================================================================" << std::endl;
+    std::cout << "==============================================================================" << std::endl;
+  }
+  int rejectedEvents  = 0;
+
+  
+  //==================================================================================
+  // process events from tree:
+  // - fill spectra plots for cross checking
+  //==================================================================================
+  for(int i=0; i<evts && i < maxEvents ; i++){
+    if (i%5000 == 0&& i > 0 && debug > 0) std::cout << "Reading " <<  i << "/" << evts << " events"<< std::endl;
+    if (debug > 2 && typeRO == ReadOut::Type::Hgcroc){
+      std::cout << "************************************* NEW EVENT " << i << "  *********************************" << std::endl;
+    }
+    TdataIn->GetEntry(i);
+   
+    bool bREvent = false;
+    if (EventCleanup == 1){
+      if (!event.CheckEventIntegrity(calib, cleanupLGTh, cleanupHGTh)){
+        rejectedEvents++;
+        bREvent = true;
+        continue;
+      }
+    }
+
+    
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // process tiles in event
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    for(int j=0; j<event.GetNTiles(); j++){
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // histo filling for CAEN specific things
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      Caen* aTile=(Caen*)event.GetTile(j);
+      ithSpectra=hSpectra.find(aTile->GetCellID());
+      double hgCorr = aTile->GetADCHigh()-calib.GetPedestalMeanH(aTile->GetCellID());
+      double lgCorr = aTile->GetADCLow()-calib.GetPedestalMeanL(aTile->GetCellID());
+      // fill spectra histos
+      if(ithSpectra!=hSpectra.end()){
+        ithSpectra->second.FillExtCAEN(lgCorr,hgCorr, 0., 0.);
+      } else {
+        RootOutputHist->cd("IndividualCells");
+        hSpectra[aTile->GetCellID()]=TileSpectra("All",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+        hSpectra[aTile->GetCellID()].FillExtCAEN(lgCorr,hgCorr, 0., 0.);
+        RootOutput->cd();
+      }
+    }
+    RootOutput->cd();
+    // fill tree
+    if (!bREvent) TdataOut->Fill();
+  }
+  // write tree
+  TdataOut->Write();
+  TsetupIn->CloneTree()->Write();
+
+  if (EventCleanup == 1){
+    std::cout << "****************************************************************************************************"<< std::endl; 
+    std::cout << "****************************************************************************************************"<< std::endl; 
+    std::cout << rejectedEvents<< "\t/" << maxEvents  << " rejected CAEN events due to corrupted data for single channels!"<< std::endl; 
+    std::cout << "****************************************************************************************************"<< std::endl; 
+    std::cout << "****************************************************************************************************"<< std::endl; 
+  }
+  
+  //==================================================================================
+  // Setup general plotting infos
+  //==================================================================================  
+  TString outputDirPlots = GetPlotOutputDir();
+  Double_t textSizeRel = 0.035;
+
+  if (CalcBadChannel > 0 || ExtPlot > 0) {
+    gSystem->Exec("mkdir -p "+outputDirPlots);
+    StyleSettingsBasics("pdf");
+    SetPlotStyle();  
+  }
+  int maxChannelPerLayer             = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
+  int maxChannelPerLayerSingleMod    = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
+  
+  //==================================================================================
+  // Application of external bad channel map
+  //==================================================================================
+  if (CalcBadChannel == 1 ){
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+    // Create monitoring histos for BC extraction
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+
+    // monitoring applied pedestals
+    TH1D* hBCvsCellID      = new TH1D( "hBC_vsCellID","Bad Channel vs CellID ; cell ID; BC flag ",
+                                              setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5);
+    hBCvsCellID->SetDirectory(0);
+    TH2D* hBCVsLayer   = new TH2D( "hBCVsLayer","Bad Channel Map; layer; brd channel; BC flag  ",
+                                              setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
+    hBCVsLayer->SetDirectory(0);
+
+    int currCells = 0;
+    if ( debug > 0 && CalcBadChannel == 1)
+      std::cout << "============================== setting bad channel according to external map" << std::endl;
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+    // evaluate each tile spectrum & set BC flag
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+    for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
+      if (currCells%20 == 0 && currCells > 0 && debug > 0)
+        std::cout << "============================== cell " <<  currCells << " / " << hSpectra.size() << " cells" << std::endl;
+      currCells++;
+      short bc   = 3;
+      if ( bcmap.size() > 0 ) {
+        bcmapIte  = bcmap.find(ithSpectra->second.GetCellID());
+        if(bcmapIte!=bcmap.end())
+          bc        = bcmapIte->second;
+        else 
+          bc        = 3;
+      } 
+      
+      long cellID   = ithSpectra->second.GetCellID();
+      ithSpectra->second.SetBadChannelInCalib(bc);
+      
+      // initializing pedestal fits from calib file
+      ithSpectra->second.InitializeNoiseFitsFromCalib();
+      
+      // histo filling
+      int layer     = setup->GetLayer(cellID);
+      int chInLayer = setup->GetChannelInLayerFull(cellID,detConf);
+      if (debug > 0 && bc > -1 && bc < 3)
+        std::cout << "\t" << cellID << "\t" << layer << "\t" << setup->GetRow(cellID) << "\t" << setup->GetColumn(cellID)<< "\t" << setup->GetModule(cellID) << " - quality flag: " << bc << "\t" << calib.GetBadChannel(cellID) << "\t ped H: " << calib.GetPedestalMeanH(cellID) << "\t ped L: " << calib.GetPedestalMeanL(cellID)<< std::endl;
+
+      hBCvsCellID->SetBinContent(hBCvsCellID->FindBin(cellID), calib.GetBadChannel(cellID));
+      int bin2D     = hBCVsLayer->FindBin(layer,chInLayer);
+      hBCVsLayer->SetBinContent(bin2D, calib.GetBadChannel(cellID));
+    }
+    
+    hBCvsCellID->Write();
+    hBCVsLayer->Write();
+
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+    // Create canvases for channel overview plotting
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+    // Get run info object
+    // create directory for plot output
+  
+    TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
+    DefaultCanvasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
+
+    canvas2DCorr->SetLogz(0);
+    
+    PlotSimple2DZRange( canvas2DCorr, hBCVsLayer, -10000, -10000, -0.1, 3.1, textSizeRel, Form("%s/BadChannelMap.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, "colz", true);    
+    calib.SetBCCalib(true);
+  }
+
+  //==================================================================================
+  // Reevaluation of LG-HG and HG-LG factors
+  //==================================================================================
+  TH2D* hLGHGCorrVsLayer = new TH2D( "hLGHGCorrVsLayer","LG-HG corr; layer; brd channel; a_{LG-HG} (arb. units) ",
+                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
+  hLGHGCorrVsLayer->SetDirectory(0);
+  TH2D* hLGHGCorrRatioVsLayer = new TH2D( "hLGHGCorrRatioVsLayer","LG-HG corr old/new; layer; brd channel; a_{LG-HG} (arb. units) ",
+                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
+  hLGHGCorrRatioVsLayer->SetDirectory(0);
+  TH2D* hLGHGCorrOffsetVsLayer = new TH2D( "hLGHGCorrOffsetVsLayer","LG-HG corr offset; layer; brd channel; b_{LG-HG} (arb. units) ",
+                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
+  hLGHGCorrOffsetVsLayer->SetDirectory(0);
+  TH2D* hLGHGCorrOffsetRatioVsLayer = new TH2D( "hLGHGCorrOffsetRatioVsLayer","LG-HG corr offset old/new; layer; brd channel; b_{LG-HG} (arb. units) ",
+                                            setup->GetNMaxLayer()+1, -0.5, setup->GetNMaxLayer()+1-0.5, maxChannelPerLayer, -0.5, maxChannelPerLayer-0.5);
+  hLGHGCorrOffsetRatioVsLayer->SetDirectory(0);
+  
+  int currCells = 0;
+  for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
+    if (currCells%20 == 0 && currCells > 0 && debug > 0)
+      std::cout << "============================== cell " <<  currCells << " / " << hSpectra.size() << " cells" << std::endl;
+    currCells++;
+    long cellID   = ithSpectra->second.GetCellID();
+    
+    // histo filling
+    int layer     = setup->GetLayer(cellID);
+    int chInLayer = setup->GetChannelInLayerFull(cellID,detConf);
+    int bin2D     = hLGHGCorrVsLayer->FindBin(layer,chInLayer);
+
+    double lghgcorrB    = calib.GetLGHGCorr(cellID);
+    double lghgcorrOffB = calib.GetLGHGCorrOff(cellID);
+    
+    // fitting LG-HG, HG-LG
+    bool isGood=ithSpectra->second.FitLGHGCorr(debug,true);
+    double lghgcorrA    = calib.GetLGHGCorr(cellID);
+    double lghgcorrOffA = calib.GetLGHGCorrOff(cellID);
+    
+    // fill histos
+    if (ithSpectra->second.GetCorrModel(0)){
+      double ratiolghgcorr    = lghgcorrB/lghgcorrA;
+      double ratiolghgcorrOff = lghgcorrOffB/lghgcorrOffA;
+      hLGHGCorrVsLayer->SetBinContent(bin2D,ithSpectra->second.GetCorrModel(0)->GetParameter(1));
+      hLGHGCorrVsLayer->SetBinError(bin2D,ithSpectra->second.GetCorrModel(0)->GetParError(1));
+      hLGHGCorrOffsetVsLayer->SetBinContent(bin2D,ithSpectra->second.GetCorrModel(0)->GetParameter(0));
+      hLGHGCorrOffsetVsLayer->SetBinError(bin2D,ithSpectra->second.GetCorrModel(0)->GetParError(0));
+      hLGHGCorrRatioVsLayer->SetBinContent(bin2D,ratiolghgcorr);
+      hLGHGCorrOffsetRatioVsLayer->SetBinContent(bin2D,ratiolghgcorrOff);      
+    }
+  }
+  
+  std::cout << "*****************************************************************" << std::endl;
+  std::cout << "******************** Modified calib *****************************" << std::endl;
+  std::cout << "*****************************************************************" << std::endl;
+  calib.PrintDetailedGlobalInfo();
+  std::cout << "*****************************************************************" << std::endl;
+  
+  
+  //==================================================================================
+  // write calib output to root-tree output file
+  //==================================================================================  
+  RootOutput->cd();
+  // print calib file to text file
+  std::cout<<"What is the value? <ped mean high>: "<<calib.GetAveragePedestalMeanHigh() << "\t good channels: " << calib.GetNumberOfChannelsWithBCflag(3) <<std::endl;
+  if (IsCalibSaveToFile()){
+    TString fileCalibPrint = RootOutputName;
+    fileCalibPrint         = fileCalibPrint.ReplaceAll(".root","_calib.txt");
+    calib.PrintCalibToFile(fileCalibPrint);
+  }
+  // write calib output to 
+  TcalibOut->Fill();
+  TcalibOut->Write();
+  // close file
+  RootOutput->Close();
+
+  //==================================================================================
+  // write histo output to file as cross check
+  //==================================================================================    
+  RootOutputHist->cd();
+    hLGHGCorrVsLayer->Write();
+    hLGHGCorrOffsetVsLayer->Write();
+    hLGHGCorrRatioVsLayer->Write();
+    hLGHGCorrOffsetRatioVsLayer->Write();
+  // save individual cell spectra
+  RootOutputHist->cd("IndividualCells");
+  for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
+    ithSpectra->second.WriteExt(true);
+  }
+  // close root histo output file
+  RootOutputHist->Close();
+  // close root input file
+  RootInput->Close();
+  
+  //==================================================================================
+  // Create plots in case extended plotting is enabled for waveforms
+  //==================================================================================
+  if (ExtPlot > 0){
+    double avHGLGCorr   = calib.GetAverageHGLGCorr();
+    double avHGLGOffCorr= calib.GetAverageHGLGCorrOff();
+    double avLGHGCorr   = calib.GetAverageLGHGCorr();
+    double avLGHGOffCorr= calib.GetAverageLGHGCorrOff();
+
+    TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
+    DefaultCanvasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);  
+    canvas2DCorr->SetLogz(0);
+  
+    PlotSimple2D( canvas2DCorr, hLGHGCorrVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_HG_Corr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form( "#LT a_{LGHG} #GT = %.1f", avLGHGCorr));
+    PlotSimple2D( canvas2DCorr, hLGHGCorrOffsetVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_HG_CorrOffset.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kTRUE, "colz", true, Form( "#LT b_{LGHG} #GT = %.1f", avLGHGOffCorr));
+    PlotSimple2D( canvas2DCorr, hLGHGCorrRatioVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_HG_Corr_Ratio.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form( "#LT a_{LGHG} #GT = %.1f", avLGHGCorrOrg/avLGHGCorr));
+    PlotSimple2D( canvas2DCorr, hLGHGCorrOffsetRatioVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_HG_CorrOffset_Ratio.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, Form( "#LT b_{LGHG} #GT = %.1f", avLGHGOffCorrOrg/avLGHGOffCorr));
+    
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+    // Multi panel plotting
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++      
+    MultiCanvas panelPlot2D(detConf, "Transfer2D");
+    bool init2D = panelPlot2D.Initialize(2);
+    
+    panelPlot2D.PlotCorr2DLayer(hSpectra, 0, -20, 340, 0, 4000,
+                                  Form("%s/LGHG2D_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, skipPlotLayer );
+  }
+  
+  return true;
+} // end Analyses::ReevaluateLGHGCorr()
+
 
 // ****************************************************************************
 // Analyse waveform
@@ -4732,6 +5136,21 @@ bool Analyses::Calibrate(void){
   int nLocalNoiseTriggs       = 0;
   int nLocalMuonTriggs        = 0;
   
+  if (EventCleanup == 1){
+    std::cout << "==============================================================================" << std::endl;
+    std::cout << "==============================================================================" << std::endl;
+    if (calib.GetAverageScaleHigh() != -10000 ){
+      std::cout << "resetting rejection thresholds with average HG Scale" << std::endl;
+      cleanupLGTh   =  ((calib.GetAverageScaleHigh()-calib.GetAverageLGHGCorrOff())/calib.GetAverageLGHGCorr() )* 2.5;
+      cleanupHGTh   =  calib.GetAverageScaleHigh()*1.5;
+    }
+    std::cout << "Thresholds for rejections: \t LG: " << cleanupLGTh << "\t HG: " << cleanupHGTh << std::endl;
+    std::cout << "==============================================================================" << std::endl;
+    std::cout << "==============================================================================" << std::endl;
+  }
+  int rejectedEvents  = 0;
+
+  
   //==================================================================================
   // setup waveform builder for HGCROC data
   //==================================================================================
@@ -4748,6 +5167,15 @@ bool Analyses::Calibrate(void){
     TdataIn->GetEntry(i);
     if (i%outCount == 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
     
+    bool bREvent = false;
+    if (EventCleanup == 1){
+      if (!event.CheckEventIntegrity(calib, cleanupLGTh, cleanupHGTh)){
+        rejectedEvents++;
+        bREvent = true;
+        continue;
+      }
+    }
+
     double Etot         = 0;
     int nCells          = 0;
     int nCellsST        = 0;    // Ncells single tile equivalent
@@ -5046,8 +5474,17 @@ bool Analyses::Calibrate(void){
     hspectraEnergyTotvsNCellsNoNoise->Fill(nCellsNoNoise,EtotNoNoise);
     hspectraEnergyTotvsNCellsST->Fill(nCellsST,Etot);
     RootOutput->cd();
-    TdataOut->Fill();
+    if (!bREvent) TdataOut->Fill();
   }
+  
+  if (EventCleanup == 1){
+    std::cout << "****************************************************************************************************"<< std::endl; 
+    std::cout << "****************************************************************************************************"<< std::endl; 
+    std::cout << rejectedEvents<< "\t/" << maxEvents  << " rejected CAEN events due to corrupted data for single channels!"<< std::endl; 
+    std::cout << "****************************************************************************************************"<< std::endl; 
+    std::cout << "****************************************************************************************************"<< std::endl; 
+  }
+
 
   std::cout << "=======================================================" << std::endl;
   std::cout << "Total events processed " << maxEvents << std::endl;
@@ -5229,15 +5666,15 @@ bool Analyses::Calibrate(void){
                           Form("%s/Spectra_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
 
     if (typeRO == ReadOut::Type::Caen) {
-      if(nLocalNoiseTriggs > 1) panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 1, -50, 100, 1.2, 
+      if(nLocalNoiseTriggs > 1 && ExtPlot > 2) panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 1, -50, 100, 1.2, 
                                                               Form("%s/NoiseTrigg_HG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
-      if(nLocalNoiseTriggs > 1) panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 0, -50, 100, 1.2, 
+      if(nLocalNoiseTriggs > 1 && ExtPlot > 2) panelPlot.PlotNoiseAdvWithFits(hSpectra, hSpectraNoise, 0, -50, 100, 1.2, 
                                                               Form("%s/NoiseTrigg_LG" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
       panelPlot.PlotSpectra( hSpectra, 2, -2, 100, 1.2, 
                             Form("%s/Spectra_Comb" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
-      panelPlot2D.PlotCorrWithFits( hSpectra, 0, -20, 800, 0., 50.,
+      if (ExtPlot > 1) panelPlot2D.PlotCorrWithFits( hSpectra, 0, -20, 800, 0., 50.,
                                     Form("%s/LGHG_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
-      panelPlot2D.PlotCorrWithFits( hSpectra, 2, -20, 800, 0., 50.,
+      if (ExtPlot > 1) panelPlot2D.PlotCorrWithFits( hSpectra, 2, -20, 800, 0., 50.,
                                     Form("%s/LGLGhgeq_Corr",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, skipPlotLayer);
       
     } else if (typeRO == ReadOut::Type::Hgcroc) {

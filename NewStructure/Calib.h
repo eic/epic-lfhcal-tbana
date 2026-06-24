@@ -133,6 +133,7 @@ class Calib{
   void SetBCCalib(bool);            // Bad channel map calculated
 
   void PrintGlobalInfo();
+  void PrintDetailedGlobalInfo();
   void PrintCalibToFile( TString );
   void ReadCalibFromTextFile( TString, int);
   void ReadExternalBadChannelMap(TString, int);

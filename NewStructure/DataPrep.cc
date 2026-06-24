@@ -35,6 +35,7 @@ void PrintHelp(char* exe){
   std::cout<<"-c ccc   overwriting min cut off for calibrated data filtering. Experts only!"<<std::endl;
   std::cout<<"-C yyy   Apply calibrations stored in yyy root file to the input uncalibrated file"<<std::endl;
   std::cout<<"-d [0-n] switch on debug info with debug level 0 to n"<<std::endl;
+  std::cout<<"-D       switch on event rejection due to data corruption"<<std::endl;
   std::cout<<"-e       extended plotting = 1"<<std::endl;
   std::cout<<"-E [1-3] extended plotting set to whatever value you specify"<<std::endl;
   std::cout<<"-f       Force to write output if already exist"<<std::endl;
@@ -43,6 +44,7 @@ void PrintHelp(char* exe){
   std::cout<<"-G GGG   use external ToA phase calib from GGG file "<<std::endl;
   std::cout<<"-i uuu   Input file in root format"<<std::endl;
   std::cout<<"-k kkk   enabling overwriting of calib file using external calib txt file"<<std::endl;
+  std::cout<<"-K KKK   enable reextraction of LG-HG parameters from given file and write to output"<<std::endl;
   std::cout<<"-l [0-n] skip plotting of single layers except multiples of defined number"<<std::endl;
   std::cout<<"-L LLL   enable testing with only limited number of events"<<std::endl;
   std::cout<<"-m mmm   Name of mapping file  2024 PS TB [../configs/mappingFile_202409_CAEN.txt] "<<std::endl;
@@ -80,7 +82,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"aA:bB:c:C:d:eE:fF:g:G:hi:k:l:L:m:MnNo:O:pP:r:R:sStT:uwXy:"))!=-1){
+  while((c=getopt(argc,argv,"aA:bB:c:C:d:DeE:fF:g:G:hi:k:K:l:L:m:MnNo:O:pP:r:R:sStT:uwXy:"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"DataPrep: printing calib object to file"<<std::endl;
@@ -112,6 +114,10 @@ int main(int argc, char* argv[]){
     case 'd':
       std::cout<<"DataPrep: enable debug " << optarg <<std::endl;
       AnAnalysis.EnableDebug(atoi(optarg));
+      break;
+    case 'D':
+      std::cout<<"DataPrep: enable event rejection due to data corruption" <<std::endl;
+      AnAnalysis.SetCleanupEvents(1);
       break;
     case 'e':
       std::cout<<"DataPrep: enabling extended plotting"<<std::endl;
@@ -146,6 +152,11 @@ int main(int argc, char* argv[]){
       std::cout<<"DataPrep: enable overwrite from external text file: "<< optarg <<std::endl;
       AnAnalysis.SetExternalCalibFile(optarg);
       AnAnalysis.SetOverWriteCalib(true);
+      break;
+    case 'K':
+      std::cout<<"DataPrep: enable reextraction of LG-HG corr: "<< optarg <<std::endl;
+      AnAnalysis.IsToReextractLGHGCorr(true);
+      AnAnalysis.SetRootPedestalInput(Form("%s",optarg));
       break;
     case 'l':
       std::cout<<"DataPrep: SetSkipLayer plotting processed:"<<optarg<<std::endl;

@@ -1,10 +1,10 @@
 #! /bin/bash
 
 PlotBaseDir=..
+runNrFile='../configs/TB2024/DataTakingDB_202409_CAEN.csv'
 
 function MuonCalib()
 {
-  runNrFile='../configs/TB2024/DataTakingDB_202409_CAEN.csv'
   echo "=================================================================================="
   echo "option $1"
   echo "run Nr Pedestal: $2"
@@ -342,8 +342,6 @@ if [ $2 == "muoncalibF" ] ; then
   MuonCalib $3 $pedScanF1_41V muonScanF_41V $dataDirRaw $dataDirOut muonScanF_41V $badChannelMap $skipLayer
 fi
 
-
-
 # 101.7K events
 muonScanG_46V='508 510 511 525'
 pedScanG_46V='521'
@@ -353,6 +351,40 @@ if [ $2 == "muoncalibAll" ] || [ $2 == "muoncalibG" ] || [ $2 == "muoncalib46V" 
 fi
 
 
+if [ $2 == "ReextractLGHG" ]; then 
+  runNr=''
+  calibFile=''
+  if [ $3 = "FullSetA" ]; then
+    runNr='269'
+    calibFile=$dataDirOut/calib_muonScanA1_45V_V2.root
+  elif [ $3 = "FullSetA_2" ]; then
+    runNr='275'
+    calibFile=$dataDirOut/calib_muonScanA1_45V_V2.root
+  elif [ $3 = "FullSetB" ]; then
+    runNr='357'
+    calibFile=$dataDirOut/calib_muonScanB1_42V_V2.root
+  elif [ $3 = "FullSetC" ]; then
+    runNr='394'
+    calibFile=$dataDirOut/calib_muonScanC2_43_5V_V2.root
+  elif [ $3 = "FullSetD" ]; then
+    runNr='441'
+    calibFile=''
+  elif [ $3 = "FullSetH" ]; then
+    runNr='545'
+    calibFile=''
+  elif [ $3 = "MiniSetE" ]; then
+    runNr='472'
+    calibFile=$dataDirOut/calib_muonScanE1_40V_V2.root
+  elif [ $3 = "MiniSetF" ]; then
+    runNr='504'
+    calibFile=$dataDirOut/calib_muonScanF_41V_V2.root
+  elif [ $3 = "MiniSetG" ]; then
+    runNr='520'
+    calibFile=''
+  fi
+
+  time ./DataPrep -d 1 -a -e -D -f -K $calibFile -i $dataDirRaw/raw_$runNr.root -o $dataDirOut/rawCalibReExtractedLGHG_$runNr.root -B $badChannelMap -O $PlotBaseDir/CAEN_ReextractLGHG_2024/Run_$runNr -r $runNrFile -l $4
+fi
 
 if [ $2 == "reducemuons" ]; then
   runs='261 264 265 269 270 272 274 275 ' 

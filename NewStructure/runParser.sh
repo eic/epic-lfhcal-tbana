@@ -5,7 +5,7 @@ function ParseRun(){
 
 }
 
-mainPath=/media/fbock/Lennard4TB/202604_PST10/Calibrations
+mainPath=/media/fbock/ALICE2-4TB/202604_PST10/Calibrations/FOCalTests/
 
 run=1
 filePath=$mainPath/FOCALTests-DefSettingsShihai-ORNL04-05/test_wo_detector/302_ToTCalib_Target400/205_Injection_Low/205_Injection_20260424_165941/205_Injection_asic4_injdac250_mg7_pack8_chn76
@@ -115,3 +115,11 @@ ParseRun $filePath $run
 # run=34
 # filePath=$mainPath/FOCALTests-settings_9_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_153858/205_Injection_asic4_injdac250_mg7_pack8_chn76
 # ParseRun $filePath $run
+
+mainPath=/media/fbock/ALICE2-4TB/202604_PST10/Calibrations/FOCalTests/
+run=35
+filePath=$mainPath/FOCALTests-settings_9_7_9_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_151010/205_Injection_asic4_injdac400_mg7_pack8_chn76
+ParseRun $filePath $run
+run=36
+filePath=$mainPath/FOCALTests-settings_9_7_9_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_150316/205_Injection_asic4_injdac250_mg7_pack8_chn76
+ParseRun $filePath $run

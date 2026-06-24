@@ -87,6 +87,8 @@ class Analyses{
   inline void IsToExtractScalingImproved(bool b) {ExtractScalingImproved=b;};
   inline void IsHGCROC(bool b)                   {HGCROC=b;};
   inline void IsToReextractNoise(bool b)         {ReextractNoise=b;};
+  inline void IsToReextractLGHGCorr(bool b)      {ReextractLGHGCorr=b;};
+  
   inline void IsToSaveNoiseOnly(bool b)          {SaveNoiseOnly = b;};
   inline void IsToSaveMipsOnly(bool b)           {SaveMipsOnly = b;};
   inline void IsToEvalLocalTrigg(bool b)         {EvalLocalTriggers = b;};
@@ -98,6 +100,7 @@ class Analyses{
   inline void SetOverWriteCalib(bool b)          {OverWriteCalib = b;};
   inline void SetOverWriteSetup(bool b)          {OverWriteSetup = b;};
   inline void SetExtPlotting(short b)            {ExtPlot = b;};
+  inline void SetCleanupEvents(short b)          {EventCleanup = b;};
   inline void EnableDebug(int i)                 {debug=i;};
   inline void SetHGCROCTruncation(bool b)        {truncateHGCROC = b;};
   
@@ -157,6 +160,7 @@ class Analyses{
   bool ExtractScaling         =false;     // Flag for mip scaling extraction
   bool ExtractScalingImproved =false;     // Flag for mip scaling extraction 2nd pass
   bool ReextractNoise         =false;     // Flag to enable noise trigger extraction and alternative pass for pedestals
+  bool ReextractLGHGCorr      =false;     // Flag to enable reevaluation of LG-HG extraction 
   bool ExtractToAPhase        =false;     // Flag to enable the ToA Phase extraction
   bool ApplyTransferCalib     =false;     // Flag for application of pedestals
   bool IsVisualizeWaveform    =false;     // Flag for routine with waveform visualization
@@ -178,6 +182,9 @@ class Analyses{
   int skipPlotLayer           = 0;        // allow for skipping layers
   int yearData                =-1;        // data taking year externally set
   bool truncateHGCROC         =false;     // flag to enable the truncation of the HGCROC data to 8 bit (masking the 2 least significant bits)
+  short EventCleanup          = 0;        // flag to reject events due to messed up signals in single channels
+  double cleanupLGTh          = 20;
+  double cleanupHGTh          = 150;
   double minMipFrac           = 0.3;
   double minFracTriggThre     = 3.;
   
@@ -206,6 +213,7 @@ class Analyses{
   bool GetPedestal(void);
   bool EvaluateHGCROCToAPhases(void);
   bool TransferCalib(void);
+  bool ReevaluateLGHGCorr(void);
   bool VisualizeWaveform(void);
   bool GetScaling(void);
   bool GetImprovedScaling(void);
@@ -217,6 +225,7 @@ class Analyses{
   bool SaveCalibToOutputOnly(void);
   bool SkimHGCROCData(void);
   bool OverWriteSetupTree(void);
+  
 
   std::map<int,short> ReadExternalBadChannelMap(void);
  };

@@ -329,3 +329,18 @@ double Event::CalculateLocalMuonTrigg(  Calib calib,
   return avsurr;
 }
 
+bool Event::CheckEventIntegrity( Calib calib, double thLG, double thHG){
+  if (GetROtype() == ReadOut::Type::Caen){
+    for(int j=0; j<GetNTiles(); j++){
+      long cellID = TileIDs.at(j);
+      if ((((Caen*)GetTileFromID(cellID))->GetADCLow() - calib.GetPedestalMeanL(cellID) > thLG)  && 
+          (((Caen*)GetTileFromID(cellID))->GetADCHigh() - calib.GetPedestalMeanL(cellID) < thHG)  ){
+          return false;
+      }
+    }
+    return true;
+  } else {
+    return true;
+  }
+  return true;
+}

@@ -78,15 +78,26 @@ double Calib::GetCalcScaleLow(int cellID) const {
   std::map<int, TileCalib>::const_iterator it= CaloCalib.find(cellID);
   if(it!=CaloCalib.end()){
     if (it->second.ScaleH != -1000 && it->second.LGHGCorr != -64  && (BCcalc && it->second.BadChannel > 1)){
-      return it->second.ScaleH/it->second.LGHGCorr;
+      return (it->second.ScaleH)/it->second.LGHGCorr;
     } else if ( it->second.LGHGCorr != -64  && (BCcalc && it->second.BadChannel > 1)){
-      return GetAverageScaleHigh()/it->second.LGHGCorr;
+      return (GetAverageScaleHigh())/it->second.LGHGCorr;
     } else if (it->second.ScaleH != -1000 && (BCcalc && it->second.BadChannel > 1)){
-      return it->second.ScaleH/GetAverageLGHGCorr();
+      return (it->second.ScaleH)/GetAverageLGHGCorr();
     } else {
-      return GetAverageScaleHigh()/GetAverageLGHGCorr();
+      return (GetAverageScaleHigh())/GetAverageLGHGCorr();
     }
   }
+  // if(it!=CaloCalib.end()){
+  //   if (it->second.ScaleH != -1000 && it->second.LGHGCorr != -64  && (BCcalc && it->second.BadChannel > 1)){
+  //     return (it->second.ScaleH - it->second.LGHGCorrOff)/it->second.LGHGCorr;
+  //   } else if ( it->second.LGHGCorr != -64  && (BCcalc && it->second.BadChannel > 1)){
+  //     return (GetAverageScaleHigh() - it->second.LGHGCorrOff)/it->second.LGHGCorr;
+  //   } else if (it->second.ScaleH != -1000 && (BCcalc && it->second.BadChannel > 1)){
+  //     return (it->second.ScaleH - GetAverageLGHGCorrOff())/GetAverageLGHGCorr();
+  //   } else {
+  //     return (GetAverageScaleHigh()- GetAverageLGHGCorrOff())/GetAverageLGHGCorr();
+  //   }
+  // }
   else return -1.;
 }
 
@@ -307,7 +318,10 @@ double Calib::GetAverageScaleHigh( )const{
       avSc += it->second.ScaleH;
     }
   }
-  return avSc/(CaloCalib.size()-notCalib);
+  double avScaleR = -10000;
+  if (avSc != 0. && (CaloCalib.size()-notCalib) != 0)
+    avScaleR      = avSc/(CaloCalib.size()-notCalib);
+  return avScaleR;
 }
 
 
@@ -323,7 +337,10 @@ double Calib::GetAverageScaleHigh(int &active )const{
     }
   }
   active=(CaloCalib.size()-notCalib);
-  return avSc/(CaloCalib.size()-notCalib);
+  double avScaleR = -10000;
+  if (avSc != 0. && active > 0)
+    avScaleR      = avSc/active;
+  return avScaleR;
 }
 
 double Calib::GetAverageScaleHighPerSingleLayer( )const{
@@ -338,7 +355,11 @@ double Calib::GetAverageScaleHighPerSingleLayer( )const{
       avSc += it->second.ScaleH/setup->GetLayersInSegment(it->first);
     }
   }
-  return avSc/(CaloCalib.size()-notCalib);
+  int active = (CaloCalib.size()-notCalib);
+  double avScaleR = -10000;
+  if (avSc != 0. && active > 0)
+    avScaleR      = avSc/active;
+  return avScaleR;
 }
 
 
@@ -357,12 +378,15 @@ double Calib::GetAverageScaleHighPerSingleLayer(int &active, double &avTilesPerL
     }
   }
   active=(CaloCalib.size()-notCalib);
-  avTilesPerLayer=avTilesPerLayer/active;
-  return avSc/(CaloCalib.size()-notCalib);
+  double avScaleR = -10000;
+  if (avSc != 0. && active > 0){
+    avScaleR      = avSc/active;
+    avTilesPerLayer=avTilesPerLayer/active;
+  } else {
+    avTilesPerLayer= -10000;
+  }
+  return avScaleR;
 }
-
-
-
 
 double Calib::GetAverageScaleWidthHigh()const{
   double avSc = 0;
@@ -375,7 +399,11 @@ double Calib::GetAverageScaleWidthHigh()const{
       avSc += it->second.ScaleWidthH;
     }
   }
-  return avSc/(CaloCalib.size()-notCalib);
+  int active = (CaloCalib.size()-notCalib);
+  double avScaleR = -10000;
+  if (avSc != 0. && active > 0)
+    avScaleR      = avSc/active;
+  return avScaleR;
 }
 
 double Calib::GetAverageScaleLow()const{
@@ -389,7 +417,11 @@ double Calib::GetAverageScaleLow()const{
       avSc += it->second.ScaleL;
     }
   }
-  return avSc/(CaloCalib.size()-notCalib);
+  int active = (CaloCalib.size()-notCalib);
+  double avScaleR = -10000;
+  if (avSc != 0. && active > 0)
+    avScaleR      = avSc/active;
+  return avScaleR;
 }
 double Calib::GetAverageScaleWidthLow()const{
   double avSc = 0;
@@ -402,7 +434,11 @@ double Calib::GetAverageScaleWidthLow()const{
       avSc += it->second.ScaleWidthL;
     }
   }
-  return avSc/(CaloCalib.size()-notCalib);
+  int active = (CaloCalib.size()-notCalib);
+  double avScaleR = -10000;
+  if (avSc != 0. && active > 0)
+    avScaleR      = avSc/active;
+  return avScaleR;
 }
 
 double Calib::GetAverageLGHGCorr()const{
@@ -838,6 +874,19 @@ void Calib::PrintGlobalInfo(){
             << "\n\t RunNr mip: " << GetRunNumberMip() << "\t start time:" << GetBeginRunTimeMip() 
             << "\n\t Vop: " << GetVop() << "\t Vov: "<< GetVov() << "\t BC calib set: " << GetBCCalib() << std::endl;  
   std::cout << "\n\t mean Scale: " <<     GetAverageScaleHigh() << std::endl;      
+  std::cout << "********************************************************************************************************" << std::endl;
+}
+
+void Calib::PrintDetailedGlobalInfo(){
+  std::cout << "********************************************************************************************************" << std::endl;
+  std::cout << "Calib info:\n \t RunNr: " << GetRunNumber() << "\t start time:" << GetBeginRunTime() 
+            << "\n\t RunNr ped: " << GetRunNumberPed() << "\t start time:" << GetBeginRunTimePed() 
+            << "\n\t RunNr mip: " << GetRunNumberMip() << "\t start time:" << GetBeginRunTimeMip() 
+            << "\n\t Vop: " << GetVop() << "\t Vov: "<< GetVov() << "\t BC calib set: " << GetBCCalib() 
+            << "\n\t mean HG Scale: " <<     GetAverageScaleHigh() << "\t width\t" <<  GetAverageScaleWidthHigh() 
+            << "\n\t mean LG Scale: " <<     GetAverageScaleLow() << "\t width\t" <<  GetAverageScaleWidthLow() 
+            << "\n\t mean LG-HG a: " <<     GetAverageLGHGCorr() << "\t b\t" <<  GetAverageLGHGCorrOff() 
+            << "\n\t mean HG-LG a: " <<     GetAverageHGLGCorr() << "\t b\t" <<  GetAverageHGLGCorrOff() << std::endl;      
   std::cout << "********************************************************************************************************" << std::endl;
 }
 

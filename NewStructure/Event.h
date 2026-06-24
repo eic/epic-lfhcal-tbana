@@ -53,7 +53,8 @@ class Event{
   bool    InspectIfLocalMuonTrigg(int, double, double, double);
   bool    InspectIfNoiseTrigg(int, double, double);
   double  CalculateLocalMuonTrigg(Calib, TRandom3*, int, int, double);
-
+  bool CheckEventIntegrity( Calib calib, double thLG = 20, double thHG = 150);
+  
  private:
 
   double                BeamEnergy;
