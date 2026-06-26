@@ -60,6 +60,9 @@ if [ $2 = "pedestal" ]; then
     runs='188' #pedestals
   elif [ $3 = "HadronScan" ]; then
     runs='207' #pedestals
+  elif [ $3 = "ParamScan" ]; then
+#     runs='294 296 299 301 303 305 307 309 328 330 332 334 336 338 340 342 344 346 348 350 352 354 356 358 360 362 364 367' #pedestals
+    runs='328' #pedestals
   fi
   for runNr in $runs; do 
     printf -v runNrPed "%03d" "$runNr"
@@ -125,12 +128,13 @@ if [ $2 == "calibMuon" ]; then
     runPed='372'
     runs='Muon_FullSetE_1'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetB.csv'
-  
-  
   elif [ $4 = "HVScan" ]; then
     runPed='188'
     runs='194 195 196 197 198 199 200 201 202'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetB.csv'
+  elif [ $4 = "ParamScan" ]; then
+    runPed='294'
+    runs='295'
   else 
     echo "No run selected, exiting..."
     exit
@@ -138,9 +142,29 @@ if [ $2 == "calibMuon" ]; then
 
   badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_dummy.txt
 
+  if [ $4 = "ParamScan" ]; then
+#     badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_OnlyCenter4x6.txt
+    badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_OnlyCenter2x4.txt
+  fi
+  
   for runNr in $runs; do
     echo "$runNr   $runPed"
     MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset 	
   done
 fi
 
+if [ $2 == "calibMuonParScan" ]; then
+  badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_OnlyCenter2x4.txt
+#   toaPhaseOffset=../configs/TB2026/ToAOffsets_TBSPS2026_ParamScan_1.csv
+#   runPeds=( 294 296 299 301 303 305 307 309 )
+#   runMuons=( 295 298 300 302 304 306 308 310 )
+  toaPhaseOffset=../configs/TB2026/ToAOffsets_TBSPS2026_ParamScan_2.csv
+  runPeds=( 328 330 332 334 336 338 340 342 344 346 348 350 352 354 356 358 360 362 364 367 )
+  runMuons=( 329 331 333 335 337 339 341 343 345 347 349 351 353 355 357 359 361 363 366 369 )
+  for idx in "${!runPeds[@]}"; do
+    runPed=${runPeds[$idx]}
+    runMuon=${runMuons[$idx]}
+    MuonCalibHGCROC $3 $runPed $runMuon $dataDirRaw $dataDirOut Run_$runMuon $badChannelMap $toaPhaseOffset 	
+  done
+
+fi

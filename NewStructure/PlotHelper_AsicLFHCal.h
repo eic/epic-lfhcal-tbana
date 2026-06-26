@@ -85,6 +85,7 @@
         tempProfile     = ithSpectra->second.GetWave1D();
         temp2D          = ithSpectra->second.GetCorr();          
       }
+      TH1D* dummyhist = nullptr;
       if (!temp2D && (option < 4)) continue;
       if (temp2D){
         SetStyleHistoTH2ForGraphs( temp2D, temp2D->GetXaxis()->GetTitle(), temp2D->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
@@ -105,8 +106,8 @@
         if (!tempProfile) continue;
         gStyle->SetOptDate(0);   //show day and time
         gStyle->SetOptStat(0);  //show statistic
-
-        TH1D* dummyhist = new TH1D(Form("dummyhist_%d",ch ), "", tempProfile->GetNbinsX(), tempProfile->GetXaxis()->GetXmin(), tempProfile->GetXaxis()->GetXmax());
+        
+        dummyhist = new TH1D(Form("dummyhist_%d",ch ), "", tempProfile->GetNbinsX(), tempProfile->GetXaxis()->GetXmin(), tempProfile->GetXaxis()->GetXmax());
         SetStyleHistoTH1ForGraphs( dummyhist, tempProfile->GetXaxis()->GetTitle(), tempProfile->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
         dummyhist->GetXaxis()->SetRangeUser(xMin,xMax);
         dummyhist->GetYaxis()->SetRangeUser(minY,maxY);

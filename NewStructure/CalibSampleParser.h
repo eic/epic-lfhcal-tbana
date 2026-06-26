@@ -42,6 +42,7 @@ class CalibSampleParser{
         inline void SetInputCalibFile(TString name)     {calibInputFile=name;};
         inline void SetPlottingSuffix(TString name)     {suffix=name;};
         inline void SetCalibXInjection()                {optParse=2;}
+        inline void SetCalibXDACInjection()             {optParse=3;}
 
         // general methods
         bool CheckAndOpenIO(void);
@@ -88,9 +89,12 @@ class CalibSampleParser{
     private:
         bool Parse();
         bool ParseInjectionCalibX();
+        bool ParseInjectionDACCalibX();
         bool ProcessAndPlotWaveforms();
+        bool ProcessAndPlotWaveformsDAC();
         bool ParsePedestalCalib();
         bool ParseTOA();
+        
 
         bool IsCalibChannel(int channel){
             for(int i=0; i < calibChannelsSet.size(); i++){

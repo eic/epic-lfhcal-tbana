@@ -29,6 +29,7 @@ void PrintHelp(char* exe){
   std::cout<<exe<<" [-option (arguments)]"<<std::endl;
   std::cout<<"Options:"<<std::endl;
   std::cout<<"-d [0-n]  switch on debug info with debug level 0 to n"<<std::endl;
+  std::cout<<"-D        switch on the calibX dac injection parsing" <<std::endl;
   std::cout<<"-i uuu    path to the input file: either .csv or config file with .json files for pedestal calib (mandatory)"<<std::endl;
   std::cout<<"-t        switch on the ToA calib file parser (required .csv file)" <<std::endl;
   std::cout<<"-I        switch on the calibX injection parsing" <<std::endl;
@@ -63,11 +64,15 @@ int main(int argc, char* argv[]){
 
   CalibSampleParser calibParser;
   int c;
-  while( (c=getopt(argc,argv,"d:i:It:m:r:n:p:s:o:c:h:"))!=-1){
+  while( (c=getopt(argc,argv,"d:Di:It:m:r:n:p:s:o:c:h:"))!=-1){
     switch(c){
       case 'd':
           std::cout << "Enable debug " << optarg << std::endl;
           calibParser.EnableDebug( atoi(optarg) );
+          break;
+      case 'D':          
+          std::cout << "Switching on CalibX Injectin for DAC values parser " << std::endl;
+          calibParser.SetCalibXDACInjection();
           break;
       case 'i':
           std::cout << "Input file set to: " << optarg << std::endl;

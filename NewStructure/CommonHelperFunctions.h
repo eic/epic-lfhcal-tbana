@@ -453,6 +453,7 @@
       label = Form("%sCF_{comp}=%.1ffF",label.Data() , ReturnCFCompValue(currRunInfo.cfcomp));
     return label;
   }
+  
   inline TString GetLabelHGCROCSettingsRFCC(RunInfo currRunInfo){
     TString label = "";
     if (currRunInfo.rf > -1)
@@ -460,6 +461,15 @@
     if (currRunInfo.cc > -1)
       label = Form("%sCC=%.3f",label.Data() , ReturnCCValue(currRunInfo.cc));
     return label;
+  }
+  
+  inline double GetInjectionfCEquivalent(double dac, int range){
+    if (range == 0){
+      return dac*500./4095;  //maximum injected charge 500fC, max dac = 4095
+    } else if (range == 1){
+      return dac*8000./4095;  //maximum injected charge 8000fC, max dac = 4095
+    }
+    return -1;
   }
   
   // // Function to generate the CRC-32 lookup table at runtime (or compile time with C++11 constexpr)
