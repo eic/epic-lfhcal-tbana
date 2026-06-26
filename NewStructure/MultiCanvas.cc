@@ -1730,6 +1730,27 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
       if(maxY<itrend->second.GetMaxHGpedwidth()) maxY=itrend->second.GetMaxHGpedwidth();          
       if(minY>itrend->second.GetMinLGpedwidth()) minY=itrend->second.GetMinLGpedwidth();
       if(maxY<itrend->second.GetMaxLGpedwidth()) maxY=itrend->second.GetMaxLGpedwidth();          
+    } else if (option == 30){
+      if(minY>itrend->second.GetMinADCmax()) minY=itrend->second.GetMinADCmax();
+      if(maxY<itrend->second.GetMaxADCmax()) maxY=itrend->second.GetMaxADCmax();          
+    } else if (option == 31){
+      if(minY>itrend->second.GetMinADCsat()) minY=itrend->second.GetMinADCsat();
+      if(maxY<itrend->second.GetMaxADCsat()) maxY=itrend->second.GetMaxADCsat();          
+    } else if (option == 32){
+      if(minY>itrend->second.GetMinTOT()) minY=itrend->second.GetMinTOT();
+      if(maxY<itrend->second.GetMaxTOT()) maxY=itrend->second.GetMaxTOT();          
+    } else if (option == 33){
+      if(minY>itrend->second.GetMinTOTsat()) minY=itrend->second.GetMinTOTsat();
+      if(maxY<itrend->second.GetMaxTOTsat()) maxY=itrend->second.GetMaxTOTsat();          
+    } else if (option == 34){
+      if(minY>itrend->second.GetMinTOA()) minY=itrend->second.GetMinTOA();
+      if(maxY<itrend->second.GetMaxTOA()) maxY=itrend->second.GetMaxTOA();          
+    } else if (option == 35){ 
+      if(minY>itrend->second.GetMinNSampTOA()) minY=itrend->second.GetMinNSampTOA();
+      if(maxY<itrend->second.GetMaxNSampTOA()) maxY=itrend->second.GetMaxNSampTOA();          
+    } else if (option == 36){
+      if(minY>itrend->second.GetMinNTOA()) minY=itrend->second.GetMinNTOA();
+      if(maxY<itrend->second.GetMaxNTOA()) maxY=itrend->second.GetMaxNTOA();          
     }
   }
   itrend=trend.begin();

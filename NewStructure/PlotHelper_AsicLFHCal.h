@@ -288,6 +288,15 @@
       else if (optionTrend == 16) tempGraph = ithTrend->second.GetLGpedwidth();
       else if (optionTrend == 17) tempGraph = ithTrend->second.GetLGHGOff();
       else if (optionTrend == 18) tempGraph = ithTrend->second.GetHGLGOff();
+      // special mode for injections
+      else if (optionTrend == 30) tempGraph = ithTrend->second.GetADCmax();
+      else if (optionTrend == 31) tempGraph = ithTrend->second.GetADCsat();
+      else if (optionTrend == 32) tempGraph = ithTrend->second.GetTOT();
+      else if (optionTrend == 33) tempGraph = ithTrend->second.GetTOTsat();
+      else if (optionTrend == 34) tempGraph = ithTrend->second.GetTOA();
+      else if (optionTrend == 35) tempGraph = ithTrend->second.GetNSampTOA();
+      else if (optionTrend == 36) tempGraph = ithTrend->second.GetNTOA();
+
       if (!tempGraph) continue;
       TH1D* dummyhist = new TH1D("dummyhist", "", 100, xMin, xMax);
       SetStyleHistoTH1ForGraphs( dummyhist, tempGraph->GetXaxis()->GetTitle(), tempGraph->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  

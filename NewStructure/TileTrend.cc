@@ -178,6 +178,61 @@ bool TileTrend::FillInjection(
   return true;
 }
 
+
+bool  TileTrend::FillInjectionDACVal  ( double x, double ped, double adc, double toa, double tot, 
+                                        int adcSatN, int totSatN, int nTOA, int nSampToA){
+  if (extended != 4 ){
+    std::cout << "This option Filling option isn't implemented for the current extended option" << std::endl;
+    return false;
+  }
+
+  gTrendHGped.AddPoint     (x,ped     );
+  gTrendHGped.SetPointError     (gTrendHGped.GetN()-1,0.,0.);
+  if(ped<MinHGped) MinHGped  = ped;
+  if(ped>MaxHGped) MaxHGped  = ped;
+    
+  gTrendADCMax.AddPoint     (x,adc     );
+  gTrendADCMax.SetPointError     (gTrendADCMax.GetN()-1,0.,0.);
+  if(adc<MinADCmax) MinADCmax  = adc;
+  if(adc>MaxADCmax) MaxADCmax  = adc;
+    
+  gTrendTOA.AddPoint     (x,toa     );
+  gTrendTOA.SetPointError     (gTrendTOA.GetN()-1,0.,0.);
+  if(toa<MinTOA) MinTOA  = toa;
+  if(toa>MaxTOA) MaxTOA  = toa;
+
+  gTrendTOT.AddPoint     (x,tot     );
+  gTrendTOT.SetPointError     (gTrendTOT.GetN()-1,0.,0.);
+  if(tot<MinTOT) MinTOT  = tot;
+  if(tot>MaxTOT) MaxTOT  = tot;
+ 
+  if (MaxTOT > 4095 ) MaxTOT = 4095;
+  
+  
+  gTrendADCSaturated.AddPoint     (x,adcSatN     );
+  gTrendADCSaturated.SetPointError     (gTrendADCSaturated.GetN()-1,0.,0.);
+  if(adcSatN<MinADCsat) MinADCsat  = adcSatN;
+  if(adcSatN>MaxADCsat) MaxADCsat  = adcSatN;
+  
+  
+  gTrendTOTSaturated.AddPoint     (x,totSatN     );
+  gTrendTOTSaturated.SetPointError     (gTrendTOTSaturated.GetN()-1,0.,0.);
+  if(totSatN<MinTOTsat) MinTOTsat  = totSatN;
+  if(totSatN>MaxTOTsat) MaxTOTsat  = totSatN;
+  
+  gTrendNSampTOA.AddPoint     (x,nSampToA     );
+  gTrendNSampTOA.SetPointError     (gTrendNSampTOA.GetN()-1,0.,0.);
+  if(nSampToA<MinNSampTOA) MinNSampTOA  = nSampToA;
+  if(nSampToA>MaxNSampTOA) MaxNSampTOA  = nSampToA;
+  
+  gTrendNTOA.AddPoint     (x,nTOA     );
+  gTrendNTOA.SetPointError     (gTrendNTOA.GetN()-1,0.,0.);
+  if(nTOA<MinNTOA) MinNTOA  = nTOA;
+  if(nTOA>MaxNTOA) MaxNTOA  = nTOA;
+  
+  return true;
+}
+
 //===============================================================================
 void TileTrend::FillMPV(double x, double hgmpv, double ehgmpv, double lgmpv, double elgmpv){
   gTrendHGLMPV.AddPoint     (x,hgmpv     );
@@ -400,6 +455,48 @@ bool TileTrend::DrawLGHGOffset(TString opt){
   return true;
 }
 
+//===============================================================================
+bool TileTrend::DrawADCmax(TString opt){
+  gTrendADCMax.Draw(opt.Data());
+  return true;
+}
+
+//===============================================================================
+bool TileTrend::DrawADCsat(TString opt){
+  gTrendADCSaturated.Draw(opt.Data());
+  return true;
+}
+
+//===============================================================================
+bool TileTrend::DrawTOT(TString opt){
+  gTrendTOT.Draw(opt.Data());
+  return true;
+}
+
+//===============================================================================
+bool TileTrend::DrawTOTsat(TString opt){
+  gTrendTOTSaturated.Draw(opt.Data());
+  return true;
+}
+
+//===============================================================================
+bool TileTrend::DrawTOA(TString opt){
+  gTrendTOA.Draw(opt.Data());
+  return true;
+}
+
+//===============================================================================
+bool TileTrend::DrawNSampTOA(TString opt){
+  gTrendNSampTOA.Draw(opt.Data());
+  return true;
+}
+
+//===============================================================================
+bool TileTrend::DrawNTOA(TString opt){
+  gTrendNTOA.Draw(opt.Data());
+  return true;
+}
+
 //************************************************************************
 // Set Drawing options
 //************************************************************************
@@ -429,9 +526,18 @@ bool TileTrend::SetLineColor(uint col){
       gTrendHGGSigma.SetLineColor(col);
       gTrendLGGSigma.SetLineColor(col);
     }
-  } else {
-    gTrendHGped    .SetLineColor(col);
-    gTrendHGpedwidth.SetLineColor(col);    
+  } else if (extended == 3){
+    gTrendHGped     .SetLineColor(col);
+    gTrendHGpedwidth.SetLineColor(col);
+  } else if (extended == 4){
+    gTrendHGped       .SetLineColor(col);
+    gTrendHGpedwidth  .SetLineColor(col);
+    gTrendADCSaturated.SetLineColor(col);
+    gTrendTOA         .SetLineColor(col);
+    gTrendNSampTOA    .SetLineColor(col);
+    gTrendNTOA        .SetLineColor(col);
+    gTrendTOT         .SetLineColor(col);
+    gTrendTOTSaturated.SetLineColor(col);
   }
   return true;
 }
@@ -461,9 +567,18 @@ bool TileTrend::SetMarkerColor(uint col){
       gTrendHGGSigma.SetMarkerColor(col);
       gTrendLGGSigma.SetMarkerColor(col);
     }
-  } else {
-    gTrendHGped    .SetMarkerColor(col);
-    gTrendHGpedwidth.SetMarkerColor(col);    
+  } else if (extended == 3){
+    gTrendHGped     .SetMarkerColor(col);
+    gTrendHGpedwidth.SetMarkerColor(col);
+  } else if (extended == 4){
+    gTrendHGped       .SetMarkerColor(col);
+    gTrendHGpedwidth  .SetMarkerColor(col);
+    gTrendADCSaturated.SetMarkerColor(col);
+    gTrendTOA         .SetMarkerColor(col);
+    gTrendNSampTOA    .SetMarkerColor(col);
+    gTrendNTOA        .SetMarkerColor(col);
+    gTrendTOT         .SetMarkerColor(col);
+    gTrendTOTSaturated.SetMarkerColor(col);
   }
   return true;
 }
@@ -493,10 +608,19 @@ bool TileTrend::SetMarkerStyle(uint col){
       gTrendHGGSigma.SetMarkerStyle(col);
       gTrendLGGSigma.SetMarkerStyle(col);
     }
-  } else {
-    gTrendHGped    .SetMarkerStyle(col);
-    gTrendHGpedwidth.SetMarkerStyle(col);    
-  }
+  } else if (extended == 3){
+    gTrendHGped     .SetMarkerStyle(col);
+    gTrendHGpedwidth.SetMarkerStyle(col);
+  } else if (extended == 4){
+    gTrendHGped       .SetMarkerStyle(col);
+    gTrendHGpedwidth  .SetMarkerStyle(col);
+    gTrendADCSaturated.SetMarkerStyle(col);
+    gTrendTOA         .SetMarkerStyle(col);
+    gTrendNSampTOA    .SetMarkerStyle(col);
+    gTrendNTOA        .SetMarkerStyle(col);
+    gTrendTOT         .SetMarkerStyle(col);
+    gTrendTOTSaturated.SetMarkerStyle(col);
+  }  
   return true;
 }
 //===============================================================================
@@ -525,9 +649,18 @@ bool TileTrend::SetXAxisTitle(TString title){
       gTrendHGGSigma.GetXaxis()->SetTitle(title.Data());
       gTrendLGGSigma.GetXaxis()->SetTitle(title.Data());
     }
-  } else {
+  } else if (extended == 3){
     gTrendHGped    .GetXaxis()->SetTitle(title.Data());
     gTrendHGpedwidth.GetXaxis()->SetTitle(title.Data());    
+  } else if (extended == 4){
+    gTrendHGped       .GetXaxis()->SetTitle(title.Data());
+    gTrendHGpedwidth  .GetXaxis()->SetTitle(title.Data());    
+    gTrendADCSaturated.GetXaxis()->SetTitle(title.Data());    
+    gTrendTOA         .GetXaxis()->SetTitle(title.Data());    
+    gTrendNSampTOA    .GetXaxis()->SetTitle(title.Data());    
+    gTrendNTOA        .GetXaxis()->SetTitle(title.Data());    
+    gTrendTOT         .GetXaxis()->SetTitle(title.Data());    
+    gTrendTOTSaturated.GetXaxis()->SetTitle(title.Data());    
   }
   return true;
 }
@@ -560,10 +693,19 @@ void TileTrend::Sort(){
       gTrendHGGSigma.Sort();
       gTrendLGGSigma.Sort();
     }
-  } else {
+  } else if (extended == 3){
     gTrendHGped    .Sort();
-    gTrendHGpedwidth.Sort();    
-  }
+    gTrendHGpedwidth.Sort();
+  } else if (extended == 4){
+    gTrendHGped       .Sort();
+    gTrendADCMax      .Sort();
+    gTrendADCSaturated.Sort();
+    gTrendTOA         .Sort();
+    gTrendNSampTOA    .Sort();
+    gTrendNTOA        .Sort();
+    gTrendTOT         .Sort();
+    gTrendTOTSaturated.Sort();
+  } 
   return;  
 }
 
@@ -600,8 +742,66 @@ bool TileTrend::Write(TFile* f){
   if (extended == 3){
     gTrendHGped    .Write();
     gTrendHGpedwidth.Write();
-    
   }
+  if (extended == 4){
+    gTrendHGped       .Write();
+    gTrendHGpedwidth  .Write();
+    gTrendADCMax      .Write();
+    gTrendADCSaturated.Write();
+    gTrendTOA         .Write();
+    gTrendNSampTOA    .Write();
+    gTrendNTOA        .Write();
+    gTrendTOT         .Write();
+    gTrendTOTSaturated.Write();
+  } 
+  
+  return true;
+}
+
+//************************************************************************
+// Write 
+//************************************************************************
+bool TileTrend::Write(){
+  if (extended < 3){
+    gTrendLGped    .Write();
+    gTrendHGped    .Write();
+    gTrendLGpedwidth.Write();
+    gTrendHGpedwidth.Write();
+    gTrendLGscale  .Write();
+    gTrendHGscale  .Write();
+    gTrendHGLGcorr .Write();
+    gTrendLGHGcorr .Write();
+    gTrendHGLGOffset .Write();
+    gTrendLGHGOffset .Write();
+    if (extended == 1 || extended == 2 ){
+      gTrendTrigger .Write();
+      gTrendSBNoise .Write();
+      gTrendSBSignal.Write();
+    }
+    if (extended == 1){
+      gTrendHGLMPV  .Write();
+      gTrendLGLMPV  .Write();
+      gTrendHGLSigma.Write();
+      gTrendLGLSigma.Write();
+      gTrendHGGSigma.Write();
+      gTrendLGGSigma.Write();
+    }
+  }
+  if (extended == 3){
+    gTrendHGped    .Write();
+    gTrendHGpedwidth.Write();
+  }
+  if (extended == 4){
+    gTrendHGped       .Write();
+    gTrendHGpedwidth  .Write();
+    gTrendADCMax      .Write();
+    gTrendADCSaturated.Write();
+    gTrendTOA         .Write();
+    gTrendNSampTOA    .Write();
+    gTrendNTOA        .Write();
+    gTrendTOT         .Write();
+    gTrendTOTSaturated.Write();
+  } 
   
   return true;
 }

@@ -171,6 +171,78 @@ class TileTrend: public TObject{
       gTrendHGped    .SetLineColor(kRed);
       gTrendHGped    .SetMarkerColor(kRed);
       gTrendHGped    .SetMarkerStyle(kFullCircle);      
+      
+      gTrendHGpedwidth  = TGraphErrors();
+      gTrendHGpedwidth  .SetName(Form("TrendHGpedwidthCellID%d",CellID));
+      gTrendHGpedwidth  .GetYaxis()->SetTitle("#sigma_{PED, 0^{th} sample} (arb. units)");
+      gTrendHGpedwidth  .SetLineColor(kRed);
+      gTrendHGpedwidth  .SetMarkerColor(kRed);
+
+    }
+    // mode for injection dac plotting
+    if (ext == 4){
+      gTrendHGped    = TGraphErrors();
+      gTrendHGped    .SetName(Form("TrendHGpedCellID%d",CellID));
+      gTrendHGped    .GetYaxis()->SetTitle("#mu_{PED, 0^{th} sample} (arb. units)");
+      gTrendHGped    .SetLineColor(kRed);
+      gTrendHGped    .SetMarkerColor(kRed);
+      gTrendHGped    .SetMarkerStyle(kFullCircle);      
+
+      gTrendHGpedwidth  = TGraphErrors();
+      gTrendHGpedwidth  .SetName(Form("TrendHGpedwidthCellID%d",CellID));
+      gTrendHGpedwidth  .GetYaxis()->SetTitle("#sigma_{PED, 0^{th} sample} (arb. units)");
+      gTrendHGpedwidth  .SetLineColor(kRed);
+      gTrendHGpedwidth  .SetMarkerColor(kRed);
+
+      gTrendADCMax    = TGraphErrors();
+      gTrendADCMax    .SetName(Form("TrendADCMaxCellID%d",CellID));
+      gTrendADCMax    .GetYaxis()->SetTitle("ADC_{max} (arb. units)");
+      gTrendADCMax    .SetLineColor(kRed);
+      gTrendADCMax    .SetMarkerColor(kRed);
+      gTrendADCMax    .SetMarkerStyle(kFullCircle);      
+  
+      gTrendADCSaturated    = TGraphErrors();
+      gTrendADCSaturated    .SetName(Form("TrendADCSaturatedCellID%d",CellID));
+      gTrendADCSaturated    .GetYaxis()->SetTitle("# samples ADC_{sat}");
+      gTrendADCSaturated    .SetLineColor(kRed);
+      gTrendADCSaturated    .SetMarkerColor(kRed);
+      gTrendADCSaturated    .SetMarkerStyle(kFullCircle);      
+
+      gTrendTOA    = TGraphErrors();
+      gTrendTOA    .SetName(Form("TrendTOACellID%d",CellID));
+      gTrendTOA    .GetYaxis()->SetTitle("TOA (arb. units)");
+      gTrendTOA    .SetLineColor(kRed);
+      gTrendTOA    .SetMarkerColor(kRed);
+      gTrendTOA    .SetMarkerStyle(kFullCircle);      
+
+      gTrendNSampTOA    = TGraphErrors();
+      gTrendNSampTOA    .SetName(Form("TrendNSampleTOACellID%d",CellID));
+      gTrendNSampTOA    .GetYaxis()->SetTitle("# sample TOA fired");
+      gTrendNSampTOA    .SetLineColor(kRed);
+      gTrendNSampTOA    .SetMarkerColor(kRed);
+      gTrendNSampTOA    .SetMarkerStyle(kFullCircle);      
+      
+      gTrendNTOA    = TGraphErrors();
+      gTrendNTOA    .SetName(Form("TrendNTOACellID%d",CellID));
+      gTrendNTOA    .GetYaxis()->SetTitle("# TOA fired");
+      gTrendNTOA    .SetLineColor(kRed);
+      gTrendNTOA    .SetMarkerColor(kRed);
+      gTrendNTOA    .SetMarkerStyle(kFullCircle);      
+
+      gTrendTOT    = TGraphErrors();
+      gTrendTOT    .SetName(Form("TrendTOTCellID%d",CellID));
+      gTrendTOT    .GetYaxis()->SetTitle("TOT (arb. units)");
+      gTrendTOT    .SetLineColor(kRed);
+      gTrendTOT    .SetMarkerColor(kRed);
+      gTrendTOT    .SetMarkerStyle(kFullCircle);      
+      
+      gTrendTOTSaturated    = TGraphErrors();
+      gTrendTOTSaturated    .SetName(Form("TrendTOTSaturatedCellID%d",CellID));
+      gTrendTOTSaturated    .GetYaxis()->SetTitle("# samples TOT_{sat}");
+      gTrendTOTSaturated    .SetLineColor(kRed);
+      gTrendTOTSaturated    .SetMarkerColor(kRed);
+      gTrendTOTSaturated    .SetMarkerStyle(kFullCircle);      
+  
     }
     
   }
@@ -188,6 +260,8 @@ class TileTrend: public TObject{
   bool FillInjection  ( double x, double ped, int runNr, 
                         TProfile* wave, TProfile* toa, TProfile* tot, 
                         double val_rf = -1., double val_cf= -1., double val_cfcomp= -1., double val_cc= -1.);
+
+  bool FillInjectionDACVal  ( double x, double ped, double adc, double toa, double tot, int adcSatN = 0, int totSatN = 0, int nTOA = 0, int nSampToA = 0) ;
   
   
   // Drawing functions for graphs
@@ -210,6 +284,13 @@ class TileTrend: public TObject{
   bool DrawLGGSigma   (TString);
   bool DrawHGLGOffset (TString);
   bool DrawLGHGOffset (TString);
+  bool DrawADCmax     (TString);
+  bool DrawADCsat     (TString);
+  bool DrawTOT        (TString);
+  bool DrawTOTsat     (TString);
+  bool DrawTOA        (TString);
+  bool DrawNSampTOA   (TString);
+  bool DrawNTOA       (TString);
   
   // Set default drawing options for all graphs
   bool SetLineColor   (uint);
@@ -221,7 +302,8 @@ class TileTrend: public TObject{
   void Sort          ();
   // Write graphs to file
   bool Write          (TFile*);
-
+  bool Write          ();
+  
   inline double GetExtOpt()       {return extended;};
 
   // Get minima and maxima for different graphs
@@ -241,6 +323,7 @@ class TileTrend: public TObject{
   inline double GetMaxHGLGcorr()  {return MaxHGLGcorr;};
   inline double GetMinLGHGcorr()  {return MinLGHGcorr;};
   inline double GetMaxLGHGcorr()  {return MaxLGHGcorr;};
+
   
   // Get minima and maxima for different graphs extended graphs
   inline double GetMinTrigg()     {return MinTrigg;};
@@ -267,8 +350,25 @@ class TileTrend: public TObject{
   inline double GetMaxSBNoise()   {return MaxSBNoise;};
   inline double GetMinLGHGOffset(){return MinLGHGOff;};
   inline double GetMaxLGHGOffset(){return MaxLGHGOff;};
-  inline double GetMinHGLGOffset(){return MinHGLGOff;};
   inline double GetMaxHGLGOffset(){return MaxHGLGOff;};
+  inline double GetMinHGLGOffset(){return MinHGLGOff;};
+  
+  
+  // Get minima and maxima for different graphs injection related
+  inline double GetMaxADCmax()    {return MaxADCmax;};
+  inline double GetMaxADCsat()    {return MaxADCsat;};
+  inline double GetMaxTOT()       {return MaxTOT;};
+  inline double GetMaxTOTsat()    {return MaxTOTsat;};
+  inline double GetMaxTOA()       {return MaxTOA;};
+  inline double GetMaxNSampTOA()  {return MaxNSampTOA;};
+  inline double GetMaxNTOA()      {return MaxNTOA;};
+  inline double GetMinADCmax()    {return MinADCmax;};
+  inline double GetMinADCsat()    {return MinADCsat;};
+  inline double GetMinTOT()       {return MinTOT;};
+  inline double GetMinTOTsat()    {return MinTOTsat;};
+  inline double GetMinTOA()       {return MinTOA;};
+  inline double GetMinNSampTOA()  {return MinNSampTOA;};
+  inline double GetMinNTOA()      {return MinNTOA;};
   
   inline double GetMaxInjADC(){return MaxInjADC;};
   inline double GetMaxInjTOT(){return MaxInjTOT;};
@@ -306,6 +406,14 @@ class TileTrend: public TObject{
   inline TGraphErrors* GetLGGSigma()  {return &gTrendLGGSigma;};
   inline TGraphErrors* GetLGHGOff()   {return &gTrendLGHGOffset;};
   inline TGraphErrors* GetHGLGOff()   {return &gTrendHGLGOffset;};
+  inline TGraphErrors* GetADCmax()    {return &gTrendADCMax;};
+  inline TGraphErrors* GetADCsat()    {return &gTrendADCSaturated;};
+  inline TGraphErrors* GetTOT()       {return &gTrendTOT;};
+  inline TGraphErrors* GetTOTsat()    {return &gTrendTOTSaturated;};
+  inline TGraphErrors* GetTOA()       {return &gTrendTOA;};
+  inline TGraphErrors* GetNSampTOA()  {return &gTrendNSampTOA;};
+  inline TGraphErrors* GetNTOA()      {return &gTrendNTOA;};
+  
   // Getters for individual graph histgrams
   TH1D* GetHGTriggRun(int);
   TH1D* GetLGTriggRun(int);
@@ -339,6 +447,14 @@ class TileTrend: public TObject{
   
   TGraphErrors gTrendLGHGOffset ;
   TGraphErrors gTrendHGLGOffset ;
+
+  TGraphErrors gTrendADCMax;
+  TGraphErrors gTrendADCSaturated;
+  TGraphErrors gTrendTOA;
+  TGraphErrors gTrendNSampTOA;
+  TGraphErrors gTrendNTOA;
+  TGraphErrors gTrendTOT;
+  TGraphErrors gTrendTOTSaturated;
   
   double MaxLGped    =0.;
   double MaxHGped    =0.;
@@ -363,7 +479,14 @@ class TileTrend: public TObject{
   double MaxHGLGOff   =-10000.;
   double MaxInjADC    =-10000.;
   double MaxInjTOT    =-10000.;
-  
+  double MaxADCmax    =0.;
+  double MaxADCsat    =0.;
+  double MaxTOT       =0.;
+  double MaxTOTsat    =0.;
+  double MaxTOA       =0.;
+  double MaxNSampTOA  =0.;
+  double MaxNTOA      =0.;
+
   double MinLGped    =9999.;
   double MinHGped    =9999.;
   double MinLGpedwidth =9999.;
@@ -385,6 +508,13 @@ class TileTrend: public TObject{
   double MinSBSignal =9999.;
   double MinLGHGOff  =9999.;
   double MinHGLGOff  =9999.;
+  double MinADCmax    =9999.;
+  double MinADCsat    =9999.;
+  double MinTOT       =9999.;
+  double MinTOTsat    =9999.;
+  double MinTOA       =9999.;
+  double MinNSampTOA  =9999.;
+  double MinNTOA      =9999.;
   
   std::vector<int> runNrs;
   std::vector<int> pdgs;
@@ -400,7 +530,7 @@ class TileTrend: public TObject{
   std::map<int, TProfile> TOAProf;
   std::map<int, TProfile> TOTProf;
   
-  ClassDef(TileTrend,7);
+  ClassDef(TileTrend,8);
 };
 
 #endif

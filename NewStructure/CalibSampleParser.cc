@@ -9,6 +9,7 @@
 #include "TProfile.h"
 #include "TChain.h"
 #include "TileSpectra.h"
+#include "TileTrend.h"
 #include "PlotHelper.h"
 #include "CommonHelperFunctions.h"
 #include "MultiCanvas.h"
@@ -715,7 +716,7 @@ bool CalibSampleParser::ParseInjectionDACCalibX(){
     std::string tokenTOA;
     std::vector<std::string> tokensTOA;
     while(std::getline(sTOA,tokenTOA,',')){
-      tokensTOA.push_back(tokenTOA); // tokens[0] - channelNr, remaining token single ADC values
+      tokensTOA.push_back(tokenTOA); // tokens[0] - channelNr, remaining token single ToA values
     }
     // read tot values
     std::getline( calibSampleCsvTOT, lineTOT );
@@ -723,7 +724,7 @@ bool CalibSampleParser::ParseInjectionDACCalibX(){
     std::string tokenTOT;
     std::vector<std::string> tokensTOT;
     while(std::getline(sTOT,tokenTOT,',')){
-      tokensTOT.push_back(tokenTOT); // tokens[0] - channelNr, remaining token single ADC values
+      tokensTOT.push_back(tokenTOT); // tokens[0] - channelNr, remaining token single TOT values
     }
     
     int dacCurr     = 0;
@@ -741,7 +742,7 @@ bool CalibSampleParser::ParseInjectionDACCalibX(){
     cADCs[0].replace(0,3,""); //"dac"
     dacCurr     = std::stoi(cADCs[0]);
     if (dacPrev != dacCurr){
-      std::cout << "switching to next event: " << nEvt << std::endl;
+      if (debug > 2)std::cout << "switching to next event: " << nEvt << std::endl;
       // fill previous event 
       if (nEvt > 0){
         int counter2 = 0;
@@ -846,7 +847,8 @@ bool CalibSampleParser::ParseInjectionDACCalibX(){
     cell_id  = setup->GetCellID(asic, channel % 72);
 
     if (cell_id == -1) continue;
-          
+       
+    if (debug > 2) std::cout << "channel "<< channel << "\t cell ID: " << cell_id << "\t TOT: ";
     for (int k = 0; k < tokensADC.size()-1; k++){
       temp_adc.push_back( std::atoi(tokensADC[k+1].c_str()) );
       temp_toa.push_back( std::atoi(tokensTOA[k+1].c_str()) );
@@ -854,14 +856,14 @@ bool CalibSampleParser::ParseInjectionDACCalibX(){
       // TOT is a 12 bit counter, but gets sent as a 10 bit number
       // If the most significant bit is 1, then the lower two bits were dropped
       int temp  = std::atoi(tokensTOT[k+1].c_str());
-      // if( temp & 0x200){
-      //     temp = temp & 0b0111111111;
-      //     temp = temp << 3;
-      // }
-      
+      if( temp & 0x200){
+          temp = temp & 0b0111111111;
+          temp = temp << 3;
+      }
+      if (temp > 4095 || temp < 0)  temp= -1;
+      if (debug > 2)std::cout << tokensTOT[k+1] << "(" << temp<< ")"<< "\t";
       temp_tot.push_back( temp );
     }
-    
     // save the current tiles waveforms, and then push the tile to the samples vector
     sample_counter =  tokensADC.size()-1;
     tmpTile.SetNsample(sample_counter);
@@ -872,11 +874,15 @@ bool CalibSampleParser::ParseInjectionDACCalibX(){
     tempTOT = *(std::find_if(temp_tot.begin(), temp_tot.end(), [](int n){ return n!=0; }) );
     if (tempTOT < 0) tempTOT = 0;
     tmpTile.SetCorrectedTOT( tempTOT );        // need to process waveform to set this - the first value that comes up 
+
+    if (debug > 2)std::cout << "\t registered tot: " << tempTOT;
+    if (debug > 2)std::cout << std::endl;
+
     // TOA - the first non-zero value
     int tempTOA   = 0;
     tempTOA   = *(std::find_if(temp_toa.begin(), temp_toa.end(), [](int n){ return n!=0; }) );
     if (tempTOA < 0) tempTOA = 0;
-    tmpTile.SetCorrectedTOA( tempTOA );        // need to process waveform to set this - the first value that comes up 
+    
     // SetIntegratedADC as max ADC 
     int tempIntADC    = *(std::max_element( temp_adc.begin(), temp_adc.end() ));
     tmpTile.SetIntegratedADC( tempIntADC );
@@ -992,7 +998,7 @@ bool CalibSampleParser::ProcessAndPlotWaveforms(){
 
     aTile->SetIntegratedADC(waveform_builder->get_E());
     aTile->SetPedestal(waveform_builder->get_pedestal());
-    
+        
     if(ithSpectra!=hSpectra.end()){
       ithSpectra->second.FillExtHGCROC(adc, toa, tot, 0,-1);
       ithSpectra->second.FillWaveformVsTimeParser(aTile->GetADCWaveform(),ped-20);
@@ -1046,6 +1052,9 @@ bool CalibSampleParser::ProcessAndPlotWaveforms(){
   return true;
 }
 
+//******************************************************************************************************************
+//******************************** Plotting for Injection DAC Scan *************************************************
+//******************************************************************************************************************
 bool CalibSampleParser::ProcessAndPlotWaveformsDAC(){
 
   // initialize run number file
@@ -1068,14 +1077,23 @@ bool CalibSampleParser::ProcessAndPlotWaveformsDAC(){
   std::map<int,TileSpectra>             hSpectra;
   std::map<int,TileSpectra>::iterator   ithSpectra;
 
+  std::map<int,TileTrend>             hTrend;
+  std::map<int,TileTrend>::iterator   ithTrend;
+
   int evts=tOutTree->GetEntries();
+  
+  double minE = 999999;
+  double maxE = -50;
   
   for(int i=0; i<evts; i++){
     tOutTree->GetEntry(i);
+    if (minE > event.GetBeamEnergy()) minE = event.GetBeamEnergy();
+    if (maxE < event.GetBeamEnergy()) maxE = event.GetBeamEnergy();
     for(int j=0; j<event.GetNTiles(); j++){
       Hgcroc*   aTile   = (Hgcroc*)event.GetTile(j);
       ithSpectra  = hSpectra.find(aTile->GetCellID());
-
+      ithTrend    = hTrend.find(aTile->GetCellID());
+      
       double adc  = 0; 
       double tot  = 0; 
       double toa  = 0; 
@@ -1088,17 +1106,38 @@ bool CalibSampleParser::ProcessAndPlotWaveformsDAC(){
       std::vector<int> temp_toaWaveform = aTile->GetTOAWaveform();
       std::vector<int> temp_adcWaveform = aTile->GetADCWaveform();
 
-      tot = *(std::find_if( temp_totWaveform.begin(), temp_totWaveform.end(), [](int val){return val>1;} ));  // placeholders for now
-      toa = *(std::find_if( temp_toaWaveform.begin(), temp_toaWaveform.end(), [](int val){return val>1;} ));  // placeholders for now
+      tot = aTile->GetCorrectedTOT();  // placeholders for now
+      toa   = *(std::find_if(temp_toaWaveform.begin(), temp_toaWaveform.end(), [](int n){ return n!=0; }) );
+      if (toa < 0) toa = 0;
+
       adc = *(std::max_element( temp_adcWaveform.begin(), temp_adcWaveform.end())) - ped;                     // placeholders for now
 
       if(debug > 5) std::cout << "tot: " <<  tot << "\t toa " << toa << "\t adc " << adc << std::endl;
   
       waveform_builder->set_waveform( aTile->GetADCWaveform() );
       waveform_builder->fit_with_average_ped(ped);
-
+      if (j == 10 && debug > 3){
+        std::cout << "DAC injected:  " <<  event.GetBeamEnergy()<< std::endl;
+        aTile->PrintWaveFormDebugInfo(waveform_builder->get_pedestal(), waveform_builder->get_pedestal(), waveform_builder->get_pedestal());
+      }
       aTile->SetIntegratedADC(waveform_builder->get_E());
       aTile->SetPedestal(waveform_builder->get_pedestal());
+      
+      int adcSatN = 0;
+      for (int k = 0; k < (int)temp_adcWaveform.size(); k++ ){
+        if (temp_adcWaveform[k] == 1023 ) adcSatN++;
+      }
+      int totSatN = 0;
+      for (int k = 0; k < (int)temp_totWaveform.size(); k++ ){
+        if (temp_totWaveform[k] == 4095 ) totSatN++;
+      }
+      int nTOA      = 0;
+      int nSampTOA  = 0;
+      for (int k = 0; k < (int)temp_toaWaveform.size(); k++ ){
+        if (temp_toaWaveform[k] > 0 ) nTOA++;
+        if (nSampTOA == 0 && temp_toaWaveform[k] > 0)  nSampTOA = k;
+      }
+      
       
       if(ithSpectra!=hSpectra.end()){
         ithSpectra->second.FillExtHGCROC(adc, toa, tot, 0,-1);
@@ -1115,6 +1154,13 @@ bool CalibSampleParser::ProcessAndPlotWaveformsDAC(){
         // hSpectra[aTile->GetCellID()].WriteExt(false);
         RootOutputHist->cd();
       }
+      if (ithTrend!=hTrend.end()){
+        ithTrend->second.FillInjectionDACVal  ( event.GetBeamEnergy(), ped, adc, toa, tot, adcSatN, totSatN, nTOA, nSampTOA);
+      } else {
+        RootOutputHist->cd("IndividualCells");
+        hTrend[aTile->GetCellID()]=TileTrend(aTile->GetCellID(),debug, 4);
+        hTrend[aTile->GetCellID()].FillInjectionDACVal  ( event.GetBeamEnergy(), ped, adc, toa, tot, adcSatN, totSatN, nTOA, nSampTOA);
+      }
     }
   }
   int t_max = ((Hgcroc*)event.GetTile(0))->GetNsample();
@@ -1122,29 +1168,42 @@ bool CalibSampleParser::ProcessAndPlotWaveformsDAC(){
   
   // create directory for plot output
   gSystem->Exec("mkdir -p "+outputDirPlots);
-
+  gSystem->Exec("mkdir -p "+outputDirPlots+"/SingleLayer");
+  StyleSettingsBasics("pdf");
+  SetPlotStyle();  
   
-  MultiCanvas panelPlot2D(detConf, "DAC");
-  bool init2D = panelPlot2D.Initialize(2);
-  
-  panelPlot2D.PlotCorr2DLayer(hSpectra, 11, 0, t_max, 0, 1024, 
-                                Form("%s/Waveform",outputDirPlots.Data()), suffix.Data(), it->second, &calib, 1 );
-  
-  panelPlot2D.PlotCorr2DLayer(hSpectra, 5, 0, t_max, 0, 4024, 
-                                Form("%s/TOT",outputDirPlots.Data()), suffix.Data(), it->second, &calib, 1);
-  
-  panelPlot2D.PlotCorr2DLayer(hSpectra, 6, 0, t_max, 0, 1024, 
-                                Form("%s/TOA",outputDirPlots.Data()), suffix.Data(), it->second, &calib, 1 );
-
   RootOutput->cd();
   RootOutputHist->cd("IndividualCells");
   for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
     ithSpectra->second.Write(true);
   }  
-  RootOutputHist->Write();
-  RootOutputHist->Close();
+  for(ithTrend=hTrend.begin(); ithTrend!=hTrend.end(); ++ithTrend){
+    // sort graphs
+    ithTrend->second.Sort();
+    // set x axis title for trending graphs
+    ithTrend->second.SetXAxisTitle("Inj. DAC (fC)");
 
+    ithTrend->second.Write();
+  }  
+  RootOutputHist->Write();
+  
+  // plotting
+  MultiCanvas panelPlot(detConf, "DACScan");
+  bool init1D = panelPlot.Initialize(3);
+  
+  panelPlot.PlotTrending(hTrend, 0, minE,maxE, outputDirPlots, "Ped", "pdf", it->second, 1 );
+  panelPlot.PlotTrending(hTrend, 30, minE,maxE, outputDirPlots, "ADC", "pdf", it->second, 1 );
+  panelPlot.PlotTrending(hTrend, 31, minE,maxE, outputDirPlots, "ADCSat", "pdf", it->second, 1 );
+  panelPlot.PlotTrending(hTrend, 32, minE,maxE, outputDirPlots, "TOT", "pdf", it->second, 1 );
+  panelPlot.PlotTrending(hTrend, 33, minE,maxE, outputDirPlots, "TOTSat", "pdf", it->second, 1 );
+  panelPlot.PlotTrending(hTrend, 34, minE,maxE, outputDirPlots, "TOA", "pdf", it->second, 1 );
+  panelPlot.PlotTrending(hTrend, 35, minE,maxE, outputDirPlots, "nSampToA", "pdf", it->second, 1 );
+  panelPlot.PlotTrending(hTrend, 35, minE,maxE, outputDirPlots, "nTOA", "pdf", it->second, 1 );
+  
+  // close files
+  RootOutputHist->Close();
   RootOutput->Close();  
+  
   
   std::cout <<"=============================================================" << std::endl;
   std::cout <<" Plots saved to " << outputDirPlots.Data() << std::endl;
@@ -1186,7 +1245,7 @@ bool CalibSampleParser::ParsePedestalCalib(){
   std::string     pedestalValJson   = "    \"pede_values\": [";
 
   int   NChannels = 0;
-  std::vector<int>  calibChannelsJson; 
+  std::vector<int>  calibChannelsJson;
   std::vector<int>  pedestalValues;
   int   channelCounter = 0; 
 
