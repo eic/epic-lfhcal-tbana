@@ -29,7 +29,10 @@
     
     for (int ch = 0; ch < nChA; ch++){
       int tempCellID = setupT->GetCellID(asic, ch);
-      if (tempCellID == -1 ) continue;    
+      if (tempCellID == -1 ) {
+        skipped++;
+        continue;    
+      }
       int chInLayer  = setupT->GetChannelInLayer(tempCellID); 
       int layer      = setupT->GetLayer(tempCellID); 
       int row        = setupT->GetRow(tempCellID); 
@@ -107,7 +110,8 @@
         gStyle->SetOptDate(0);   //show day and time
         gStyle->SetOptStat(0);  //show statistic
         
-        dummyhist = new TH1D(Form("dummyhist_%d",ch ), "", tempProfile->GetNbinsX(), tempProfile->GetXaxis()->GetXmin(), tempProfile->GetXaxis()->GetXmax());
+        dummyhist = new TH1D(Form("dummyhist_%d_%d_%d",option, asic,ch ), "", tempProfile->GetNbinsX(), tempProfile->GetXaxis()->GetXmin(), tempProfile->GetXaxis()->GetXmax());
+        dummyhist->SetDirectory(0);
         SetStyleHistoTH1ForGraphs( dummyhist, tempProfile->GetXaxis()->GetTitle(), tempProfile->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
         dummyhist->GetXaxis()->SetRangeUser(xMin,xMax);
         dummyhist->GetYaxis()->SetRangeUser(minY,maxY);
@@ -222,7 +226,10 @@
     
     for (int ch = 0; ch < nChA; ch++){
       int tempCellID = setupT->GetCellID(asic, ch);
-      if (tempCellID == -1 ) continue;    
+      if (tempCellID == -1 ){
+        skipped++;
+        continue;    
+      }
       int chInLayer  = setupT->GetChannelInLayer(tempCellID); 
       int layer      = setupT->GetLayer(tempCellID); 
       int row        = setupT->GetRow(tempCellID); 
@@ -298,7 +305,8 @@
       else if (optionTrend == 36) tempGraph = ithTrend->second.GetNTOA();
 
       if (!tempGraph) continue;
-      TH1D* dummyhist = new TH1D("dummyhist", "", 100, xMin, xMax);
+      TH1D* dummyhist = new TH1D(Form("dummyhist_%d_%d_%d",optionTrend,asic,ch), "", 100, xMin, xMax);
+      dummyhist->SetDirectory(0);
       SetStyleHistoTH1ForGraphs( dummyhist, tempGraph->GetXaxis()->GetTitle(), tempGraph->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
       // if (optionTrend == 6)std::cout << "\t" << tempGraph->GetXaxis()->GetTitle() << "\t" << tempGraph->GetYaxis()->GetTitle() << std::endl;
       SetMarkerDefaultsTGraphErr(tempGraph, 20, 1, kBlue+1, kBlue+1);   
@@ -379,7 +387,10 @@
     
     for (int ch = 0; ch < nChA; ch++){
       int tempCellID = setupT->GetCellID(asic, ch);
-      if (tempCellID == -1 ) continue;    
+      if (tempCellID == -1 ){
+        skipped++;
+        continue;    
+      }
       int chInLayer  = setupT->GetChannelInLayer(tempCellID); 
       int layer      = setupT->GetLayer(tempCellID); 
       int row        = setupT->GetRow(tempCellID); 
@@ -463,7 +474,8 @@
           if (rc == 0){
             TString yTitle = profs[rc]->GetYaxis()->GetTitle();
             if (scaleInt && profs[rc] != nullptr) yTitle = Form("%s/ integral", yTitle.Data());
-            dummyhist = new TH1D("dummyhist", "", profs[rc]->GetNbinsX(), profs[rc]->GetXaxis()->GetXmin(), profs[rc]->GetXaxis()->GetXmax());
+            dummyhist = new TH1D(Form("dummyhist_%d_%d_%d",option, asic,ch), "", profs[rc]->GetNbinsX(), profs[rc]->GetXaxis()->GetXmin(), profs[rc]->GetXaxis()->GetXmax());
+            dummyhist->SetDirectory(0);
             SetStyleHistoTH1ForGraphs( dummyhist, profs[rc]->GetXaxis()->GetTitle(), profs[rc]->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
             dummyhist->GetXaxis()->SetRangeUser(xMin,xMax);
             dummyhist->GetYaxis()->SetRangeUser(yPMin,yPMax);
@@ -507,7 +519,7 @@
           
       if (cp == 63) legend->Draw();
       if (cp == 55){
-        TString lab1 = Form("#it{#bf{LFHCal TB:}} %s", GetStringFromRunInfo(currRunInfo, 9).Data());
+        TString lab1 = Form("#it{#bf{%s TB:}} %s", (currRunInfo.detector).Data(), GetStringFromRunInfo(currRunInfo, 9).Data());
         TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
         TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
         DrawLatex(topRCornerX[cp]+0.045, topRCornerY[cp]-1.2*relSize8P[cp]-1*0.85*relSize8P[cp], lab1, false, 0.85*textSizePixel, 43);

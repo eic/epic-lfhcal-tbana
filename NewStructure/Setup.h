@@ -75,6 +75,7 @@ class Setup{
   bool    Initialize   (RootSetupWrapper&);
   bool    IsInit       (void) const;
   bool    IsLayerOn     (int /**/, int /**/) const; 
+  bool    IsAsicOn      (int /**/) const;
   float     GetMinX       (void) const;
   float     GetMaxX       (void) const;
   float     GetMinY       (void) const;

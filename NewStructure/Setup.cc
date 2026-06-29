@@ -409,28 +409,42 @@ float Setup::GetMaxZ() const{
 bool Setup::IsLayerOn(int layer, int mod) const{
   bool isOn = false;
   for (int r = 0; r< GetNMaxRow(); r++){
-      for (int c = 0; c < GetNMaxColumn(); c++){
-        if (mod == -1){
-          for (int m = 0; m < GetNMaxModule(); m++){
-            int cellID = GetCellID(r, c, layer, m);
-            std::map<int, TString>::const_iterator it=assemblyID.find(cellID);
-            if (it != assemblyID.end()){
-              isOn = true;
-              break;
-            }
-          }
-        } else {
-          int cellID = GetCellID(r, c, layer, mod);
+    for (int c = 0; c < GetNMaxColumn(); c++){
+      if (mod == -1){
+        for (int m = 0; m < GetNMaxModule(); m++){
+          int cellID = GetCellID(r, c, layer, m);
           std::map<int, TString>::const_iterator it=assemblyID.find(cellID);
           if (it != assemblyID.end()){
             isOn = true;
             break;
           }
         }
+      } else {
+        int cellID = GetCellID(r, c, layer, mod);
+        std::map<int, TString>::const_iterator it=assemblyID.find(cellID);
+        if (it != assemblyID.end()){
+          isOn = true;
+          break;
+        }
       }
+    }
   }
   return isOn;
 }
+
+bool Setup::IsAsicOn(int asic) const{
+  bool isOn = false;
+  for (int ch = 0; ch< 76; ch++){
+    int cellID = GetCellID(asic, ch);
+    std::map<int, TString>::const_iterator it=assemblyID.find(cellID);
+    if (it != assemblyID.end()){
+      isOn = true;
+      break;
+    }    
+  }
+  return isOn;
+}
+
 
 int Setup::GetNActiveLayers() const{
   int nActLayer = 0;

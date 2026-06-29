@@ -129,6 +129,8 @@ function Calib()
     time ./DataPrep -t -e -f -d 1 -a -C $2 -i $3/rawHGCROC_wPedwMuon_wBC_$5.root -o $4/calibratedNoCutOffHGCROC_Run_$5.root -O $6NoCutOff$7$5 -r $runList -B $8 -G $9 -c -10.
   elif [ $1 == "full" ]; then
     time ./DataPrep -e -f -d 1 -a -C $2 -i $3/rawHGCROC_$5.root -o $4/calibratedHGCROC_Run_$5.root -O $6/$7$5 -r $runList -B $8 -G $9
+  elif [ $1 == "fullMuon" ]; then
+    time ./DataPrep -e -f -d 1 -a -C $2 -i $3/rawHGCROC_mipTrigg_wPedwMuon_wBC_$5.root -o $4/calibratedHGCROC_Run_$5.root -O $6/$7$5 -r $runList -B $8 -G $9
   fi
 }
 

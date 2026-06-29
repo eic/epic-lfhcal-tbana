@@ -133,7 +133,7 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
 bool TileTrend::FillInjection(
                                 double x, double ped, int runNr, 
                                 TProfile* wave, TProfile* toa, TProfile* tot, 
-                                double val_rf, double val_cf, double val_cfcomp, double val_cc
+                                double val_rf, double val_cf, double val_cfcomp, double val_cc, double val_inj
                               ){
   
   if (extended != 3 ){
@@ -174,6 +174,7 @@ bool TileTrend::FillInjection(
   cf.push_back(val_cf);
   cfcomp.push_back(val_cfcomp);
   cc.push_back(val_cc);
+  inj.push_back(val_inj);
   
   return true;
 }

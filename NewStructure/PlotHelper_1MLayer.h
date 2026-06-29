@@ -425,7 +425,8 @@
     if (currRunInfo.cfcomp > -1) nSameSettings++;
     if (currRunInfo.cc > -1) nSameSettings++;
     if (currRunInfo.vop > -1) nSameSettings++;
-
+    if (currRunInfo.injDAC > -1) nSameSettings++;
+    
     TProfile* profs[30];
 
     double lineBottom  = (7);
@@ -442,27 +443,48 @@
     ithTrend=trending.find(tempCellID);
 
     TString label           = Form("layer %d", layer);
+    if ((currRunInfo.detector).Contains("FoCal")){
+      label           = Form("a:%d, ch:%d", setupT->GetROunit(tempCellID), setupT->GetROchannel(tempCellID));
+    }
     TString label2          = Form("V_{op}=%2.1fV", currRunInfo.vop);
+    if (currRunInfo.injDAC > 0 )
+      label2 = label2+Form(",inj=%.1f(fC)", currRunInfo.injDAC);
     TString label3          = GetLabelHGCROCSettingsCF(currRunInfo);
     TString label4          = GetLabelHGCROCSettingsRFCC(currRunInfo);
-
+    
     Double_t yPosStart = topRCornerY;
     double startLegY  = yPosStart -(lineBottom-1)*relSizeP;
     double endLegY    = yPosStart;
     TString header    = "";
     double width      = 0.5;
-    if (nSameSettings == 4){
+    int columns       = 4;
+    double labelScale = 0.75;
+    if (nSameSettings == 5){
         width = 0.9;
         std::cout <<  currRunInfo.rf << "\t" << currRunInfo.cf << "\t" << currRunInfo.cfcomp << "\t" << currRunInfo.cc << "\t" << currRunInfo.vop << std::endl;
-        if (currRunInfo.rf < 0)
-          header = "RF (k#Omega)";
+        if (currRunInfo.rf < 0) header = "RF (k#Omega)";
+        startLegY  = yPosStart -(lineBottom+1-1)*relSizeP;
         if (currRunInfo.cf < 0) header = "CF (fF)";
         if (currRunInfo.cfcomp < 0) header = "CF_{comp} (fF)";
         if (currRunInfo.cc < 0)  header = "CC";
         if (currRunInfo.vop < 0)  header = "V_{op} (V)";
+        if (currRunInfo.injDAC < 0)  header = "inj (fC)";
+    } else if (nSameSettings == 4){
+        width = 0.9;
+        columns = 2;
+        labelScale = 0.6;
+        startLegY  = yPosStart -(lineBottom+1-1)*relSizeP;
+        std::cout <<  currRunInfo.rf << "\t" << currRunInfo.cf << "\t" << currRunInfo.cfcomp << "\t" << currRunInfo.cc << "\t" << currRunInfo.vop << std::endl;
+        if (currRunInfo.rf < 0)
+          header = "RF (k#Omega) ";
+        if (currRunInfo.cf < 0) header = header+"CF (fF) ";
+        if (currRunInfo.cfcomp < 0) header = header+"CF_{comp} (fF) ";
+        if (currRunInfo.cc < 0)  header = header+"CC ";
+        if (currRunInfo.vop < 0)  header = header+"V_{op} (V) ";
+        if (currRunInfo.injDAC < 0)  header = header+"inj (fC) ";      
     }
     TLegend* legend = GetAndSetLegend2(  topRCornerX, startLegY, 0.55, endLegY,
-                                0.75*textSizePixel, 4, header,43,0.25);    
+                                labelScale*textSizePixel, columns, header,43,0.25);    
     TH1D* dummyhist;
     for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
       int tmpRunNr = ithTrend->second.GetRunNr(rc);
@@ -496,13 +518,23 @@
         profs[rc]->Draw("same,pe");
         
         TString labelLegend = Form("%d",tmpRunNr);
-        if (nSameSettings == 4){
+        if (nSameSettings == 5){
           if (currRunInfo.vop < 0) labelLegend = Form("%.1f",(double)ithTrend->second.GetVoltage(rc));
           if (currRunInfo.rf < 0) labelLegend = Form("%.1f",ReturnRFValue(ithTrend->second.GetRF(rc)));
-          if (currRunInfo.cf < 0) labelLegend = Form("%.0f",ReturnCFValue(ithTrend->second.GetCF(rc)));
-          if (currRunInfo.cfcomp < 0) labelLegend = Form("%.0f",ReturnCFCompValue(ithTrend->second.GetCFComp(rc)));
-          if (currRunInfo.cc < 0)  labelLegend = Form("%.0f",ReturnCCValue(ithTrend->second.GetCC(rc)));
+          if (currRunInfo.cf < 0) labelLegend = Form("%.0f",ReturnCFValue(ithTrend->second.GetCF(rc),1));
+          if (currRunInfo.cfcomp < 0) labelLegend = Form("%.0f",ReturnCFCompValue(ithTrend->second.GetCFComp(rc),1));
+          if (currRunInfo.cc < 0)  labelLegend = Form("%.3f",ReturnCCValue(ithTrend->second.GetCC(rc),1));
+          if (currRunInfo.injDAC < 0)  labelLegend = Form("%.0f",ithTrend->second.GetInj(rc));
+        } else if (nSameSettings == 4){
+          labelLegend="";
+          if (currRunInfo.vop < 0) labelLegend = Form("%.1f ",(double)ithTrend->second.GetVoltage(rc));
+          if (currRunInfo.rf < 0) labelLegend = labelLegend+Form("%.1f ",ReturnRFValue(ithTrend->second.GetRF(rc)));
+          if (currRunInfo.cf < 0) labelLegend = labelLegend+Form("%.0f ",ReturnCFValue(ithTrend->second.GetCF(rc),1));
+          if (currRunInfo.cfcomp < 0) labelLegend = labelLegend+Form("%.0f ",ReturnCFCompValue(ithTrend->second.GetCFComp(rc),1));
+          if (currRunInfo.cc < 0)  labelLegend = labelLegend+Form("%.3f ",ReturnCCValue(ithTrend->second.GetCC(rc),1));
+          if (currRunInfo.injDAC < 0)  labelLegend = labelLegend+Form("%.0f",ithTrend->second.GetInj(rc));
         }
+        std::cout << labelLegend.Data() << std::endl;
         legend->AddEntry(profs[rc],labelLegend.Data(),"p");
       }
     }
@@ -517,7 +549,7 @@
     
     legend->Draw();
     TString beamline = GetStringFromRunInfo(currRunInfo, 9).Data();
-    TString lab1 = Form("#it{#bf{LFHCal TB:}} %s", beamline.Data());
+    TString lab1 = Form("#it{#bf{%s TB:}} %s", (currRunInfo.detector).Data(), beamline.Data());
     if (beamline.Contains("ORNL"))
       lab1 = beamline;
     TString lab2 = GetStringFromRunInfo(currRunInfo, 8);

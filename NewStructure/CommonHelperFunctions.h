@@ -74,7 +74,7 @@
   }
   
   struct RunInfo{
-    RunInfo(): runNr(0), species(""), pdg(0), energy(0), vop(0), vbr(0), lgSet(0), hgSet(0), posX(0), posY(0), shapetime(0), assemblyNr(0), year(-1), month(-1), readout(""), facility(""), beamline(""), samples(0), trigDelay(0), trigDead(0), phase(0), nFPGA(0), nASIC(0), rf(12), cf(10), cc(12), cfcomp(10), temp(20.), injMode(0), injDAC(0) {}
+    RunInfo(): runNr(0), species(""), pdg(0), energy(0), vop(0), vbr(0), lgSet(0), hgSet(0), posX(0), posY(0), shapetime(0), assemblyNr(0), year(-1), month(-1), detector(""), readout(""), facility(""), beamline(""), samples(0), trigDelay(0), trigDead(0), phase(0), nFPGA(0), nASIC(0), rf(12), cf(10), cc(12), cfcomp(10), temp(20.), injMode(0), injDAC(0) {}
     int runNr;
     TString species;
     int pdg;
@@ -89,6 +89,7 @@
     int assemblyNr;
     int year;
     int month;
+    TString detector;
     TString readout;
     TString facility;
     TString beamline;
@@ -104,7 +105,7 @@
     int cfcomp;
     float temp;
     int injMode;  // 0: low, 1: high, 2:2.5V
-    int injDAC;
+    double injDAC;
   } ;
 
   TString GetStringFromRunInfo(RunInfo, Int_t);
@@ -126,6 +127,7 @@
     TString facility="";
     TString beamline="";
     TString readout="";
+    TString detector="LFHCal";
     int year = -1;
     int month = -1;
     for( TString tempLine; tempLine.ReadLine(runListFile, kTRUE); ) {
@@ -152,8 +154,12 @@
         } else if (tempLine.BeginsWith("beam-line")){ 
           beamline=((TString)((TObjString*)tempArr2->At(1))->GetString());
           continue;
+        } else if (tempLine.BeginsWith("detector")){ 
+          detector=((TString)((TObjString*)tempArr2->At(1))->GetString());
+          continue;
         }
       }
+      
       // Separate the string according to tabulators
       TObjArray *tempArr  = tempLine.Tokenize(",");
       if(tempArr->GetEntries()<1){
@@ -164,6 +170,7 @@
 
       // Put them to the correct variables    
       RunInfo tempRun;
+      tempRun.detector= detector;
       tempRun.facility= facility;
       tempRun.beamline= beamline;
       tempRun.readout = readout;
@@ -411,7 +418,7 @@
   }
   
   inline Double_t ReturnCCValue(int cc, int debug = 0){
-    if (debug) std::cout << "CFComp:  " << cc ;
+    if (debug) std::cout << "CC:  " << cc ;
     Double_t ccVal = 0;
     if ((cc - 8) >= 0){
       ccVal = ccVal+0.2;
@@ -431,6 +438,15 @@
     }
     if (debug) std::cout << "\t" << ccVal  << std::endl;
     return ccVal;
+  }
+  
+  inline double GetInjectionfCEquivalent(double dac, int range){
+    if (range == 0){
+      return dac*500./4095;  //maximum injected charge 500fC, max dac = 4095
+    } else if (range == 1){
+      return dac*8000./4095;  //maximum injected charge 8000fC, max dac = 4095
+    }
+    return -1;
   }
   
   inline TString GetLabelHGCROCSettings(RunInfo currRunInfo){
@@ -462,15 +478,24 @@
       label = Form("%sCC=%.3f",label.Data() , ReturnCCValue(currRunInfo.cc));
     return label;
   }
-  
-  inline double GetInjectionfCEquivalent(double dac, int range){
-    if (range == 0){
-      return dac*500./4095;  //maximum injected charge 500fC, max dac = 4095
-    } else if (range == 1){
-      return dac*8000./4095;  //maximum injected charge 8000fC, max dac = 4095
-    }
-    return -1;
+
+  inline void PrintSettingsRunInfo(RunInfo currRunInfo){
+    TString label = "";
+    if (currRunInfo.injDAC > -1)
+      label = Form("%sinj=%.1ffC ", label.Data(), GetInjectionfCEquivalent(currRunInfo.injDAC,currRunInfo.injMode));
+    if (currRunInfo.rf > -1)
+      label = Form("%sRF=%.1fk#Omega ",label.Data() , ReturnRFValue(currRunInfo.rf));
+    if (currRunInfo.cc > -1)
+      label = Form("%sCC=%.3f ",label.Data() , ReturnCCValue(currRunInfo.cc));
+    if (currRunInfo.cfcomp > -1)
+      label = Form("%sCF_{comp}=%.1ffF ",label.Data() , ReturnCFCompValue(currRunInfo.cfcomp));
+    if (currRunInfo.cf > -1)
+      label = Form("%sCF=%.1ffF ",label.Data() , ReturnCFValue(currRunInfo.cf));
+    std::cout<< label.Data() << std::endl;
+    return;
   }
+
+  
   
   // // Function to generate the CRC-32 lookup table at runtime (or compile time with C++11 constexpr)
   // void generate_crc32_table(uint32_t(&table)[256]) {

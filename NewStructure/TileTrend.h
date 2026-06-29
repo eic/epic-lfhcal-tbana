@@ -259,7 +259,7 @@ class TileTrend: public TObject{
   
   bool FillInjection  ( double x, double ped, int runNr, 
                         TProfile* wave, TProfile* toa, TProfile* tot, 
-                        double val_rf = -1., double val_cf= -1., double val_cfcomp= -1., double val_cc= -1.);
+                        double val_rf = -1., double val_cf= -1., double val_cfcomp= -1., double val_cc= -1., double val_inj = -1.);
 
   bool FillInjectionDACVal  ( double x, double ped, double adc, double toa, double tot, int adcSatN = 0, int totSatN = 0, int nTOA = 0, int nSampToA = 0) ;
   
@@ -384,6 +384,7 @@ class TileTrend: public TObject{
   inline int GetCF(int i)         {if (cf.size()> 0 && i < (int)cf.size()) return cf[i]; else return -1;}
   inline int GetCFComp(int i)     {if (cfcomp.size()> 0 && i < (int)cfcomp.size()) return cfcomp[i]; else return -1;}
   inline int GetCC(int i)         {if (cc.size()> 0 && i < (int)cc.size()) return cc[i]; else return -1;}
+  inline double GetInj(int i)     {if (inj.size()> 0 && i < (int)inj.size()) return inj[i]; else return -1;}
   
   // Getters for graphs
   inline TGraphErrors* GetHGped()     {return &gTrendHGped;};
@@ -523,6 +524,7 @@ class TileTrend: public TObject{
   std::vector<double> cf;
   std::vector<double> cfcomp;
   std::vector<double> cc;
+  std::vector<double> inj;
   std::map<int, TH1D> HGTriggRuns;
   std::map<int, TH1D> LGTriggRuns;
   std::map<int, TProfile> LGHGTriggRuns;
@@ -530,7 +532,7 @@ class TileTrend: public TObject{
   std::map<int, TProfile> TOAProf;
   std::map<int, TProfile> TOTProf;
   
-  ClassDef(TileTrend,8);
+  ClassDef(TileTrend,9);
 };
 
 #endif

@@ -1022,6 +1022,11 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
   } else if ( detType == DetConf::Type::Asic){
     for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
       std::cout << "====> asic " << a << std::endl;
+      if (!setup->IsAsicOn(a)){
+        std::cout << "====> asic " << a << " not enabled" << std::endl;
+        continue;
+      }          
+
       PlotCorr2DAsicLFHCal(canvasMulti, padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                         spectra, option, xPMin, xPMax, minY, maxY, a, 
                         Form("%s_Asic%02d.%s" ,nameOutputBase.Data(), a, suffix.Data()), currRunInfo, noCalib, triggerCha);      
@@ -1840,6 +1845,10 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
   // full asic plot
   } else if ( detType == DetConf::Type::Asic){
     for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
+      if (!setup->IsAsicOn(a)){
+        std::cout << "====> asic " << a << " not enabled" << std::endl;
+        continue;
+      }          
       std::cout << "====> asic " << a << "\t detailed plot option: " << ExtPlot<< std::endl;
       PlotTrendingAsicLFHCal (canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                              trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commonVoltage, a,
@@ -1970,6 +1979,11 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
   } else if ( detType == DetConf::Type::Asic){
     for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
       std::cout << "====> asic " << a << std::endl;
+      if (!setup->IsAsicOn(a)){
+        std::cout << "====> asic " << a << " not enabled" << std::endl;
+        continue;
+      }          
+      
       PlotRunOverlayProfileAsicLFHCal (canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                              trend, nrun, option, xPMin,xPMax, yMin, yMax, a,
                              Form("%s/SingleLayer/%s_Asic%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), a, suffix.Data()), 

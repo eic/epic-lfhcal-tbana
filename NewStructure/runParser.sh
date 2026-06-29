@@ -1,142 +1,73 @@
 #/bin/bash
 
 function ParseRun(){
-  ./ParseCalibSamples -i $1 -d 0 -I -m ../configs/FOCalTest2026/mapping_injectionTest.txt -o testingPlots/calibout_$2.root -r /home/fbock/EIC/Software/epic-LFHCalTB/configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv -n $2 -p testingPlots/Run$2
+  ./ParseCalibSamples -i $1 -d 0 -I -m $3 -o testingPlots/calibout_$2.root -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv -n $2 -p testingPlots/Run$2
 }
 
 function ParseDACRun(){
-  ./ParseCalibSamples -i $1 -d 0 -D -m $3 -o testingPlots/caliboutDAC_$2.root -r /home/fbock/EIC/Software/epic-LFHCalTB/configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv -n $2 -p testingPlots/DACRun$2
+  ./ParseCalibSamples -i $1 -d 0 -D -m $3 -o testingPlots/caliboutDAC_$2.root -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv -n $2 -p testingPlots/DACRun$2
 }
 
-
-# mainPath=/media/fbock/ALICE2-4TB/202604_PST10/Calibrations/FOCalTests/
+# mappingFile=../configs/FOCalTest2026/mapping_injectionTest.txt
+# mainPath=/media/fbock/ALICE2-4TB/202604_PST10/Calibrations/FOCalTests
+# while IFS=$' ' read -r runs pathPart2 ; do
+#   echo "${runs}"
+#   echo "${pathPart2}"
+#   filePath=$mainPath/${pathPart2}
+#   echo $filePath ${runs} 
+#   ParseRun $filePath ${runs} $mappingFile
+# done < "configs/injectionsList_FOCal_042026.txt"
 # 
-# run=1
-# filePath=$mainPath/FOCALTests-DefSettingsShihai-ORNL04-05/test_wo_detector/302_ToTCalib_Target400/205_Injection_Low/205_Injection_20260424_165941/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# 
-# run=2
-# filePath=$mainPath/FOCALTests-DefSettingsShihai-ORNL04-05/test_wo_detector/302_ToTCalib_Target400/205_Injection_Low/205_Injection_20260424_153821/205_Injection_asic4_injdac100_mg7_pack8_chn76
-# ParseRun $filePath $run
-# 
-# 
-# run=3
-# filePath=$mainPath/FOCALTests-DefSettingsShihai-ORNL04-05/test_wo_detector/302_ToTCalib_Target400/205_Injection_Low/205_Injection_20260424_153054/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# 
-# # mainPath=/media/fbock/ALICE2-4TB/202604_PST10/Calibrations/FOCalTests/
-# run=4
-# filePath=$mainPath/FOCALTests-settings_10_7_5_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_210504/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=5
-# filePath=$mainPath/FOCALTests-settings_10_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_205436/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=6
-# filePath=$mainPath/FOCALTests-settings_11_7_5_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260426_120805/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=7
-# filePath=$mainPath/FOCALTests-settings_11_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260426_115343/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=8
-# filePath=$mainPath/FOCALTests-settings_3_7_5_12_ORNL03-Valpo01/205_Injection_High/205_Injection_20260427_045126/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=9
-# filePath=$mainPath/FOCALTests-settings_3_7_5_12_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260427_044500/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=10
-# filePath=$mainPath/FOCALTests-settings_3_7_5_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_204143/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=11
-# filePath=$mainPath/FOCALTests-settings_3_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_203243/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# 
-# run=12
-# filePath=$mainPath/FOCALTests-settings_3_7_5_8_ORNL03-Valpo01/205_Injection_High/205_Injection_20260427_021617/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=13
-# filePath=$mainPath/FOCALTests-settings_3_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_203243/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=14
-# filePath=$mainPath/FOCALTests-settings_4_7_5_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_201610/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=15
-# filePath=$mainPath/FOCALTests-settings_4_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_200726/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=16
-# filePath=$mainPath/FOCALTests-settings_5_7_5_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_174555/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=17
-# filePath=$mainPath/FOCALTests-settings_5_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_173712/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=18
-# filePath=$mainPath/FOCALTests-settings_8_7_5_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_215731/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=19
-# filePath=$mainPath/FOCALTests-settings_8_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_214335/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=20
-# filePath=$mainPath/FOCALTests-settings_9_7_9_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_151010/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=21
-# filePath=$mainPath/FOCALTests-settings_9_7_9_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_150316/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=22
-# filePath=$mainPath/FOCALTests-settings_9_7_9_4_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_161639/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=23
-# filePath=$mainPath/FOCALTests-settings_9_7_9_4_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_153858/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=24
-# filePath=$mainPath/FOCALTests-settings_9_7_9_4_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_160124/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=25
-# filePath=$mainPath/FOCALTests-settings_12_7_5_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_181246/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=26
-# filePath=$mainPath/FOCALTests-settings_12_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_180511/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=27
-# filePath=$mainPath/FOCALTests-settings_1_7_5_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_184447/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=28
-# filePath=$mainPath/FOCALTests-settings_1_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_183227/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=29
-# filePath=$mainPath/FOCALTests-settings_2_7_5_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_194740/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=30
-# filePath=$mainPath/FOCALTests-settings_2_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_194049/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=31
-# filePath=$mainPath/FOCALTests-settings_7_7_5_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260426_113424/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=32
-# filePath=$mainPath/FOCALTests-settings_7_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260426_112639/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=33
-# filePath=$mainPath/FOCALTests-settings_9_7_5_1_ORNL03-Valpo01/205_Injection_High/205_Injection_20260425_154622/205_Injection_asic4_injdac400_mg7_pack8_chn76
-# ParseRun $filePath $run
-# run=34
-# filePath=$mainPath/FOCALTests-settings_9_7_5_1_ORNL03-Valpo01/205_Injection_Low/205_Injection_20260425_153858/205_Injection_asic4_injdac250_mg7_pack8_chn76
-# ParseRun $filePath $run
-# 
-# mainPath=/media/fbock/ALICE2-4TB/202604_PST10/Calibrations/
-# run=35
-# filePath=$mainPath/FoCalTests072026/Rf_3_Cf_8_cfc_1_cc_5/fpga0_405_InjectionY_Low/405_InjectionY_asic0-2_injdac550_mg7_pack8_chn76
-# ParseRun $filePath $run
-
-mainPath=/media/fbock/ALICE2-4TB/202604_PST10/Calibrations/
 mappingFile76=../configs/FOCalTest2026/mapping_injectionTest_072026_full.txt
 mappingFile16=../configs/FOCalTest2026/mapping_injectionTest_07202616ch.txt
-runs=( 36 100 101 102 )
-parts=( FoCalTests072026/Rf_3_Cf_8_cfc_1_cc_5/fpga0_406_InjectionDacScan_High/406_InjectionDACY_asic0-2_mg7_pack8_chn76 FoCalTests072026/RF_3_CF_8_CFC_1_CC_5/fpga1_406_InjectionDACY_20260624_130547/406_InjectionDACY_asic0-2_mg7_pack8_chn76 FoCalTests072026/RF_12_CF_5_CFC_1_CC_3/fpga1_406_InjectionDACY_20260623_204927/406_InjectionDACY_asic0-2_mg7_pack8_chn76 FoCalTests072026/RF_12_CF_5_CFC_1_CC_3/fpga1_406_InjectionDACY_20260624_190457/406_InjectionDACY_asic0-2_mg7_pack8_chn76 )
-for idx in "${!runs[@]}"; do
-  run=${runs[$idx]}
-  filePath=$mainPath/${parts[$idx]}
-  filePath
-  ParseDACRun $filePath $run $mappingFile76
-done
+mainPath=/media/fbock/ALICE2-4TB/202604_PST10/Calibrations/FoCalTests072026
+# while IFS=$' ' read -r runs pathPart2 ; do
+#   echo "${runs}"
+#   echo "${pathPart2}"
+#   filePath=$mainPath/${pathPart2}
+#   echo $filePath ${runs} 
+#   ParseRun $filePath ${runs} $mappingFile76
+# done < "configs/injectionsList_FOCal_072026_76ch.txt"
+# 
+while IFS=$' ' read -r runs pathPart2 ; do
+  echo "${runs}"
+  echo "${pathPart2}"
+  filePath=$mainPath/${pathPart2}
+  echo $filePath ${runs} 
+  ParseRun $filePath ${runs} $mappingFile16
+done < "configs/injectionsList_FOCal_072026_16ch.txt"
 
-# run=37
-# filePath=$mainPath/FoCalTests072026/RF_4_CF_8_CFC_1_CC_5/fpga1_406_InjectionDACY_20260625_225208/406_InjectionDACY_asic0-2_mg7_pack8_chn16
-# ParseDACRun $filePath $run $mappingFile16
+# 
+# while IFS=$' ' read -r runs pathPart2 ; do
+#   echo "${runs}"
+#   echo "${pathPart2}"
+#   filePath=$mainPath/${pathPart2}
+#   echo $filePath ${runs} 
+#   ParseDACRun $filePath ${runs} $mappingFile76
+# done < "configs/injectionsDACList_FOCal_072026_76ch.txt"
+# 
+# while IFS=$' ' read -r runs pathPart2 ; do
+#   echo "${runs}"
+#   echo "${pathPart2}"
+#   filePath=$mainPath/${pathPart2}
+#   echo $filePath ${runs} 
+#   ParseDACRun $filePath ${runs} $mappingFile16
+# done < "configs/injectionsDACList_FOCal_072026_16ch.txt"
+
+
+# ./CompareInjection -d 1 -e 1 -E 1 -f -H -I configs/injectionCF4_CFcomp1_red.txt -o testingPlots/injectionCF4_CFcomp1.root -O testingPlots/injectionCF4_CFcomp1/ -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv
+# # ./CompareInjection -d 1 -e 1 -E 1 -f -H -I configs/injectionCF7_CFcomp1.txt -o testingPlots/injectionCF7_CFcomp1.root -O testingPlots/injectionCF7_CFcomp1/ -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv
+# ./CompareInjection -d 1 -e 1 -E 1 -f -H -I configs/injectionCF7_CFcomp1_low.txt -o testingPlots/injectionCF7_CFcomp1_low.root -O testingPlots/injectionCF7_CFcomp1_low/ -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv
+# ./CompareInjection -d 1 -e 1 -E 1 -f -H -I configs/injectionCF7_CFcomp1_high.txt -o testingPlots/injectionCF7_CFcomp1_high.root -O testingPlots/injectionCF7_CFcomp1_high/ -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv
+# ./CompareInjection -d 1 -e 1 -E 1 -f -H -I configs/injectionCF7_CFcomp1_new.txt -o testingPlots/injectionCF7_CFcomp1_new.root -O testingPlots/injectionCF7_CFcomp1_new/ -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv
+# 
+# ./CompareInjection -d 1 -e 1 -E 1 -f -H -I configs/injectionCF2_CFcomp1_red.txt -o testingPlots/injectionCF2_CFcomp1.root -O testingPlots/injectionCF2_CFcomp1/ -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv
+# ./CompareInjection -d 1 -e 1 -E 1 -f -H -I configs/injectionCF6_CFcomp1_red.txt -o testingPlots/injectionCF6_CFcomp1.root -O testingPlots/injectionCF6_CFcomp1/ -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv
+# ./CompareInjection -d 1 -e 1 -E 1 -f -H -I configs/injectionCF8_CFcomp1.txt -o testingPlots/injectionCF8_CFcomp1.root -O testingPlots/injectionCF8_CFcomp1/ -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv
+# ./CompareInjection -d 1 -e 1 -E 1 -f -H -I configs/injectionRF3_CFcomp1.txt -o testingPlots/injectionRF3_CFcomp1.root -O testingPlots/injectionRF3_CFcomp1/ -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv
+# ./CompareInjection -d 1 -e 1 -E 1 -f -H -I configs/injectionRF3_CFcomp1_low.txt -o testingPlots/injectionRF3_CFcomp1_low.root -O testingPlots/injectionRF3_CFcomp1_low/ -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv
+# ./CompareInjection -d 1 -e 1 -E 1 -f -H -I configs/injectionRF3_CFcomp1_new.txt -o testingPlots/injectionRF3_CFcomp1_new.root -O testingPlots/injectionRF3_CFcomp1_new/ -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv
+
+# ./CompareInjection -d 1 -e 1 -E 1 -f -H -I configs/injectionRF5_CFcomp1.txt -o testingPlots/injectionRF5_CFcomp1.root -O testingPlots/injectionRF5_CFcomp1/ -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv
+# ./CompareInjection -d 1 -e 1 -E 1 -f -H -I configs/injectionRF12_CFcomp1.txt -o testingPlots/injectionRF12_CFcomp1.root -O testingPlots/injectionRF12_CFcomp1/ -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv
+# ./CompareInjection -d 1 -e 1 -E 1 -f -H -I configs/injectionRF4_CFcomp1.txt -o testingPlots/injectionRF4_CFcomp1.root -O testingPlots/injectionRF4_CFcomp1/ -r ../configs/FOCalTest2026/DataDB_InjectionTestFocal_202604.csv

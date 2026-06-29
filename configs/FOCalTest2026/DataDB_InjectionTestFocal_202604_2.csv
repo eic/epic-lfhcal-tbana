@@ -1,9 +1,8 @@
 year 2026
-month 06
+month 04
 readout HGCROC
 facility CERN
 beam-line injection
-detector FoCal-H
 #Run Number,type,bias Voltage,V_br,machine gun,dead time,phase,nrKCU,nrAsic,RF,CF,CC,CFcomp,mode,value,location,comments
 1,injection,0,38.6,7,0,1,0,4,4,8,4,8,0,250,FOCALTests-DefSettingsShihai-ORNL04-05/test_wo_detector/302_ToTCalib_Target400/205_Injection_Low/205_Injection_20260424_165941/205_Injection_asic4_injdac250_mg7_pack8_chn76,
 2,injection,0,38.6,7,0,1,0,4,4,8,4,8,0,100,FOCALTests-DefSettingsShihai-ORNL04-05/test_wo_detector/302_ToTCalib_Target400/205_Injection_Low/205_Injection_20260424_153821/205_Injection_asic4_injdac100_mg7_pack8_chn76,
@@ -87,8 +86,8 @@ detector FoCal-H
 127,injection,0,38.6,7,0,1,0,2,4,4,3,5,1,550,RF_4_CF_4_CFC_5_CC_3/fpga1_405_InjectionY_20260625_140156/405_InjectionY_asic0-2_injdac550_mg7_pack8_chn76,
 128,injection,0,38.6,7,0,1,0,2,4,4,5,5,1,550,RF_4_CF_4_CFC_5_CC_5/fpga1_405_InjectionY_20260625_142955/405_InjectionY_asic0-2_injdac550_mg7_pack8_chn76,
 129,injection,0,38.6,7,0,1,0,2,4,4,6,5,1,550,RF_4_CF_4_CFC_5_CC_6/fpga1_405_InjectionY_20260625_145758/405_InjectionY_asic0-2_injdac550_mg7_pack8_chn76,
-130,injection,0,38.6,7,0,1,0,2,4,6,5,1,1,550,RF_4_CF_6_CFC_1_CC_5/fpga1_405_InjectionY_20260625_200925/405_InjectionY_asic0-2_injdac550_mg7_pack8_chn16,
-131,injection,0,38.6,7,0,1,0,2,4,6,5,3,1,550,RF_4_CF_6_CFC_3_CC_5/fpga1_405_InjectionY_20260625_203642/405_InjectionY_asic0-2_injdac550_mg7_pack8_chn16,
+130,injection,0,38.6,7,0,1,0,2,4,6,5,1,1,550,RF_4_CF_6_CFC_1_CC_5/fpga1_405_InjectionY_20260625_200925/405_InjectionY_asic0-2_injdac550_mg7_pack8_chn76,
+131,injection,0,38.6,7,0,1,0,2,4,6,5,3,1,550,RF_4_CF_6_CFC_3_CC_5/fpga1_405_InjectionY_20260625_203642/405_InjectionY_asic0-2_injdac550_mg7_pack8_chn76,
 132,injection,0,38.6,7,0,1,0,2,4,6,5,5,1,550,RF_4_CF_6_CFC_5_CC_5/fpga1_405_InjectionY_20260625_210341/405_InjectionY_asic0-2_injdac550_mg7_pack8_chn76,
 133,injection,0,38.6,7,0,1,0,2,4,8,5,1,1,550,RF_4_CF_8_CFC_1_CC_5/fpga1_405_InjectionY_20260625_225114/405_InjectionY_asic0-2_injdac550_mg7_pack8_chn76,
 134,injection,0,38.6,7,0,1,0,2,4,8,5,3,1,550,RF_4_CF_8_CFC_3_CC_5/fpga1_405_InjectionY_20260625_231831/405_InjectionY_asic0-2_injdac550_mg7_pack8_chn76,

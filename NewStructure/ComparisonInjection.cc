@@ -171,7 +171,8 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
     double set_cf     = (double)itRun->second.cf;
     double set_cc     = (double)itRun->second.cc;
     double set_cfcomp = (double)itRun->second.cfcomp;
-    std::cout <<calib.GetRunNumber() << "\t" << set_rf << "\t" << set_cf << "\t" << set_cc << "\t" << set_cfcomp << std::endl;
+    double set_injec  = (double)GetInjectionfCEquivalent(itRun->second.injDAC, itRun->second.injMode); 
+    std::cout <<calib.GetRunNumber() << "\t" << set_rf << "\t" << set_cf << "\t" << set_cc << "\t" << set_cfcomp << "\t" << set_injec<< std::endl;
     
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // Set X-values according to option
@@ -236,7 +237,7 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
         itrend->second.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(),0, -10000., -10000.);
         itrend->second.FillInjection(Xvalue,calib.GetPedestalMeanH(itcalib->first),(int)calib.GetRunNumber(), 
                                      profCellWave, profCellTOA, profCellTOT, 
-                                     set_rf, set_cf, set_cfcomp, set_cc );
+                                     set_rf, set_cf, set_cfcomp, set_cc, set_injec );
       // create new TileTrend object if not yet available in map
       } else {
         TileTrend atrend=TileTrend(itcalib->first,0, 3);
@@ -244,7 +245,7 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
         atrend.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(), 0, -10000., -10000.);
         atrend.FillInjection(Xvalue,calib.GetPedestalMeanH(itcalib->first),(int)calib.GetRunNumber(), 
                              profCellWave, profCellTOA, profCellTOT, 
-                             set_rf, set_cf, set_cfcomp, set_cc);
+                             set_rf, set_cf, set_cfcomp, set_cc, set_injec);
         // append TileTrend object to map
         trend[itcalib->first]=atrend;
       }
@@ -304,10 +305,12 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
   bool isSameCF         = true;
   bool isSameCFcomp     = true;
   bool isSameCC         = true;
+  bool isSameInj         = true;
   double commonRF       = 0;
   double commonCF       = 0;
   double commonCFcomp   = 0;
   double commonCC       = 0;
+  double commonInj      = 0;
   itrend=trend.begin();
   for (int rc = 0; rc < itrend->second.GetNRuns() && rc < 30; rc++ ){
     if (rc == 0){
@@ -316,14 +319,16 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
       commonCF      = itrend->second.GetCF(rc);
       commonCC      = itrend->second.GetCC(rc);
       commonCFcomp  = itrend->second.GetCFComp(rc);
+      commonInj     = itrend->second.GetInj(rc);
     } else {
       if (commonVoltage != itrend->second.GetVoltage(rc))   isSameVoltage = false;
       if (commonRF != itrend->second.GetRF(rc))        isSameRF = false;
       if (commonCF != itrend->second.GetCF(rc))        isSameCF = false;
       if (commonCFcomp != itrend->second.GetCFComp(rc))    isSameCFcomp = false;
       if (commonCC != itrend->second.GetCC(rc))        isSameCC = false;
+      if (commonInj != itrend->second.GetInj(rc))        isSameInj = false;
     }
-    std::cout << itrend->second.GetRunNr(rc) << "\t" <<  itrend->second.GetRF(rc) << "\t" << itrend->second.GetCF(rc) << "\t" << itrend->second.GetCC(rc) << "\t" << itrend->second.GetCFComp(rc) << "\tRF calc:"<< ReturnRFValue(itrend->second.GetRF(rc))<< std::endl;
+    std::cout << itrend->second.GetRunNr(rc) << "\t" <<  itrend->second.GetRF(rc) << "\t" << itrend->second.GetCF(rc) << "\t" << itrend->second.GetCC(rc) << "\t" << itrend->second.GetCFComp(rc) << "\tinj:"<< itrend->second.GetInj(rc) << std::endl;
     
   }
   std::cout << "Show all common settings" << std::endl;
@@ -340,6 +345,7 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
   commonRunInfo.energy      = itRun->second.energy;
   commonRunInfo.pdg         = itRun->second.pdg;
   commonRunInfo.species     = itRun->second.species;
+  commonRunInfo.detector    = itRun->second.detector;
   commonRunInfo.beamline    = itRun->second.beamline;
   commonRunInfo.facility    = itRun->second.facility;
   commonRunInfo.readout     = itRun->second.readout;
@@ -367,6 +373,15 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
     commonRunInfo.vop       = commonVoltage;
   else 
     commonRunInfo.vop       = -10.;
+  
+  if (isSameInj)
+    commonRunInfo.injDAC    = commonInj;
+  else 
+    commonRunInfo.injDAC    = -10.;
+  
+
+  PrintSettingsRunInfo(commonRunInfo);
+  
   //******************************************************************************
   // plotting overview for each run overlayed
   //******************************************************************************

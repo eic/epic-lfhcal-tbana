@@ -155,12 +155,19 @@ fi
 
 if [ $2 == "calibMuonParScan" ]; then
   badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_OnlyCenter2x4.txt
-#   toaPhaseOffset=../configs/TB2026/ToAOffsets_TBSPS2026_ParamScan_1.csv
-#   runPeds=( 294 296 299 301 303 305 307 309 )
-#   runMuons=( 295 298 300 302 304 306 308 310 )
-  toaPhaseOffset=../configs/TB2026/ToAOffsets_TBSPS2026_ParamScan_2.csv
-  runPeds=( 328 330 332 334 336 338 340 342 344 346 348 350 352 354 356 358 360 362 364 367 )
-  runMuons=( 329 331 333 335 337 339 341 343 345 347 349 351 353 355 357 359 361 363 366 369 )
+  toaPhaseOffset=../configs/TB2026/ToAOffsets_TBSPS2026_ParamScan_1.csv
+  if [ $4 = "Set1" ]; then
+    runPeds=( 294 296 299 301 303 305 )
+    runMuons=( 295 298 300 302 304 306 )
+  elif [ $4 = "Set2" ]; then
+    runPeds=( 307 309 )
+    runMuons=( 308 310 )
+  elif [ $4 = "Set3" ]; then
+    toaPhaseOffset=../configs/TB2026/ToAOffsets_TBSPS2026_ParamScan_2.csv
+    runPeds=( 328 330 332 334 336 338 340 342 344 346 348 350 352 354 356 358 360 362 364 367 )
+    runMuons=( 329 331 333 335 337 339 341 343 345 347 349 351 353 355 357 359 361 363 366 369 )
+  fi
+  
   for idx in "${!runPeds[@]}"; do
     runPed=${runPeds[$idx]}
     runMuon=${runMuons[$idx]}
