@@ -19,6 +19,7 @@ namespace DetConf{
               MediumTB,
               LargeTB,
               Asic,
+              FocalH,
             };
 }
 
@@ -118,7 +119,7 @@ class Setup{
   float cellD = 2.;/*cm, depth*/
   int sumOpt  = 0;  
   
-  ClassDef(Setup,3)
+  ClassDef(Setup,4)
 };
 
 

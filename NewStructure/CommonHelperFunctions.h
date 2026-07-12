@@ -451,33 +451,48 @@
   
   inline TString GetLabelHGCROCSettings(RunInfo currRunInfo){
     TString label = "";
-    if (currRunInfo.rf > -1)
+    if (currRunInfo.rf > -10000.)
       label = Form("%sRF=%.1fk#Omega ",label.Data() , ReturnRFValue(currRunInfo.rf));
-    if (currRunInfo.cf > -1)
+    if (currRunInfo.cf > -10000.)
       label = Form("%sCF=%.1ffF ",label.Data() , ReturnCFValue(currRunInfo.cf));
-    if (currRunInfo.cfcomp > -1)
+    if (currRunInfo.cfcomp > -10000.)
       label = Form("%sCF_{comp}=%.1ffF ",label.Data() , ReturnCFCompValue(currRunInfo.cfcomp));
-    if (currRunInfo.cc > -1)
+    if (currRunInfo.cc > -10000.)
       label = Form("%sCC=%.3f",label.Data() , ReturnCCValue(currRunInfo.cc));
     return label;
   }
   inline TString GetLabelHGCROCSettingsCF(RunInfo currRunInfo){
     TString label = "";
-    if (currRunInfo.cf > -1)
+    if (currRunInfo.cf > -10000.)
       label = Form("%sCF=%.1ffF ",label.Data() , ReturnCFValue(currRunInfo.cf));
-    if (currRunInfo.cfcomp > -1)
+    if (currRunInfo.cfcomp > -10000.)
       label = Form("%sCF_{comp}=%.1ffF",label.Data() , ReturnCFCompValue(currRunInfo.cfcomp));
     return label;
   }
   
   inline TString GetLabelHGCROCSettingsRFCC(RunInfo currRunInfo){
     TString label = "";
-    if (currRunInfo.rf > -1)
+    if (currRunInfo.rf > -10000.)
       label = Form("%sRF=%.1fk#Omega ",label.Data() , ReturnRFValue(currRunInfo.rf));
-    if (currRunInfo.cc > -1)
+    if (currRunInfo.cc > -10000.)
       label = Form("%sCC=%.3f",label.Data() , ReturnCCValue(currRunInfo.cc));
     return label;
   }
+  
+  inline TString GetLabelVoltageTemp(RunInfo currRunInfo){
+    TString label = "";
+    if (currRunInfo.vop > -10000.)
+      label = Form("%sV_{op}=%.1f V ",label.Data() , currRunInfo.vop);
+    if (currRunInfo.temp > -10000.)
+      label = Form("%s T=%.1f C",label.Data() , currRunInfo.temp);
+    if (currRunInfo.energy > -10000. && currRunInfo.species.Contains("laser"))
+      label = Form("%s I_{laser}=%.0f",label.Data() , currRunInfo.energy);
+    else if (currRunInfo.energy > -10000.)
+      label = Form("%s E=%.1f GeV",label.Data() , currRunInfo.energy);
+    
+    return label;
+  }
+  
 
   inline void PrintSettingsRunInfo(RunInfo currRunInfo){
     TString label = "";
@@ -495,6 +510,156 @@
     return;
   }
 
+  inline RunInfo GetCommonRunInfoFromList( std::vector<RunInfo> runList, Int_t option = -1){
+    
+    bool isSameVoltage    = true;
+    double commonVoltage  = runList.at(0).vop;
+    bool isSameRF         = true;
+    bool isSameCF         = true;
+    bool isSameCFcomp     = true;
+    bool isSameCC         = true;
+    bool isSameInj        = true;
+    bool isSameTemp       = true;
+    bool isSameE          = true;
+    double commonRF       = runList.at(0).rf;
+    double commonCF       = runList.at(0).cf;
+    double commonCFcomp   = runList.at(0).cfcomp;
+    double commonCC       = runList.at(0).cc;
+    double commonInj      = (double)GetInjectionfCEquivalent(runList.at(0).injDAC, runList.at(0).injMode); 
+    double commonTemp     = runList.at(0).temp;
+    double commonE        = runList.at(0).energy;
+
+    std::cout << runList.at(0).runNr << "\t"<<  commonVoltage << "\t" << commonE << "\t"<< commonTemp << "\t Sett: "<< commonRF << "\t" << commonCF << "\t"<< commonCC << "\t" << commonCFcomp << "\tinj:"<< commonInj << std::endl;
+    
+    for (Int_t r = 1; r< (int)runList.size(); r++){
+      if (commonVoltage != runList.at(r).vop)   isSameVoltage = false;
+      if (commonRF != runList.at(r).rf)         isSameRF      = false;
+      if (commonCF != runList.at(r).cf)         isSameCF      = false;
+      if (commonCFcomp != runList.at(r).cfcomp)    isSameCFcomp  = false;
+      if (commonCC != runList.at(r).cc)         isSameCC      = false;
+      double currentInj = (double)GetInjectionfCEquivalent(runList.at(r).injDAC, runList.at(r).injMode);
+      if (commonInj != currentInj)              isSameInj     = false;
+      if (commonE   != runList.at(r).energy)    isSameE       = false;
+      if (commonTemp   != runList.at(r).temp)   isSameTemp    = false;
+      std::cout << runList.at(r).runNr << "\t" <<  runList.at(r).vop << "\t" << runList.at(r).energy << "\t"<< runList.at(r).temp << "\t Sett: "<< runList.at(r).rf << "\t" << runList.at(r).cf << "\t"<<  runList.at(r).cc << "\t" << runList.at(r).cfcomp << "\tinj:"<< currentInj << std::endl;
+    }
+    
+    std::cout << "Show all common settings" << std::endl;
+    std::cout << "Common Voltage: "<< isSameVoltage << "\t"  << commonVoltage
+              << "\t RF: " << isSameRF << "\t"  << commonRF
+              << "\t CF: " << isSameCF << "\t"  << commonCF 
+              << "\t CFcomp: " << isSameCFcomp << "\t"  << commonCFcomp 
+              << "\t CC: " << isSameCC << "\t"  << commonCC 
+              << "\t E: " << isSameE << "\t"  << commonE 
+              << "\t T: " << isSameTemp << "\t"  << commonTemp 
+              << "\t Inj: " << isSameInj << "\t"  << commonInj 
+              << std::endl;
+    
+    RunInfo commonRunInfo;
+    commonRunInfo.nFPGA       = runList.at(0).nFPGA;
+    commonRunInfo.nASIC       = runList.at(0).nASIC;
+    commonRunInfo.pdg         = runList.at(0).pdg;
+    commonRunInfo.species     = runList.at(0).species;
+    commonRunInfo.detector    = runList.at(0).detector;
+    commonRunInfo.beamline    = runList.at(0).beamline;
+    commonRunInfo.facility    = runList.at(0).facility;
+    commonRunInfo.readout     = runList.at(0).readout;
+    commonRunInfo.month       = runList.at(0).month;
+    commonRunInfo.year        = runList.at(0).year;
+    commonRunInfo.samples     = runList.at(0).samples;
+    commonRunInfo.vbr         = runList.at(0).vbr;
+  
+    if (isSameRF)
+      commonRunInfo.rf        = commonRF;
+    else 
+      commonRunInfo.rf        = -10000.;
+    if (isSameCF)
+      commonRunInfo.cf        = commonCF;
+    else 
+      commonRunInfo.cf        = -10000.;
+    if (isSameCFcomp)
+      commonRunInfo.cfcomp    = commonCFcomp;
+    else 
+      commonRunInfo.cfcomp    = -10000.;
+    if (isSameCC)
+      commonRunInfo.cc        = commonCC;
+    else 
+      commonRunInfo.cc        = -10000.;
+    if (isSameVoltage)
+      commonRunInfo.vop       = commonVoltage;
+    else 
+      commonRunInfo.vop       = -10000.;
+    
+    if (isSameInj)
+      commonRunInfo.injDAC    = commonInj;
+    else 
+      commonRunInfo.injDAC    = -10000.;
+    
+    if (isSameE)
+      commonRunInfo.energy    = commonE;
+    else 
+      commonRunInfo.energy    = -10000.;
+
+    if (isSameTemp)
+      commonRunInfo.temp    = commonTemp;
+    else 
+      commonRunInfo.temp    = -10000.;
+
+    return commonRunInfo;
+    
+  }
+
+  inline Int_t GetNSameSettings(RunInfo currRunInfo){
+    Int_t nSameSettings = 0;
+    if (currRunInfo.species.Contains("injection")){
+      if (currRunInfo.rf > -10000.) nSameSettings++;
+      if (currRunInfo.cf > -10000.) nSameSettings++;
+      if (currRunInfo.cfcomp > -10000.) nSameSettings++;
+      if (currRunInfo.cc > -10000.) nSameSettings++;
+      if (currRunInfo.vop > -10000.) nSameSettings++;
+      if (currRunInfo.injDAC > -10000.) nSameSettings++;
+      if (currRunInfo.energy > -10000.) nSameSettings++;
+    } else if (currRunInfo.species.Contains("laser")){
+      if (currRunInfo.energy > -10000.) nSameSettings++;
+      if (currRunInfo.temp > -10000.) nSameSettings++;
+      if (currRunInfo.vop > -10000.) nSameSettings++;
+    }
+    return nSameSettings;
+  }
+
+  
+  inline TString GetHeaderLegendCommonRunObject (RunInfo currRunInfo, int nSameSettings, double &width, int &columns, double labelScale  ){
+    TString header = "";
+    if (currRunInfo.species.Contains("injection")){
+      if (nSameSettings == 6){
+          // width = 0.9;
+          // std::cout <<  currRunInfo.rf << "\t" << currRunInfo.cf << "\t" << currRunInfo.cfcomp << "\t" << currRunInfo.cc << "\t" << currRunInfo.vop << "\t" << currRunInfo.energy << std::endl;
+          if (currRunInfo.rf < -9999) header = "RF (k#Omega)";
+          if (currRunInfo.cf < -9999) header = "CF (fF)";
+          if (currRunInfo.cfcomp < -9999) header = "CF_{comp} (fF)";
+          if (currRunInfo.cc < -9999)  header = "CC";
+          if (currRunInfo.vop < -9999)  header = "V_{op} (V)";
+          if (currRunInfo.injDAC < -9999)  header = "inj (fC)";
+          if (currRunInfo.energy < -9999)  header = "E ";
+      } else if (nSameSettings == 5){
+          // width = 0.9;
+          columns = 2;
+          labelScale = 0.6;
+          // std::cout <<  currRunInfo.rf << "\t" << currRunInfo.cf << "\t" << currRunInfo.cfcomp << "\t" << currRunInfo.cc << "\t" << currRunInfo.vop << "\t" << currRunInfo.energy << std::endl;
+          if (currRunInfo.rf < -9999)       header = "RF (k#Omega) ";
+          if (currRunInfo.cf < -9999)       header = header+"CF (fF) ";
+          if (currRunInfo.cfcomp < -9999)   header = header+"CF_{comp} (fF) ";
+          if (currRunInfo.cc < -9999)       header = header+"CC ";
+          if (currRunInfo.vop < -9999)      header = header+"V_{op} (V) ";
+          if (currRunInfo.injDAC < -9999)   header = header+"inj (fC) ";      
+          if (currRunInfo.energy < -9999)   header = header+"E  ";      
+      }
+    } else if (currRunInfo.species.Contains("laser")){
+      if (currRunInfo.energy < -9999)       header = header+"Laser Intensity  ";
+      if (currRunInfo.temp < -9999)         header = header+"Temperature (#circ C) ";
+    }
+    return header;
+  }
   
   
   // // Function to generate the CRC-32 lookup table at runtime (or compile time with C++11 constexpr)

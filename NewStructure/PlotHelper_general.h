@@ -215,6 +215,18 @@
       return styles[l%7];
     }
   }
+
+  //__________________________________________________________________________________________________________  
+  inline Style_t GetFillStyleLayer(int l, int alter = 0){
+    if (alter == 0){
+      Style_t styles[10] = {3244, 3205, 3250, 3135, 3153, 3344, 3305, 3350, 3465, 3456  };
+      int bin = l/10;
+      return styles[bin];
+    } else {
+      Style_t styles[7] = {3144, 3105, 3150, 3235, 3253, 3344, 3205};
+      return styles[l%7];
+    }
+  }
   
   //__________________________________________________________________________________________________________
   inline void DrawCanvasSettings( TCanvas* c1,
@@ -435,6 +447,22 @@
       histo1->SetLineStyle(LineStyle);
   }
 
+  //__________________________________________________________________________________________________________
+  inline void SetHistDefaultsWFill(    TH1* histo1,
+                                      Int_t LineColor,
+                                      Int_t LineWidth,
+                                      Int_t LineStyle,
+                                      Int_t FillStyle = 0
+                                   ) {
+      histo1->SetLineColor(LineColor);
+      histo1->SetMarkerColor(LineColor);
+      histo1->SetFillColor(LineColor);
+      histo1->SetLineWidth(LineWidth);
+      histo1->SetLineStyle(LineStyle);
+      histo1->SetFillStyle(FillStyle);
+      
+  }
+  
   //__________________________________________________________________________________________________________
   inline void SetLineDefaultsTF1(  TF1*  Fit1,
                               Int_t LineColor,

@@ -111,7 +111,7 @@ bool TileSpectra::FillExtHGCROCPed(std::vector<int> samples, double h){
 bool TileSpectra::FillWaveform(std::vector<int> samples, double ped = 0){
  for (int k = 0; k < (int)samples.size(); k++ ){
    hcorr.Fill(k,samples.at(k)-ped);
-   if (extend == 3 || extend == 7) hWaveForm.Fill(k,samples.at(k)-ped);
+   if (extend == 3 || extend == 7 || extend == 2) hWaveForm.Fill(k,samples.at(k)-ped);
  }
  return true;
 }
@@ -122,7 +122,7 @@ bool TileSpectra::FillWaveformVsTime(std::vector<int> samples, double toalincorr
   for (int k = 0; k < (int)samples.size(); k++ ){
     double tempt = ((k+offset)*1024+toalincorr)*timeRes;
     hcorr.Fill(tempt,samples.at(k)-ped);
-    if (extend == 3 || extend == 5 || extend == 6 || extend == 8) hWaveForm.Fill(tempt,samples.at(k)-ped);
+    if (extend == 3 || extend == 5 || extend == 6 || extend == 8 || extend == 2) hWaveForm.Fill(tempt,samples.at(k)-ped);
   }
   return true;
 }
@@ -132,7 +132,7 @@ bool TileSpectra::FillMaxVsTime(double adc, double toalincorr = 0, int offset = 
   double timeRes = 25./1024;
   double tempt = ((nSampleADCMax+offset)*1024+toalincorr)*timeRes;
   hcorr.Fill(tempt,adc);
-  if (extend == 3 || extend == 5 || extend == 6 || extend == 8)   hWaveForm.Fill(tempt,adc);
+  if (extend == 3 || extend == 5 || extend == 6 || extend == 8 || extend == 2)   hWaveForm.Fill(tempt,adc);
   return true;
 }
 
@@ -934,7 +934,7 @@ void TileSpectra::Write( bool wFits = true){
     if (bTriggPrim) hTriggPrim.Write(hTriggPrim.GetName(), kOverwrite);
     hADCTOT.Write(hspectraTOT.GetName(), kOverwrite);
     hTOAADC.Write(hspectraTOA.GetName(), kOverwrite);
-    if (extend == 8 || extend == 7 || extend == 6 || extend == 5) hWaveForm.Write(hWaveForm.GetName(), kOverwrite);
+    if (extend == 8 || extend == 7 || extend == 6 || extend == 5 || extend == 2) hWaveForm.Write(hWaveForm.GetName(), kOverwrite);
     if ( wFits ){
       if(bpedHG)BackgroundHG.Write(BackgroundHG.GetName(), kOverwrite);
       if(bmipHG)SignalHG.Write(SignalHG.GetName(), kOverwrite);
@@ -974,6 +974,7 @@ void TileSpectra::WriteExt( bool wFits = true){
     }
     if (extend == 2){
       hADCTOT.Write(hADCTOT.GetName(), kOverwrite);  
+      hWaveForm.Write(hWaveForm.GetName(), kOverwrite);  
     } else if (extend == 3){
       hWaveForm.Write(hWaveForm.GetName(), kOverwrite);  
     } else if (extend == 4){

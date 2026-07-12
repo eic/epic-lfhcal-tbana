@@ -58,6 +58,7 @@ class ComparisonCalib{
   inline void SetMaxPlotLayer(int i)             {maxLayerPlot=i;};
   inline void SetIsHGCROC(bool b)                {isHGCROC=b;};
 	inline void SetLegendLabelOpt(int i)					 {eoLabelOpt=i;};  
+  inline void SetCellList(TString name)					 {cellList=name;};  
   //General methods
   bool CreateOutputRootFile(void);
   bool CheckAndOpenIO(void);
@@ -68,10 +69,11 @@ class ComparisonCalib{
   std::vector<TString> RootInputNames;    // file name of root output with tree
   //TString RootOutputNameHist;             // file name of root output with additional histograms & fits
   TString OutputNameDirPlots;             // directory name of output for plots
-  TString plotSuffix        = "pdf";      // output file format for plots
+  TString plotSuffix          = "pdf";    // output file format for plots
   TString InputListName;                  // file name of input file list 
   TString RunListInputName;               // file name run list 
-  TFile* RootOutput         =nullptr;     // root file output tree
+  TString cellList            = "";       // list of cells to be plotted separately
+  TFile* RootOutput           =nullptr;   // root file output tree
   bool Overwrite              =false;     // Flag to overwrite outputs
   int expandedList            =0;         // Expanded input list option: 1 - ImprovedScaling histo output, 2 - GetScaling histo output
   int debug                   =0;         // debug level 
@@ -80,7 +82,7 @@ class ComparisonCalib{
   int Xaxis                   =0;         // Trending dependence 0: run nr, 1: Voltage
   int maxLayerPlot            =100;       // option restrict individual layer plotting
   bool isHGCROC               =false;     // option to switch to HGCROC comparison
-  int eoLabelOpt              =1; // 1: run number, 2: beam E (NOT IMPLEMENTED), 3: Vop
+  int eoLabelOpt              =1;         // 1: run number, 2: beam E (NOT IMPLEMENTED), 3: Vop
   RootSetupWrapper rsw;                   // Wrapper singleton class for setup
   RootSetupWrapper* rswptr;               // Pointer to wrapper for singleton class for setup
   Setup* setup;                           // geometry setup

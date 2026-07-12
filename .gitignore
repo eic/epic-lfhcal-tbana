@@ -6,5 +6,9 @@ NewStructure/Cint*
 NewStructure/lib
 NewStructure/build
 NewStructure/doxy
+NewStructure/*.d
+NewStructure/*.pcm
+NewStructure/*.txt
+NewStructure/*.log
 *.root
 *.h2g

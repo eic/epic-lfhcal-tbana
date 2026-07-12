@@ -46,6 +46,8 @@ class MultiCanvas{
   Double_t* GetLegPlace1D(int opt){ if (init) {if (opt==0) return legPlace_X; else return legPlace_Y;} else return nullptr;}
   Double_t* GetRelTextSize1D(){ if (init) return relTextSize; else return nullptr;}
   
+  void SetCellVector( std::vector<int> tempcells); 
+  
   
   void ReturnCorrectValuesForCanvasScaling(   Int_t sizeX, Int_t sizeY, Int_t nCols, Int_t nRows, Double_t  leftMargin, Double_t rightMargin, Double_t upperMargin, Double_t lowerMargin, Double_t* arrayBoundariesX, Double_t* arrayBoundariesY, Double_t* relativeMarginsX, Double_t* relativeMarginsY, int verbose = 1);
   
@@ -134,6 +136,8 @@ class MultiCanvas{
   // int maxRow               = 0;
   // int maxColumn            = 0;
   TString addName          = "";
+  std::vector<int> cells;
+  
   
  protected:
 

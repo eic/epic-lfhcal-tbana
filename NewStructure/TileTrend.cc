@@ -8,7 +8,7 @@ ClassImp(TileTrend);
 // Fill functions for the trending objects
 //************************************************************************
 //===============================================================================
-bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt, int pdg,  double hgmaxerr, double lgmaxerr){
+bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt, int pdg,  double hgmaxerr, double lgmaxerr, double tempE, double temper){
   gTrendLGped   .AddPoint     (x,tc.PedestalMeanL);
   gTrendLGped   .SetPointError(gTrendLGped.GetN()-1,0.,tc.PedestalSigL);
   if(tc.PedestalMeanL<MinLGped && tc.PedestalMeanL > -100) MinLGped=tc.PedestalMeanL;
@@ -68,11 +68,13 @@ bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt, int 
   voltages.push_back(volt);
   runNrs.push_back(runNr);
   pdgs.push_back(pdg);
+  energy.push_back(tempE);
+  temp.push_back(temper);
   return true;
 }
 
 //===============================================================================
-bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH1D* histLG, TProfile* profLGHG ){
+bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH1D* histLG, TProfile* profLGHG, TProfile* wave ){
   
   if (extended == 1 || extended == 2 ){
     gTrendTrigger.AddPoint     (x,triggers     );
@@ -103,6 +105,7 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
     }
   }
   if (profLGHG){
+    // std::cout << "filling profile " <<  profLGHG->GetName() << std::endl;
     //std::cout << "setting LG-HG profile " << profLGHG->GetName() << std::endl;
     TProfile temp3 = *profLGHG;
     temp3.SetName(Form("%s_Run%i",profLGHG->GetName(),runNr));
@@ -119,11 +122,33 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
       double scaler = 1./temp.GetEntries();
       temp.Scale(scaler);
       temp.GetYaxis()->SetTitle("Counts/ trigger");
-      temp.Rebin(2);
+      TString name = histHG->GetName();
+      if (name.Contains("TOT"))
+        temp.Rebin(8);
+      else 
+        temp.Rebin(2);
       if (MinHGSpec > scaler) MinHGSpec = (double)scaler;
       if (MaxHGSpec < temp.GetMaximum()) MaxHGSpec = temp.GetMaximum();
       HGTriggRuns[runNr] = temp;
-    }    
+    }
+    if (histLG){
+      TH1D temp2 = *histLG;
+      temp2.SetName(Form("%s_Run%i",histLG->GetName(),runNr));
+      temp2.SetDirectory(0);
+      temp2.Scale(1./triggers);
+      temp2.GetYaxis()->SetTitle("Counts/ trigger");
+      if (MinLGSpec > 1./triggers) MinLGSpec = (double)1./triggers;
+      if (MaxLGSpec < temp2.GetMaximum()) MaxLGSpec = temp2.GetMaximum();
+      LGTriggRuns[runNr] = temp2;
+    }
+    if (wave){
+      TProfile temp = *wave;
+      // std::cout << "filling wave " <<  wave->GetName() << std::endl;
+      temp.SetName(Form("%s_Run%i",wave->GetName(),runNr));
+      temp.SetDirectory(0);
+      if (MaxInjADC < temp.GetMaximum()) MaxInjADC = temp.GetMaximum();
+      Wave1DProf[runNr] = temp;
+    }
   }
   
   return true;
@@ -805,4 +830,39 @@ bool TileTrend::Write(){
   } 
   
   return true;
+}
+
+
+//*************************************************************************
+// Labeling legend entries
+//*************************************************************************
+TString TileTrend::GetLabelLegend( RunInfo currRunInfo, int runIndex, int nSameSettings){
+  
+  TString labelLegend = "";
+  if (currRunInfo.species.Contains("injection")){
+    if (nSameSettings == 6){
+      if (currRunInfo.vop < -9999) labelLegend = Form("%.1f",(double)GetVoltage(runIndex));
+      if (currRunInfo.rf < -9999) labelLegend = Form("%.1f",ReturnRFValue(GetRF(runIndex)));
+      if (currRunInfo.cf < -9999) labelLegend = Form("%.0f",ReturnCFValue(GetCF(runIndex),1));
+      if (currRunInfo.cfcomp < -9999) labelLegend = Form("%.0f",ReturnCFCompValue(GetCFComp(runIndex),1));
+      if (currRunInfo.cc < -9999)  labelLegend = Form("%.3f",ReturnCCValue(GetCC(runIndex),1));
+      if (currRunInfo.injDAC < -9999)  labelLegend = Form("%.0f",GetInj(runIndex));
+      if (currRunInfo.energy < -9999)  labelLegend = Form("%.0f",GetEnergy(runIndex));
+    } else if (nSameSettings == 5){
+      if (currRunInfo.vop < -9999) labelLegend = Form("%.1f ",(double)GetVoltage(runIndex));
+      if (currRunInfo.rf < -9999) labelLegend = labelLegend+Form("%.1f ",ReturnRFValue(GetRF(runIndex)));
+      if (currRunInfo.cf < -9999) labelLegend = labelLegend+Form("%.0f ",ReturnCFValue(GetCF(runIndex),1));
+      if (currRunInfo.cfcomp < -9999) labelLegend = labelLegend+Form("%.0f ",ReturnCFCompValue(GetCFComp(runIndex),1));
+      if (currRunInfo.cc < -9999)  labelLegend = labelLegend+Form("%.3f ",ReturnCCValue(GetCC(runIndex),1));
+      if (currRunInfo.injDAC < -9999)  labelLegend = labelLegend+Form("%.0f",GetInj(runIndex));
+      if (currRunInfo.energy < -9999)  labelLegend = labelLegend+Form("%.0f",GetEnergy(runIndex));
+    }
+  } else if (currRunInfo.species.Contains("laser")){
+    if (currRunInfo.energy < -9999)  labelLegend = Form("%.0f",GetEnergy(runIndex));
+    if (currRunInfo.temp < -9999)  labelLegend = Form("%.0f",GetTemp(runIndex));
+  }
+  if (labelLegend.CompareTo("") == 0)
+    labelLegend = Form("%i",GetRunNr(runIndex) );
+    
+  return   labelLegend;
 }

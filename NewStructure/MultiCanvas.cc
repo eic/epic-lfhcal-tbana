@@ -75,8 +75,8 @@ bool MultiCanvas::Initialize(int opt){
     } else if ( detType ==  DetConf::Type::LargeTB){
       init = false;
       std::cout << "Setup-1d: this option hasn't been implemented yet!" << std::endl;
-    // full asic plot
-    } else if ( detType ==  DetConf::Type::Asic){
+    // full asic plot or FoCalH
+    } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
       double margin = 0.035;
       CreateCanvasAndPadsForAsicLFHCalTBPlot( textSize, margin, addName);
       maxPads       = 64;      
@@ -149,9 +149,8 @@ bool MultiCanvas::Initialize(int opt){
     } else if ( detType == DetConf::Type::LargeTB){
       init = false;
       std::cout << "Setup-2d: this option hasn't been implemented yet!" << std::endl;
-        
-    // full asic plot
-    } else if ( detType == DetConf::Type::Asic){
+    // full asic plot or FoCalH
+    } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
       CreateCanvasAndPadsForAsicLFHCalTBPlot( textSize, 0.035, addName+"Prof", true);
       maxPads       = 64;
       init = true;
@@ -241,6 +240,14 @@ void MultiCanvas::ReturnCorrectValuesForCanvasScaling(   Int_t sizeX,
     relativeMarginsY[2]         = (Double_t)nPixelsLowerColumn/(nPixelsLowerColumn+nPixelsSinglePlotY);;
 
     return;
+}
+
+void MultiCanvas::SetCellVector(std::vector<int> tempcells){
+  for (int i = 0; i < (int)tempcells.size(); i++){
+    std::cout << "adding " << tempcells.at(i) << " to array" << std::endl; 
+    cells.push_back(tempcells.at(i));
+  }
+  return;
 }
 
 //__________________________________________________________________________________________________________
@@ -736,8 +743,8 @@ void MultiCanvas::DefaultPadSettings( TPad* pad1,
 
 
 void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int option, 
-                        Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
-                        TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int skiplayers, int debug ){
+                                    Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
+                                    TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int skiplayers, int debug ){
   
   std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
   Setup* setup = Setup::GetInstance();
@@ -874,12 +881,19 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
         continue;
       }        
     }
-  // full asic plot
-  } else if ( detType == DetConf::Type::Asic){
-    std::cout << "PlotNoiseWithFits: this option hasn't been implemented yet!" << std::endl; 
-    // for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
+  // full asic plot or Focal H
+  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
+    for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
+      std::cout << "====> asic " << a << std::endl;
+      if (!setup->IsAsicOn(a)){
+        std::cout << "====> asic " << a << " not enabled" << std::endl;
+        continue;
+      }          
+      PlotNoiseWithFitsAsicLFHCal( canvasMulti, padMulti, legPlace_X, legPlace_Y, relTextSize, textSize, 
+                                    spectra, option, xPMin, xPMax, scaleYMax, a,
+                                    Form("%s_Asic%02d.%s" ,nameOutputBase.Data(), a, suffix.Data()), currRunInfo);
+    }
 
-    // }
   }
 }  
   
@@ -1018,8 +1032,8 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "PlotCorr2DLayer: this option hasn't been implemented yet!" << std::endl;
         
-  // full asic plot
-  } else if ( detType == DetConf::Type::Asic){
+  // full asic plot or Focal H
+  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
     for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
       std::cout << "====> asic " << a << std::endl;
       if (!setup->IsAsicOn(a)){
@@ -1123,8 +1137,8 @@ void MultiCanvas::PlotNoiseAdvWithFits(  std::map<int,TileSpectra> spectra, std:
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "PlotNoiseAdvWithFits: this option hasn't been implemented yet!" << std::endl;
         
-  // full asic plot
-  } else if ( detType == DetConf::Type::Asic){
+  // full asic plot or Focal H
+  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
     std::cout << "PlotNoiseAdvWithFits: this option hasn't been implemented yet!" << std::endl;
   }
 }  
@@ -1201,8 +1215,8 @@ void MultiCanvas::Plot3SpectraOverlay(  std::map<int,TileSpectra> spectra, std::
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "Plot3SpectraOverlay: this option hasn't been implemented yet!" << std::endl;
         
-  // full asic plot
-  } else if ( detType == DetConf::Type::Asic){
+  // full asic plot or Focal H
+  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
     std::cout << "Plot3SpectraOverlay: this option hasn't been implemented yet!" << std::endl;
   }
 }  
@@ -1339,8 +1353,8 @@ void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option,
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "PlotSpectra: this option hasn't been implemented yet!" << std::endl;
         
-  // full asic plot
-  } else if ( detType == DetConf::Type::Asic){
+  // full asic plot or Focal H
+  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
     std::cout << "PlotSpectra: this option hasn't been implemented yet!" << std::endl;
   }
 }    
@@ -1437,8 +1451,8 @@ void MultiCanvas::PlotCorrWithFits( std::map<int,TileSpectra> spectra, int optio
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "PlotCorrWithFits: this option hasn't been implemented yet!" << std::endl;
         
-  // full asic plot
-  } else if ( detType == DetConf::Type::Asic){
+  // full asic plot or Focal H
+  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
     std::cout << "PlotCorrWithFits: this option hasn't been implemented yet!" << std::endl;
   }
 }    
@@ -1534,8 +1548,8 @@ void MultiCanvas::PlotMipWithFits(  std::map<int,TileSpectra> spectra, std::map<
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "PlotMipWithFits: this option hasn't been implemented yet!" << std::endl;
         
-  // full asic plot
-  } else if ( detType == DetConf::Type::Asic){
+  // full asic plot or Focal H
+  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
     std::cout << "PlotMipWithFits: this option hasn't been implemented yet!" << std::endl;
   }
 }  
@@ -1636,8 +1650,8 @@ void MultiCanvas::PlotTriggerPrim(  std::map<int,TileSpectra> spectra,
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "PlotTriggerPrim: this option hasn't been implemented yet!" << std::endl;
         
-  // full asic plot
-  } else if ( detType == DetConf::Type::Asic){
+  // full asic plot or Focal H
+  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
     std::cout << "PlotTriggerPrim: this option hasn't been implemented yet!" << std::endl;
   }  
 }
@@ -1842,8 +1856,8 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "PlotTrending: this option hasn't been implemented yet!" << std::endl;
         
-  // full asic plot
-  } else if ( detType == DetConf::Type::Asic){
+  // full asic plot or Focal H
+  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
     for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
       if (!setup->IsAsicOn(a)){
         std::cout << "====> asic " << a << " not enabled" << std::endl;
@@ -1886,20 +1900,31 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
   Setup* setup = Setup::GetInstance();
   // Single tile plotting
   if (detType ==  DetConf::Type::SingleTile){
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
-        if (l%5 == 0 && l > 0 && debug > 0)
-          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
-        if (!setup->IsLayerOn(l,m)){
-          std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
-          continue;
-        }    
-
+    if (cells.size() > 0){
+      for (int c = 0; c<(int)cells.size(); c++ ){
+        std::cout << "plotting cell " << cells.at(c) << std::endl;
         PlotRunOverlayProfile1MLayer( canvasMulti, legPlace_X[0], legPlace_X[0]-0.8, legPlace_Y[0], relTextSize[0], textSize,
-                                      trend, nrun, option, xPMin,xPMax, yMin, yMax, l, m,
-                                      Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
-                                      Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
-                                      currRunInfo, ExtPlot, scaleInt);        
+                                        trend, nrun, option, xPMin,xPMax, yMin, yMax, -1, -1,
+                                        Form("%s/SingleLayer/%s_CellID%02d.%s" ,nameOutputBase.Data(),namePlot.Data(),cells.at(c), suffix.Data()), 
+                                        Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                        currRunInfo, ExtPlot, scaleInt, cells.at(c));        
+      }
+    } else {
+      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
+        for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+          if (l%5 == 0 && l > 0 && debug > 0)
+            std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+          if (!setup->IsLayerOn(l,m)){
+            std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+            continue;
+          }    
+
+          PlotRunOverlayProfile1MLayer( canvasMulti, legPlace_X[0], legPlace_X[0]-0.8, legPlace_Y[0], relTextSize[0], textSize,
+                                        trend, nrun, option, xPMin,xPMax, yMin, yMax, l, m,
+                                        Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
+                                        Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                        currRunInfo, ExtPlot, scaleInt);        
+        }
       }
     }
   // Single 2M horizontal plotting    
@@ -1975,8 +2000,8 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "PlotRunOverlayProfile: this option hasn't been implemented yet!" << std::endl;
         
-  // full asic plot
-  } else if ( detType == DetConf::Type::Asic){
+  // full asic plot or Focal H
+  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
     for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
       std::cout << "====> asic " << a << std::endl;
       if (!setup->IsAsicOn(a)){
@@ -2006,20 +2031,31 @@ void MultiCanvas::PlotRunOverlaySpectra(  std::map<int,TileTrend>  trend, int nr
   Setup* setup = Setup::GetInstance();
   // Single tile plotting
   if (detType ==  DetConf::Type::SingleTile){
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
-        if (l%5 == 0 && l > 0 && debug > 0)
-          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
-        if (!setup->IsLayerOn(l,m)){
-          std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
-          continue;
-        }    
-
+    if (cells.size() > 0){
+      for (int c = 0; c<(int)cells.size(); c++ ){
+        std::cout << "plotting cell " << cells.at(c) << std::endl;
         PlotRunOverlay1MLayer (  canvasMulti, legPlace_X[0], legPlace_X[0]-0.8, legPlace_Y[0], relTextSize[0], textSize,
-                                 trend, nrun, option, xPMin,xPMax, l, m,
-                                 Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
-                                 Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
-                                 currRunInfo, ExtPlot, plotMean);        
+                                  trend, nrun, option, xPMin,xPMax, -1, -1,
+                                  Form("%s/SingleLayer/%s_Cell%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), cells.at(c), suffix.Data()), 
+                                  Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                  currRunInfo, ExtPlot, plotMean, cells.at(c));        
+      }
+    } else {
+      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
+        for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+          if (l%5 == 0 && l > 0 && debug > 0)
+            std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+          if (!setup->IsLayerOn(l,m)){
+            std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+            continue;
+          }    
+
+          PlotRunOverlay1MLayer (  canvasMulti, legPlace_X[0], legPlace_X[0]-0.8, legPlace_Y[0], relTextSize[0], textSize,
+                                  trend, nrun, option, xPMin,xPMax, l, m,
+                                  Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
+                                  Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                                  currRunInfo, ExtPlot, plotMean);        
+        }
       }
     }
   // Single 2M horizontal plotting    
@@ -2093,8 +2129,8 @@ void MultiCanvas::PlotRunOverlaySpectra(  std::map<int,TileTrend>  trend, int nr
   } else if ( detType == DetConf::Type::LargeTB){
     std::cout << "PlotRunOverlaySpectra: this option hasn't been implemented yet!" << std::endl;
         
-  // full asic plot
-  } else if ( detType == DetConf::Type::Asic){
+  // full asic plot or Focal H
+  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
     std::cout << "PlotRunOverlaySpectra: this option hasn't been implemented yet!" << std::endl;
     // for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
     //   std::cout << "====> asic " << a << std::endl;

@@ -156,6 +156,8 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
   std::map<int,RunInfo>::iterator itRun; // basic infos
   int firstRunNr    = -1;
   
+  std::vector<RunInfo> runList;
+  
   // ******************************************************************************************
   // Iterate over all entries (runs) in the calib tree
   // ******************************************************************************************
@@ -167,6 +169,7 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
     // set global iterator for runs to first run number in list to obtain beam-line, dates...
     if (ientry==0) firstRunNr = calib.GetRunNumber();
     itRun = ri.find(calib.GetRunNumber());
+    runList.push_back(itRun->second);
     double set_rf     = (double)itRun->second.rf;
     double set_cf     = (double)itRun->second.cf;
     double set_cc     = (double)itRun->second.cc;
@@ -234,7 +237,7 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
       itrend=trend.find(itcalib->first);
       if(itrend!=trend.end()){
         // fill injection hists
-        itrend->second.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(),0, -10000., -10000.);
+        itrend->second.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(),0, -10000., -10000.,itRun->second.energy,itRun->second.temp);
         itrend->second.FillInjection(Xvalue,calib.GetPedestalMeanH(itcalib->first),(int)calib.GetRunNumber(), 
                                      profCellWave, profCellTOA, profCellTOT, 
                                      set_rf, set_cf, set_cfcomp, set_cc, set_injec );
@@ -242,7 +245,7 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
       } else {
         TileTrend atrend=TileTrend(itcalib->first,0, 3);
         // fill injection hists
-        atrend.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(), 0, -10000., -10000.);
+        atrend.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(), 0, -10000., -10000.,itRun->second.energy,itRun->second.temp );
         atrend.FillInjection(Xvalue,calib.GetPedestalMeanH(itcalib->first),(int)calib.GetRunNumber(), 
                              profCellWave, profCellTOA, profCellTOT, 
                              set_rf, set_cf, set_cfcomp, set_cc, set_injec);
@@ -296,90 +299,8 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
     // write graphs for each cell to output
     itrend->second.Write(RootOutput);
   }
-
-  itRun = ri.find(firstRunNr);
   
-  bool isSameVoltage    = true;
-  double commonVoltage  = 0;
-  bool isSameRF         = true;
-  bool isSameCF         = true;
-  bool isSameCFcomp     = true;
-  bool isSameCC         = true;
-  bool isSameInj         = true;
-  double commonRF       = 0;
-  double commonCF       = 0;
-  double commonCFcomp   = 0;
-  double commonCC       = 0;
-  double commonInj      = 0;
-  itrend=trend.begin();
-  for (int rc = 0; rc < itrend->second.GetNRuns() && rc < 30; rc++ ){
-    if (rc == 0){
-      commonVoltage = itrend->second.GetVoltage(rc);
-      commonRF      = itrend->second.GetRF(rc);
-      commonCF      = itrend->second.GetCF(rc);
-      commonCC      = itrend->second.GetCC(rc);
-      commonCFcomp  = itrend->second.GetCFComp(rc);
-      commonInj     = itrend->second.GetInj(rc);
-    } else {
-      if (commonVoltage != itrend->second.GetVoltage(rc))   isSameVoltage = false;
-      if (commonRF != itrend->second.GetRF(rc))        isSameRF = false;
-      if (commonCF != itrend->second.GetCF(rc))        isSameCF = false;
-      if (commonCFcomp != itrend->second.GetCFComp(rc))    isSameCFcomp = false;
-      if (commonCC != itrend->second.GetCC(rc))        isSameCC = false;
-      if (commonInj != itrend->second.GetInj(rc))        isSameInj = false;
-    }
-    std::cout << itrend->second.GetRunNr(rc) << "\t" <<  itrend->second.GetRF(rc) << "\t" << itrend->second.GetCF(rc) << "\t" << itrend->second.GetCC(rc) << "\t" << itrend->second.GetCFComp(rc) << "\tinj:"<< itrend->second.GetInj(rc) << std::endl;
-    
-  }
-  std::cout << "Show all common settings" << std::endl;
-  std::cout << "Common Voltage: "<< isSameVoltage << "\t"  << commonVoltage
-            << "\t RF: " << isSameRF << "\t"  << commonRF
-            << "\t CF: " << isSameCF << "\t"  << commonCF 
-            << "\t CFcomp: " << isSameCFcomp << "\t"  << commonCFcomp 
-            << "\t CC: " << isSameCC << "\t"  << commonCC 
-            << std::endl;
-  
-  RunInfo commonRunInfo;
-  commonRunInfo.nFPGA       = itRun->second.nFPGA;
-  commonRunInfo.nASIC       = itRun->second.nASIC;
-  commonRunInfo.energy      = itRun->second.energy;
-  commonRunInfo.pdg         = itRun->second.pdg;
-  commonRunInfo.species     = itRun->second.species;
-  commonRunInfo.detector    = itRun->second.detector;
-  commonRunInfo.beamline    = itRun->second.beamline;
-  commonRunInfo.facility    = itRun->second.facility;
-  commonRunInfo.readout     = itRun->second.readout;
-  commonRunInfo.month       = itRun->second.month;
-  commonRunInfo.year        = itRun->second.year;
-  commonRunInfo.samples     = itRun->second.samples;
-  commonRunInfo.samples     = itRun->second.vbr;
-  if (isSameRF)
-    commonRunInfo.rf        = commonRF;
-  else 
-    commonRunInfo.rf        = -10.;
-  if (isSameCF)
-    commonRunInfo.cf        = commonCF;
-  else 
-    commonRunInfo.cf        = -10.;
-  if (isSameCFcomp)
-    commonRunInfo.cfcomp    = commonCFcomp;
-  else 
-    commonRunInfo.cfcomp    = -10.;
-  if (isSameCC)
-    commonRunInfo.cc        = commonCC;
-  else 
-    commonRunInfo.cc        = -10.;
-  if (isSameVoltage)
-    commonRunInfo.vop       = commonVoltage;
-  else 
-    commonRunInfo.vop       = -10.;
-  
-  if (isSameInj)
-    commonRunInfo.injDAC    = commonInj;
-  else 
-    commonRunInfo.injDAC    = -10.;
-  
-
+  RunInfo commonRunInfo = GetCommonRunInfoFromList(runList);
   PrintSettingsRunInfo(commonRunInfo);
   
   //******************************************************************************

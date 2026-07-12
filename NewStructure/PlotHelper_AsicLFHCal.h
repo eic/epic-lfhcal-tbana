@@ -4,7 +4,158 @@
   //*****************************************************************
   // ASIC geom sorted by LFHCal layer geom in addtion
   //===========================================================
+
+  
+  //__________________________________________________________________________________________________________
+  // Plot Corr with Fits for Full Asic 2D
+  //__________________________________________________________________________________________________________
+  inline void PlotNoiseWithFitsAsicLFHCal (TCanvas* canvas, TPad** pads, 
+                                          Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
+                                          std::map<int,TileSpectra> spectra, int option, 
+                                          Double_t xMin, Double_t xMax, Double_t scaleYMax, int asic, TString nameOutput, RunInfo currRunInfo){
+                                  
+    Setup* setupT = Setup::GetInstance();
     
+    std::map<int, TileSpectra>::iterator ithSpectra;    
+    Double_t maxY = 0;
+    int nChA      = setupT->GetAbsNMaxROChannel()+1;
+    int skipped   = 0;
+    ReadOut::Type rotype = ReadOut::Type::Undef;
+    
+    
+    for (int ch = 0; ch < nChA; ch++){
+      int tempCellID = setupT->GetCellID(asic, ch);
+      ithSpectra=spectra.find(tempCellID);
+      if(ithSpectra==spectra.end()){
+        std::cout << "WARNING: skipping cell ID: " << tempCellID << "\t asic " << asic << "\t channel " << ch  << std::endl;
+        skipped++;
+        continue;
+      } 
+      TH1D* tempHist = nullptr;
+      if (option == 0){
+          tempHist = ithSpectra->second.GetHG();
+      } else if (option ==1){
+          tempHist = ithSpectra->second.GetLG();
+      } else if (option ==2){
+          tempHist = ithSpectra->second.GetTOA();
+      } else if (option ==3){
+          tempHist = ithSpectra->second.GetTOT();
+      }
+      if (maxY < FindLargestBin1DHist(tempHist, xMin , xMax)) maxY = FindLargestBin1DHist(tempHist, xMin , xMax);
+    }  
+    
+    
+    for (int ch = 0; ch < nChA; ch++){
+      int tempCellID = setupT->GetCellID(asic, ch);
+      if (tempCellID == -1 ) {
+        skipped++;
+        continue;    
+      }
+      int chInLayer  = setupT->GetChannelInLayer(tempCellID); 
+      int layer      = setupT->GetLayer(tempCellID); 
+      int row        = setupT->GetRow(tempCellID); 
+      int col        = setupT->GetColumn(tempCellID); 
+      int mod        = setupT->GetModule(tempCellID); 
+        
+      int cp         = layer%8*8+chInLayer;
+      if ((TString)(currRunInfo.detector).Contains("FoCal-H"))
+        cp         = mod%8*8+chInLayer;
+      
+      // std::cout << "cell ID: " << tempCellID << "\t row " << row << "\t column " << col << "\t layer " << layer << "\t module " << mod << "\t asic " << asic << "\tro ch asic " << ch << "\t " << cp<< std::endl;    
+      canvas->cd();
+      pads[cp]->Draw();
+      // pads[cp]->Clear();
+      pads[cp]->SetLogy(0);
+      pads[cp]->SetLogz(1);
+      pads[cp]->cd();
+      ithSpectra=spectra.find(tempCellID);
+      if(ithSpectra==spectra.end()){
+        skipped++;
+        std::cout << "WARNING: PlotCorr2DAsicLFHCal skipping cell ID: " << tempCellID << "\t row " << row << "\t column " << col << "\t layer " << layer << "\t module " << mod << "\t asic " << asic << "\tro ch asic " << ch << std::endl;
+        pads[cp]->Clear();
+        pads[cp]->Draw();
+        if (cp ==63 ){
+          DrawLatex(topRCornerX[cp]-0.04, topRCornerY[cp]-1*0.85*relSize8P[cp]-2.4*relSize8P[cp], GetStringFromRunInfo(currRunInfo, 2), true, 0.85*relSize8P[cp], 42);
+          DrawLatex(topRCornerX[cp]-0.04, topRCornerY[cp]-1*0.85*relSize8P[cp]-3.2*relSize8P[cp], GetStringFromRunInfo(currRunInfo, 3), true, 0.85*relSize8P[cp], 42);
+        }
+        continue;
+      } else {
+        rotype = ithSpectra->second.GetROType();
+      }
+      
+      TH1D* tempHist = nullptr;
+      if (option == 0){
+          tempHist = ithSpectra->second.GetHG();
+      } else if (option ==1){
+          tempHist = ithSpectra->second.GetLG();
+      } else if (option ==2){
+          tempHist = ithSpectra->second.GetTOA();
+      } else if (option ==3){
+          tempHist = ithSpectra->second.GetTOT();
+      }
+
+      SetStyleHistoTH1ForGraphs( tempHist, tempHist->GetXaxis()->GetTitle(), tempHist->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.1, 510, 510, 43, 63);  
+      SetMarkerDefaults(tempHist, 20, 1, kBlue+1, kBlue+1, kFALSE);   
+      tempHist->GetXaxis()->SetRangeUser(xMin,xMax);
+      tempHist->GetYaxis()->SetRangeUser(0.7,scaleYMax*maxY);
+      
+      tempHist->Draw("pe");
+      DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xMin, 0, xMax, maxY);
+      tempHist->Draw("same,axis");
+      tempHist->Draw("same,pe");
+    
+      TString label           = Form("r:%d c:%d, ro-ch:%d", row, col, ch);
+      if ((TString)(currRunInfo.detector).Contains("FoCal-H"))
+        label           = Form("ro-ch:%d", ch);
+      TString labelAsic       = "";
+      if (cp%8 == 7)
+        labelAsic = Form("layer:%d", layer);
+      if (cp == 63){
+        labelAsic = Form("layer:%d :%d, asic:%d", layer, mod, asic);
+      }
+      TLatex *labelChannel    = new TLatex(topRCornerX[cp]-0.04,topRCornerY[cp]-1.2*relSize8P[cp],label);
+      SetStyleTLatex( labelChannel, 0.85*textSizePixel,4,1,43,kTRUE,31);
+      TLatex *labelLayer;
+
+      int nlinesTot = 1;
+      TF1* fit = nullptr;
+      if (option == 0){
+        fit = ithSpectra->second.GetBackModel(1);
+      } else  if (option ==1){
+        fit = ithSpectra->second.GetBackModel(0);  
+      }
+      if (fit){
+        SetStyleFit(fit , xMin, xMax, 7, 7, kBlack);
+        fit->Draw("same");
+        TLegend* legend = GetAndSetLegend2( topRCornerX[cp]-8*relSize8P[cp], topRCornerY[cp]-4*0.85*relSize8P[cp]-0.4*relSize8P[cp], topRCornerX[cp]-0.04, topRCornerY[cp]-0.6*relSize8P[cp],0.85*textSizePixel, 1, label, 43,0.2);
+        legend->AddEntry(fit, "Gauss noise fit", "l");
+        legend->AddEntry((TObject*)0, Form("#mu = %2.2f #pm %2.2f",fit->GetParameter(1), fit->GetParError(1) ) , " ");
+        legend->AddEntry((TObject*)0, Form("#sigma = %2.2f #pm %2.2f",fit->GetParameter(2), fit->GetParError(2) ) , " ");
+        legend->Draw();
+        nlinesTot=3;
+          
+      } else {
+        labelChannel->Draw();  
+        nlinesTot=2;
+      }
+    
+      if (cp%8 == 7 && !(TString)(currRunInfo.detector).Contains("FoCal-H")){
+        labelLayer    = new TLatex(topRCornerX[cp]-0.04,topRCornerY[cp]-2.2*relSize8P[cp],labelAsic);
+        SetStyleTLatex( labelLayer, 0.85*textSizePixel,4,1,43,kTRUE,31);
+      }
+    
+    
+      if (cp ==63 ){
+        DrawLatex(topRCornerX[cp]-0.04, topRCornerY[cp]-nlinesTot*0.85*relSize8P[cp]-2.4*relSize8P[cp], GetStringFromRunInfo(currRunInfo, 2), true, 0.85*relSize8P[cp], 42);
+        DrawLatex(topRCornerX[cp]-0.04, topRCornerY[cp]-nlinesTot*0.85*relSize8P[cp]-3.2*relSize8P[cp], GetStringFromRunInfo(currRunInfo, 3), true, 0.85*relSize8P[cp], 42);
+      }
+    }
+    if (skipped < 64)
+      canvas->SaveAs(nameOutput.Data());
+  }
+  
+  
+  
   //__________________________________________________________________________________________________________
   // Plot Corr with Fits for Full Asic 2D
   //__________________________________________________________________________________________________________
@@ -40,6 +191,9 @@
       int mod        = setupT->GetModule(tempCellID); 
         
       int cp         = layer%8*8+chInLayer;
+      if ((TString)(currRunInfo.detector).Contains("FoCal-H"))
+        cp         = mod%8*8+chInLayer;
+      
       // std::cout << "cell ID: " << tempCellID << "\t row " << row << "\t column " << col << "\t layer " << layer << "\t module " << mod << "\t asic " << asic << "\tro ch asic " << ch << "\t " << cp<< std::endl;    
       canvas->cd();
       pads[cp]->Draw();
@@ -135,6 +289,8 @@
         tempProfile->Draw("pe, same");
       }
       TString label           = Form("r:%d c:%d, ro-ch:%d", row, col, ch);
+      if ((TString)(currRunInfo.detector).Contains("FoCal-H"))
+        label           = Form("ro-ch:%d", ch);
       TString labelAsic       = "";
       if (cp%8 == 7)
         labelAsic = Form("layer:%d", layer);
@@ -237,6 +393,8 @@
       int mod        = setupT->GetModule(tempCellID); 
         
       int cp         = layer%8*8+chInLayer;
+      if ((TString)(currRunInfo.detector).Contains("FoCal-H"))
+        cp         = mod%8*8+chInLayer;
       
       TString label           = Form("r:%d c:%d, ro-ch:%d", row, col, ch);
       std::cout << "cell ID:\t"<< tempCellID <<"\t panel nr:\t"<<  cp<< "\t"<< label.Data() << std::endl;
@@ -398,7 +556,9 @@
       int mod        = setupT->GetModule(tempCellID); 
         
       int cp         = layer%8*8+chInLayer;
-    
+      if ((TString)(currRunInfo.detector).Contains("FoCal-H"))
+        cp         = mod%8*8+chInLayer;
+      
       TString label           = Form("r:%d c:%d, ro-ch:%d", row, col, ch);
       TString labelAsic       = "";
       if (cp%8 == 7)
@@ -431,11 +591,9 @@
           DrawLatex(0.04, topRCornerY[cp]-1.2*relSize8P[cp]*relSize8P[cp], label2, false, 0.85*textSizePixel, 43);
           DrawLatex(0.04, topRCornerY[cp]-1.2*relSize8P[cp]*relSize8P[cp]-0.85*relSize8P[cp], label3, false, 0.85*textSizePixel, 43);
         }
-
         continue;
       }    
-
-
+      
       if (cp == 63 ){
         double startLegY  = topRCornerY[cp]-lineBottom*relSize8P[cp];
         double endLegY    = topRCornerY[cp]-1.4*relSize8P[cp];
@@ -455,7 +613,7 @@
                                     0.85*textSizePixel, 5, "",43,0.25);
       }
           
-      TH1D* dummyhist;
+      TH1D* dummyhist = nullptr;
       for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
         int tmpRunNr = ithTrend->second.GetRunNr(rc);
         profs[rc] = nullptr;
@@ -496,7 +654,9 @@
             }
             legend->AddEntry(profs[rc],labelLegend.Data(),"p");
           }
-        }
+        // } else {
+          // std::cout << "couldn't find object " << option << "\t" << rc<< std::endl;
+        } 
       }
       if (dummyhist) dummyhist->Draw("axis,same");                
           

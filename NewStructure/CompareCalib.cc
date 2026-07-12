@@ -32,6 +32,7 @@ void PrintHelp(char* exe){
   std::cout<<"Usage:"<<std::endl;
   std::cout<<exe<<" [-option (arguments)]"<<std::endl;
   std::cout<<"Options:"<<std::endl;
+  std::cout<<"-c ccc   list of cell to be plotted separately"<<std::endl;
   std::cout<<"-d [0-3] Debugging mode"<<std::endl;
   std::cout<<"-e [0-1] extended plotting"<<std::endl;
   std::cout<<"-E [1-X] histo reading options for expanded file list"<<std::endl;
@@ -68,8 +69,16 @@ int main(int argc, char* argv[]){
   }
   ComparisonCalib CompAnalysis;
   int c;
-  while((c=getopt(argc,argv,"d:e:E:fF:Hi:I:L:o:O:r:RstTVh"))!=-1){
+  while((c=getopt(argc,argv,"c:d:e:E:fF:Hi:I:L:o:O:r:RstTVh"))!=-1){
     switch(c){
+    case 'c':
+      std::cout<<"Compare: set list of cells for detailed plotting " << optarg <<std::endl;
+      CompAnalysis.SetCellList(optarg);
+      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-c");
+      RootRegexp.erase(it);
+      it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
+      RootRegexp.erase(it);
+      break;
     case 'd':
       std::cout<<"Compare: enable debug " << optarg <<std::endl;
       CompAnalysis.EnableDebug(atoi(optarg));
@@ -133,6 +142,7 @@ int main(int argc, char* argv[]){
       it=std::find(RootRegexp.begin(),RootRegexp.end(),"-H");
       RootRegexp.erase(it);
       break;
+      
     case 'L':
       std::cout<<"Compare: restrict max layer plotting: "<<optarg<<std::endl;
       CompAnalysis.SetMaxPlotLayer(atoi(optarg));

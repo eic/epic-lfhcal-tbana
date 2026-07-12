@@ -32,6 +32,10 @@ elif [ $3 = "2026" ]; then
   mkdir -p configs/TB2026
   ln -sf $LFHCALTBDIR/configs/TB2026/*.txt configs/TB2026
   ln -sf $LFHCALTBDIR/configs/TB2026/*.csv configs/TB2026
+elif [ $3 = "Focal" ]; then 
+  mkdir -p configs/FOCalTest2026
+  ln -sf $LFHCALTBDIR/configs/FOCalTest2026/*.txt configs/FOCalTest2026
+  ln -sf $LFHCALTBDIR/configs/FOCalTest2026/*.csv configs/FOCalTest2026
 fi
 
 if [ $2 = "old" ]; then

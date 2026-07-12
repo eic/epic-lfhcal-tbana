@@ -1005,11 +1005,39 @@ bool Analyses::ConvertOldRootFile2Root(void){
 // ****************************************************************************
 bool Analyses::GetPedestal(void){
   std::cout<<"GetPedestal for maximium "<< setup->GetMaxCellID() << " cells" <<std::endl;
+    
+  // Event loop to fill histograms & output tree
+  std::cout << "N max layers: " << setup->GetNMaxLayer() << "\t columns: " <<  setup->GetNMaxColumn() << "\t row: " << setup->GetNMaxRow() << "\t module: " <<  setup->GetNMaxModule() << std::endl;
+  if(TcalibIn) TcalibIn->GetEntry(0);
+  // check whether calib should be overwritten based on external text file
+  if (OverWriteCalib){
+    calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
+  }
   
+  int evts=TdataIn->GetEntries();
+  TdataIn->GetEntry(0);
+  int runNr             = event.GetRunNumber();
+  ReadOut::Type typeRO  = event.GetROtype();
+  if (maxEvents == -1){
+    maxEvents = evts;
+  } else {
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+    std::cout << "ATTENTION: YOU ARE RESETTING THE MAXIMUM NUMBER OF EVENTS TO BE PROCESSED TO: " << maxEvents << ". THIS SHOULD ONLY BE USED FOR TESTING!" << std::endl;
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+  }
+  std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+  calib.SetRunNumberPed(runNr);
+  calib.SetBeginRunTimePed(event.GetBeginRunTimeAlt());
+  std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
+
+  // Get run info object
+  std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
+  std::map<int,RunInfo>::iterator it=ri.find(runNr);
   // Find detector config 
   DetConf::Type detConf = setup->GetDetectorConfig();
-  
-  std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
+  if (it->second.detector == "FoCal-H")
+    detConf = DetConf::Type::FocalH; 
+
   
   int maxChannelPerLayer          = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
   int maxChannelPerLayerSingleMod = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
@@ -1044,6 +1072,17 @@ bool Analyses::GetPedestal(void){
   TH2D* hPedMeanHGvsLG          = new TH2D( "hPedMeanHGvsLG","Mean Ped High Gain vs Low Gain; #mu_{noise, HG} (arb. units); #mu_{noise, LG} (arb. units)", 500, 0, 250, 500, 0, 250);
   hPedMeanHGvsLG->SetDirectory(0);
   
+  if (typeRO == ReadOut::Type::Caen) 
+    std::cout << "Read-out type CAEN" << std::endl;
+  else{
+    std::cout << "Read-out type HGCROC" << std::endl;
+    hPedMeanHGvsLG->GetYaxis()->SetTitle("#mu_{noise, wave} (arb. units)");
+    hPedMeanHGvsLG->GetXaxis()->SetTitle("#mu_{noise, 0th sample} (arb. units)");
+    hPedMeanHGvsLG->SetTitle("Pedestal Eval 0th sample vs wave");
+    hspectraLGvsCellID->SetYTitle("ADC (arb. units) all samples");
+  }
+
+  
   std::map<int,TileSpectra> hSpectra;
   std::map<int, TileSpectra>::iterator ithSpectra;	
 
@@ -1054,43 +1093,10 @@ bool Analyses::GetPedestal(void){
   RootOutputHist->cd("IndividualCells");
 
   RootOutput->cd();
-  // Event loop to fill histograms & output tree
-  std::cout << "N max layers: " << setup->GetNMaxLayer() << "\t columns: " <<  setup->GetNMaxColumn() << "\t row: " << setup->GetNMaxRow() << "\t module: " <<  setup->GetNMaxModule() << std::endl;
-  if(TcalibIn) TcalibIn->GetEntry(0);
-  // check whether calib should be overwritten based on external text file
-  if (OverWriteCalib){
-    calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
-  }
   
-  int evts=TdataIn->GetEntries();
-  int runNr = -1;
-  if (maxEvents == -1){
-    maxEvents = evts;
-  } else {
-    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-    std::cout << "ATTENTION: YOU ARE RESETTING THE MAXIMUM NUMBER OF EVENTS TO BE PROCESSED TO: " << maxEvents << ". THIS SHOULD ONLY BE USED FOR TESTING!" << std::endl;
-    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-  }
-  ReadOut::Type typeRO = ReadOut::Type::Caen;
   
   for(int i=0; i<evts && i < maxEvents; i++){
     TdataIn->GetEntry(i);
-    if (i == 0){
-      runNr   = event.GetRunNumber();
-      typeRO  = event.GetROtype();
-      std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
-      if (typeRO == ReadOut::Type::Caen) std::cout << "Read-out type CAEN" << std::endl;
-      else{
-        std::cout << "Read-out type HGCROC" << std::endl;
-        hPedMeanHGvsLG->GetYaxis()->SetTitle("#mu_{noise, wave} (arb. units)");
-        hPedMeanHGvsLG->GetXaxis()->SetTitle("#mu_{noise, 0th sample} (arb. units)");
-        hPedMeanHGvsLG->SetTitle("Pedestal Eval 0th sample vs wave");
-        hspectraLGvsCellID->SetYTitle("ADC (arb. units) all samples");
-      }
-      calib.SetRunNumberPed(runNr);
-      calib.SetBeginRunTimePed(event.GetBeginRunTimeAlt());
-      std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
-    }
     if (i%5000 == 0&& i > 0 && debug > 0) std::cout << "Reading " <<  i << "/" << evts << " events"<< std::endl;
     for(int j=0; j<event.GetNTiles(); j++){
       if (typeRO == ReadOut::Type::Caen) {
@@ -1115,10 +1121,15 @@ bool Analyses::GetPedestal(void){
         if (i == 0 && debug == 3 ){
           std::cout << ((TString)setup->DecodeCellID(aTile->GetCellID())).Data() << std::endl;
         }
-        if (debug > 3 && aTile->GetCellID() == 2 ){
-          std::bitset<10> pedBit(aTile->GetPedestal());
-          std::bitset<5> pedBit5bit(aTile->GetPedestal());
-          std::cout << aTile->GetPedestal() << "\t" << pedBit << "\t" << pedBit5bit << std::endl;
+        // if (debug > 3 && aTile->GetCellID() == 2 ){
+          // std::bitset<10> pedBit(aTile->GetPedestal());
+          // std::bitset<5> pedBit5bit(aTile->GetPedestal());
+          // std::cout << aTile->GetPedestal() << "\t" << pedBit << "\t" << pedBit5bit << std::endl;
+        // }
+        
+        // single tile debug info print
+        if (debug > 10 ){
+          aTile->PrintWaveFormDebugInfo(aTile->GetPedestal(), aTile->GetPedestal(), 1);
         }
         
         ithSpectra=hSpectra.find(aTile->GetCellID());
@@ -1179,6 +1190,8 @@ bool Analyses::GetPedestal(void){
     int cellID    = ithSpectra->second.GetCellID();
     int layer     = setup->GetLayer(cellID);
     int chInLayer = setup->GetChannelInLayerFull(cellID, detConf);
+    
+    
     
     hMeanPedHGvsCellID->SetBinContent(hMeanPedHGvsCellID->FindBin(cellID), parameters[4]);
     hMeanPedHGvsCellID->SetBinError  (hMeanPedHGvsCellID->FindBin(cellID), parameters[6]);
@@ -1262,10 +1275,7 @@ bool Analyses::GetPedestal(void){
   
   //==================================================================================
   // Plotting 
-  //==================================================================================
-  // Get run info object
-  std::map<int,RunInfo>::iterator it=ri.find(runNr);
-  
+  //==================================================================================  
   // create directory for plot output
   TString outputDirPlots = GetPlotOutputDir();
   gSystem->Exec("mkdir -p "+outputDirPlots);
@@ -1706,8 +1716,6 @@ bool Analyses::TransferCalib(void){
   std::map<int,TileSpectra> hSpectraTrigg;
   std::map<int, TileSpectra>::iterator ithSpectraTrigg;
 
-  // Find detector config
-  DetConf::Type detConf = setup->GetDetectorConfig();
   
   // initialize calib
   TcalibIn->GetEntry(0);
@@ -1733,6 +1741,11 @@ bool Analyses::TransferCalib(void){
   calib.SetBeginRunTime(event.GetBeginRunTimeAlt());
   std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
   std::map<int,RunInfo>::iterator it=ri.find(runNr);
+
+  // Find detector config
+  DetConf::Type detConf = setup->GetDetectorConfig();
+  if (it->second.detector == "FoCal-H")
+    detConf = DetConf::Type::FocalH; 
 
     
   //==================================================================================

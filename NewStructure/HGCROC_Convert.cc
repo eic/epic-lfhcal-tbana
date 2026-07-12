@@ -162,6 +162,12 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
               waveform_builder->fit();
               tile->SetIntegratedADC(waveform_builder->get_E());
               tile->SetPedestal(waveform_builder->get_pedestal());
+              
+              // single tile debug info print
+              // if (analysis->debug > 10 ){
+                // tile->PrintWaveFormDebugInfo(waveform_builder->get_pedestal(), waveform_builder->get_pedestal(), 1);
+              // }
+              
               analysis->event.AddTile(tile);
             }
           }

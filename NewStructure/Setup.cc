@@ -39,6 +39,7 @@ bool Setup::Initialize(TString file, int debug){
     if (tempLine.BeginsWith("%") || tempLine.BeginsWith("#")){
         continue;
     }
+    if (debug > 10) std::cout << tempLine.Data() << std::endl;
     TObjArray *tempArr  = tempLine.Tokenize("\t");
     if(tempArr->GetEntries()<1){
         if (debug > 1) std::cout << "nothing to be done" << std::endl;
@@ -102,7 +103,7 @@ bool Setup::Initialize(TString file, int debug){
     if (nMaxModule < Amod)    nMaxModule  = Amod;
     if (nMaxROUnit < AROunit) nMaxROUnit  = AROunit;
     if (maxCellID < Akey)     maxCellID   = Akey;
-    if (debug > 10)std::cout <<AROunit<< "\t" << AROchannel << "\t"<< Alayer << "\t"<< Anassembly << "\t"<< AROlayer << "\t"<< Arow << "\t"<< Acolumn << "\t"<< Amod << segSize<< std::endl;
+    if (debug > 10)std::cout <<AROunit<< "\t" << AROchannel << "\t"<< Alayer << "\t"<< Anassembly << "\t"<< AROlayer << "\t row: "<< Arow << "\t col: "<< Acolumn << "\t mod: "<< Amod << "\t"<< AmodX<< "\t"<< AmodY<< "\t"<< segSize<< std::endl;
     if (debug > 1)std::cout << "registered cell: " << DecodeCellID(Akey).Data() << std::endl;
   }
     
@@ -333,6 +334,8 @@ int Setup::GetChannelInLayerFull(int cellID, DetConf::Type type) const{
     }
   } else if ( type == DetConf::Type::Single8M){
     absChL = row*(nMaxColumn+1)+column;
+  } else if ( type == DetConf::Type::FocalH){
+    absChL = mod*((nMaxColumn+1)*(nMaxRow+1))+row*(nMaxColumn+1)+column;
   }
   return absChL;
 }

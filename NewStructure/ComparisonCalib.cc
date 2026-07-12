@@ -232,12 +232,36 @@ bool ComparisonCalib::ProcessCalib(void){
   double Xmax=-9999.;
   int nRun = 0;
   
+  std::vector <int> cellVec;
+  if (cellList.CompareTo("")!= 0){
+    std::cout << "cell List set: "  << cellList.Data() << std::endl;
+    std::fstream cellTxt;
+    cellTxt.open(cellList.Data(),std::ios::in);
+    if(!cellTxt.is_open()){
+      std::cout<<"Error opening "<<cellList.Data()<<", does the file exist?"<<std::endl;
+    }
+    while(cellTxt.good()){
+      TString dummyCell;
+      // set first root file names
+      cellTxt>>dummyCell;
+      std::cout << "\t" << dummyCell.Data() << std::endl;
+      if (dummyCell.CompareTo("") != 0)
+        cellVec.push_back(dummyCell.Atoi());
+    }
+    std::cout << "registered: " << cellVec.size() << " single cells to be plotted" << std::endl;
+    for (int i = 0; i < cellVec.size(); i++){
+        std::cout << cellVec.at(i) << "," ;
+    }
+    std::cout << std::endl;
+  }
+  
   // ******************************************************************************************
   // ************* Get run data base to potentially obtain more information from file *********
   // ******************************************************************************************
   std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
   std::map<int,RunInfo>::iterator it; // basic infos
   std::map<int,RunInfo>::iterator cit; // basic infos
+  std::vector<RunInfo> runList;
   
   // ******************************************************************************************
   // Iterate over all entries (runs) in the calib tree
@@ -251,6 +275,9 @@ bool ComparisonCalib::ProcessCalib(void){
     if (ientry==0) it = ri.find(calib.GetRunNumber());
     // find current run infos
     cit = ri.find(calib.GetRunNumber());
+    runList.push_back(cit->second);
+    std::cout << "Energy \t" <<  cit->second.energy << "\t run " << calib.GetRunNumber() << std::endl;
+    
     
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // Set X-values according to option
@@ -440,12 +467,12 @@ bool ComparisonCalib::ProcessCalib(void){
         }
       } else if (expandedList == 4){
         if (ExtPlot > 1){
-          std::cout<<"Layer Plotting: " << setup->GetLayer(itcalib->first) <<std::endl;
-          histCellHG      = (TH1D*)tempFile->Get(Form("IndividualCells/hspectrafullADCCellID%i",itcalib->first));
-          profCellLGHG    = (TProfile*)tempFile->Get(Form("IndividualCells/wafeform1DfullCellID%i",itcalib->first));
-          std::cout << histCellHG << "\t" << profCellLGHG << std::endl;
-        }
-      
+          // std::cout<<"Layer Plotting: " << setup->GetLayer(itcalib->first) <<std::endl;
+          histCellHG      = (TH1D*)tempFile->Get(Form("IndividualCells/hspectraAllTOTCellID%i",itcalib->first));
+          histCellLG      = (TH1D*)tempFile->Get(Form("IndividualCells/hspectraAllTOACellID%i",itcalib->first));
+          profCellLGHG    = (TProfile*)tempFile->Get(Form("IndividualCells/waveform1DAllCellID%i",itcalib->first));
+          // std::cout << histCellHG << "\t" << profCellLGHG << std::endl;
+        }      
       // Ped case  
       } else if (expandedList == 5){      
           if (debug > 1)std::cout<<"Nothing to do in this case" <<std::endl;
@@ -462,7 +489,7 @@ bool ComparisonCalib::ProcessCalib(void){
       itrend=trend.find(itcalib->first);
       if(itrend!=trend.end()){
         // fill minimal object
-        itrend->second.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(), (int)cit->second.pdg, hgmaxErr, lgmaxErr);
+        itrend->second.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(), (int)cit->second.pdg, hgmaxErr, lgmaxErr, cit->second.energy, cit->second.temp);
         // fill with additional information
         if (expandedList == 1){
           itrend->second.FillExtended(Xvalue,triggers, (int)calib.GetRunNumber(), histCellHG, histCellLG, profCellLGHG); 
@@ -478,14 +505,14 @@ bool ComparisonCalib::ProcessCalib(void){
           itrend->second.FillExtended(Xvalue,1, (int)calib.GetRunNumber(), nullptr, nullptr, profCellLGHG); 
           // itrend->second.FillCorrOffset(Xvalue, lghgOff, lghgOff_E, hglgOff, hglgOff_E);
         } else if (expandedList == 4){
-          // std::cerr<<"Run Num: " << (int)calib.GetRunNumber()<<std::endl;
-          itrend->second.FillExtended(Xvalue,1, (int)calib.GetRunNumber(), histCellHG, nullptr, profCellLGHG); 
+          std::cerr<<"Run Num: " << (int)calib.GetRunNumber()<<": "<< histCellHG << "\t"<< histCellLG<< " \t" << profCellLGHG <<std::endl;
+          itrend->second.FillExtended(Xvalue,1, (int)calib.GetRunNumber(), histCellHG, histCellLG, nullptr, profCellLGHG); 
         }
       // create new TileTrend object if not yet available in map
       } else {
         TileTrend atrend=TileTrend(itcalib->first,0, expandedList);
         // fill minimal object
-        atrend.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(), (int)cit->second.pdg, hgmaxErr, lgmaxErr);
+        atrend.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(), (int)cit->second.pdg, hgmaxErr, lgmaxErr, cit->second.energy, cit->second.temp);
         // fill with additional information
         if (expandedList == 1){
           atrend.FillExtended(Xvalue,triggers, (int)calib.GetRunNumber(), histCellHG, histCellLG, profCellLGHG); 
@@ -501,8 +528,8 @@ bool ComparisonCalib::ProcessCalib(void){
           // std::cout<<"Layer Filling: " << calib.GetRunNumber()<<": "<<setup->GetLayer(itcalib->first) <<std::endl;
           atrend.FillExtended(Xvalue,1, (int)calib.GetRunNumber(), nullptr, nullptr, profCellLGHG); 
         } else if (expandedList == 4){
-          // std::cout<<"Layer Filling: " << calib.GetRunNumber()<<": "<<setup->GetLayer(itcalib->first) <<std::endl;
-          atrend.FillExtended(Xvalue,1, (int)calib.GetRunNumber(), histCellHG, nullptr, profCellLGHG); 
+          std::cerr<<"Run Num: " << (int)calib.GetRunNumber()<<": "<< histCellHG << "\t"<< histCellLG<< " \t" << profCellLGHG <<std::endl;
+          atrend.FillExtended(Xvalue,1, (int)calib.GetRunNumber(), histCellHG, histCellLG, nullptr,  profCellLGHG); 
         }
         // append TileTrend object to map
         trend[itcalib->first]=atrend;
@@ -534,6 +561,12 @@ bool ComparisonCalib::ProcessCalib(void){
     std::cout << "!!!!!!!!!!!!!!!!!!!!!  ATTENTION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
     std::cout << "Aborting plotting: none of the files has either ped or mip scales filled" << std::endl; 
   }
+  
+  // ******************************************************************************************
+  // Get common runInfo
+  // ******************************************************************************************
+  RunInfo commonRunInfo = GetCommonRunInfoFromList(runList);
+  PrintSettingsRunInfo(commonRunInfo);  
   
   // ******************************************************************************************
   // Set X axis title and ranges 
@@ -570,34 +603,34 @@ bool ComparisonCalib::ProcessCalib(void){
   DefaultCanvasSettings( canvas1DRunsOverlay, 0.075, 0.015, 0.025, 0.09);
 
   PlotCalibRunOverlay( canvas1DRunsOverlay, 0, sumCalibs, textSizeRel, 
-                      Form("%s/HGPedSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);
+                      Form("%s/HGPedSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
   PlotCalibRunOverlay( canvas1DRunsOverlay, 1, sumCalibs, textSizeRel, 
-                      Form("%s/HGPedWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);
+                      Form("%s/HGPedWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
   PlotCalibRunOverlay( canvas1DRunsOverlay, 2, sumCalibs, textSizeRel, 
-                      Form("%s/LGPedSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);
+                      Form("%s/LGPedSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
   PlotCalibRunOverlay( canvas1DRunsOverlay, 3, sumCalibs, textSizeRel, 
-                      Form("%s/LGPedWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);
+                      Form("%s/LGPedWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
   if (globalStatus > 1){
     PlotCalibRunOverlay( canvas1DRunsOverlay, 4, sumCalibs, textSizeRel, 
-                      Form("%s/HGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);
+                      Form("%s/HGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
     PlotCalibRunOverlay( canvas1DRunsOverlay, 5, sumCalibs, textSizeRel, 
-                      Form("%s/HGScaleWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);
+                      Form("%s/HGScaleWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
     if (!isHGCROC){
       
       PlotCalibRunOverlay( canvas1DRunsOverlay, 6, sumCalibs, textSizeRel, 
-                          Form("%s/LGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+                          Form("%s/LGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
       PlotCalibRunOverlay( canvas1DRunsOverlay, 7, sumCalibs, textSizeRel, 
-                          Form("%s/LGScaleWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+                          Form("%s/LGScaleWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
       PlotCalibRunOverlay( canvas1DRunsOverlay, 8, sumCalibs, textSizeRel, 
-                          Form("%s/LGHGCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+                          Form("%s/LGHGCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
       PlotCalibRunOverlay( canvas1DRunsOverlay, 9, sumCalibs, textSizeRel, 
-                          Form("%s/HGLGCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+                          Form("%s/HGLGCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
       PlotCalibRunOverlay( canvas1DRunsOverlay, 10, sumCalibs, textSizeRel, 
-                          Form("%s/LGScaleCalcSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,"", debug);  
+                          Form("%s/LGScaleCalcSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);  
       PlotCalibRunOverlay( canvas1DRunsOverlay, 11, sumCalibs, textSizeRel, 
-                          Form("%s/LGHGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+                          Form("%s/LGHGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
       PlotCalibRunOverlay( canvas1DRunsOverlay, 12, sumCalibs, textSizeRel, 
-                          Form("%s/HGLGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second, "", debug);
+                          Form("%s/HGLGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
     }
   }
   std::cout << "row max: " << setup->GetNMaxRow() << "\t column max: "  << setup->GetNMaxColumn() << std::endl;
@@ -605,7 +638,9 @@ bool ComparisonCalib::ProcessCalib(void){
   
   // plotting individual layers/asics
   DetConf::Type detConf = setup->GetDetectorConfig();
-
+  if (it->second.detector.Contains("FoCal-H"))
+    detConf = DetConf::Type::FocalH;
+  
   MultiCanvas panelPlot(detConf, "Compare");
   bool init1D = panelPlot.Initialize(3);
   
@@ -615,42 +650,42 @@ bool ComparisonCalib::ProcessCalib(void){
   if (expandedList != 3 ){
 //     TString pedAName = "HG";
 //     if (isHGCROC) pedAName = "0thSample";
-//     panelPlot.PlotTrending(trend, 0, Xmin,Xmax, OutputNameDirPlots, Form("%sped",pedAName.Data()), plotSuffix, it->second, ExtPlot );
-//     panelPlot.PlotTrending(trend, 15, Xmin,Xmax, OutputNameDirPlots, Form("%spedwidth",pedAName.Data()), plotSuffix, it->second, ExtPlot );
+//     panelPlot.PlotTrending(trend, 0, Xmin,Xmax, OutputNameDirPlots, Form("%sped",pedAName.Data()), plotSuffix, commonRunInfo, ExtPlot );
+//     panelPlot.PlotTrending(trend, 15, Xmin,Xmax, OutputNameDirPlots, Form("%spedwidth",pedAName.Data()), plotSuffix, commonRunInfo, ExtPlot );
 //     
 //     TString pedBName = "LG";
 //     if (isHGCROC) pedBName = "Wave";
-//     panelPlot.PlotTrending(trend, 1, Xmin,Xmax, OutputNameDirPlots, Form("%sped", pedBName.Data()), plotSuffix, it->second, ExtPlot );
-//     panelPlot.PlotTrending(trend, 16, Xmin,Xmax, OutputNameDirPlots, Form("%sLGpedwidth", pedBName.Data()), plotSuffix, it->second, ExtPlot );
+//     panelPlot.PlotTrending(trend, 1, Xmin,Xmax, OutputNameDirPlots, Form("%sped", pedBName.Data()), plotSuffix, commonRunInfo, ExtPlot );
+//     panelPlot.PlotTrending(trend, 16, Xmin,Xmax, OutputNameDirPlots, Form("%sLGpedwidth", pedBName.Data()), plotSuffix, commonRunInfo, ExtPlot );
 
-    panelPlot.PlotTrending(trend, 19, Xmin,Xmax, OutputNameDirPlots, "Ped", plotSuffix, it->second, ExtPlot );
-    panelPlot.PlotTrending(trend, 20, Xmin,Xmax, OutputNameDirPlots, "Pedwidth", plotSuffix, it->second, ExtPlot );
+    panelPlot.PlotTrending(trend, 19, Xmin,Xmax, OutputNameDirPlots, "Ped", plotSuffix, commonRunInfo, ExtPlot );
+    panelPlot.PlotTrending(trend, 20, Xmin,Xmax, OutputNameDirPlots, "Pedwidth", plotSuffix, commonRunInfo, ExtPlot );
     
     if (globalStatus >1 ){
-      panelPlot.PlotTrending(trend, 2, Xmin,Xmax, OutputNameDirPlots, "HGScale", plotSuffix, it->second, ExtPlot );
+      panelPlot.PlotTrending(trend, 2, Xmin,Xmax, OutputNameDirPlots, "HGScale", plotSuffix, commonRunInfo, ExtPlot );
       if (!isHGCROC){
-        panelPlot.PlotTrending(trend, 3, Xmin,Xmax, OutputNameDirPlots, "LGScale", plotSuffix, it->second, ExtPlot );
-        panelPlot.PlotTrending(trend, 4, Xmin,Xmax, OutputNameDirPlots, "LGHGCorr", plotSuffix, it->second, ExtPlot );
-        panelPlot.PlotTrending(trend, 5, Xmin,Xmax, OutputNameDirPlots, "HGLGCorr", plotSuffix, it->second, ExtPlot );
-        panelPlot.PlotTrending(trend, 17, Xmin,Xmax, OutputNameDirPlots, "LGHG_Offset", plotSuffix, it->second, ExtPlot );
-        panelPlot.PlotTrending(trend, 18, Xmin,Xmax, OutputNameDirPlots, "HGLG_Offset", plotSuffix, it->second, ExtPlot );
+        panelPlot.PlotTrending(trend, 3, Xmin,Xmax, OutputNameDirPlots, "LGScale", plotSuffix, commonRunInfo, ExtPlot );
+        panelPlot.PlotTrending(trend, 4, Xmin,Xmax, OutputNameDirPlots, "LGHGCorr", plotSuffix, commonRunInfo, ExtPlot );
+        panelPlot.PlotTrending(trend, 5, Xmin,Xmax, OutputNameDirPlots, "HGLGCorr", plotSuffix, commonRunInfo, ExtPlot );
+        panelPlot.PlotTrending(trend, 17, Xmin,Xmax, OutputNameDirPlots, "LGHG_Offset", plotSuffix, commonRunInfo, ExtPlot );
+        panelPlot.PlotTrending(trend, 18, Xmin,Xmax, OutputNameDirPlots, "HGLG_Offset", plotSuffix, commonRunInfo, ExtPlot );
       }
     }
   }  
   if (expandedList == 1 && globalStatus > 1 ){
-    panelPlot.PlotTrending(trend, 9, Xmin,Xmax, OutputNameDirPlots, "HG_LandMPV", plotSuffix, it->second, ExtPlot );
-    panelPlot.PlotTrending(trend, 11, Xmin,Xmax, OutputNameDirPlots, "HG_LandSigma", plotSuffix, it->second, ExtPlot );
-    panelPlot.PlotTrending(trend, 13, Xmin,Xmax, OutputNameDirPlots, "HG_GaussSigma", plotSuffix, it->second, ExtPlot );
+    panelPlot.PlotTrending(trend, 9, Xmin,Xmax, OutputNameDirPlots, "HG_LandMPV", plotSuffix, commonRunInfo, ExtPlot );
+    panelPlot.PlotTrending(trend, 11, Xmin,Xmax, OutputNameDirPlots, "HG_LandSigma", plotSuffix, commonRunInfo, ExtPlot );
+    panelPlot.PlotTrending(trend, 13, Xmin,Xmax, OutputNameDirPlots, "HG_GaussSigma", plotSuffix, commonRunInfo, ExtPlot );
     if (!isHGCROC){
-      panelPlot.PlotTrending(trend, 10, Xmin,Xmax, OutputNameDirPlots, "LG_LandMPV", plotSuffix, it->second, ExtPlot );
-      panelPlot.PlotTrending(trend, 12, Xmin,Xmax, OutputNameDirPlots, "LG_LandSigma", plotSuffix, it->second, ExtPlot );
-      panelPlot.PlotTrending(trend, 14, Xmin,Xmax, OutputNameDirPlots, "LG_GaussSigma", plotSuffix, it->second, ExtPlot );
+      panelPlot.PlotTrending(trend, 10, Xmin,Xmax, OutputNameDirPlots, "LG_LandMPV", plotSuffix, commonRunInfo, ExtPlot );
+      panelPlot.PlotTrending(trend, 12, Xmin,Xmax, OutputNameDirPlots, "LG_LandSigma", plotSuffix, commonRunInfo, ExtPlot );
+      panelPlot.PlotTrending(trend, 14, Xmin,Xmax, OutputNameDirPlots, "LG_GaussSigma", plotSuffix, commonRunInfo, ExtPlot );
     }
   }
   if (( expandedList == 1 || expandedList == 2)  && globalStatus > 1){
-    panelPlot.PlotTrending(trend, 6, Xmin,Xmax, OutputNameDirPlots, "MuonTriggers", plotSuffix, it->second, ExtPlot );
-    panelPlot.PlotTrending(trend, 7, Xmin,Xmax, OutputNameDirPlots, "SBSignal_MuonTriggers", plotSuffix, it->second, ExtPlot );
-    panelPlot.PlotTrending(trend, 8, Xmin,Xmax, OutputNameDirPlots, "SBNoise_MuonTriggers", plotSuffix, it->second, ExtPlot );
+    panelPlot.PlotTrending(trend, 6, Xmin,Xmax, OutputNameDirPlots, "MuonTriggers", plotSuffix, commonRunInfo, ExtPlot );
+    panelPlot.PlotTrending(trend, 7, Xmin,Xmax, OutputNameDirPlots, "SBSignal_MuonTriggers", plotSuffix, commonRunInfo, ExtPlot );
+    panelPlot.PlotTrending(trend, 8, Xmin,Xmax, OutputNameDirPlots, "SBNoise_MuonTriggers", plotSuffix, commonRunInfo, ExtPlot );
   }
   
   if (ExtPlot > 1){
@@ -661,18 +696,38 @@ bool ComparisonCalib::ProcessCalib(void){
         maxADC = 350;
         nameADC = "MuonTriggers_ADCDist";
       }
-      panelPlot.PlotRunOverlaySpectra(trend, nRun, 0, -15, maxADC, OutputNameDirPlots, nameADC, plotSuffix, it->second, ExtPlot);
+      panelPlot.PlotRunOverlaySpectra(trend, nRun, 0, -15, maxADC, OutputNameDirPlots, nameADC, plotSuffix, commonRunInfo, ExtPlot);
       if (!isHGCROC) 
-        panelPlot.PlotRunOverlaySpectra(trend, nRun, 1, -10,210, OutputNameDirPlots, "MuonTriggers_LGDist", plotSuffix, it->second, ExtPlot);
+        panelPlot.PlotRunOverlaySpectra(trend, nRun, 1, -10,210, OutputNameDirPlots, "MuonTriggers_LGDist", plotSuffix, commonRunInfo, ExtPlot);
     }
     if (expandedList > 0 && !isHGCROC){
-      if (globalStatus > 1) panelPlot2D.PlotRunOverlayProfile(trend, nRun, 0, -20, 340, -20, 3900, OutputNameDirPlots, "LGHGCorr", plotSuffix, it->second, ExtPlot );
+      if (globalStatus > 1) panelPlot2D.PlotRunOverlayProfile(trend, nRun, 0, -20, 340, -20, 3900, OutputNameDirPlots, "LGHGCorr", plotSuffix, commonRunInfo, ExtPlot );
     }
     
     if (expandedList > 0 && isHGCROC && globalStatus > 1){
-      panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, -20, 450000, -20, 1024, OutputNameDirPlots, "WaveOverlay", plotSuffix, it->second, ExtPlot );
-      panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, -20, 450000, -0.01, 0.05, OutputNameDirPlots, "WaveOverlayScaled", plotSuffix, it->second, ExtPlot, 1, true);
+      panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, -20, 450000, -20, 1024, OutputNameDirPlots, "WaveOverlay", plotSuffix, commonRunInfo, ExtPlot );
+      panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, -20, 450000, -0.01, 0.05, OutputNameDirPlots, "WaveOverlayScaled", plotSuffix, commonRunInfo, ExtPlot, 1, true);
     }    
+    
+    std::cout << "exp list" << expandedList << "\t HGCROC\t " << isHGCROC << std::endl;
+    if (expandedList == 4 && isHGCROC ){
+      panelPlot.PlotRunOverlaySpectra(trend, nRun, 0, 0, 4148, OutputNameDirPlots, "TOTSpectra", plotSuffix, commonRunInfo, ExtPlot);
+      panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, 0 , commonRunInfo.samples, -20, 1324, OutputNameDirPlots, "WaveOverlay", plotSuffix, commonRunInfo, ExtPlot );
+    }    
+  }
+  
+  if (ExtPlot > 2 && expandedList == 4 && isHGCROC ){
+    detConf = DetConf::Type::SingleTile;
+    MultiCanvas panelSingleTile(detConf, "InjectionTile");
+    if (cellVec.size() > 0){
+      std::cout << "setting single cell list, will plot " << cellVec.size()  << std::endl;
+      panelSingleTile.SetCellVector(cellVec);
+    }
+    bool initSngle = panelSingleTile.Initialize(1);
+    panelSingleTile.PlotRunOverlaySpectra(trend, nRun, 0, 0, 4148, OutputNameDirPlots, "TileTOTSpectra", plotSuffix, commonRunInfo, ExtPlot, debug, 0);
+    panelSingleTile.PlotRunOverlaySpectra(trend, nRun, 1, 0, 1024, OutputNameDirPlots, "TileTOASpectra", plotSuffix, commonRunInfo, ExtPlot, debug, 0);
+    panelSingleTile.PlotRunOverlayProfile(trend, nRun, 1, 0 , commonRunInfo.samples, -10, 1324, OutputNameDirPlots, "TileWaveOverlay", plotSuffix, commonRunInfo, ExtPlot );
+
   }
   
   return status;

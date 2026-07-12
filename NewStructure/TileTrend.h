@@ -13,6 +13,9 @@
 #include "TLegend.h"
 #include "TFile.h"
 #include "Calib.h"
+#include "Setup.h"
+#include "Tile.h"
+#include "CommonHelperFunctions.h"
 
 class TileTrend: public TObject{
 
@@ -249,19 +252,19 @@ class TileTrend: public TObject{
   ~TileTrend(){}
 
   // Fill objects 
-  bool Fill           (double, const TileCalib&, int, double, int, double, double);
-  bool FillExtended   (double, int, int, TH1D*, TH1D*, TProfile*);
+  bool Fill           (double, const TileCalib&, int, double, int, double, double, double, double);
+  bool FillExtended   (double, int, int, TH1D*, TH1D*, TProfile*, TProfile* wave = nullptr);
   void FillMPV        (double, double, double, double, double);
   void FillLSigma     (double, double, double, double, double);
   void FillGSigma     (double, double, double, double, double);
   void FillSB         (double, double, double);
   void FillCorrOffset (double, double, double, double, double);  
-  
   bool FillInjection  ( double x, double ped, int runNr, 
                         TProfile* wave, TProfile* toa, TProfile* tot, 
                         double val_rf = -1., double val_cf= -1., double val_cfcomp= -1., double val_cc= -1., double val_inj = -1.);
 
   bool FillInjectionDACVal  ( double x, double ped, double adc, double toa, double tot, int adcSatN = 0, int totSatN = 0, int nTOA = 0, int nSampToA = 0) ;
+  
   
   
   // Drawing functions for graphs
@@ -291,6 +294,7 @@ class TileTrend: public TObject{
   bool DrawTOA        (TString);
   bool DrawNSampTOA   (TString);
   bool DrawNTOA       (TString);
+  TString GetLabelLegend(RunInfo , int, int );
   
   // Set default drawing options for all graphs
   bool SetLineColor   (uint);
@@ -385,6 +389,8 @@ class TileTrend: public TObject{
   inline int GetCFComp(int i)     {if (cfcomp.size()> 0 && i < (int)cfcomp.size()) return cfcomp[i]; else return -1;}
   inline int GetCC(int i)         {if (cc.size()> 0 && i < (int)cc.size()) return cc[i]; else return -1;}
   inline double GetInj(int i)     {if (inj.size()> 0 && i < (int)inj.size()) return inj[i]; else return -1;}
+  inline double GetEnergy(int i)  {if (energy.size()> 0 && i < (int)energy.size()) return energy[i]; else return -1;}
+  inline double GetTemp(int i)  {if (temp.size()> 0 && i < (int)temp.size()) return temp[i]; else return -1;}
   
   // Getters for graphs
   inline TGraphErrors* GetHGped()     {return &gTrendHGped;};
@@ -525,6 +531,8 @@ class TileTrend: public TObject{
   std::vector<double> cfcomp;
   std::vector<double> cc;
   std::vector<double> inj;
+  std::vector<double> energy;
+  std::vector<double> temp;
   std::map<int, TH1D> HGTriggRuns;
   std::map<int, TH1D> LGTriggRuns;
   std::map<int, TProfile> LGHGTriggRuns;
@@ -532,7 +540,7 @@ class TileTrend: public TObject{
   std::map<int, TProfile> TOAProf;
   std::map<int, TProfile> TOTProf;
   
-  ClassDef(TileTrend,9);
+  ClassDef(TileTrend,10);
 };
 
 #endif

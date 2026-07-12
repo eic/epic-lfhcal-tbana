@@ -112,6 +112,10 @@ class TileSpectra: public TObject{
         hcorr.SetDirectory(0);
         hcorrADCTOT   = TH2D(Form("hCorr2DTOTADC%sCellID%d",name.Data(),id),Form("2D TOT-ADC CellID %d;  ADC (arb. units); TOT  (arb. units)",id),1128/8,-100,1028,4096/8,0,4096);
         hcorrADCTOT.SetDirectory(0);
+        hWaveForm     = TProfile(Form("waveform1D%sCellID%d",name.Data(),id),Form("1D waveform CellID %d;  sample ; ADC (arb. units)",id),20,0,20);
+        hWaveForm.SetDirectory(0);
+        
+        
       }
     // Waveform analysis
     } else if (extend == 3){
