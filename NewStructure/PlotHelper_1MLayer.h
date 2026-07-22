@@ -550,7 +550,7 @@
     
     TLegend* legend = GetAndSetLegend2(  topRCornerX, startLegY, 0.6, endLegY,
                                 labelScale*textSizePixel, columns, header,43,0.25);    
-    TH1D* dummyhist;
+    TH1D* dummyhist = nullptr;
     for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
       int tmpRunNr = ithTrend->second.GetRunNr(rc);
       profs[rc] = nullptr;

@@ -114,6 +114,15 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
     LGHGTriggRuns[runNr] = temp3;
   }
   
+  if (wave){
+      TProfile temp = *wave;
+      // std::cout << "filling wave " <<  wave->GetName() << std::endl;
+      temp.SetName(Form("%s_Run%i",wave->GetName(),runNr));
+      temp.SetDirectory(0);
+      if (MaxInjADC < temp.GetMaximum()) MaxInjADC = temp.GetMaximum();
+      Wave1DProf[runNr] = temp;
+    }
+  
   if (extended == 4){
     if (histHG){
       TH1D temp = *histHG;
