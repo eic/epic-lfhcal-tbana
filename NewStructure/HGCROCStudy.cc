@@ -27,6 +27,7 @@ void PrintHelp(char* exe){
   std::cout<<"Usage:"<<std::endl;
   std::cout<<exe<<" [-option (arguments)]"<<std::endl;
   std::cout<<"Options:"<<std::endl;
+  std::cout<<"-c ccc   list of cell to be plotted separately"<<std::endl;
   std::cout<<"-B lll   apply external bad channel map during transfer of calibs"<<std::endl;
   std::cout<<"-c ccc   set fixed Readout board channel"<<std::endl;
   std::cout<<"-d [0-n] switch on debug info with debug level 0 to n"<<std::endl;
@@ -56,8 +57,9 @@ int main(int argc, char* argv[]){
   }
   HGCROC_Waveform_Analysis AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"B:c:d:E:fF:i:hk:L:o:O:r:s:t:Twx"))!=-1){
+  while((c=getopt(argc,argv,"B:c:d:E:fF:i:hk:l:L:o:O:r:s:t:Twx"))!=-1){
     switch(c){
+    
     case 'B':
       std::cout<<"HGCROCStudy: read bad channel map from external file: "<<optarg<<std::endl;
       AnAnalysis.SetExternalBadChannelMap(Form("%s",optarg));
@@ -90,6 +92,10 @@ int main(int argc, char* argv[]){
       std::cout<<"HGCROCStudy: enable overwrite from external text file: "<< optarg <<std::endl;
       AnAnalysis.SetExternalCalibFile(optarg);
       AnAnalysis.SetOverWriteCalib(true);
+      break;
+    case 'l':
+      std::cout<<"HGCROCStudy: set list of cells for detailed plotting " << optarg <<std::endl;
+      AnAnalysis.SetCellList(optarg);
       break;
     case 'L':
       std::cout<<"HGCROCStudy: SetMaxEvents processed:"<<optarg<<std::endl;

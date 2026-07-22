@@ -105,7 +105,7 @@ bool MultiCanvas::Initialize(int opt){
     // Single tile setup
     if ( detType ==  DetConf::Type::SingleTile){
       canvasMulti = new TCanvas(Form("canvasLayer%sProf",addName.Data()),"",0,0,620,600);
-      DefaultCanvasSettings( canvasMulti,0.138, 0.08, 0.03, 0.1);
+      DefaultCanvasSettings( canvasMulti,0.138, 0.11, 0.03, 0.09);
       legPlace_X[0] = 0.175;
       legPlace_Y[0] = 0.95;
       textSize        = 26;
@@ -242,6 +242,8 @@ void MultiCanvas::ReturnCorrectValuesForCanvasScaling(   Int_t sizeX,
     return;
 }
 
+//__________________________________________________________________________________________________________
+//__________________________________________________________________________________________________________
 void MultiCanvas::SetCellVector(std::vector<int> tempcells){
   for (int i = 0; i < (int)tempcells.size(); i++){
     std::cout << "adding " << tempcells.at(i) << " to array" << std::endl; 
@@ -250,6 +252,7 @@ void MultiCanvas::SetCellVector(std::vector<int> tempcells){
   return;
 }
 
+//__________________________________________________________________________________________________________
 //__________________________________________________________________________________________________________
 void MultiCanvas::ReturnCorrectValuesTextSize(   TPad * pad,
                                     Double_t &textsizeLabels,
@@ -749,23 +752,35 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
   std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
   Setup* setup = Setup::GetInstance();
   if (detType ==  DetConf::Type::SingleTile){
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
-        if (skiplayers > 0){
-          if  (l%skiplayers != 0){
-            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
-            continue;
+    if (cells.size() > 0){
+      for (int c = 0; c<(int)cells.size(); c++ ){
+        std::cout << "plotting cell " << cells.at(c) << std::endl;
+        
+          PlotNoiseWithFits1MLayer (canvasMulti, legPlace_X[0], legPlace_Y[0], relTextSize[0], textSize, 
+                                    spectra,  option, xPMin, xPMax, scaleYMax, -1, -1,
+                                    Form("%s_CellID%05d.%s" ,nameOutputBase.Data(), cells.at(c), suffix.Data()), currRunInfo, cells.at(c));
+      }
+    } else {
+
+    
+      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
+        for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+          if (skiplayers > 0){
+            if  (l%skiplayers != 0){
+              std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+              continue;
+            }
           }
+          if (l%5 == 0 && l > 0 && debug > 0)
+            std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+          if (!setup->IsLayerOn(l,m)){
+            std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+            continue;
+          }    
+          PlotNoiseWithFits1MLayer (canvasMulti, legPlace_X[0], legPlace_Y[0], relTextSize[0], textSize, 
+                                    spectra,  option, xPMin, xPMax, scaleYMax, l, m,
+                                    Form("%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(), m, l, suffix.Data()), currRunInfo);
         }
-        if (l%5 == 0 && l > 0 && debug > 0)
-          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
-        if (!setup->IsLayerOn(l,m)){
-          std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
-          continue;
-        }    
-        PlotNoiseWithFits1MLayer (canvasMulti, legPlace_X[0], legPlace_Y[0], relTextSize[0], textSize, 
-                                  spectra,  option, xPMin, xPMax, scaleYMax, l, m,
-                                  Form("%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(), m, l, suffix.Data()), currRunInfo);
       }
     }
   } else if (detType ==  DetConf::Type::Single2MH){    
@@ -910,28 +925,38 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
   Setup* setup = Setup::GetInstance();
   // Single tile plotting
   if (detType ==  DetConf::Type::SingleTile){
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
-        if (skiplayers > 0){
-          if  (l%skiplayers != 0){
-            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
-            continue;
-          }
-        }
-        if (l%5 == 0 && l > 0 && debug > 0)
-          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
-        if (!setup->IsLayerOn(l,m)){
-          std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
-          continue;
-        }    
-        if (!calib->IsLayerEnabled(l,m)){
-          std::cout << "====> layer " << l <<" in module " << m << " all channels masked" << std::endl;
-          continue;
-        }        
+    if (cells.size() > 0){
+      for (int c = 0; c<(int)cells.size(); c++ ){
+        std::cout << "plotting cell " << cells.at(c) << std::endl;
         
         PlotCorr2D1MLayer (canvasMulti, legPlace_X[0], legPlace_Y[0], relTextSize[0], textSize, 
-                                  spectra,  option, xPMin, xPMax, maxY, l, m,
-                                  Form("%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(), m, l, suffix.Data()), currRunInfo);
+                                    spectra,  option, xPMin, xPMax, maxY, -1, -1,
+                                    Form("%s_CellID%05d.%s" ,nameOutputBase.Data(),cells.at(c), suffix.Data()), currRunInfo, cells.at(c));
+      }
+    } else {
+      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
+        for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+          if (skiplayers > 0){
+            if  (l%skiplayers != 0){
+              std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+              continue;
+            }
+          }
+          if (l%5 == 0 && l > 0 && debug > 0)
+            std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+          if (!setup->IsLayerOn(l,m)){
+            std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+            continue;
+          }    
+          if (!calib->IsLayerEnabled(l,m)){
+            std::cout << "====> layer " << l <<" in module " << m << " all channels masked" << std::endl;
+            continue;
+          }        
+          
+          PlotCorr2D1MLayer (canvasMulti, legPlace_X[0], legPlace_Y[0], relTextSize[0], textSize, 
+                                    spectra,  option, xPMin, xPMax, maxY, l, m,
+                                    Form("%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(), m, l, suffix.Data()), currRunInfo);
+        }
       }
     }
   // Single 2M horizontal plotting    
@@ -1234,29 +1259,40 @@ void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option,
   Setup* setup = Setup::GetInstance();
   // Single tile plotting
   if (detType ==  DetConf::Type::SingleTile){
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
-      for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
-        if (skiplayers > 0){
-          if  (l%skiplayers != 0){
-            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
-            continue;
-          }
-        }        
-        if (l%5 == 0 && l > 0 && debug > 0)
-          std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
-        if (!setup->IsLayerOn(l,m)){
-          std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
-          continue;
-        }    
-        if (!calib->IsLayerEnabled(l,m)){
-          std::cout << "====> layer " << l <<" in module " << m << " all channels masked" << std::endl;
-          continue;
-        }        
+    
+    if (cells.size() > 0){
+      for (int c = 0; c<(int)cells.size(); c++ ){
+        std::cout << "plotting cell " << cells.at(c) << std::endl;
         PlotSpectra1MLayer (canvasMulti, legPlace_X[0], legPlace_Y[0], relTextSize[0], textSize, 
-                            spectra, option, xPMin, xPMax, scaleYMax, l, m,
-                            Form("%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(), m, l, suffix.Data()), currRunInfo);
+                              spectra, option, xPMin, xPMax, scaleYMax, -1, -1,
+                              Form("%s_CellID%05d.%s" ,nameOutputBase.Data(),cells.at(c) , suffix.Data()), currRunInfo, cells.at(c));
+      }
+    } else {
+      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
+        for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+          if (skiplayers > 0){
+            if  (l%skiplayers != 0){
+              std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+              continue;
+            }
+          }        
+          if (l%5 == 0 && l > 0 && debug > 0)
+            std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+          if (!setup->IsLayerOn(l,m)){
+            std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+            continue;
+          }    
+          if (!calib->IsLayerEnabled(l,m)){
+            std::cout << "====> layer " << l <<" in module " << m << " all channels masked" << std::endl;
+            continue;
+          }        
+          PlotSpectra1MLayer (canvasMulti, legPlace_X[0], legPlace_Y[0], relTextSize[0], textSize, 
+                              spectra, option, xPMin, xPMax, scaleYMax, l, m,
+                              Form("%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(), m, l, suffix.Data()), currRunInfo);
+        }
       }
     }
+    
   // Single 2M horizontal plotting    
   } else if (detType ==  DetConf::Type::Single2MH){    
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
@@ -1905,7 +1941,7 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
         std::cout << "plotting cell " << cells.at(c) << std::endl;
         PlotRunOverlayProfile1MLayer( canvasMulti, legPlace_X[0], legPlace_X[0]-0.8, legPlace_Y[0], relTextSize[0], textSize,
                                         trend, nrun, option, xPMin,xPMax, yMin, yMax, -1, -1,
-                                        Form("%s/SingleLayer/%s_CellID%02d.%s" ,nameOutputBase.Data(),namePlot.Data(),cells.at(c), suffix.Data()), 
+                                        Form("%s/SingleLayer/%s_CellID%05d.%s" ,nameOutputBase.Data(),namePlot.Data(),cells.at(c), suffix.Data()), 
                                         Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
                                         currRunInfo, ExtPlot, scaleInt, cells.at(c));        
       }

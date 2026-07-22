@@ -77,6 +77,7 @@ class HGCROC_Waveform_Analysis{
   inline void SetMaxEvents(int n)                 {maxEvents = n;};
   inline void SetFixedTOASample(int s)            {fixedTOASample = s;};
   inline void SetFixedROChannel(int r)            {fixedROCh = r;};
+  inline void SetCellList(TString name)           {cellList=name;};  
   
   //General methods
   bool CreateOutputRootFile(void);
@@ -92,6 +93,7 @@ class HGCROC_Waveform_Analysis{
   TString RootCalibInputName;             // file name of calibration root file (mip calib)
   TString RootCalibOutputName;            // file name of calibration root file (mip calib) output
   TString RunListInputName;               // file name run list 
+  TString cellList            = "";       // list of cells to be plotted separately
   TString ExternalBadChannelMap;          // file name external bad channel map
   TString ExternalCalibFile;              // file name external calib file
   TString ExternalToACalibOffSetFile =""; // file name external ToA calib offsets file

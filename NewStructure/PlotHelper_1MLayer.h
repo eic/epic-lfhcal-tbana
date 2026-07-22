@@ -9,7 +9,7 @@
   //__________________________________________________________________________________________________________
   inline void PlotNoiseWithFits1MLayer (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
                                   std::map<int,TileSpectra> spectra, int option, 
-                                  Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
+                                  Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo, int extCellId = -1){
                                   
     Double_t maxY = 0;
     std::map<int, TileSpectra>::iterator ithSpectra;
@@ -17,7 +17,14 @@
     Setup* setupT = Setup::GetInstance();
     
     int skipped = 0;
-    int tempCellID = setupT->GetCellID(0,0, layer, mod);
+    int tempCellID = -1;
+    if (layer != -1 && mod != -1 )
+      tempCellID = setupT->GetCellID(0,0, layer, mod);
+    if (extCellId != -1)
+      tempCellID = extCellId;
+    if (tempCellID < 0)
+      return;
+   
     ithSpectra=spectra.find(tempCellID);
     if(ithSpectra==spectra.end()){
       std::cout << "WARNING: skipping cell ID: " << tempCellID << "\t layer " << layer << "\t module " << mod << std::endl;
@@ -59,6 +66,9 @@
     }
       
     TString label           = Form("layer %d", layer);
+    if (extCellId != -1)
+      label = Form("a:%d, ch:%d",setupT->GetROunit(extCellId), setupT->GetROchannel(extCellId) );
+
     TLatex *labelChannel    = new TLatex(topRCornerX-0.04,topRCornerY-1.2*relSizeP,label);
     SetStyleTLatex( labelChannel, 0.85*textSizePixel,4,1,43,kTRUE,31);
 
@@ -93,13 +103,21 @@
   inline void PlotSpectra1MLayer (TCanvas* canvas,
                            Double_t topRCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
                                   std::map<int,TileSpectra> spectra, int option, 
-                                  Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
+                                  Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo, Int_t extCellId = -1){
                                   
     Double_t maxY = 0;
     std::map<int, TileSpectra>::iterator ithSpectra;
     Setup* setupT = Setup::GetInstance();
     
-    int tempCellID = setupT->GetCellID(0,0, layer, mod);
+    int tempCellID = -1;
+    if (layer != -1 && mod != -1 )
+      tempCellID = setupT->GetCellID(0,0, layer, mod);
+    if (extCellId != -1)
+      tempCellID = extCellId;
+    if (tempCellID < 0)
+      return;
+
+    
     ithSpectra=spectra.find(tempCellID);
     if(ithSpectra==spectra.end()){
       std::cout << "WARNING: skipping cell ID: " << tempCellID << "\t layer " << layer << "\t module " << mod << std::endl;
@@ -144,6 +162,9 @@
     }
             
     TString label = Form("layer %d", layer);
+    if (extCellId != -1)
+      label = Form("a:%d, ch:%d",setupT->GetROunit(extCellId), setupT->GetROchannel(extCellId) );
+
     TLatex *labelChannel    = new TLatex(topRCornerX-0.045,topRCornerY-1.2*relSizeP,label);
     SetStyleTLatex( labelChannel, 0.85*textSizePixel,4,1,43,kTRUE,31);
     labelChannel->Draw();  
@@ -164,7 +185,7 @@
   //__________________________________________________________________________________________________________
   inline void PlotCorr2D1MLayer (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
                                   std::map<int,TileSpectra> spectra, int option,
-                                  Double_t xPMin, Double_t xPMax, Double_t maxY, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
+                                  Double_t xPMin, Double_t xPMax, Double_t maxY, int layer, int mod,  TString nameOutput, RunInfo currRunInfo, Int_t extCellId = -1 ){
                                   
     Setup* setupT = Setup::GetInstance();
     
@@ -174,7 +195,15 @@
     
     
     canvas2Panel->cd();
-    int tempCellID = setupT->GetCellID(0,0, layer, mod);
+    int tempCellID = -1;
+    if (layer != -1 && mod != -1 )
+      tempCellID = setupT->GetCellID(0,0, layer, mod);
+    if (extCellId != -1)
+      tempCellID = extCellId;
+    if (tempCellID < 0)
+      return;
+
+    
     canvas2Panel->SetLogy(0);
     canvas2Panel->SetLogz(1);
       
@@ -211,7 +240,7 @@
     std::cout << "min: " << xPMin << "\t" << xPMax << std::endl; 
     temp2D->GetYaxis()->SetRangeUser(-10,maxY);
     temp2D->GetXaxis()->SetRangeUser(xPMin,xPMax);
-    temp2D->Draw("col");
+    temp2D->Draw("colz");
 
     DrawCorrectBadChannelBox(ithSpectra->second.GetCalib()->BadChannel,xPMin, 0, xPMax, maxY);
     temp2D->Draw("axis,same");
@@ -221,10 +250,12 @@
       tempProfile->Draw("pe, same");
     } 
         
-    TString label           = Form("layer %d", layer);
-    TLatex *labelChannel    = new TLatex(topRCornerX,topRCornerY-1.2*relSizeP,label);
-    SetStyleTLatex( labelChannel, 0.85*textSizePixel,4,1,43,kTRUE,11);
-
+    TString labelCh           = Form("layer %d", layer);
+    if (extCellId != -1 && (currRunInfo.detector).CompareTo("FoCal") == 0)
+      labelCh = Form("a:%d, ch:%d",setupT->GetROunit(extCellId), setupT->GetROchannel(extCellId) );
+    else 
+      labelCh = Form("m:%d, l:%d, c:%d, r:%d",setupT->GetModule(extCellId), setupT->GetLayer(extCellId), setupT->GetColumn(extCellId), setupT->GetRow(extCellId));
+    
     TF1* fit            = ithSpectra->second.GetCorrModel(0);
     if (rotype == ReadOut::Type::Hgcroc)
       fit            = ithSpectra->second.GetCorrModel(2);
@@ -236,18 +267,18 @@
       fit->Draw("same");
       TLegend* legend = nullptr;
       if (rotype == ReadOut::Type::Caen){
-        legend = GetAndSetLegend2( topRCornerX, topRCornerY-4*0.85*relSizeP-0.4*relSizeP, topRCornerX+6*relSizeP, topRCornerY-0.6*relSizeP,0.85*textSizePixel, 1, label, 43,0.1);
+        legend = GetAndSetLegend2( topRCornerX, topRCornerY-4*0.85*relSizeP-0.4*relSizeP, topRCornerX+6*relSizeP, topRCornerY-0.6*relSizeP,0.85*textSizePixel, 1, labelCh, 43,0.1);
         legend->AddEntry(fit, "linear fit, trigg.", "l");
         legend->AddEntry((TObject*)0, Form("#scale[0.8]{b = %2.3f #pm %2.4f}",fit->GetParameter(0), fit->GetParError(0) ) , " ");
         legend->AddEntry((TObject*)0, Form("#scale[0.8]{a = %2.3f #pm %2.4f}",fit->GetParameter(1), fit->GetParError(1) ) , " ");
       } else {
-        legend = GetAndSetLegend2( topRCornerX, topRCornerY-3*0.85*relSizeP-0.4*relSizeP, topRCornerX+6*relSizeP, topRCornerY-0.6*relSizeP,0.85*textSizePixel, 1, label, 43,0.1);
+        legend = GetAndSetLegend2( topRCornerX, topRCornerY-3*0.85*relSizeP-0.4*relSizeP, topRCornerX+6*relSizeP, topRCornerY-0.6*relSizeP,0.85*textSizePixel, 1, labelCh, 43,0.1);
         legend->AddEntry(fit, "const fit", "l");
         legend->AddEntry((TObject*)0, Form("#scale[0.8]{a = %2.3f #pm %2.4f}",fit->GetParameter(0), fit->GetParError(0) ) , " ");   
       }
       legend->Draw();
     } else {
-      labelChannel->Draw();  
+      DrawLatex(0.86, topRCornerY-offset*0.85*relSizeP-0.1*relSizeP, labelCh, true, 0.85*relSizeP, 42);
     }
   
     if (option == 1){
@@ -256,8 +287,15 @@
       } 
     }
   
-    DrawLatex(topRCornerX, topRCornerY-offset*0.85*relSizeP-1.4*relSizeP, GetStringFromRunInfo(currRunInfo, 2), false, 0.85*relSizeP, 42);
-    DrawLatex(topRCornerX, topRCornerY-offset*0.85*relSizeP-2.2*relSizeP, GetStringFromRunInfo(currRunInfo, 3), false, 0.85*relSizeP, 42);
+    
+    TString beamline = GetStringFromRunInfo(currRunInfo, 9).Data();
+    TString lab1 = Form("#it{#bf{%s TB:}} %s", (currRunInfo.detector).Data(), beamline.Data());
+    // labeling inside the panels & legend drawing 
+    if (beamline.Contains("ORNL")) lab1 = beamline;
+    
+    DrawLatex(topRCornerX, topRCornerY-offset*0.85*relSizeP-0.1*relSizeP, lab1, false, 0.85*relSizeP, 42);
+    DrawLatex(topRCornerX, topRCornerY-offset*0.85*relSizeP-0.9*relSizeP, GetStringFromRunInfo(currRunInfo, 2), false, 0.85*relSizeP, 42);
+    DrawLatex(topRCornerX, topRCornerY-offset*0.85*relSizeP-1.7*relSizeP, GetStringFromRunInfo(currRunInfo, 3), false, 0.85*relSizeP, 42);
     canvas2Panel->SaveAs(nameOutput.Data());
   }
 

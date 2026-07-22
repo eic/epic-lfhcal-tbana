@@ -570,6 +570,63 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
     panelPlot.PlotSpectra( hSpectra, 4, 0, 4096, 1.2,
                            Form("%s/TOT" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
   }
+  
+  std::vector <int> cellVec;
+  if (cellList.CompareTo("")!= 0){
+    std::cout << "cell List set: "  << cellList.Data() << std::endl;
+    std::fstream cellTxt;
+    cellTxt.open(cellList.Data(),std::ios::in);
+    if(!cellTxt.is_open()){
+      std::cout<<"Error opening "<<cellList.Data()<<", does the file exist?"<<std::endl;
+    }
+    while(cellTxt.good()){
+      TString dummyCell;
+      // set first root file names
+      cellTxt>>dummyCell;
+      std::cout << "\t" << dummyCell.Data() << std::endl;
+      if (dummyCell.CompareTo("") != 0)
+        cellVec.push_back(dummyCell.Atoi());
+    }
+    std::cout << "registered: " << cellVec.size() << " single cells to be plotted" << std::endl;
+    for (int i = 0; i < cellVec.size(); i++){
+        std::cout << cellVec.at(i) << "," ;
+    }
+    std::cout << std::endl;
+  }
+  
+  if (cellVec.size() > 0){
+    detConf = DetConf::Type::SingleTile;
+    MultiCanvas panelSingleTile(detConf, "SingleTile");
+    MultiCanvas panelSingleTile2D(detConf, "SingleTile");
+    if (cellVec.size() > 0){
+      std::cout << "setting single cell list, will plot " << cellVec.size()  << std::endl;
+      panelSingleTile.SetCellVector(cellVec);
+      panelSingleTile2D.SetCellVector(cellVec);
+    }
+    bool initSingle   = panelSingleTile.Initialize(1);
+    bool initSingle2D = panelSingleTile2D.Initialize(2);
+    
+    panelSingleTile2D.PlotCorr2DLayer(hSpectra, 1, -25, (it->second.samples)*25, 0, 300,
+                                Form("%s/Waveform",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+    panelSingleTile2D.PlotCorr2DLayer(hSpectra, 2, 0, 1024, 0, 300,
+                                Form("%s/TOA_ADC",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+    panelSingleTile2D.PlotCorr2DLayer(hSpectra, 3, 0, 1024, 0, it->second.samples,
+                                Form("%s/TOA_Sample",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+    panelSingleTile2D.PlotCorr2DLayer(hSpectraTrigg, 1, -25, (it->second.samples)*25, 0, 300,
+                                Form("%s/WaveformSignal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+    panelSingleTile2D.PlotCorr2DLayer(hSpectraTrigg, 2, 0, 1024, 0, 300,
+                                Form("%s/TOA_ADC_Signal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+    panelSingleTile2D.PlotCorr2DLayer(hSpectraTrigg, 3, 0, 1024, 0, it->second.samples,
+                                Form("%s/TOA_Sample_Signal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+    if (ExtPlot > 1){
+      panelSingleTile.PlotSpectra( hSpectra, 0, -100, 1024, 1.2,
+                            Form("%s/Spectra_ADC" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+      panelSingleTile.PlotSpectra( hSpectra, 3, 0, 1024, 1.2,
+                            Form("%s/TOA" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+      panelSingleTile.PlotSpectra( hSpectra, 4, 0, 4096, 1.2,
+                            Form("%s/TOT" ,outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib);
+    }
+  }
     
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
   // Saving histo putput
