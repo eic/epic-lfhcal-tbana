@@ -305,16 +305,11 @@
   //__________________________________________________________________________________________________________
   inline void PlotRunOverlay1MLayer (TCanvas* canvas2Panel, Double_t topRCornerX, Double_t topLCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
                               std::map<int,TileTrend> trending, int nruns, int optionTrend, 
-                              Double_t xPMin, Double_t xPMax, int layer, int mod,  TString nameOutput, TString nameOutputSummary, RunInfo currRunInfo, Int_t detailedPlot = 1, bool plotMean = false, int extCellId = -1){
-                                  
+                              Double_t xPMin, Double_t xPMax, int layer, int mod,  TString nameOutput, TString nameOutputSummary, RunInfo currRunInfo, Int_t detailedPlot = 1, bool plotMean = false, int labelOpt = 0, int extCellId = -1){
+    
+    // loading instance of setip
     Setup* setupT = Setup::GetInstance();
-    
-    std::map<int, TileTrend>::iterator ithTrend;    
-    int nCol = setupT->GetNMaxColumn()+1;
-    int skipped = 0;
-    
-    Double_t maxY         = 0.;
-    Double_t minY         = 9999.;
+    // checking whether we are plotting a specific cell
     int tempCellID = -1;
     if (layer != -1 && mod != -1 )
       tempCellID = setupT->GetCellID(0,0, layer, mod);
@@ -323,14 +318,17 @@
     if (tempCellID < 0)
       return;
     
-    Int_t nSameSettings = GetNSameSettings(currRunInfo);
-
+    Double_t maxY         = 0.;
+    Double_t minY         = 9999.;
+    
+    // testing whether cell is contained in tile trend map
+    std::map<int, TileTrend>::iterator ithTrend;    
     ithTrend=trending.find(tempCellID);
     if(ithTrend==trending.end()){
-      skipped++;
       std::cout << "WARNING: skipping cell ID: " << tempCellID << "\t layer " << layer << "\t module " << mod << std::endl;
       return;
-    } 
+    }
+    // setting min and max for spectra plot
     if (optionTrend == 0){      // HG
       if(maxY<ithTrend->second.GetMaxHGSpec()) maxY=ithTrend->second.GetMaxHGSpec();
       if(minY>ithTrend->second.GetMinHGSpec()) minY=ithTrend->second.GetMinHGSpec();
@@ -338,57 +336,44 @@
       if(maxY<ithTrend->second.GetMaxLGSpec()) maxY=ithTrend->second.GetMaxLGSpec();
       if(minY>ithTrend->second.GetMinLGSpec()) minY=ithTrend->second.GetMinLGSpec();
     } 
-    
     if (maxY == 0 && minY == 9999.){
       std::cout <<"Something went wrong! No ranges set for layer " <<  layer << " \t trend plotting option: " << optionTrend << "\t ABORTING!" << std::endl;
       return;
     }
     maxY = 3*maxY;
-    TH1D* histos[30];
-
-    Int_t columns     = 4;
-    double lineBottom  = (7+0.1);
-    double scaleTextSize = 0.75;
-    double startLegY  = topRCornerY-lineBottom*relSizeP;
-    double endLegY    = topRCornerY;
-    double width      = 0.6;
-    Double_t yPosStart = topRCornerY;
-    TString header    = GetHeaderLegendCommonRunObject(currRunInfo, nSameSettings, width, columns, scaleTextSize);
-    
-    if (nruns < 5) lineBottom = (1+0.1);
-    else if (nruns < 9) lineBottom = (2+0.1);
-    else if (nruns < 13) lineBottom = (3+0.1);
-    else if (nruns < 17) lineBottom = (4+0.1);
-    else if (nruns < 21) lineBottom = (5+0.1);
-    else if (nruns < 25) lineBottom = (6+0.1);
-
-    if (plotMean) {
-      columns     = 2;
-      lineBottom  = (7+0.1);
-      if (nruns < 3) lineBottom = (1+0.1);
-      else if (nruns < 5) lineBottom = (2+0.1);
-      else if (nruns < 7) lineBottom = (3+0.1);
-      else if (nruns < 9) lineBottom = (4+0.1);
-      else if (nruns < 11) lineBottom = (5+0.1);
-      else if (nruns < 13) lineBottom = (6+0.1);
-      scaleTextSize = 0.65; 
-      lineBottom--;
+  
+    // defining global settings
+    double labelScaleL = 0.75;
+    double labelScaleT = 0.75;
+    double sizeLabelsPix = labelScaleT*textSizePixel;
+    double width        = 0.6;
+    Int_t columns       = 4;
+    Int_t nSameSettings = GetNSameSettings(currRunInfo, labelOpt);
+    TString header      = GetHeaderLegendCommonRunObject(currRunInfo, nSameSettings, width, columns, labelScaleL);
+    if (plotMean){
+      columns         = 2;
+      labelScaleL   = 0.65; 
     }
-    if (currRunInfo.species.Contains("injection")){
-      if (nSameSettings == 5){
-          startLegY  = yPosStart -(lineBottom+1-1)*relSizeP;
-      }
-    } else if (currRunInfo.species.Contains("laser")){
-      startLegY  = yPosStart -(lineBottom)*relSizeP;
-    }
+    double lineBottom   = (int)(nruns/columns)+1;
+    if (header.CompareTo("") != 0 ) lineBottom++;
     
+    double lineDist     = labelScaleT*relSizeP;
+    double lineDistL    = labelScaleL*relSizeP;
 
-    TLegend* legend = GetAndSetLegend2(  width, startLegY, topRCornerX, endLegY,
-                                        scaleTextSize*textSizePixel, columns, header,43,0.25);
+    // calculating the legend position
+    Double_t yPosStart  = topRCornerY -lineDist;
+    double startLegY    = topRCornerY -(lineBottom+0.25)*lineDistL;
+    double endLegY      = topRCornerY -0.25*lineDistL;
+    // std::cout << lineBottom << "\t" << yPosStart << "\t"<< startLegY << "\t"<< endLegY << std::endl;
+
+    // entering canvas
     canvas2Panel->cd();
     canvas2Panel->SetLogy(1);
-    
 
+    TLegend* legend = GetAndSetLegend2(  width, startLegY, topRCornerX, endLegY,
+                                        labelScaleL*textSizePixel, columns, header,43,0.25);
+    
+    TH1D* histos[30];
     for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
       int tmpRunNr = ithTrend->second.GetRunNr(rc);
       histos[rc] = nullptr;
@@ -401,7 +386,7 @@
       }
       TString drawOpt = "f";
       if (histos[rc]){
-        SetStyleHistoTH1ForGraphs( histos[rc], histos[rc]->GetXaxis()->GetTitle(), histos[rc]->GetYaxis()->GetTitle(), 0.75*textSizePixel, 0.9*textSizePixel, 0.75*textSizePixel, 0.9*textSizePixel,0.9, 1.3,  510, 510, 43, 63);  
+        SetStyleHistoTH1ForGraphs( histos[rc], histos[rc]->GetXaxis()->GetTitle(), histos[rc]->GetYaxis()->GetTitle(), sizeLabelsPix, 0.9*textSizePixel, sizeLabelsPix, 0.9*textSizePixel,0.9, 1.3,  510, 510, 43, 63);  
         if (nameOutput.Contains("TOT") || nameOutput.Contains("Tot") ||  nameOutput.Contains("ToT"))
           SetHistDefaultsWFill(histos[rc], GetColorLayer(rc), 3, GetLineStyleLayer(rc), GetFillStyleLayer(rc));   
         else {
@@ -426,45 +411,38 @@
     }
     if (histos[0]) histos[0]->Draw("axis,same");                
     
+    // labeling right top corner & legend drawing
     legend->Draw();    
-    
-    TString label           = Form("layer %d", layer);
-    if (extCellId != -1)
-      label = Form("a:%d, ch:%d",setupT->GetROunit(extCellId), setupT->GetROchannel(extCellId) );
-
-    if ((currRunInfo.detector).Contains("FoCal")){
-      label           = Form("a:%d, ch:%d", setupT->GetROunit(tempCellID), setupT->GetROchannel(tempCellID));
-    }
     TString label2          = GetLabelVoltageTemp(currRunInfo);
     TString label3          = "";
     TString label4          = "";
-    if (currRunInfo.species.Contains("injection")){
+    if (currRunInfo.species.Contains("injection") || labelOpt > 0 ){
       label3          = GetLabelHGCROCSettingsCF(currRunInfo);
       label4          = GetLabelHGCROCSettingsRFCC(currRunInfo);
-      if (currRunInfo.injDAC > -10000. )
+      if (currRunInfo.injDAC > -10000. &&  currRunInfo.injDAC > 0. )
         label2 = label2+Form(",inj=%.1f fC", currRunInfo.injDAC);
     }
     if ( nSameSettings > 0 ){
-      DrawLatex(topRCornerX, yPosStart-(lineBottom+0.5)*relSizeP, label2, true, 0.75*textSizePixel, 43);
-      DrawLatex(topRCornerX, yPosStart-(lineBottom+1+0.5)*relSizeP, label3, true, 0.75*textSizePixel, 43);
-      DrawLatex(topRCornerX, yPosStart-(lineBottom+2+0.5)*relSizeP, label4, true, 0.75*textSizePixel, 43);
+      DrawLatex(topRCornerX, startLegY-lineDist, label2, true, sizeLabelsPix, 43);
+      DrawLatex(topRCornerX, startLegY-2*lineDist, label3, true, sizeLabelsPix, 43);
+      DrawLatex(topRCornerX, startLegY-3*lineDist, label4, true, sizeLabelsPix, 43);
     }
     
+    // labeling left top corner
     TString beamline = GetStringFromRunInfo(currRunInfo, 9).Data();
     TString lab1 = Form("#it{#bf{%s TB:}} %s", (currRunInfo.detector).Data(), beamline.Data());
-
-    // labeling inside the panels & legend drawing 
-    DrawLatex(topRCornerX, topRCornerY-(lineBottom+1.3)*relSizeP, label, true, 0.75*textSizePixel, 43);
     if (beamline.Contains("ORNL")) lab1 = beamline;
     TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
     TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
-    DrawLatex(topLCornerX, topRCornerY-relSizeP, lab1, false, 0.85*textSizePixel, 43);
-    DrawLatex(topLCornerX, topRCornerY-relSizeP-1*0.75*relSizeP, lab2, false, 0.75*textSizePixel, 43);
-    DrawLatex(topLCornerX, topRCornerY-relSizeP-2*0.75*relSizeP, lab3, false, 0.75*textSizePixel, 43);
-    if(detailedPlot) canvas2Panel->SaveAs(nameOutput.Data());
-    if (layer == 0) canvas2Panel->Print(Form("%s.pdf[",nameOutputSummary.Data()));
-    canvas2Panel->Print(Form("%s.pdf",nameOutputSummary.Data()));
-    if (layer == setupT->GetNMaxLayer()) canvas2Panel->Print(Form("%s.pdf]",nameOutputSummary.Data()));
+    TString cellLabel           = Form("layer %d", layer);
+    if (extCellId != -1 || (currRunInfo.detector).Contains("FoCal"))
+      cellLabel = Form("a:%d, ch:%d",setupT->GetROunit(tempCellID), setupT->GetROchannel(tempCellID) );    
+    DrawLatex(topLCornerX, yPosStart, lab1, false, sizeLabelsPix, 43); // beam line info
+    DrawLatex(topLCornerX, yPosStart-1*lineDist, lab2, false, sizeLabelsPix, 43); // readout type
+    DrawLatex(topLCornerX, yPosStart-2*lineDist, lab3, false, sizeLabelsPix, 43); // TB dates
+    DrawLatex(topLCornerX, yPosStart-3*lineDist, cellLabel, false, sizeLabelsPix, 43); // tile label
+    
+    canvas2Panel->SaveAs(nameOutput.Data());
   }
 
   //__________________________________________________________________________________________________________
@@ -473,18 +451,11 @@
   inline void PlotRunOverlayProfile1MLayer (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topLCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
                                       std::map<int,TileTrend> trending, int nruns, int option,
                                       Double_t xPMin, Double_t xPMax, Double_t yPMin, Double_t yPMax,  int layer, int mod,  TString nameOutput, TString nameOutputSummary,
-                                      RunInfo currRunInfo, Int_t detailedPlot = 1, bool scaleInt = false, int extCellId = -1 ){
+                                      RunInfo currRunInfo, Int_t detailedPlot = 1, bool scaleInt = false, int labelOpt = 0, int extCellId = -1 ){
                                   
+    // loading instance of setip
     Setup* setupT = Setup::GetInstance();
-    
-    std::map<int, TileTrend>::iterator ithTrend;    
-    int nRow = setupT->GetNMaxRow()+1;
-    int nCol = setupT->GetNMaxColumn()+1;
-    int skipped = 0;
-    
-    bool isSameVoltage    = true;
-    double commanVoltage  = 0;
-    
+    // checking whether we are plotting a specific cell
     int tempCellID = -1;
     if (layer != -1 && mod != -1 )
       tempCellID = setupT->GetCellID(0,0, layer, mod);
@@ -492,64 +463,45 @@
       tempCellID = extCellId;
     if (tempCellID < 0)
       return;
-  
+
+    // checking whether trend is filled
+    std::map<int, TileTrend>::iterator ithTrend;    
     ithTrend=trending.find(tempCellID);
     if(ithTrend==trending.end()){
       std::cout << "WARNING: skipping cell ID: " << tempCellID  << "\t layer " << layer << "\t module " << mod << std::endl;
       return;
     } 
 
-    Int_t nSameSettings = GetNSameSettings(currRunInfo);
-
-    TProfile* profs[30];
-
-    double lineBottom  = (7);
-    if (nruns < 5) lineBottom = (1);
-    else if (nruns < 9) lineBottom = (2);
-    else if (nruns < 13) lineBottom = (3);
-    else if (nruns < 17) lineBottom = (4);
-    else if (nruns < 21) lineBottom = (5);
-    else if (nruns < 25) lineBottom = (6);
-    if (nSameSettings == 6 && currRunInfo.species.Contains("injection")) lineBottom++;
+    // defining global settings
+    double width        = 0.5;
+    int columns         = 4;
+    double labelScaleL  = 0.75;
+    double labelScaleT  = 0.75;
+    double sizeLabelsPix    = labelScaleT*textSizePixel;
+    Int_t nSameSettings = GetNSameSettings(currRunInfo, labelOpt);
+    TString header      = GetHeaderLegendCommonRunObject(currRunInfo, nSameSettings, width, columns, labelScaleL);
+    double lineBottom   = (int)(nruns/columns)+1;
+    if (header.CompareTo("") != 0 ) lineBottom++;
     
+    double lineDist     = labelScaleT*relSizeP;
+    double lineDistL    = labelScaleL*relSizeP;
+    
+    // entering canvas
     canvas2Panel->cd();
     canvas2Panel->SetLogy(0);
     ithTrend=trending.find(tempCellID);
 
-    TString label           = Form("layer %d", layer);
-    if (extCellId != -1)
-      label = Form("a:%d, ch:%d",setupT->GetROunit(extCellId), setupT->GetROchannel(extCellId) );
-
-    if ((currRunInfo.detector).Contains("FoCal")){
-      label           = Form("a:%d, ch:%d", setupT->GetROunit(tempCellID), setupT->GetROchannel(tempCellID));
-    }
-    TString label2          = GetLabelVoltageTemp(currRunInfo);
-    TString label3          = "";
-    TString label4          = "";
-    if (currRunInfo.species.Contains("injection")){
-      label3          = GetLabelHGCROCSettingsCF(currRunInfo);
-      label4          = GetLabelHGCROCSettingsRFCC(currRunInfo);
-      if (currRunInfo.injDAC > -10000. )
-        label2 = label2+Form(",inj=%.1f fC", currRunInfo.injDAC);
-    }
+    // calculating the legend position
+    Double_t yPosStart  = topRCornerY -lineDist;
+    double startLegY    = topRCornerY -(lineBottom+0.25)*lineDistL;
+    double endLegY      = topRCornerY -0.25*lineDistL;
+    // std::cout << lineBottom << "\t" << yPosStart << "\t"<< startLegY << "\t"<< endLegY << std::endl;
     
-    Double_t yPosStart = topRCornerY;
-    double startLegY  = yPosStart -(lineBottom-1)*relSizeP;
-    double endLegY    = yPosStart;
-    double width      = 0.5;
-    int columns       = 4;
-    double labelScale = 0.75;
-    TString header    = GetHeaderLegendCommonRunObject(currRunInfo, nSameSettings, width, columns, labelScale);
-    if (currRunInfo.species.Contains("injection")){
-      if (nSameSettings == 5){
-          startLegY  = yPosStart -(lineBottom+1-1)*relSizeP;
-      }
-    } else if (currRunInfo.species.Contains("laser")){
-      startLegY  = yPosStart -(lineBottom)*relSizeP;
-    }
-    
+    // defining the legend
     TLegend* legend = GetAndSetLegend2(  topRCornerX, startLegY, 0.6, endLegY,
-                                labelScale*textSizePixel, columns, header,43,0.25);    
+                                labelScaleL*textSizePixel, columns, header,43,0.25);    
+    
+    TProfile* profs[30];  // maximum 30 profiles to be loaded
     TH1D* dummyhist = nullptr;
     for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
       int tmpRunNr = ithTrend->second.GetRunNr(rc);
@@ -571,7 +523,7 @@
           TString yTitle = profs[rc]->GetYaxis()->GetTitle();
           if (scaleInt) yTitle = Form("%s/ integral", yTitle.Data());
           dummyhist = new TH1D("dummyhist", "", profs[rc]->GetNbinsX(), profs[rc]->GetXaxis()->GetXmin(), profs[rc]->GetXaxis()->GetXmax());
-          SetStyleHistoTH1ForGraphs( dummyhist, profs[rc]->GetXaxis()->GetTitle(), yTitle, 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.85, 1.3, 510, 510, 43, 63);
+          SetStyleHistoTH1ForGraphs( dummyhist, profs[rc]->GetXaxis()->GetTitle(), yTitle, labelScaleT*textSizePixel, textSizePixel, labelScaleT*textSizePixel, textSizePixel,0.85, 1.3, 510, 510, 43, 63);
           dummyhist->GetXaxis()->SetRangeUser(xPMin,xPMax);
           dummyhist->GetYaxis()->SetRangeUser(yPMin,yPMax);
           dummyhist->Draw("axis");
@@ -583,35 +535,45 @@
         profs[rc]->Draw("same,pe");
         
         TString labelLegend = ithTrend->second.GetLabelLegend( currRunInfo, rc, nSameSettings);
-        // std::cout << labelLegend.Data() << std::endl;
         legend->AddEntry(profs[rc],labelLegend.Data(),"p");
       }
     }
     if (dummyhist) dummyhist->Draw("axis,same");                
     
-    // labeling inside the panels & legend drawing 
+    // labeling right top corner & legend draw
+    legend->Draw();
+    TString label2          = GetLabelVoltageTemp(currRunInfo);
+    TString label3          = "";
+    TString label4          = "";
+    if (currRunInfo.species.Contains("injection") || labelOpt > 0){
+      label3          = GetLabelHGCROCSettingsCF(currRunInfo);
+      label4          = GetLabelHGCROCSettingsRFCC(currRunInfo);
+      if (currRunInfo.injDAC > -10000. &&  currRunInfo.injDAC > 0. )
+        label2 = label2+Form(",inj=%.1f fC", currRunInfo.injDAC);
+    }
     if ( nSameSettings > 0 ){
-      DrawLatex(topRCornerX, yPosStart-(lineBottom+0.5)*relSizeP, label2, true, 0.75*textSizePixel, 43);
-      DrawLatex(topRCornerX, yPosStart-(lineBottom+1+0.5)*relSizeP, label3, true, 0.75*textSizePixel, 43);
-      DrawLatex(topRCornerX, yPosStart-(lineBottom+2+0.5)*relSizeP, label4, true, 0.75*textSizePixel, 43);
+      DrawLatex(topRCornerX, startLegY-lineDist, label2, true, sizeLabelsPix, 43);
+      DrawLatex(topRCornerX, startLegY-2*lineDist, label3, true, sizeLabelsPix, 43);
+      DrawLatex(topRCornerX, startLegY-3*lineDist, label4, true, sizeLabelsPix, 43);
     }
     
-    legend->Draw();
+    // labeling left top corner
+    TString cellLabel           = Form("layer %d", layer);
+    if (extCellId != -1 || (currRunInfo.detector).Contains("FoCal"))
+      cellLabel = Form("a:%d, ch:%d",setupT->GetROunit(tempCellID), setupT->GetROchannel(tempCellID) );
+    
     TString beamline = GetStringFromRunInfo(currRunInfo, 9).Data();
     TString lab1 = Form("#it{#bf{%s TB:}} %s", (currRunInfo.detector).Data(), beamline.Data());
     if (beamline.Contains("ORNL"))
       lab1 = beamline;
     TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
     TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
-    DrawLatex(topLCornerX, yPosStart-1*0.75*relSizeP, lab1, false, 0.75*textSizePixel, 43);
-    DrawLatex(topLCornerX, yPosStart-2*0.75*relSizeP, lab2, false, 0.75*textSizePixel, 43);
-    DrawLatex(topLCornerX, yPosStart-3*0.75*relSizeP, lab3, false, 0.75*textSizePixel, 43);
-    DrawLatex(topLCornerX, yPosStart-4*0.75*relSizeP, label, false, 0.75*textSizePixel, 43);
+    DrawLatex(topLCornerX, yPosStart, lab1, false, sizeLabelsPix, 43);  // beam line info
+    DrawLatex(topLCornerX, yPosStart-1*lineDist, lab2, false, sizeLabelsPix, 43);  // readout type
+    DrawLatex(topLCornerX, yPosStart-2*lineDist, lab3, false, sizeLabelsPix, 43);  // TB dates
+    DrawLatex(topLCornerX, yPosStart-3*lineDist, cellLabel, false, sizeLabelsPix, 43); // tile label
   
-    if(detailedPlot) canvas2Panel->SaveAs(nameOutput.Data());
-    if (layer == 0) canvas2Panel->Print(Form("%s.pdf[",nameOutputSummary.Data()));
-    canvas2Panel->Print(Form("%s.pdf",nameOutputSummary.Data()));
-    if (layer == setupT->GetNMaxLayer()) canvas2Panel->Print(Form("%s.pdf]",nameOutputSummary.Data()));
+    canvas2Panel->SaveAs(nameOutput.Data());
   }
   
 #endif

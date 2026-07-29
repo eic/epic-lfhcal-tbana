@@ -1943,7 +1943,7 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
                                         trend, nrun, option, xPMin,xPMax, yMin, yMax, -1, -1,
                                         Form("%s/SingleLayer/%s_CellID%05d.%s" ,nameOutputBase.Data(),namePlot.Data(),cells.at(c), suffix.Data()), 
                                         Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
-                                        currRunInfo, ExtPlot, scaleInt, cells.at(c));        
+                                        currRunInfo, ExtPlot, scaleInt, labelOpt, cells.at(c));        
       }
     } else {
       for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
@@ -1959,7 +1959,7 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
                                         trend, nrun, option, xPMin,xPMax, yMin, yMax, l, m,
                                         Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
                                         Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
-                                        currRunInfo, ExtPlot, scaleInt);        
+                                        currRunInfo, ExtPlot, scaleInt, labelOpt);        
         }
       }
     }
@@ -2074,7 +2074,7 @@ void MultiCanvas::PlotRunOverlaySpectra(  std::map<int,TileTrend>  trend, int nr
                                   trend, nrun, option, xPMin,xPMax, -1, -1,
                                   Form("%s/SingleLayer/%s_Cell%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), cells.at(c), suffix.Data()), 
                                   Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
-                                  currRunInfo, ExtPlot, plotMean, cells.at(c));        
+                                  currRunInfo, ExtPlot, plotMean, labelOpt, cells.at(c));        
       }
     } else {
       for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
@@ -2090,7 +2090,7 @@ void MultiCanvas::PlotRunOverlaySpectra(  std::map<int,TileTrend>  trend, int nr
                                   trend, nrun, option, xPMin,xPMax, l, m,
                                   Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
                                   Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
-                                  currRunInfo, ExtPlot, plotMean);        
+                                  currRunInfo, ExtPlot, plotMean, labelOpt);        
         }
       }
     }

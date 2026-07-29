@@ -213,7 +213,16 @@ bool TileTrend::FillInjection(
   return true;
 }
 
+//===============================================================================
+void TileTrend::FillHGCROCSetting (double val_rf, double val_cf, double val_cfcomp, double val_cc, double val_inj){
+  rf.push_back(val_rf);
+  cf.push_back(val_cf);
+  cfcomp.push_back(val_cfcomp);
+  cc.push_back(val_cc);
+  inj.push_back(val_inj);
+}
 
+//===============================================================================
 bool  TileTrend::FillInjectionDACVal  ( double x, double ped, double adc, double toa, double tot, 
                                         int adcSatN, int totSatN, int nTOA, int nSampToA){
   if (extended != 4 ){
@@ -852,24 +861,42 @@ TString TileTrend::GetLabelLegend( RunInfo currRunInfo, int runIndex, int nSameS
     if (nSameSettings == 6){
       if (currRunInfo.vop < -9999) labelLegend = Form("%.1f",(double)GetVoltage(runIndex));
       if (currRunInfo.rf < -9999) labelLegend = Form("%.1f",ReturnRFValue(GetRF(runIndex)));
-      if (currRunInfo.cf < -9999) labelLegend = Form("%.0f",ReturnCFValue(GetCF(runIndex),1));
-      if (currRunInfo.cfcomp < -9999) labelLegend = Form("%.0f",ReturnCFCompValue(GetCFComp(runIndex),1));
-      if (currRunInfo.cc < -9999)  labelLegend = Form("%.3f",ReturnCCValue(GetCC(runIndex),1));
+      if (currRunInfo.cf < -9999) labelLegend = Form("%.0f",ReturnCFValue(GetCF(runIndex)));
+      if (currRunInfo.cfcomp < -9999) labelLegend = Form("%.0f",ReturnCFCompValue(GetCFComp(runIndex)));
+      if (currRunInfo.cc < -9999)  labelLegend = Form("%.3f",ReturnCCValue(GetCC(runIndex)));
       if (currRunInfo.injDAC < -9999)  labelLegend = Form("%.0f",GetInj(runIndex));
       if (currRunInfo.energy < -9999)  labelLegend = Form("%.0f",GetEnergy(runIndex));
     } else if (nSameSettings == 5){
       if (currRunInfo.vop < -9999) labelLegend = Form("%.1f ",(double)GetVoltage(runIndex));
       if (currRunInfo.rf < -9999) labelLegend = labelLegend+Form("%.1f ",ReturnRFValue(GetRF(runIndex)));
-      if (currRunInfo.cf < -9999) labelLegend = labelLegend+Form("%.0f ",ReturnCFValue(GetCF(runIndex),1));
-      if (currRunInfo.cfcomp < -9999) labelLegend = labelLegend+Form("%.0f ",ReturnCFCompValue(GetCFComp(runIndex),1));
-      if (currRunInfo.cc < -9999)  labelLegend = labelLegend+Form("%.3f ",ReturnCCValue(GetCC(runIndex),1));
+      if (currRunInfo.cf < -9999) labelLegend = labelLegend+Form("%.0f ",ReturnCFValue(GetCF(runIndex)));
+      if (currRunInfo.cfcomp < -9999) labelLegend = labelLegend+Form("%.0f ",ReturnCFCompValue(GetCFComp(runIndex)));
+      if (currRunInfo.cc < -9999)  labelLegend = labelLegend+Form("%.3f ",ReturnCCValue(GetCC(runIndex)));
       if (currRunInfo.injDAC < -9999)  labelLegend = labelLegend+Form("%.0f",GetInj(runIndex));
       if (currRunInfo.energy < -9999)  labelLegend = labelLegend+Form("%.0f",GetEnergy(runIndex));
     }
   } else if (currRunInfo.species.Contains("laser")){
     if (currRunInfo.energy < -9999)  labelLegend = Form("%.0f",GetEnergy(runIndex));
     if (currRunInfo.temp < -9999)  labelLegend = Form("%.0f",GetTemp(runIndex));
+  // labeling for waveform compare from beam data 5 same settings
+  } else if (nSameSettings == 5){
+    if (currRunInfo.vop < -9999) labelLegend = Form("%.1f",(double)GetVoltage(runIndex));
+    if (currRunInfo.rf < -9999) labelLegend = Form("%.1f",ReturnRFValue(GetRF(runIndex)));
+    if (currRunInfo.cf < -9999) labelLegend = Form("%.0f",ReturnCFValue(GetCF(runIndex)));
+    if (currRunInfo.cfcomp < -9999) labelLegend = Form("%.0f",ReturnCFCompValue(GetCFComp(runIndex)));
+    if (currRunInfo.cc < -9999)  labelLegend = Form("%.3f",ReturnCCValue(GetCC(runIndex)));
+    if (currRunInfo.energy < -9999)  labelLegend = Form("%.0f",GetEnergy(runIndex));
+  // labeling for waveform compare from beam data 4 same settings    
+  } else if (nSameSettings == 4){
+    if (currRunInfo.vop < -9999) labelLegend = Form("%.1f ",(double)GetVoltage(runIndex));
+    if (currRunInfo.rf < -9999) labelLegend = labelLegend+Form("%.1f ",ReturnRFValue(GetRF(runIndex)));
+    if (currRunInfo.cf < -9999) labelLegend = labelLegend+Form("%.0f ",ReturnCFValue(GetCF(runIndex)));
+    if (currRunInfo.cfcomp < -9999) labelLegend = labelLegend+Form("%.0f ",ReturnCFCompValue(GetCFComp(runIndex)));
+    if (currRunInfo.cc < -9999)  labelLegend = labelLegend+Form("%.3f ",ReturnCCValue(GetCC(runIndex)));
+    if (currRunInfo.energy < -9999)  labelLegend = labelLegend+Form("%.0f",GetEnergy(runIndex));
   }
+    
+    
   if (labelLegend.CompareTo("") == 0)
     labelLegend = Form("%i",GetRunNr(runIndex) );
     

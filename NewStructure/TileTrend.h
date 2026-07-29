@@ -259,6 +259,8 @@ class TileTrend: public TObject{
   void FillGSigma     (double, double, double, double, double);
   void FillSB         (double, double, double);
   void FillCorrOffset (double, double, double, double, double);  
+  void FillHGCROCSetting (double val_rf = -1., double val_cf= -1., double val_cfcomp= -1., double val_cc= -1., double val_inj = -1.);  
+  
   bool FillInjection  ( double x, double ped, int runNr, 
                         TProfile* wave, TProfile* toa, TProfile* tot, 
                         double val_rf = -1., double val_cf= -1., double val_cfcomp= -1., double val_cc= -1., double val_inj = -1.);

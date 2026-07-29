@@ -174,7 +174,7 @@ bool ComparisonWaveform::ProcessWaveformCompare(void){
     double set_cf     = (double)itRun->second.cf;
     double set_cc     = (double)itRun->second.cc;
     double set_cfcomp = (double)itRun->second.cfcomp;
-    double set_injec  = (double)GetInjectionfCEquivalent(itRun->second.injDAC, itRun->second.injMode); 
+    double set_injec  = -10000.;
     std::cout <<calib.GetRunNumber() << "\t" << set_rf << "\t" << set_cf << "\t" << set_cc << "\t" << set_cfcomp << "\t" << set_injec<< std::endl;
     
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -243,15 +243,15 @@ bool ComparisonWaveform::ProcessWaveformCompare(void){
       if(itrend!=trend.end()){
         // fill injection hists
         itrend->second.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(),itRun->second.pdg, -10000., -10000.,itRun->second.energy,itRun->second.temp);
-        itrend->second.FillExtended(Xvalue,profCellWave->GetEntries(), (int)calib.GetRunNumber(), histCellTOA, histCellTOT, nullptr, profCellWave);
-        
+        itrend->second.FillExtended(Xvalue,profCellWave->GetEntries(), (int)calib.GetRunNumber(), histCellTOT, histCellTOA, nullptr, profCellWave);
+        itrend->second.FillHGCROCSetting (set_rf, set_cf, set_cfcomp, set_cc, set_injec);
       // create new TileTrend object if not yet available in map
       } else {
         TileTrend atrend=TileTrend(itcalib->first,0, 2);
         // fill injection hists
         atrend.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(), itRun->second.pdg, -10000., -10000.,itRun->second.energy,itRun->second.temp );
-        atrend.FillExtended(Xvalue,profCellWave->GetEntries(), (int)calib.GetRunNumber(), histCellTOA, histCellTOT, nullptr, profCellWave);
-                
+        atrend.FillExtended(Xvalue,profCellWave->GetEntries(), (int)calib.GetRunNumber(),histCellTOT,  histCellTOA, nullptr, profCellWave);
+        atrend.FillHGCROCSetting (set_rf, set_cf, set_cfcomp, set_cc, set_injec);
         // append TileTrend object to map
         trend[itcalib->first]=atrend;
       }
@@ -318,7 +318,6 @@ bool ComparisonWaveform::ProcessWaveformCompare(void){
                       Form("%s/HGPedSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
   PlotCalibRunOverlay( canvas1DRunsOverlay, 1, sumCalibs, textSizeRel, 
                       Form("%s/HGPedWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
-
   
   // plotting individual layers/asics
   DetConf::Type detConf = DetConf::Type::Asic;
@@ -361,6 +360,7 @@ bool ComparisonWaveform::ProcessWaveformCompare(void){
     MultiCanvas panelSingleTile(detConf, "WaveformTile");
     panelSingleTile.SetCellVector(cellVec);
     bool initSngle = panelSingleTile.Initialize(1);
+    panelSingleTile.SetLabelOpt(1);
     
     panelSingleTile.PlotRunOverlayProfile(trend, nRun, 1, -25, 25*commonRunInfo.samples, -10, 1324, OutputNameDirPlots, "TileWaveOverlay", plotSuffix, commonRunInfo, ExtPlot);
     panelSingleTile.PlotRunOverlaySpectra(trend, nRun, 0, 0, 4148, OutputNameDirPlots, "TileTOTSpectra", plotSuffix, commonRunInfo, ExtPlot, debug, 0);

@@ -334,6 +334,9 @@
     }
   }
 
+  //****************************************************************************
+  // Setting minimum for mip plot range, depending of Vov
+  //****************************************************************************
   inline Double_t ReturnMipMinPlotRangeDepVov(double Vov, bool isHG, ReadOut::Type type){
     if (type == ReadOut::Type::Caen){
       if (isHG){
@@ -346,6 +349,9 @@
     }
   }
   
+  //****************************************************************************
+  // decoding of RF setting for HGCROC
+  //****************************************************************************
   inline Double_t ReturnRFValue(int rf, int debug = 0){
     if (debug) std::cout << "RF:  " << rf ;
     Double_t rfOhm = 0;
@@ -367,10 +373,13 @@
       rfOhm = rfOhm+1/ohmBit[0];
       rf = rf-1;
     }
-    if (debug) std::cout << "\t" << rfOhm << " kOhm" << std::endl;
+    if (debug) std::cout << "\t" << 1./rfOhm << " kOhm" << std::endl;
     return 1./rfOhm;
   }
   
+  //****************************************************************************
+  // decoding of CF setting for HGCROC
+  //****************************************************************************
   inline Double_t ReturnCFValue(int cf, int debug = 0){
     if (debug) std::cout << "CF:  " << cf ;
     Double_t cffF = 0;
@@ -394,6 +403,9 @@
     return cffF;
   }
   
+  //****************************************************************************
+  // decoding of CFcomp setting for HGCROC
+  //****************************************************************************
   inline Double_t ReturnCFCompValue(int cf, int debug = 0){
     if (debug) std::cout << "CFComp:  " << cf ;
     Double_t cffF = 0;
@@ -417,6 +429,9 @@
     return cffF;
   }
   
+  //****************************************************************************
+  // decoding of CC setting for HGCROC
+  //****************************************************************************
   inline Double_t ReturnCCValue(int cc, int debug = 0){
     if (debug) std::cout << "CC:  " << cc ;
     Double_t ccVal = 0;
@@ -440,6 +455,9 @@
     return ccVal;
   }
   
+  //****************************************************************************
+  // decoding of injection equivalent calculation for HGCROC
+  //****************************************************************************
   inline double GetInjectionfCEquivalent(double dac, int range){
     if (range == 0){
       return dac*500./4095;  //maximum injected charge 500fC, max dac = 4095
@@ -449,6 +467,8 @@
     return -1;
   }
   
+  //****************************************************************************
+  //****************************************************************************
   inline TString GetLabelHGCROCSettings(RunInfo currRunInfo){
     TString label = "";
     if (currRunInfo.rf > -10000.)
@@ -461,39 +481,65 @@
       label = Form("%sCC=%.3f",label.Data() , ReturnCCValue(currRunInfo.cc));
     return label;
   }
+
+  //****************************************************************************
+  //****************************************************************************
   inline TString GetLabelHGCROCSettingsCF(RunInfo currRunInfo){
     TString label = "";
     if (currRunInfo.cf > -10000.)
-      label = Form("%sCF=%.1ffF ",label.Data() , ReturnCFValue(currRunInfo.cf));
-    if (currRunInfo.cfcomp > -10000.)
-      label = Form("%sCF_{comp}=%.1ffF",label.Data() , ReturnCFCompValue(currRunInfo.cfcomp));
+      label = Form("%sCF=%.1ffF",label.Data() , ReturnCFValue(currRunInfo.cf));
+    if (currRunInfo.cfcomp > -10000.){
+      if (label.CompareTo("") != 0)
+        label = Form("%s, CF_{comp}=%.1ffF",label.Data() , ReturnCFCompValue(currRunInfo.cfcomp));
+      else 
+        label = Form("%sCF_{comp}=%.1ffF",label.Data() , ReturnCFCompValue(currRunInfo.cfcomp));
+    }
     return label;
   }
   
+  //****************************************************************************
+  //****************************************************************************
   inline TString GetLabelHGCROCSettingsRFCC(RunInfo currRunInfo){
     TString label = "";
     if (currRunInfo.rf > -10000.)
-      label = Form("%sRF=%.1fk#Omega ",label.Data() , ReturnRFValue(currRunInfo.rf));
-    if (currRunInfo.cc > -10000.)
-      label = Form("%sCC=%.3f",label.Data() , ReturnCCValue(currRunInfo.cc));
+      label = Form("%sRF=%.1fk#Omega",label.Data() , ReturnRFValue(currRunInfo.rf));
+    if (currRunInfo.cc > -10000.){
+      if (label.CompareTo("") != 0)
+        label = Form("%s, CC=%.3f",label.Data() , ReturnCCValue(currRunInfo.cc));
+      else 
+        label = Form("%sCC=%.3f",label.Data() , ReturnCCValue(currRunInfo.cc));
+    }
     return label;
   }
   
+  //****************************************************************************
+  //****************************************************************************
   inline TString GetLabelVoltageTemp(RunInfo currRunInfo){
     TString label = "";
     if (currRunInfo.vop > -10000.)
-      label = Form("%sV_{op}=%.1f V ",label.Data() , currRunInfo.vop);
-    if (currRunInfo.temp > -10000.)
-      label = Form("%s T=%.1f C",label.Data() , currRunInfo.temp);
-    if (currRunInfo.energy > -10000. && currRunInfo.species.Contains("laser"))
-      label = Form("%s I_{laser}=%.0f",label.Data() , currRunInfo.energy);
-    else if (currRunInfo.energy > -10000.)
-      label = Form("%s E=%.1f GeV",label.Data() , currRunInfo.energy);
-    
+      label = Form("%sV_{op}=%.1f V",label.Data() , currRunInfo.vop);
+    if (currRunInfo.temp > -10000.){
+      if (label.CompareTo("") != 0)
+        label = Form("%s, T=%.1f C",label.Data() , currRunInfo.temp);
+      else 
+        label = Form("%sT=%.1f C",label.Data() , currRunInfo.temp);
+    }
+    if (currRunInfo.energy > -10000. && currRunInfo.species.Contains("laser")){
+      if (label.CompareTo("") != 0)
+        label = Form("%s, I_{laser}=%.0f",label.Data() , currRunInfo.energy);
+      else 
+        label = Form("%sI_{laser}=%.0f",label.Data() , currRunInfo.energy);
+    } else if (currRunInfo.energy > -10000.){
+      if (label.CompareTo("") != 0)
+        label = Form("%s, E=%.1f GeV",label.Data() , currRunInfo.energy);
+      else 
+        label = Form("%sE=%.1f GeV",label.Data() , currRunInfo.energy);
+    }
     return label;
   }
   
-
+  //****************************************************************************
+  //****************************************************************************
   inline void PrintSettingsRunInfo(RunInfo currRunInfo){
     TString label = "";
     if (currRunInfo.injDAC > -1)
@@ -510,6 +556,8 @@
     return;
   }
 
+  //****************************************************************************
+  //****************************************************************************  
   inline RunInfo GetCommonRunInfoFromList( std::vector<RunInfo> runList, Int_t option = -1){
     
     bool isSameVoltage    = true;
@@ -609,7 +657,9 @@
     
   }
 
-  inline Int_t GetNSameSettings(RunInfo currRunInfo){
+  //****************************************************************************
+  //****************************************************************************  
+  inline Int_t GetNSameSettings(RunInfo currRunInfo, int option = 0){
     Int_t nSameSettings = 0;
     if (currRunInfo.species.Contains("injection")){
       if (currRunInfo.rf > -10000.) nSameSettings++;
@@ -623,40 +673,69 @@
       if (currRunInfo.energy > -10000.) nSameSettings++;
       if (currRunInfo.temp > -10000.) nSameSettings++;
       if (currRunInfo.vop > -10000.) nSameSettings++;
+    } else if ( option == 1 ){ // waveform data from beam 
+      if (currRunInfo.rf > -10000.) nSameSettings++;
+      if (currRunInfo.cf > -10000.) nSameSettings++;
+      if (currRunInfo.cfcomp > -10000.) nSameSettings++;
+      if (currRunInfo.cc > -10000.) nSameSettings++;
+      if (currRunInfo.vop > -10000.) nSameSettings++;
+      if (currRunInfo.energy > -10000.) nSameSettings++;    
     }
     return nSameSettings;
   }
 
-  
-  inline TString GetHeaderLegendCommonRunObject (RunInfo currRunInfo, int nSameSettings, double &width, int &columns, double labelScale  ){
+  //****************************************************************************
+  // Setting header for legend of comparison plots
+  //****************************************************************************  
+  inline TString GetHeaderLegendCommonRunObject (RunInfo currRunInfo, 
+                                                 int nSameSettings, 
+                                                 double &width, int &columns, 
+                                                 double labelScale  ){
     TString header = "";
     if (currRunInfo.species.Contains("injection")){
       if (nSameSettings == 6){
-          // width = 0.9;
-          // std::cout <<  currRunInfo.rf << "\t" << currRunInfo.cf << "\t" << currRunInfo.cfcomp << "\t" << currRunInfo.cc << "\t" << currRunInfo.vop << "\t" << currRunInfo.energy << std::endl;
-          if (currRunInfo.rf < -9999) header = "RF (k#Omega)";
-          if (currRunInfo.cf < -9999) header = "CF (fF)";
-          if (currRunInfo.cfcomp < -9999) header = "CF_{comp} (fF)";
-          if (currRunInfo.cc < -9999)  header = "CC";
-          if (currRunInfo.vop < -9999)  header = "V_{op} (V)";
-          if (currRunInfo.injDAC < -9999)  header = "inj (fC)";
-          if (currRunInfo.energy < -9999)  header = "E ";
+        // width = 0.9;
+        // std::cout <<  currRunInfo.rf << "\t" << currRunInfo.cf << "\t" << currRunInfo.cfcomp << "\t" << currRunInfo.cc << "\t" << currRunInfo.vop << "\t" << currRunInfo.energy << std::endl;
+        if (currRunInfo.rf < -9999) header = "RF (k#Omega)";
+        if (currRunInfo.cf < -9999) header = "CF (fF)";
+        if (currRunInfo.cfcomp < -9999) header = "CF_{comp} (fF)";
+        if (currRunInfo.cc < -9999)  header = "CC";
+        if (currRunInfo.vop < -9999)  header = "V_{op} (V)";
+        if (currRunInfo.injDAC < -9999)  header = "inj (fC)";
+        if (currRunInfo.energy < -9999)  header = "E ";
       } else if (nSameSettings == 5){
           // width = 0.9;
-          columns = 2;
-          labelScale = 0.6;
-          // std::cout <<  currRunInfo.rf << "\t" << currRunInfo.cf << "\t" << currRunInfo.cfcomp << "\t" << currRunInfo.cc << "\t" << currRunInfo.vop << "\t" << currRunInfo.energy << std::endl;
-          if (currRunInfo.rf < -9999)       header = "RF (k#Omega) ";
-          if (currRunInfo.cf < -9999)       header = header+"CF (fF) ";
-          if (currRunInfo.cfcomp < -9999)   header = header+"CF_{comp} (fF) ";
-          if (currRunInfo.cc < -9999)       header = header+"CC ";
-          if (currRunInfo.vop < -9999)      header = header+"V_{op} (V) ";
-          if (currRunInfo.injDAC < -9999)   header = header+"inj (fC) ";      
-          if (currRunInfo.energy < -9999)   header = header+"E  ";      
+        columns = 2;
+        labelScale = 0.6;
+        // std::cout <<  currRunInfo.rf << "\t" << currRunInfo.cf << "\t" << currRunInfo.cfcomp << "\t" << currRunInfo.cc << "\t" << currRunInfo.vop << "\t" << currRunInfo.energy << std::endl;
+        if (currRunInfo.rf < -9999)       header = "RF (k#Omega) ";
+        if (currRunInfo.cf < -9999)       header = header+"CF (fF) ";
+        if (currRunInfo.cfcomp < -9999)   header = header+"CF_{comp} (fF) ";
+        if (currRunInfo.cc < -9999)       header = header+"CC ";
+        if (currRunInfo.vop < -9999)      header = header+"V_{op} (V) ";
+        if (currRunInfo.injDAC < -9999)   header = header+"inj (fC) ";      
+        if (currRunInfo.energy < -9999)   header = header+"E  ";      
       }
     } else if (currRunInfo.species.Contains("laser")){
       if (currRunInfo.energy < -9999)       header = header+"Laser Intensity  ";
       if (currRunInfo.temp < -9999)         header = header+"Temperature (#circ C) ";
+    } else if (nSameSettings == 5){
+      if (currRunInfo.rf < -9999) header = "RF (k#Omega)";
+      if (currRunInfo.cf < -9999) header = "CF (fF)";
+      if (currRunInfo.cfcomp < -9999) header = "CF_{comp} (fF)";
+      if (currRunInfo.cc < -9999)  header = "CC";
+      if (currRunInfo.vop < -9999)  header = "V_{op} (V)";
+      if (currRunInfo.energy < -9999)  header = "E ";
+    } else if (nSameSettings == 4){
+      columns = 2;
+      labelScale = 0.6;
+      // std::cout <<  currRunInfo.rf << "\t" << currRunInfo.cf << "\t" << currRunInfo.cfcomp << "\t" << currRunInfo.cc << "\t" << currRunInfo.vop << "\t" << currRunInfo.energy << std::endl;
+      if (currRunInfo.rf < -9999)       header = "RF (k#Omega) ";
+      if (currRunInfo.cf < -9999)       header = header+"CF (fF) ";
+      if (currRunInfo.cfcomp < -9999)   header = header+"CF_{comp} (fF) ";
+      if (currRunInfo.cc < -9999)       header = header+"CC ";
+      if (currRunInfo.vop < -9999)      header = header+"V_{op} (V) ";
+      if (currRunInfo.energy < -9999)   header = header+"E  ";            
     }
     return header;
   }
