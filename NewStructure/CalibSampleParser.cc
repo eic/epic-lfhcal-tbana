@@ -409,16 +409,13 @@ bool CalibSampleParser::ParseInjectionCalibX(){
     std::getline( calibSampleCsvADC, lineADC ); // skip first line 
     std::getline( calibSampleCsvTOA, lineTOA ); // skip first line 
     std::getline( calibSampleCsvTOT, lineTOT ); // skip first line 
-    
-<<<<<<< Updated upstream
-=======
+
     std::cout << lineADC.data() << std::endl;
     int optRead = 0;
     if (lineADC.at(0) != '#')
       optRead = 1;
     std::cout << "File format: " << optRead << std::endl;
-    
->>>>>>> Stashed changes
+
     while (std::getline( calibSampleCsvADC, lineADC )){
       std::stringstream sADC(lineADC);
       std::string tokenADC;
@@ -578,8 +575,6 @@ bool CalibSampleParser::ParseInjectionCalibX(){
     return true;
 }
 
-<<<<<<< Updated upstream
-=======
 // ****************************************************************************
 // Parsing routine
 // ****************************************************************************
@@ -895,7 +890,6 @@ bool CalibSampleParser::ParseInjectionDACCalibX(){
 }
 
 
->>>>>>> Stashed changes
 bool CalibSampleParser::ProcessAndPlotWaveforms(){
 
   // initialize run number file
