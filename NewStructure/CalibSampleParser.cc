@@ -410,6 +410,15 @@ bool CalibSampleParser::ParseInjectionCalibX(){
     std::getline( calibSampleCsvTOA, lineTOA ); // skip first line 
     std::getline( calibSampleCsvTOT, lineTOT ); // skip first line 
     
+<<<<<<< Updated upstream
+=======
+    std::cout << lineADC.data() << std::endl;
+    int optRead = 0;
+    if (lineADC.at(0) != '#')
+      optRead = 1;
+    std::cout << "File format: " << optRead << std::endl;
+    
+>>>>>>> Stashed changes
     while (std::getline( calibSampleCsvADC, lineADC )){
       std::stringstream sADC(lineADC);
       std::string tokenADC;
@@ -569,6 +578,324 @@ bool CalibSampleParser::ParseInjectionCalibX(){
     return true;
 }
 
+<<<<<<< Updated upstream
+=======
+// ****************************************************************************
+// Parsing routine
+// ****************************************************************************
+bool CalibSampleParser::ParseInjectionDACCalibX(){
+
+  std::cout << "*******************************************************************" << std::endl;
+  std::cout<< "Entered injection CalibX parser" << std::endl;
+  std::cout << "*******************************************************************" << std::endl;
+  // initialize run number file
+  if (RunListInputName.CompareTo("")== 0) {
+      std::cerr << "ERROR: No run list file has been provided, please make sure you do so! Aborting!" << std::endl;
+      return false;
+  }
+  std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
+  // Get run info object
+  std::map<int,RunInfo>::iterator it=ri.find( RunNr );
+  
+  // initialize setup
+  if (MapInputName.CompareTo("")== 0) {
+      std::cerr << "ERROR: No mapping file has been provided, please make sure you do so! Aborting!" << std::endl;
+      return false;
+  }
+  if( debug > 2) std::cout << "Setup max row " << setup->GetNMaxRow() << "\t max col " << setup->GetNMaxColumn() << "\t max layer " << setup->GetNMaxLayer() << "\t max module " << setup->GetNMaxModule() << std::endl;
+
+  std::cout << "Creating mapping " << std::endl;
+  setup->Initialize(MapInputName.Data(),debug);
+
+  // Initialize calib
+  TcalibOut->GetEntry(0);        // use first calib object in list (there 
+      
+  std::cout << "Run numbers: \t" << calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << "\t inj mode" << it->second.injMode << std::endl;
+  
+  Int_t temp_channel  = -1;
+  int cell_id         = -1;
+  int counter         = 1;
+  int sample_counter  = 1;
+
+  std::vector<Hgcroc>   samples;
+  samples.clear();
+  Hgcroc tmpTile;
+
+  std::vector<int> temp_adc;
+  std::vector<int> temp_toa;
+  std::vector<int> temp_tot;
+  temp_adc.clear();
+  temp_toa.clear();
+  temp_tot.clear();
+  
+  std::ifstream   calibSampleCsvADC( Form("%s_val0.csv",inputFilePath.Data()) );
+  std::ifstream   calibSampleCsvTOA( Form("%s_val2.csv",inputFilePath.Data()) );
+  std::ifstream   calibSampleCsvTOT( Form("%s_val1.csv",inputFilePath.Data()) );
+  std::string lineADC, lineTOA, lineTOT ;
+  std::getline( calibSampleCsvADC, lineADC ); // skip first line 
+  std::getline( calibSampleCsvTOA, lineTOA ); // skip first line 
+  std::getline( calibSampleCsvTOT, lineTOT ); // skip first line 
+
+  // enter output files
+  RootOutput->cd();
+
+  std::cout << lineADC.data() << std::endl;
+  int optRead = 0;
+  if (lineADC.at(0) != 'row'){
+    std::cout << "Wrong file format! Can't read this!" << std::endl; 
+    return -1;
+  }
+  std::cout << "File format: " << optRead << std::endl;
+  
+  int dacPrev     = -1;
+  int nEvt        = 0;
+  while (std::getline( calibSampleCsvADC, lineADC )){
+    // read adc values
+    std::stringstream sADC(lineADC);
+    std::string tokenADC;
+    std::vector<std::string> tokensADC;
+    while(std::getline(sADC,tokenADC,',')){
+      tokensADC.push_back(tokenADC); // tokens[0] - channelNr, remaining token single ADC values
+    }
+    // read toa values
+    std::getline( calibSampleCsvTOA, lineTOA );
+    std::stringstream sTOA(lineTOA);
+    std::string tokenTOA;
+    std::vector<std::string> tokensTOA;
+    while(std::getline(sTOA,tokenTOA,',')){
+      tokensTOA.push_back(tokenTOA); // tokens[0] - channelNr, remaining token single ToA values
+    }
+    // read tot values
+    std::getline( calibSampleCsvTOT, lineTOT );
+    std::stringstream sTOT(lineTOT);
+    std::string tokenTOT;
+    std::vector<std::string> tokensTOT;
+    while(std::getline(sTOT,tokenTOT,',')){
+      tokensTOT.push_back(tokenTOT); // tokens[0] - channelNr, remaining token single TOT values
+    }
+    
+    int dacCurr     = 0;
+    int channel     = 0;
+    int channelToA  = 0;
+    int channelToT  = 0;
+    int asic        = 0; 
+
+    std::stringstream sCADC(tokensADC[0]);
+    std::string cADC;
+    std::vector<std::string> cADCs;
+    while(std::getline(sCADC,cADC,'_')){
+      cADCs.push_back(cADC); //
+    }
+    cADCs[0].replace(0,3,""); //"dac"
+    dacCurr     = std::stoi(cADCs[0]);
+    if (dacPrev != dacCurr){
+      if (debug > 2)std::cout << "switching to next event: " << nEvt << std::endl;
+      // fill previous event 
+      if (nEvt > 0){
+        int counter2 = 0;
+        for(auto it = samples.begin(); it!= samples.end(); ++it){
+          if( debug > 1 ) {
+            std::cout << "Sample: " << counter2 << "\t CellID:" << (*it).GetCellID() << std::endl;
+          }
+          counter2++;
+          event.AddTile( new Hgcroc(*it) );
+        }
+        tOutTree->Fill();
+      
+      }
+      // switch to next event 
+      nEvt++;   // first event ID will be 1
+      event.SetEventID(nEvt);
+      // initialize a dummy event 
+      event.SetRunNumber( RunNr ); // to be fixed?
+      event.SetROtype(ReadOut::Type::Hgcroc);
+      event.SetBeamName( "injection" );
+      event.SetBeamID( 0 );    
+      event.SetVop(it->second.vop);
+      event.SetVov(it->second.vop-it->second.vbr);
+      double energy = GetInjectionfCEquivalent((double)dacCurr, it->second.injMode);
+      event.SetBeamEnergy( energy );
+      dacPrev = dacCurr;
+    }
+    cADCs[1].replace(0,4,""); //"asic"
+    cADCs[2].replace(0,3,""); //"raw"
+    cADCs[3].replace(0,5,""); //"valid"
+    
+    // energy needs to be set somewhere here....
+
+    
+    channel = std::stoi(cADCs[2]);
+    asic    = std::stoi(cADCs[1]);
+    std::stringstream sCTOA(tokensTOA[0]);
+    std::string cTOA;
+    std::vector<std::string> cTOAs;
+    while(std::getline(sCTOA,cTOA,'_')){
+      cTOAs.push_back(cTOA); //
+    }
+    cTOAs[1].replace(0,4,""); //"asic"
+    cTOAs[2].replace(0,3,""); //"raw"
+    cTOAs[3].replace(0,5,""); //"valid"
+    channelToA = std::stoi(cTOAs[2]);
+    std::stringstream sCTOT(tokensTOT[0]);
+    std::string cTOT;
+    std::vector<std::string> cTOTs;
+    while(std::getline(sCTOT,cTOT,'_')){
+      cTOTs.push_back(cTOT); //
+    }
+    cTOTs[1].replace(0,4,""); //"asic"
+    cTOTs[2].replace(0,3,""); //"raw"
+    cTOTs[3].replace(0,5,""); //"valid"
+    channelToT = std::stoi(cTOTs[2]);
+    
+    if ((int)channel != channelToA || (int)channel != channelToT ){
+      std::cout << "something went really wrong" << std::endl;
+      std::cout << channel << "\t" << tokensADC[0] << "\t" << tokensTOA[0] << "\t" << tokensTOT[0] << std::endl;
+    } 
+    
+    temp_channel = channel;
+    int temp_channel2 = temp_channel%76;
+    if (debug > 0) std::cout << "channel org:\t" << temp_channel << "\t"<< asic <<std::endl;
+    if (temp_channel2 == 0){
+      if (debug > 0) std::cout << "skipping 0" << std::endl;
+      continue;
+    } else if (temp_channel2 == 19){
+      if (debug > 0) std::cout << "skipping 19" << std::endl;
+      continue;
+    } else if (temp_channel2 == 37){
+      if (debug > 0) std::cout << "skipping 37" << std::endl;
+      continue;
+    } else if (temp_channel2 == 38){
+      if (debug > 0) std::cout << "skipping 38" << std::endl;
+      continue;
+    } else if (temp_channel2 == 57){
+      if (debug > 0) std::cout << "skipping 57" << std::endl;
+      continue;
+    } else if (temp_channel2 == 75){
+      if (debug > 0) std::cout << "skipping 75" << std::endl;
+      continue;
+    }
+    if (optRead == 0){
+      asic    = (temp_channel/76);
+      channel = channel%76;
+    }
+    
+    if (temp_channel2 > 0 && temp_channel2 < 19)
+      channel--;
+    else if (temp_channel2 > 18 && temp_channel2 < 37)
+      channel = channel -2;
+    else if (temp_channel2 > 38 && temp_channel2 < 57)
+      channel = channel -4;
+    else if (temp_channel2 > 56 && temp_channel2 < 75)
+      channel = channel -5;
+    
+    
+    if (debug > 0) std::cout << "org: "<<  temp_channel2 << "\tchannel mod: " <<  channel << "\t" << asic  <<std::endl;
+    
+    cell_id  = setup->GetCellID(asic, channel % 72);
+
+    if (cell_id == -1) continue;
+       
+    if (debug > 2) std::cout << "channel "<< channel << "\t cell ID: " << cell_id << "\t TOT: ";
+    for (int k = 0; k < tokensADC.size()-1; k++){
+      temp_adc.push_back( std::atoi(tokensADC[k+1].c_str()) );
+      temp_toa.push_back( std::atoi(tokensTOA[k+1].c_str()) );
+      // TOT Decoder
+      // TOT is a 12 bit counter, but gets sent as a 10 bit number
+      // If the most significant bit is 1, then the lower two bits were dropped
+      int temp  = std::atoi(tokensTOT[k+1].c_str());
+      if( temp & 0x200){
+          temp = temp & 0b0111111111;
+          temp = temp << 3;
+      }
+      if (temp > 4095 || temp < 0)  temp= -1;
+      if (debug > 2)std::cout << tokensTOT[k+1] << "(" << temp<< ")"<< "\t";
+      temp_tot.push_back( temp );
+    }
+    // save the current tiles waveforms, and then push the tile to the samples vector
+    sample_counter =  tokensADC.size()-1;
+    tmpTile.SetNsample(sample_counter);
+    tmpTile.SetCellID(cell_id);
+    tmpTile.SetE(0);          // need to process waveform to set this
+    // TOT - the first non-zero value
+    int tempTOT   = 0;
+    tempTOT = *(std::find_if(temp_tot.begin(), temp_tot.end(), [](int n){ return n!=0; }) );
+    if (tempTOT < 0) tempTOT = 0;
+    tmpTile.SetCorrectedTOT( tempTOT );        // need to process waveform to set this - the first value that comes up 
+
+    if (debug > 2)std::cout << "\t registered tot: " << tempTOT;
+    if (debug > 2)std::cout << std::endl;
+
+    // TOA - the first non-zero value
+    int tempTOA   = 0;
+    tempTOA   = *(std::find_if(temp_toa.begin(), temp_toa.end(), [](int n){ return n!=0; }) );
+    if (tempTOA < 0) tempTOA = 0;
+    
+    // SetIntegratedADC as max ADC 
+    int tempIntADC    = *(std::max_element( temp_adc.begin(), temp_adc.end() ));
+    tmpTile.SetIntegratedADC( tempIntADC );
+    tmpTile.SetADCWaveform( temp_adc );
+    tmpTile.SetTOAWaveform( temp_toa );
+    tmpTile.SetTOTWaveform( temp_tot );
+    
+    // only fill for first injection value the pedestals 
+    if (nEvt == 1){
+      double ped = (temp_adc[1] + temp_adc[2] + temp_adc[3])/3.;
+      TileCalib* tileCalib = calib.GetTileCalib(cell_id);
+      tileCalib->PedestalMeanH  = ped;
+      tileCalib->PedestalSigH   = 0.;
+    }
+    samples.push_back( tmpTile );
+    if(debug > 1) std::cout << "Channel: " << temp_channel << "\t Cell ID: " << cell_id 
+      // <<  "\t NSamples: " << sample_counter 
+      
+      << "\t ADC: " << tempIntADC << "\t ToT: " << tempTOT << "\t ToA: " << tempTOA << std::endl;
+          
+    // we're moving to the next tile
+    temp_adc.clear();
+    temp_toa.clear();
+    temp_tot.clear();
+    sample_counter = 1;
+  }
+  
+  
+  // fill the tree and write it out to file - should contain just one event
+  
+  // setup 
+  RootSetupWrapper rswtmp=RootSetupWrapper(setup);
+  rsw=rswtmp;
+  TsetupOut->Fill();
+  TsetupOut->Write();
+
+  // calib
+  calib.PrintGlobalInfo();    
+  
+  int counter2 = 0;
+  for(auto it = samples.begin(); it!= samples.end(); ++it){
+    if( debug > 1 ) {
+      std::cout << "Sample: " << counter2 << "\t CellID:" << (*it).GetCellID() << std::endl;
+    }
+    counter2++;
+    event.AddTile( new Hgcroc(*it) );
+  }
+  TcalibOut->Fill();
+  TcalibOut->Write();
+
+  // data
+  tOutTree->Fill();
+  tOutTree->Write();
+
+  // close the file
+  if (!doPlotting )RootOutput->Close();
+
+  std::cout <<"=============================================================" << std::endl;
+  std::cout <<" Parsing complete ... registered " << nEvt << " different DAC values"  << std::endl;
+  std::cout <<" Output saved to " << OutputFilename.Data() << std::endl;
+  std::cout <<"=============================================================" << std::endl;
+  return true;
+}
+
+
+>>>>>>> Stashed changes
 bool CalibSampleParser::ProcessAndPlotWaveforms(){
 
   // initialize run number file
