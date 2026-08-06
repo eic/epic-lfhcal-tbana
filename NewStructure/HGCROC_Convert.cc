@@ -179,7 +179,10 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     }
     
     std::cout << "\nFinished converting events\n" << std::endl;
-    std::cout << "\nTotal Events: " << decoder->get_num_proc_events() << std::endl;
+    std::cout << "\nTotal Events: " << decoder->get_num_proc_events() 
+              << "\n ---> read packets: " << decoder->get_read_packets() 
+              << "\n ---> corrupted packets: "<< decoder->get_corrupted_packets() 
+              << "\n ---> offset resets of aligner: "<< decoder->get_n_reset_offsets() << std::endl;
     for (int i = 0; i < (int)it->second.nFPGA; i++) {
       std::cout << "\t KCU: " << i << "\t att: " << decoder->get_attempted_waveforms(i) << "\t rec: " << decoder->get_completed_waveforms(i) << "\t in progress: " << decoder->get_inprogress_waveforms(i) << std::endl;
     }
@@ -210,11 +213,13 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
         maxAttempted = decoder->get_attempted_waveforms(i);
     }
     
-    TH1D* hEvents = new TH1D( "hNEvents","event category; events",2,-0.5,1.5);
+    TH1D* hEvents = new TH1D( "hNEvents","event category; events",5,-0.5,4.5);
     hEvents->SetBinContent(1, maxAttempted);
     hEvents->SetBinContent(2, decoder->get_num_proc_events());
+    hEvents->SetBinContent(3, decoder->get_read_packets());
+    hEvents->SetBinContent(4, decoder->get_corrupted_packets());
+    hEvents->SetBinContent(5, decoder->get_n_reset_offsets());
     hEvents->Write();
-    
     
     analysis->RootOutput->Close();
     return true;
