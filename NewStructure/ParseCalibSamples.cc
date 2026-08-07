@@ -28,21 +28,21 @@ void PrintHelp(char* exe){
   std::cout<<"Usage:"<<std::endl;
   std::cout<<exe<<" [-option (arguments)]"<<std::endl;
   std::cout<<"Options:"<<std::endl;
+  std::cout<<"-c        path to .root file with calib object (mandatory for pedestal calib)"<<std::endl;
   std::cout<<"-d [0-n]  switch on debug info with debug level 0 to n"<<std::endl;
   std::cout<<"-D        switch on the calibX dac injection parsing" <<std::endl;
   std::cout<<"-i uuu    path to the input file: either .csv or config file with .json files for pedestal calib (mandatory)"<<std::endl;
-  std::cout<<"-t        switch on the ToA calib file parser (required .csv file)" <<std::endl;
   std::cout<<"-I        switch on the calibX injection parsing" <<std::endl;
   std::cout<<"-m        path to the mapping file (mandatory)"<<std::endl;
-  std::cout<<"-r        path to the run list file (mandatory)"<<std::endl;
   std::cout<<"-n        run number to analyze (mandatory)"<<std::endl;
-  std::cout<<"-p        setting the plot directory (for .csv file) (mandatory for plotting)"<<std::endl;
-  std::cout<<"-s        setting the plots format (default .pdf)"<<std::endl;
   std::cout<<"-o        output root filename, default same as input file"<<std::endl;
-  std::cout<<"-c        path to .root file with calib object (mandatory for pedestal calib)"<<std::endl;
+  std::cout<<"-p        setting the plot directory (for .csv file) (mandatory for plotting)"<<std::endl;
+  std::cout<<"-r        path to the run list file (mandatory)"<<std::endl;
+  std::cout<<"-s        setting the plots format (default .pdf)"<<std::endl;
+  std::cout<<"-t        switch on the ToA calib file parser (required .csv file)" <<std::endl;
   std::cout<<"-h        print help"<<std::endl;
   std::cout<<"Examples:"<<std::endl;
-  std::cout<<exe<<"-i input.csv -o output/"<<std::endl;
+  std::cout<<exe<<" -i input.csv -o output/"<<std::endl;
 }
 
 // inj_adc_samples_208_24_300.csv
@@ -64,8 +64,14 @@ int main(int argc, char* argv[]){
 
   CalibSampleParser calibParser;
   int c;
-  while( (c=getopt(argc,argv,"d:Di:It:m:r:n:p:s:o:c:h:"))!=-1){
+  while( (c=getopt(argc,argv,"d:Di:It:m:r:n:p:s:o:c:h"))!=-1){
     switch(c){
+      case 'c':
+          std::cout << "Reading in .csv file with pedestal values from H2GCalib"<<std::endl; // add path to the calib object from the other run
+          std::cout << "File with the calib object to switch the pedestal values: " << optarg << std::endl;
+          calibParser.SwitchPedestalCalib();
+          calibParser.SetInputCalibFile( Form("%s",optarg) );
+          break;
       case 'd':
           std::cout << "Enable debug " << optarg << std::endl;
           calibParser.EnableDebug( atoi(optarg) );
@@ -82,19 +88,9 @@ int main(int argc, char* argv[]){
           std::cout << "Switching on CalibX Injectin parser " << std::endl;
           calibParser.SetCalibXInjection();
           break;
-      case 't':
-          std::cout << "Switching on ToA parser" << std::endl;
-          std::cout << optarg << " lines in the .csv file " << std::endl;
-          calibParser.SwitchTOACalib();
-          calibParser.SetTOALines( atoi(optarg) );
-          break;
       case 'm':
           std::cout << "Mapping file set to " << optarg << std::endl;
           calibParser.SetMappingFile( Form("%s",optarg) );
-          break;
-      case 'r':
-          std::cout << "Input list file set to " << optarg << std::endl;
-          calibParser.SetRunListInput( Form("%s",optarg) );
           break;
       case 'n':
           std::cout << "Run number set to " << optarg << std::endl;
@@ -105,19 +101,23 @@ int main(int argc, char* argv[]){
           calibParser.EnablePlotting();
           calibParser.SetPlotDirectory( Form("%s",optarg) );
           break;
-      case 's':
-          std::cout<< "Plots will be saved as " << optarg << std::endl;
-          calibParser.SetPlottingSuffix( Form("%s",optarg));
-          break;
       case 'o':
           std::cout << "Output root filename set to: " << optarg << std::endl;
           calibParser.SetOutputFilename( Form("%s", optarg) );
           break;
-      case 'c':
-          std::cout << "Reading in .csv file with pedestal values from H2GCalib"<<std::endl; // add path to the calib object from the other run
-          std::cout << "File with the calib object to switch the pedestal values: " << optarg << std::endl;
-          calibParser.SwitchPedestalCalib();
-          calibParser.SetInputCalibFile( Form("%s",optarg) );
+      case 'r':
+          std::cout << "Input list file set to " << optarg << std::endl;
+          calibParser.SetRunListInput( Form("%s",optarg) );
+          break;
+      case 's':
+          std::cout<< "Plots will be saved as " << optarg << std::endl;
+          calibParser.SetPlottingSuffix( Form("%s",optarg));
+          break;
+      case 't':
+          std::cout << "Switching on ToA parser" << std::endl;
+          std::cout << optarg << " lines in the .csv file " << std::endl;
+          calibParser.SwitchTOACalib();
+          calibParser.SetTOALines( atoi(optarg) );
           break;
       case 'h':
           PrintHelp( argv[0] );

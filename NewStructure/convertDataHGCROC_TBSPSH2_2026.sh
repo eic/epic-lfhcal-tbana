@@ -24,7 +24,7 @@ echo "run option $2"
 
 # different mapping files for layering
 mapConDefV2=../configs/TB2026/mapping_HGCROC_SPSH2TB_sumV2_default.csv   # v2 summing board
-mapConDefV1=../configs/TB2026/mapping_HGCROC_PST10TB_sumV1_default_inv.csv   # v1 summing board
+mapConDefV1=../configs/TB2026/mapping_HGCROC_SPSH2TB_sumV1_default.csv   # v1 summing board
 
 
 if [ $1 = "fbockTB" ]; then 
@@ -59,13 +59,43 @@ runList=../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
 #V2 summing board, initial preamp settings 
 if [ $2 = "InitMuon" ]; then 	
   if [ $3 = "convert" ]; then 
-    runs='001 002 003 004 005 006 007 008 009 010 011 012 013 014 015 016 017 018 019 020'
-#     runs='001 002 003 004 005 006 007 008 009 010 011 012 013 014 015 016 017 018 019 020 021 022 023 024 025 026 027 028 029 030 031 032 033 034 035 036 037 038 039 040 041 042 043 044 045 046 047 048 049 050 051 052 053 054 055 056 057 058 059 060 061 062 063 064 065 066 067 068 069 070 '
+    
+#     runs='001 002 003 004 005 006 007 008 009 010 011 012 013 014 015 016 017 018 019 020 021 022 023 024 025 026 027 028 029 030 031 032 033 034 035 036 037 038 039 040 041 042 043 044 045 046 047'
+#     runs='001 002 003 004 005 006 007 008 009 010 011 012 013 014 015 016 017 018 019 020'
+#     runs='021 022 023 024 025 026 027 028 029 030 031 032 033 034 035 036 037 038 039 040'
+#     runs='041 042 043 044 045 046 047 048 049 050 051 052 053 054 055 056 057 058 059 060'
+    runs='061 062 063 064 065 066 067 068 069 070'
+#     runs='001 003 004 042 043 044' // pedestals
+#     runs='005 006 007 008 009 010 011 012 013 014 015 016 017 018 019 020 021 022 023 024 025' // muons position scan 44V
+#     runs='026 027 028 029 030 031 032 034 035' // muons center 44V
+#     runs='035 037 038 ' // muons center 45V, CC variations
+#     runs='036 039 040 041 ' // muons center 43V, CC variations 
     for runNr in $runs; do 
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done
   elif [ $3 = "merge" ]; then  
-    echo "not defined yet"
+    runs='005 006 007 008 009 010 011 012 013 014 015 016 017 018 019 020 021 022 023 024 025' # set 1
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_PosScan  #ok
+    runs='026 027 028 029 030 031 032 034 035' # set 1
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_PosScan_Center  #ok
+  fi
+# 43 V, summing board V2, Preamp settings 9 7 10 1 -> wrong pedestal might be unusable
+elif [ $2 = "FullSetA" ]; then 
+  if [ $3 = "convert" ]; then 
+    echo "started conversion"
+        runs='048 049 050 051 052 053 054 055 056 057 058 059 060 061 062 063 064 065 066 067 068 069 070' #full list
+#       runs='048 065 066 067 068 069' #pedestals
+#       runs='049 050 051 052 053 054 055 056 057 058 059 060 061 062 070' #muons set 1
+#       runs='063 064 ' #e-
+    for runNr in $runs; do 
+      ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
+    done
+  elif [ $3 = "merge" ]; then 
+    runs='049 050 051 052 053 054 055 056 057 058 059 060 061 062' # set 1
+    echo $runs > runList.txt
+    MergeMuonsFileList $dataDir runList.txt Muon_FullSetA_1  #ok
   fi
 # 43 V, summing board V2, Preamp settings 9 7 10 1?
 elif [ $2 = "FullSetB" ]; then 
@@ -211,7 +241,7 @@ elif [ $2 = "FullSetG" ]; then
 #       runs='493 495 497 499 501 503 505 507 509 511 513 515 516' #h+
     for runNr in $runs; do 
       echo $runNr
-      ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
+      ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV1 -r $runList
     done
   elif [ $3 = "merge" ]; then 
     runs='484 486 487 488 489 490 491' # set 1

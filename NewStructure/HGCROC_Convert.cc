@@ -178,7 +178,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
       analysis->event.ClearTiles();
     }
     
-    std::cout << "\nFinished converting events\n" << std::endl;
+    std::cout << "\nFinished converting events for Run " << RunString.Atoi() << "\n" << std::endl;
     std::cout << "\nTotal Events: " << decoder->get_num_proc_events() 
               << "\n ---> read packets: " << decoder->get_read_packets() 
               << "\n ---> corrupted packets: "<< decoder->get_corrupted_packets() 

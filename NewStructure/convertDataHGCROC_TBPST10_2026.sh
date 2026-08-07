@@ -200,7 +200,7 @@ elif [ $2 = "FullSetA" ]; then
 #     runs='122' 
 #         runs='107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 123 124 125 126' 
     #   runs='085 120' #pedestals
-    #   runs='088 086 087 090 089 092 091' #muons set 1
+      runs='088 086 087 090 089 092 091' #muons set 1
     #   runs='121 122 123 124 125 126' #muons set 2
     #   runs='098 096 099 100 101 101 102 103 104 105 106 097 108' #pi-
     #   runs='109 110 111 112 113 114 115 116 117 118 119 095 094 093' #h+
@@ -452,7 +452,7 @@ elif [ $2 = "FullSetH" ]; then
     echo $runs > runList.txt
     MergeMuonsFileList $dataDir runList.txt pi-_10GeV_FullSetG  #ok
   fi  
-# 44V, summing board V1, new preamp settings - large scintillator paddles for all had
+# 44V, summing board V1, new preamp settings 
 elif [ $2 = "PartSetI" ]; then 
   if [ $3 = "convert" ]; then 
 #     runs='425 427 428 429 430 464 463 456 455 454 453 452 461 460 459 458 457 462 463 464' #full list

@@ -106,6 +106,12 @@ int main(int argc, char* argv[]){
       it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
       RootRegexp.erase(it);
       break;
+    case 'H':
+      std::cout<<"Compare: HGCROC output "<<std::endl;
+      CompAnalysis.SetIsHGCROC(true);
+      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-H");
+      RootRegexp.erase(it);
+      break;
     case 'i':
       std::cout<<"Compare: Root input file is: "<<optarg<<std::endl;
       CompAnalysis.SetInputList(Form("%s",optarg));
@@ -123,12 +129,6 @@ int main(int argc, char* argv[]){
       it=std::find(RootRegexp.begin(),RootRegexp.end(),"-I");
       RootRegexp.erase(it);
       it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
-      RootRegexp.erase(it);
-      break;
-    case 'H':
-      std::cout<<"Compare: HGCROC output "<<std::endl;
-      CompAnalysis.SetIsHGCROC(true);
-      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-H");
       RootRegexp.erase(it);
       break;
     case 'L':
