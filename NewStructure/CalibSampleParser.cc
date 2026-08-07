@@ -419,7 +419,7 @@ bool CalibSampleParser::ParseInjectionCalibX(){
     
     std::cout << lineADC.data() << std::endl;
     int optRead = 0;
-    if (!lineADC.starts_with("#"))
+    if (lineADC.at(0) != '#')
       optRead = 1;
     std::cout << "File format: " << optRead << std::endl;
     
@@ -694,7 +694,7 @@ bool CalibSampleParser::ParseInjectionDACCalibX(){
 
   std::cout << lineADC.data() << std::endl;
   int optRead = 0;
-  if (!lineADC.starts_with("row")){
+  if (lineADC.substr(0,3) != "row"){
     std::cout << "Wrong file format! Can't read this!" << std::endl; 
     return -1;
   }
