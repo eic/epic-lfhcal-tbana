@@ -1380,4 +1380,96 @@
     }
     return;
   }      
+
+
+// ****************************************************************************
+// Plotting routines to evaluate reco effi
+// ****************************************************************************
+
+// 
+//__________________________________________________________________________________________________________
+// Plot Corr with Fits for Full layer
+//__________________________________________________________________________________________________________
+inline void PlotTrendingCorr (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
+                            TGraph* graph, Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, TString nameOutput){
+                            //, RunInfo currRunInfo){
+                                  
+  canvas2Panel->cd();
+  if (!graph) return;;
+  TH1D* dummyhist = new TH1D("dummyhist", "", 100, xPMin, xPMax);
+  SetStyleHistoTH1ForGraphs( dummyhist, graph->GetXaxis()->GetTitle(), graph->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.02, 510, 510, 43, 63);  
+  // if (optionTrend == 6)std::cout << "\t" << graph->GetXaxis()->GetTitle() << "\t" << graph->GetYaxis()->GetTitle() << std::endl;
+  // std::cout << canvas2Panel->GetLogy() << std::endl;
+  if (canvas2Panel->GetLogy() != 0) dummyhist->GetYaxis()->SetTitleOffset(1.2);
+  SetMarkerDefaultsTGraph(graph, 20, 1, kBlue+1, kBlue+1);   
+  
+  dummyhist->GetYaxis()->SetRangeUser(minY,maxY);
+  dummyhist->Draw("axis");
+  graph->Draw("pe, same");
+                
+//     TString lab1 = Form("#it{#bf{LFHCal TB:}} %s", GetStringFromRunInfo(currRunInfo, 9).Data());
+//     TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
+//     TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
+//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-1*0.85*relSizeP, lab1, true, 0.85*textSizePixel, 43);
+//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-2*0.85*relSizeP, lab2, true, 0.85*textSizePixel, 43);
+//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-3*0.85*relSizeP, lab3, true, 0.85*textSizePixel, 43);
+//   
+  canvas2Panel->SaveAs(Form("%s.pdf",nameOutput.Data()));
+  canvas2Panel->SaveAs(Form("%s.png",nameOutput.Data()));
+}
+
+//__________________________________________________________________________________________________________
+// Plot Corr with Fits for Full layer
+//__________________________________________________________________________________________________________
+inline void PlotTrendingMultiSpecies (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
+                            TGraph** graph, Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, TString nameOutput){
+                            //, RunInfo currRunInfo){
+                                  
+  canvas2Panel->cd();
+  if (!graph) return;;
+  TH1D* dummyhist = new TH1D("dummyhist", "", 100, xPMin, xPMax);
+  SetStyleHistoTH1ForGraphs( dummyhist, graph[0]->GetXaxis()->GetTitle(), graph[0]->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.02, 510, 510, 43, 63);  
+  // if (optionTrend == 6)std::cout << "\t" << graph->GetXaxis()->GetTitle() << "\t" << graph->GetYaxis()->GetTitle() << std::endl;
+  // std::cout << canvas2Panel->GetLogy() << std::endl;
+  if (canvas2Panel->GetLogy() != 0) dummyhist->GetYaxis()->SetTitleOffset(1.2);
+  
+  SetMarkerDefaultsTGraph(graph[0], 24, 1, kGray+1, kGray+1);   
+  SetMarkerDefaultsTGraph(graph[1], 21, 1, kBlue+1, kBlue+1);   
+  SetMarkerDefaultsTGraph(graph[2], 20, 1, kRed+1, kRed+1);   
+  SetMarkerDefaultsTGraph(graph[3], 33, 1, kGreen+2, kGreen+2);   
+  SetMarkerDefaultsTGraph(graph[4], 34, 1, kOrange+7, kOrange+7);   
+  
+  dummyhist->GetYaxis()->SetRangeUser(minY,maxY);
+  dummyhist->Draw("axis");
+  Int_t nSpecies = 0;
+  for (Int_t i = 0; i < 5; i++){
+    if (graph[i]->GetN() >0 ){
+      graph[i]->Draw("pe, same");
+      nSpecies++;
+    } 
+  }
+  Double_t legX = 0.72;
+  TString titleX = (TString)(graph[0]->GetXaxis()->GetTitle());
+  if ( titleX.Contains("#var") == 1) 
+    legX = 0.12;
+  
+  TLegend* legend = GetAndSetLegend2( legX, 0.14, legX+0.15, 0.14+nSpecies*0.85*relSizeP,0.85*relSizeP, 1, "", 42,0.4);
+  if (graph[0]->GetN() >0 )legend->AddEntry(graph[0], "pedestal","p");
+  if (graph[1]->GetN() >0 )legend->AddEntry(graph[1], "#mu","p");
+  if (graph[2]->GetN() >0 )legend->AddEntry(graph[2], "e","p");
+  if (graph[3]->GetN() >0 )legend->AddEntry(graph[3], "#pi","p");
+  if (graph[4]->GetN() >0 )legend->AddEntry(graph[4], "p","p");
+  legend->Draw();
+//     TString lab1 = Form("#it{#bf{LFHCal TB:}} %s", GetStringFromRunInfo(currRunInfo, 9).Data());
+//     TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
+//     TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
+//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-1*0.85*relSizeP, lab1, true, 0.85*textSizePixel, 43);
+//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-2*0.85*relSizeP, lab2, true, 0.85*textSizePixel, 43);
+//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-3*0.85*relSizeP, lab3, true, 0.85*textSizePixel, 43);
+//   
+    
+  canvas2Panel->SaveAs(Form("%s.pdf",nameOutput.Data()));
+  canvas2Panel->SaveAs(Form("%s.png",nameOutput.Data()));
+}
+
 #endif

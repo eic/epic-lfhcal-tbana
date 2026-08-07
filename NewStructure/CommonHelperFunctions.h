@@ -777,5 +777,31 @@
   //  uint32_t checksum = calculate_crc32(reinterpret_cast<const uint8_t*>(message.c_str()), message.length());
   //  std::cout << "CRC-32 Checksum: 0x" << std::hex << std::uppercase << checksum << std::endl;
 
-  
+  struct runRecData{
+    int runNr;
+    int pid;
+    int nFPGA;
+    int triggers;
+    int recEvents;
+    double recEffi;
+    std::map<int,int> triggersPerFPGA;
+    std::map<int,int> recEventsPerFPGA;
+    std::map<int,double> effiPerFPGA;
+    std::map<int,int> abortedEventsPerFPGA;
+    std::map<int,int> inProgEventsPerFPGA;
+  };
+
+  inline TString PrintRunRecData( runRecData info, bool simple = false){
+    TString toPrint = "";
+    toPrint += Form("%d\t%d\t%d\t%d\t%0.3f\n", info.runNr, info.pid, info.triggers, 
+      info.recEvents, info.recEffi);
+    if (!simple){
+      for (int f= 0; f < info.nFPGA; f++){
+        toPrint +=Form("\t\t%d\t%d\t%d\t%d\t%d\t\t%0.3f\n", f, info.triggersPerFPGA[f], info.recEventsPerFPGA[f], info.abortedEventsPerFPGA[f], info.inProgEventsPerFPGA[f], info.effiPerFPGA[f] );
+      }
+    }
+    return toPrint;
+  }
+
+
 #endif

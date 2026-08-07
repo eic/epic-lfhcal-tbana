@@ -46,6 +46,10 @@ elif [ $1 = "atamis" ]; then
 elif [ $1 = "yale" ]; then
   dataRaw=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202604_PST10/raw
   dataDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202604_PST10/rawroot_new
+
+elif [ $1 = "eglimos" ]; then 
+  dataRaw=/home/ewa/EIC/DATA/2026_04_PS_TestBeam/raw_data
+  dataDir=/home/ewa/EIC/DATA/2026_04_PS_TestBeam/converted
 fi
   
 # global run list for 2026 PS TB
@@ -478,7 +482,8 @@ elif [ $2 = "NoSet" ]; then
 #     runs='137 138 172 173 174 175 176 185 186 187 235 236 237 239 243 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 298 332 333 334 335 336 337 371 372 373 374 375 376 377 378 420 421 426 565 466 467 468'
 #     runs='234 191 188 127 128 129 112 093'
 #     runs='423 424'
-    runs='465'
+    # runs='465'
+    runs='075 076 077 101 102 103 104 105 120 121 122 123 124 125 300 301 303 310 320 325 330 340 348 349 350'
     for runNr in $runs; do 
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done
