@@ -42,8 +42,8 @@ elif [ $1 = "ehagen" ]; then
   dataDir=/Volumes/UWU/25_TB_Data
 
 elif [ $1 = "yale" ]; then
-  dataRaw=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/raw/TBMain2025
-  dataDir=/media/lfhcal/LFHCal_Backup_11/Test_Beams/202511_PST09/rawroot_new
+  dataRaw=/mnt/wwn-0x5000c500d93c8d2c-part2/Test_Beams/202511_PST09/raw/TBMain2025
+  dataDir=/mnt/wwn-0x5000c500d93c8d2c-part2/Test_Beams/202511_PST09/rawroot
 
 fi
   
@@ -216,6 +216,69 @@ elif [ $2 = "hadrons" ]; then
   for runNr in $runs; do 
     ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
   done
+
+# Hadron Depth Scan: Config 1
+elif [ $2 = "DepthScan1" ]; then
+	if [ $3 = "convert" ]; then
+		runs='276 289 275 273 274 282 281 280 279 278 277 288 287 286 285 284 283'	
+		for runNr in $runs; do
+  	    ./Convert -d 1 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDef -r $runList
+    done
+  elif [ $3 = "merge" ]; then 
+    runs='276 289 275 273 274' 
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt Muon_DepthScan1
+    
+		runs='282'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h-_3GeV_DepthScan1
+
+		runs='281' 
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h-_5GeV_DepthScan1
+
+		runs='280'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h-_8GeV_DepthScan1
+
+		runs='279'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h-_10GeV_DepthScan1
+
+		runs='278'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h-_12GeV_DepthScan1
+
+		runs='277'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h-_15GeV_DepthScan1
+
+		runs='288'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h+_3GeV_DepthScan1
+
+		runs='287'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h+_5GeV_DepthScan1
+
+		runs='286'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h+_8GeV_DepthScan1
+
+		runs='285'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h+_10GeV_DepthScan1
+
+		runs='284'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h+_12GeV_DepthScan1
+
+		runs='283'
+		echo $runs > runList.txt
+		MergeMuonsFileList $dataDir runList.txt h+_15GeV_DepthScan1
+
+	fi
+
 
 elif [ $2 = "FullSetA" ]; then
   if [ $3 = "convert" ]; then	
