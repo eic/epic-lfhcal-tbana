@@ -85,10 +85,11 @@ if [ $2 = "InitMuon" ]; then
 elif [ $2 = "FullSetA" ]; then 
   if [ $3 = "convert" ]; then 
     echo "started conversion"
-        runs='048 049 050 051 052 053 054 055 056 057 058 059 060 061 062 063 064 065 066 067 068 069 070' #full list
+#         runs='048 049 050 051 052 053 054 055 056 057 058 059 060 061 062 063 064 065 066 067 068 069 070' #full list
 #       runs='048 065 066 067 068 069' #pedestals
 #       runs='049 050 051 052 053 054 055 056 057 058 059 060 061 062 070' #muons set 1
 #       runs='063 064 ' #e-
+      runs='063' #e-
     for runNr in $runs; do 
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done
@@ -124,7 +125,7 @@ elif [ $2 = "FullSetB" ]; then
 # 44 V, summing board V2, Preamp settings 9 7 10 5
 elif [ $2 = "FullSetC" ]; then 
   if [ $3 = "convert" ]; then 
-      runs='134 135 137 188 278 147 148 149 146 145 144 141 142 143 140 139 138 189 194 190 191 193 192 289 290 291 292 293 150 151 152 155 156 157 159 160 161 279 280 162 163 164 165 166 167 168 169 170 171 172 173 281 174 175 176 177 178 179 181 183 186 187 282 283 284 285 286 287 288' #full list
+#       runs='134 135 137 188 278 147 148 149 146 145 144 141 142 143 140 139 138 189 194 190 191 193 192 289 290 291 292 293 150 151 152 155 156 157 159 160 161 279 280 162 163 164 165 166 167 168 169 170 171 172 173 281 174 175 176 177 178 179 181 183 186 187 282 283 284 285 286 287 288' #full list
 #       runs='134 135 137 188 278' #pedestals
 #       runs='147 148 149 146 145 144 141 142 143 140 139 138' #muons set 1
 #       runs='189 194 190 191 193 192' #muons set 2
@@ -135,7 +136,7 @@ elif [ $2 = "FullSetC" ]; then
 #       runs='174 175 176 177 178 179 181 183 186 187 282 283 284 285 286 287 288 ' #h+
 #     runs='278 279 280 281 282 283 284 285 286 287 288 289 290 291 292 293' #make up runs
 #       runs='184 185' #broken (no events)
-#       runs='180 182 158 154 153 144' #out of sync
+      runs='180 182 158 154 153 144' #out of sync
     for runNr in $runs; do 
       echo $runNr
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
