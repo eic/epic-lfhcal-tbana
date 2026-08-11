@@ -58,10 +58,11 @@ class EvaluateRecoEffiGHCROC{
         ~EvaluateRecoEffiGHCROC(){}
 
         // setter methods
-        inline void EnableDebug(int i)                  {debug=i;};
-        inline void SetInputFile(TString name)          {inputFilePath=name;};
-        inline void SetRunListInput(TString name)       {RunListInputName=name;};
-        inline void SetOutputDirectory(TString name)    {outputDir=name;}
+        inline void EnableDebug(int i)                    {debug=i;};
+        inline void SetInputFile(TString name)            {inputFilePath=name;};
+        inline void SetRunListInput(TString name)         {RunListInputName=name;};
+        inline void SetOutputDirectory(TString name)      {outputDir=name;}
+        inline void SetUnconvertedDirectory(TString name) {unconvertedDir=name;}
 
         // general methods
         bool CheckAndOpenIO(void);
@@ -72,8 +73,8 @@ class EvaluateRecoEffiGHCROC{
         int             debug           = 0;            // debug level
         TString         inputFilePath;                  // path to the input file (.txt with the list of .root files)
         TString         RunListInputName;               // file name run list 
-        TString         outputDir;                // output directory
-
+        TString         outputDir;                      // output directory
+        TString         unconvertedDir      = "";       // output directory
 
     protected:
 

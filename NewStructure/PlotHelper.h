@@ -1196,4 +1196,219 @@
     canvas2D->SaveAs(nameOutput.Data());
   }  
 
+  // ****************************************************************************
+  // Plotting routines to evaluate reco effi
+  // ****************************************************************************
+
+  // 
+  //__________________________________________________________________________________________________________
+  // Plot Corr with Fits for Full layer
+  //__________________________________________________________________________________________________________
+  inline void PlotTrendingCorr (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
+                              TGraph* graph, Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, TString nameOutput, 
+                              RunInfo currRunInfo){
+                                    
+    canvas2Panel->cd();
+    if (!graph) return;;
+    TH1D* dummyhist = new TH1D("dummyhist", "", 100, xPMin, xPMax);
+    SetStyleHistoTH1ForGraphs( dummyhist, graph->GetXaxis()->GetTitle(), graph->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.95, 1.02, 510, 510, 43, 63);  
+    // if (optionTrend == 6)std::cout << "\t" << graph->GetXaxis()->GetTitle() << "\t" << graph->GetYaxis()->GetTitle() << std::endl;
+    // std::cout << canvas2Panel->GetLogy() << std::endl;
+    if (canvas2Panel->GetLogy() != 0) dummyhist->GetYaxis()->SetTitleOffset(1.2);
+    SetMarkerDefaultsTGraph(graph, 20, 1, kBlue+1, kBlue+1);   
+    
+    dummyhist->GetYaxis()->SetRangeUser(minY,maxY);
+    dummyhist->Draw("axis");
+    graph->Draw("pe, same");
+                  
+    DrawLatex(canvas2Panel->GetLeftMargin() + 0.03, 0.97-0.85*relSizeP, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(currRunInfo,7).Data()), false, 0.85*relSizeP, 42);
+    DrawLatex(canvas2Panel->GetLeftMargin() + 0.03, 0.97-2*0.85*relSizeP, GetStringFromRunInfo(currRunInfo,8), false, 0.85*relSizeP, 42);
+
+    
+    canvas2Panel->SaveAs(Form("%s.pdf",nameOutput.Data()));
+    canvas2Panel->SaveAs(Form("%s.png",nameOutput.Data()));
+  }
+
+  //__________________________________________________________________________________________________________
+  // Plot Corr with Fits for Full layer
+  //__________________________________________________________________________________________________________
+  inline void PlotTrendingMultiSpecies (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
+                              TGraph** graph, Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, TString nameOutput,
+                              RunInfo currRunInfo){
+                                    
+    canvas2Panel->cd();
+    if (!graph) return;;
+    TH1D* dummyhist = new TH1D("dummyhist", "", 100, xPMin, xPMax);
+    SetStyleHistoTH1ForGraphs( dummyhist, graph[0]->GetXaxis()->GetTitle(), graph[0]->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.95, 1.02, 510, 510, 43, 63);  
+    if (canvas2Panel->GetLogy() != 0) dummyhist->GetYaxis()->SetTitleOffset(1.2);
+    
+    SetMarkerDefaultsTGraph(graph[0], 24, 1, kGray+1, kGray+1);   
+    SetMarkerDefaultsTGraph(graph[1], 21, 1, kBlue+1, kBlue+1);   
+    SetMarkerDefaultsTGraph(graph[2], 20, 1, kRed+1, kRed+1);   
+    SetMarkerDefaultsTGraph(graph[3], 33, 1, kGreen+2, kGreen+2);   
+    SetMarkerDefaultsTGraph(graph[4], 34, 1, kOrange+7, kOrange+7);   
+    
+    dummyhist->GetYaxis()->SetRangeUser(minY,maxY);
+    dummyhist->Draw("axis");
+    Int_t nSpecies = 0;
+    for (Int_t i = 0; i < 5; i++){
+      if (graph[i]->GetN() >0 ){
+        graph[i]->Draw("pe, same");
+        nSpecies++;
+      } 
+    }
+    Double_t legX = 0.72;
+    TString titleX = (TString)(graph[0]->GetXaxis()->GetTitle());
+    if ( titleX.Contains("#var") == 1) 
+      legX = 0.12;
+    
+    TLegend* legend = GetAndSetLegend2( legX, 0.14, legX+0.15, 0.14+nSpecies*0.85*relSizeP,0.85*relSizeP, 1, "", 42,0.4);
+    if (graph[0]->GetN() >0 )legend->AddEntry(graph[0], "pedestal","p");
+    if (graph[1]->GetN() >0 )legend->AddEntry(graph[1], "#mu","p");
+    if (graph[2]->GetN() >0 )legend->AddEntry(graph[2], "e","p");
+    if (graph[3]->GetN() >0 )legend->AddEntry(graph[3], "#pi","p");
+    if (graph[4]->GetN() >0 )legend->AddEntry(graph[4], "p","p");
+    legend->Draw();
+  
+    DrawLatex(canvas2Panel->GetLeftMargin() + 0.03, 0.97-0.85*relSizeP, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(currRunInfo,7).Data()), false, 0.85*relSizeP, 42);
+    DrawLatex(canvas2Panel->GetLeftMargin() + 0.03, 0.97-2*0.85*relSizeP, GetStringFromRunInfo(currRunInfo,8), false, 0.85*relSizeP, 42);
+    
+    canvas2Panel->SaveAs(Form("%s.pdf",nameOutput.Data()));
+    canvas2Panel->SaveAs(Form("%s.png",nameOutput.Data()));
+  }
+
+  //__________________________________________________________________________________________________________
+  // Plot Trending for multiple FPGAs
+  //__________________________________________________________________________________________________________
+  inline void PlotTrendingMultiFPGA (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
+                              TGraph* graphAll,  TGraph** graphFPGA, Int_t maxFPGA,
+                              Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, TString nameOutput,
+                              RunInfo currRunInfo){
+                                    
+    canvas2Panel->cd();
+    if (!graphAll) return;;
+    TH1D* dummyhist = new TH1D("dummyhist", "", 100, xPMin, xPMax);
+    SetStyleHistoTH1ForGraphs( dummyhist, graphAll->GetXaxis()->GetTitle(), graphAll->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.95, 1.02, 510, 510, 43, 63);  
+    if (canvas2Panel->GetLogy() != 0) dummyhist->GetYaxis()->SetTitleOffset(1.2);
+    
+    
+    dummyhist->GetYaxis()->SetRangeUser(minY,maxY);
+    dummyhist->Draw("axis");
+    SetMarkerDefaultsTGraph(graphAll, 20, 1, kBlack, kBlack);   
+    graphAll->Draw("pe,same");
+    for (Int_t f = 0; f< maxFPGA; f++){
+      if (graphFPGA[f]){
+        SetMarkerDefaultsTGraph(graphFPGA[f], GetMarkerLayer(f*5,false), 1, GetColorLayer(f,2), GetColorLayer(f,2));   
+        if (graphFPGA[f]->GetN() >0)
+          graphFPGA[f]->Draw("pe, same");
+      }
+    }
+
+    Double_t legX = 0.78;
+    TString titleX = (TString)(graphAll->GetXaxis()->GetTitle());
+    if ( titleX.Contains("#var") == 1) 
+      legX = 0.12;
+    
+    TLegend* legend = GetAndSetLegend2( legX, 0.14, legX+0.15, 0.14+(maxFPGA+1)*0.85*relSizeP,0.85*relSizeP, 1, "", 42,0.4);
+    if (graphAll->GetN() >0 )legend->AddEntry(graphAll, "aligned","p");
+    for (Int_t f = 0; f< maxFPGA; f++){
+      if (graphFPGA[f]->GetN() >0 ) legend->AddEntry(graphFPGA[f], Form("FPGA %d", f),"p");
+    }
+    legend->Draw();
+  
+    DrawLatex(canvas2Panel->GetLeftMargin() + 0.03, 0.97-0.85*relSizeP, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(currRunInfo,7).Data()), false, 0.85*relSizeP, 42);
+    DrawLatex(canvas2Panel->GetLeftMargin() + 0.03, 0.97-2*0.85*relSizeP, GetStringFromRunInfo(currRunInfo,8), false, 0.85*relSizeP, 42);
+    
+    canvas2Panel->SaveAs(Form("%s.pdf",nameOutput.Data()));
+    canvas2Panel->SaveAs(Form("%s.png",nameOutput.Data()));
+  }
+
+
+  
+  // 
+  //__________________________________________________________________________________________________________
+  // Plot Trending multi graph
+  //__________________________________________________________________________________________________________
+  inline void PlotTrendingMultiGraph (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
+                                      TGraph* graph1, TGraph* graph2, TGraph* graph3,
+                                      Double_t xPMin, Double_t xPMax, Double_t minY_1st, Double_t maxY_1st, Double_t minY_2nd, Double_t maxY_2nd, 
+                                      TString nameOutput, RunInfo currRunInfo,
+                                      TString label1 = "", TString label2 = "", TString label3 = ""){
+                                    
+    canvas2Panel->cd();
+    
+    if (!canvas2Panel || !graph1 || !graph2 || !graph3) return;
+    // Fallback to internal graph titles if external labels are empty
+    if (label1.IsNull()) label1 = graph1->GetTitle();
+    if (label2.IsNull()) label2 = graph2->GetTitle();
+    if (label3.IsNull()) label3 = graph3->GetTitle();
+    
+    canvas2Panel->cd();
+    
+    // 1. Create Base Pad for Graph 1 & 2 (Log Y-scale)
+    TPad *pad1 = new TPad("pad1", "", 0, 0, 1, 1);
+    DefaultPadSettings( pad1, canvas2Panel->GetLeftMargin(), canvas2Panel->GetRightMargin(), canvas2Panel->GetTopMargin(), canvas2Panel->GetBottomMargin());
+    pad1->SetLogy(1); // Enable log scaling on primary Y-axis
+    pad1->SetTicky(0);
+    pad1->Draw();
+    pad1->cd();
+
+    TH1D* dummyhist1 = new TH1D("dummyhist1", "", 100, xPMin, xPMax);
+    SetStyleHistoTH1ForGraphs(dummyhist1, graph1->GetXaxis()->GetTitle(), graph1->GetYaxis()->GetTitle(), 
+                              0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel, 0.85, 1.2, 510, 510, 43, 63);  
+    
+    dummyhist1->GetYaxis()->SetRangeUser(minY_1st, maxY_1st);
+    dummyhist1->Draw("axis");
+    
+    
+    SetMarkerDefaultsTGraph(graph1, 20, 1, kBlue+1, kBlue+1);   
+    SetMarkerDefaultsTGraph(graph2, 25, 1, kRed+1, kRed+1);   
+    graph1->Draw("pe, same");
+    graph2->Draw("pe, same");
+
+    // 2. Create Transparent Overlay Pad for Graph 3 (Linear Y-scale)
+    canvas2Panel->cd();
+    TPad *pad2 = new TPad("pad2", "", 0, 0, 1, 1);
+    DefaultPadSettings( pad2, canvas2Panel->GetLeftMargin(), canvas2Panel->GetRightMargin(), canvas2Panel->GetTopMargin(), canvas2Panel->GetBottomMargin());
+    pad2->SetFillStyle(4000); // 4000 makes the pad transparent
+    pad2->SetFrameFillStyle(4000);
+    pad2->SetLogy(0); // Force linear scale on second Y-axis
+    pad2->SetTicky(0);
+    pad2->Draw();
+    pad2->cd();
+
+    TH1D* dummyhist2 = new TH1D("dummyhist2", "", 100, xPMin, xPMax);
+    // Hide X-axis details on second pad to prevent overlapping tick marks/labels
+    SetStyleHistoTH1ForGraphs(dummyhist2, "", graph3->GetYaxis()->GetTitle(), 
+                              0, 0, 0.85*textSizePixel, textSizePixel, 0., 1.3, 510, 510, 43, 63);  
+    dummyhist2->GetXaxis()->SetTickLength(0);  
+    // Configure Right Y-axis
+    dummyhist2->GetXaxis()->SetAxisColor(0, 0);
+    dummyhist2->GetYaxis()->SetRangeUser(minY_2nd, maxY_2nd);
+    dummyhist2->GetYaxis()->SetAxisColor(kGreen+2);
+    dummyhist2->GetYaxis()->SetLabelColor(kGreen+2);
+    dummyhist2->GetYaxis()->SetTitleColor(kGreen+2);
+    
+    // Draw frame on right side
+    dummyhist2->Draw("Y+ axis"); 
+
+    SetMarkerDefaultsTGraph(graph3, 24, 1, kGreen+2, kGreen+2);
+    graph3->Draw("pe, same");
+    
+    TLegend* legend = GetAndSetLegend2( 0.6, 0.97, 1-canvas2Panel->GetRightMargin()-0.03, 0.97-2*0.85*relSizeP,0.85*relSizeP, 2, "", 42,0.15);
+    if (graph1->GetN() >0 )legend->AddEntry(graph1, label1.Data(),"p");
+    if (graph2->GetN() >0 )legend->AddEntry(graph2, label2.Data(),"p");
+    legend->AddEntry((TObject*)(0), " "," ");
+    if (graph3->GetN() >0 )legend->AddEntry(graph3, label3.Data(),"p");
+    legend->Draw();
+      
+    DrawLatex(0.12, 0.97-0.85*relSizeP, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(currRunInfo,7).Data()), false, 0.85*relSizeP, 42);
+    DrawLatex(0.12, 0.97-2*0.85*relSizeP, GetStringFromRunInfo(currRunInfo,8), false, 0.85*relSizeP, 42);
+    
+    // Save output
+    canvas2Panel->SaveAs(Form("%s.pdf",nameOutput.Data()));
+    canvas2Panel->SaveAs(Form("%s.png",nameOutput.Data()));
+  }
+  
+  
 #endif

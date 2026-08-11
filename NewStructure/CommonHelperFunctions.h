@@ -779,11 +779,18 @@
 
   struct runRecData{
     int runNr;
-    int pid;
-    int nFPGA;
-    int triggers;
-    int recEvents;
-    double recEffi;
+    int pid;            
+    int nFPGA           = 0;
+    int triggers        = -1;
+    int recEvents       = -1;
+    double recEffi      = -1.;
+    double sizeConv     = -1.;
+    double sizeRaw      = -1.;
+    double comp         = -1.;
+    int resetsOffset    = -1;
+    long packets        = -1;
+    long brokenPackets  = -1;
+    double fracBroken   = -1;;
     std::map<int,int> triggersPerFPGA;
     std::map<int,int> recEventsPerFPGA;
     std::map<int,double> effiPerFPGA;

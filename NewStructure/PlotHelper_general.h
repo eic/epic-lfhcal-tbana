@@ -149,6 +149,9 @@
     if (alter == 0){
       Color_t colors[10] = {kBlack, kViolet+4, kBlue-3, kCyan+1, kGreen+1, kYellow-4, kOrange, kRed-4, kPink-5, kMagenta+2 };
       return colors[l%10];
+    } else if (alter == 2){
+      Color_t colors[10] = {kViolet+4, kRed-4, kCyan+1, kYellow-4, kBlue-3,  kGreen+1,  kOrange, kPink-5, kMagenta+2, kGray+1 };
+      return colors[l%10];
     } else {
       Color_t colors[10] = {kGray+1, kOrange, kBlue-3, kRed-4 , kGreen+1, kYellow-4, kViolet+4, kCyan+1 , kPink-5, kMagenta+2 };
       return colors[l%10];      
@@ -711,7 +714,7 @@
       histo->GetYaxis()->SetTitleOffset(yTitleOffset);
       histo->GetYaxis()->SetNdivisions(yNDivisions,kTRUE);
   }
-
+  
   //__________________________________________________________________________________________________________
   inline void SetStyleHistoTH1ForGraphs( TH1* histo,
                                   TString XTitle,
@@ -748,6 +751,42 @@
       histo->GetYaxis()->SetNdivisions(yNDivisions,kTRUE);
   }
 
+  //__________________________________________________________________________________________________________
+  inline void SetStyleGraphs    ( TGraph* graph,
+                                  TString XTitle,
+                                  TString YTitle,
+                                  Size_t xLableSize,
+                                  Size_t xTitleSize,
+                                  Size_t yLableSize,
+                                  Size_t yTitleSize,
+                                  Float_t xTitleOffset    = 1,
+                                  Float_t yTitleOffset    = 1,
+                                  Int_t xNDivisions       = 510,
+                                  Int_t yNDivisions       = 510,
+                                  Font_t textFontLabel    = 42,
+                                  Font_t textFontTitle    = 62
+                                ){
+      graph->GetXaxis()->SetTitle(XTitle);
+      graph->GetYaxis()->SetTitle(YTitle);
+      graph->SetTitle("");
+
+      graph->GetYaxis()->SetLabelFont(textFontLabel);
+      graph->GetXaxis()->SetLabelFont(textFontLabel);
+      graph->GetYaxis()->SetTitleFont(textFontTitle);
+      graph->GetXaxis()->SetTitleFont(textFontTitle);
+
+      graph->GetXaxis()->SetLabelSize(xLableSize);
+      graph->GetXaxis()->SetTitleSize(xTitleSize);
+      graph->GetXaxis()->SetTitleOffset(xTitleOffset);
+      graph->GetXaxis()->SetNdivisions(xNDivisions,kTRUE);
+
+      graph->GetYaxis()->SetDecimals();
+      graph->GetYaxis()->SetLabelSize(yLableSize);
+      graph->GetYaxis()->SetTitleSize(yTitleSize);
+      graph->GetYaxis()->SetTitleOffset(yTitleOffset);
+      graph->GetYaxis()->SetNdivisions(yNDivisions,kTRUE);
+  }
+  
   //__________________________________________________________________________________________________________
   inline void SetStyleHistoTH3ForGraphs( TH3* histo,
                                   TString XTitle,
@@ -1382,94 +1421,5 @@
   }      
 
 
-// ****************************************************************************
-// Plotting routines to evaluate reco effi
-// ****************************************************************************
-
-// 
-//__________________________________________________________________________________________________________
-// Plot Corr with Fits for Full layer
-//__________________________________________________________________________________________________________
-inline void PlotTrendingCorr (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
-                            TGraph* graph, Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, TString nameOutput){
-                            //, RunInfo currRunInfo){
-                                  
-  canvas2Panel->cd();
-  if (!graph) return;;
-  TH1D* dummyhist = new TH1D("dummyhist", "", 100, xPMin, xPMax);
-  SetStyleHistoTH1ForGraphs( dummyhist, graph->GetXaxis()->GetTitle(), graph->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.02, 510, 510, 43, 63);  
-  // if (optionTrend == 6)std::cout << "\t" << graph->GetXaxis()->GetTitle() << "\t" << graph->GetYaxis()->GetTitle() << std::endl;
-  // std::cout << canvas2Panel->GetLogy() << std::endl;
-  if (canvas2Panel->GetLogy() != 0) dummyhist->GetYaxis()->SetTitleOffset(1.2);
-  SetMarkerDefaultsTGraph(graph, 20, 1, kBlue+1, kBlue+1);   
-  
-  dummyhist->GetYaxis()->SetRangeUser(minY,maxY);
-  dummyhist->Draw("axis");
-  graph->Draw("pe, same");
-                
-//     TString lab1 = Form("#it{#bf{LFHCal TB:}} %s", GetStringFromRunInfo(currRunInfo, 9).Data());
-//     TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
-//     TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
-//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-1*0.85*relSizeP, lab1, true, 0.85*textSizePixel, 43);
-//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-2*0.85*relSizeP, lab2, true, 0.85*textSizePixel, 43);
-//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-3*0.85*relSizeP, lab3, true, 0.85*textSizePixel, 43);
-//   
-  canvas2Panel->SaveAs(Form("%s.pdf",nameOutput.Data()));
-  canvas2Panel->SaveAs(Form("%s.png",nameOutput.Data()));
-}
-
-//__________________________________________________________________________________________________________
-// Plot Corr with Fits for Full layer
-//__________________________________________________________________________________________________________
-inline void PlotTrendingMultiSpecies (TCanvas* canvas2Panel, Double_t topRCornerX,  Double_t topRCornerY, Double_t relSizeP, Int_t textSizePixel, 
-                            TGraph** graph, Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, TString nameOutput){
-                            //, RunInfo currRunInfo){
-                                  
-  canvas2Panel->cd();
-  if (!graph) return;;
-  TH1D* dummyhist = new TH1D("dummyhist", "", 100, xPMin, xPMax);
-  SetStyleHistoTH1ForGraphs( dummyhist, graph[0]->GetXaxis()->GetTitle(), graph[0]->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.02, 510, 510, 43, 63);  
-  // if (optionTrend == 6)std::cout << "\t" << graph->GetXaxis()->GetTitle() << "\t" << graph->GetYaxis()->GetTitle() << std::endl;
-  // std::cout << canvas2Panel->GetLogy() << std::endl;
-  if (canvas2Panel->GetLogy() != 0) dummyhist->GetYaxis()->SetTitleOffset(1.2);
-  
-  SetMarkerDefaultsTGraph(graph[0], 24, 1, kGray+1, kGray+1);   
-  SetMarkerDefaultsTGraph(graph[1], 21, 1, kBlue+1, kBlue+1);   
-  SetMarkerDefaultsTGraph(graph[2], 20, 1, kRed+1, kRed+1);   
-  SetMarkerDefaultsTGraph(graph[3], 33, 1, kGreen+2, kGreen+2);   
-  SetMarkerDefaultsTGraph(graph[4], 34, 1, kOrange+7, kOrange+7);   
-  
-  dummyhist->GetYaxis()->SetRangeUser(minY,maxY);
-  dummyhist->Draw("axis");
-  Int_t nSpecies = 0;
-  for (Int_t i = 0; i < 5; i++){
-    if (graph[i]->GetN() >0 ){
-      graph[i]->Draw("pe, same");
-      nSpecies++;
-    } 
-  }
-  Double_t legX = 0.72;
-  TString titleX = (TString)(graph[0]->GetXaxis()->GetTitle());
-  if ( titleX.Contains("#var") == 1) 
-    legX = 0.12;
-  
-  TLegend* legend = GetAndSetLegend2( legX, 0.14, legX+0.15, 0.14+nSpecies*0.85*relSizeP,0.85*relSizeP, 1, "", 42,0.4);
-  if (graph[0]->GetN() >0 )legend->AddEntry(graph[0], "pedestal","p");
-  if (graph[1]->GetN() >0 )legend->AddEntry(graph[1], "#mu","p");
-  if (graph[2]->GetN() >0 )legend->AddEntry(graph[2], "e","p");
-  if (graph[3]->GetN() >0 )legend->AddEntry(graph[3], "#pi","p");
-  if (graph[4]->GetN() >0 )legend->AddEntry(graph[4], "p","p");
-  legend->Draw();
-//     TString lab1 = Form("#it{#bf{LFHCal TB:}} %s", GetStringFromRunInfo(currRunInfo, 9).Data());
-//     TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
-//     TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
-//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-1*0.85*relSizeP, lab1, true, 0.85*textSizePixel, 43);
-//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-2*0.85*relSizeP, lab2, true, 0.85*textSizePixel, 43);
-//     DrawLatex(topRCornerX-0.045, topRCornerY-1.2*relSizeP-3*0.85*relSizeP, lab3, true, 0.85*textSizePixel, 43);
-//   
-    
-  canvas2Panel->SaveAs(Form("%s.pdf",nameOutput.Data()));
-  canvas2Panel->SaveAs(Form("%s.png",nameOutput.Data()));
-}
 
 #endif

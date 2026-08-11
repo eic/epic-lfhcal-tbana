@@ -30,6 +30,7 @@ void PrintHelp(char* exe){
     std::cout<<"-i uuu    path to the input file: .txt with list of .root files to process (mandatory)"<<std::endl;
     std::cout<<"-o        output directory (mandatory)"<<std::endl;
     std::cout<<"-r        path to the run list file (mandatory)"<<std::endl;
+    std::cout<<"-u uuu    path to unconverted files" << std::endl; 
     std::cout<<"-h        print help"<<std::endl;
     std::cout<<"Examples:"<<std::endl;
     std::cout<<exe<<"-i input.csv -o output/"<<std::endl;
@@ -44,7 +45,7 @@ int main(int argc, char* argv[]){
 
     EvaluateRecoEffiGHCROC  evaluation;
     int c;
-    while( (c=getopt(argc,argv,"d:i:r:o:h:"))!=-1){
+    while( (c=getopt(argc,argv,"d:i:r:o:u:h"))!=-1){
         switch(c){
             case 'd':
                 std::cout << "Enable debug " << optarg << std::endl;
@@ -61,6 +62,10 @@ int main(int argc, char* argv[]){
             case 'o':
                 std::cout << "Output directory set to: " << optarg << std::endl;
                 evaluation.SetOutputDirectory( Form("%s", optarg) );
+                break;
+            case 'u':
+                std::cout << "path to unconverted files: " << optarg << std::endl;
+                evaluation.SetUnconvertedDirectory( Form("%s", optarg) );
                 break;
             case 'h':
                 PrintHelp( argv[0] );
