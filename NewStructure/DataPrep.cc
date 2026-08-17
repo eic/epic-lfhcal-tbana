@@ -51,6 +51,8 @@ void PrintHelp(char* exe){
   std::cout<<"-M       save mip triggered cells only"<<std::endl;
   std::cout<<"-n       extract noise after first mip fits and reevaluate pedestals"<<std::endl;
   std::cout<<"-N       save noise triggered cells only"<<std::endl;
+  std::cout<<"-q q     switch HGCROC signal to $q samples surrounding max sample "<<std::endl;
+  std::cout<<"-Q q     switch HGCROC signal to $q samples surrounding max sample, force signal reevaluation "<<std::endl;
   std::cout<<"-o vvv   Output file name (mandatory)"<<std::endl;
   std::cout<<"-O kkk   Output directory name for plots (mandatory)"<<std::endl;
   std::cout<<"-p       Extract pedestal from input file and store it in output file"<<std::endl;
@@ -82,7 +84,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"aA:bB:c:C:d:DeE:fF:g:G:hi:k:K:l:L:m:MnNo:O:pP:r:R:sStT:uwXy:"))!=-1){
+  while((c=getopt(argc,argv,"aA:bB:c:C:d:DeE:fF:g:G:hi:k:K:l:L:m:MnNo:O:pP:q:Q:r:R:sStT:uwXy:"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"DataPrep: printing calib object to file"<<std::endl;
@@ -198,6 +200,14 @@ int main(int argc, char* argv[]){
       std::cout<<"DataPrep: transfer calib object from: "<<optarg<<std::endl;
       AnAnalysis.SetRootPedestalInput(Form("%s",optarg));
       AnAnalysis.IsToTransferCalib(true);
+      break;
+    case 'q':
+      std::cout<<"DataPrep: Switch HGCROC waveform integration"<<std::endl;
+      AnAnalysis.SetHGCROCNSampleInteg(atoi(optarg));
+      break;
+    case 'Q':
+      std::cout<<"DataPrep: Switch HGCROC waveform integration"<<std::endl;
+      AnAnalysis.SetHGCROCNSampleIntegForced(atoi(optarg));
       break;
     case 'r':
       std::cout<<"DataPrep: run list file from: "<<optarg<<std::endl;

@@ -27,6 +27,7 @@
 #include "waveform_fitting/waveform_fit_base.h"
 #include "waveform_fitting/crystal_ball_fit.h"
 #include "waveform_fitting/max_sample_fit.h"
+#include "waveform_fitting/max_sample_fit_n_integ.h"
 
 // ****************************************************************************
 // Checking and opening input and output files
@@ -264,8 +265,11 @@ bool Analyses::Process(void){
       // waveform_builder->set_parameter(15, 0);
       // waveform_builder->set_parameter(25, 160);
 
-      waveform_builder = new max_sample_fit();
-
+      if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101){
+        waveform_builder = new max_sample_fit();
+      } else {
+        waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+      }
       std::cout << "Running HGCROC conversion" << std::endl;
       status=run_hgcroc_conversion(this, waveform_builder);
     } else {
@@ -1486,7 +1490,12 @@ bool Analyses::EvaluateHGCROCToAPhases(void){
   // setup waveform builder for HGCROC data
   //==================================================================================
   waveform_fit_base *waveform_builder = nullptr;
-  waveform_builder = new max_sample_fit();
+  if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101){
+    waveform_builder = new max_sample_fit();
+  } else {
+    waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+  }
+  
   //==================================================================================
   // process events from tree
   //==================================================================================
@@ -1747,7 +1756,6 @@ bool Analyses::TransferCalib(void){
   if (it->second.detector == "FoCal-H")
     detConf = DetConf::Type::FocalH; 
 
-    
   //==================================================================================
   // create additional output hist 
   //==================================================================================
@@ -1860,7 +1868,11 @@ bool Analyses::TransferCalib(void){
   // setup waveform builder for HGCROC data
   //==================================================================================
   waveform_fit_base *waveform_builder = nullptr;
-  waveform_builder = new max_sample_fit();
+  if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101){
+    waveform_builder = new max_sample_fit();
+  } else {
+    waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+  }
   double minNSigma = 5;
   int nCellsAboveTOA  = 0;
   int nCellsAboveMADC = 0;
@@ -2687,6 +2699,16 @@ bool Analyses::VisualizeWaveform(void){
   }
   
   //==================================================================================
+  // setup waveform builder for HGCROC data
+  //==================================================================================
+  waveform_fit_base *waveform_builder = nullptr;
+  if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101 ){
+    waveform_builder = new max_sample_fit();
+  } else {
+    waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+  }
+  
+  //==================================================================================
   // process events from tree
   //==================================================================================
   for(int i=0; i<evts && i < maxEvents ; i++){
@@ -2706,6 +2728,28 @@ bool Analyses::VisualizeWaveform(void){
       int cellID = aTile->GetCellID();
       ithSpectra=hSpectra.find(cellID);
       ithSpectraTrigg=hSpectraTrigg.find(cellID);
+      
+      //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+      // possibly reevaluate waveform
+      //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+      if (GetHGCROCOptInteg() > 99){
+        // pedestals
+        double ped    = calib.GetPedestalMeanL(cellID);
+        double pedErr = calib.GetPedestalSigL(cellID);
+        if (ped == -1000){
+          ped     = calib.GetPedestalMeanH(cellID);
+          pedErr  = calib.GetPedestalSigH(cellID);
+          if (ped == -1000){
+            ped     = aTile->GetPedestal();
+            pedErr  = 5;
+          }
+        }
+        // reevaluate waveform
+        waveform_builder->set_waveform(aTile->GetADCWaveform());
+        waveform_builder->fit_with_average_ped(ped);
+        aTile->SetIntegratedADC(waveform_builder->get_E());
+        aTile->SetPedestal(waveform_builder->get_pedestal());
+      }
       
       // obtain integrated tile quantities for histo filling
       double adc = aTile->GetIntegratedADC();
@@ -2846,6 +2890,16 @@ bool Analyses::GetScaling(void){
   DetConf::Type detConf   = setup->GetDetectorConfig();
   
   //==================================================================================
+  // setup waveform builder for HGCROC data
+  //==================================================================================
+  waveform_fit_base *waveform_builder = nullptr;
+  if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101){
+    waveform_builder = new max_sample_fit();
+  } else {
+    waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+  }
+  
+  //==================================================================================
   // first pass over tree to extract spectra 
   //==================================================================================
   // entering histoOutput file
@@ -2909,8 +2963,31 @@ bool Analyses::GetScaling(void){
       } else if (typeRO == ReadOut::Type::Hgcroc) { 
         Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
         if (i == 0 && debug > 2) std::cout << ((TString)setup->DecodeCellID(aTile->GetCellID())).Data() << std::endl;
+        long cellID = aTile->GetCellID();
         
-        ithSpectra=hSpectra.find(aTile->GetCellID());
+        //-------------------------------------------------------------------------------
+        // possibly reevaluate waveform
+        //-------------------------------------------------------------------------------
+        if (GetHGCROCOptInteg() > 99){
+          // pedestals
+          double ped    = calib.GetPedestalMeanL(cellID);
+          double pedErr = calib.GetPedestalSigL(cellID);
+          if (ped == -1000){
+            ped     = calib.GetPedestalMeanH(cellID);
+            pedErr  = calib.GetPedestalSigH(cellID);
+            if (ped == -1000){
+              ped     = aTile->GetPedestal();
+              pedErr  = 5;
+            }
+          }
+          // reevaluate waveform
+          waveform_builder->set_waveform(aTile->GetADCWaveform());
+          waveform_builder->fit_with_average_ped(ped);
+          aTile->SetIntegratedADC(waveform_builder->get_E());
+          aTile->SetPedestal(waveform_builder->get_pedestal());
+        }
+        
+        ithSpectra=hSpectra.find(cellID);
         double adc = aTile->GetIntegratedADC();        
         double tot = aTile->GetRawTOT();
         double toa = aTile->GetRawTOA();
@@ -2924,8 +3001,8 @@ bool Analyses::GetScaling(void){
           ithSpectra->second.FillHGCROC(adc,toa,tot);
         } else {
           RootOutputHist->cd("IndividualCells");
-          hSpectra[aTile->GetCellID()]=TileSpectra("mip1st",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(), debug);
-          hSpectra[aTile->GetCellID()].FillHGCROC(adc,toa,tot);
+          hSpectra[cellID]=TileSpectra("mip1st",cellID,calib.GetTileCalib(cellID),event.GetROtype(), debug);
+          hSpectra[cellID].FillHGCROC(adc,toa,tot);
           RootOutput->cd();
         }
         
@@ -3245,9 +3322,9 @@ bool Analyses::GetScaling(void){
         bool localMuonTrigg = false;
 
         // read current tile
-        ithSpectraTrigg=hSpectraTrigg.find(aTile->GetCellID());
-        double hgCorr = aTile->GetADCHigh()-calib.GetPedestalMeanH(aTile->GetCellID());
-        double lgCorr = aTile->GetADCLow()-calib.GetPedestalMeanL(aTile->GetCellID());
+        ithSpectraTrigg=hSpectraTrigg.find(currCellID);
+        double hgCorr = aTile->GetADCHigh()-calib.GetPedestalMeanH(currCellID);
+        double lgCorr = aTile->GetADCLow()-calib.GetPedestalMeanL(currCellID);
 
         if (chargeTotChInLayer[chInLayer] > minFracTriggThre* meanPedSign){
           triggPrim = event.CalculateLocalMuonTrigg(calib, rand, currCellID, localTriggerTiles, avLGHGCorr);
@@ -3271,7 +3348,7 @@ bool Analyses::GetScaling(void){
           // only fill tile spectra if 4 surrounding tiles on average are compatible with muon response
           if (localMuonTrigg){
             aTile->SetLocalTriggerBit(1);
-            ithSpectraTrigg=hSpectraTrigg.find(aTile->GetCellID());
+            ithSpectraTrigg=hSpectraTrigg.find(currCellID);
             ithSpectraTrigg->second.FillSpectraCAEN(lgCorr,hgCorr);
             if (hgCorr > 3*calib.GetPedestalSigH(currCellID) && lgCorr > 3*calib.GetPedestalSigL(currCellID) && hgCorr < 3900 )
               ithSpectraTrigg->second.FillCorrCAEN(lgCorr,hgCorr);
@@ -3285,6 +3362,29 @@ bool Analyses::GetScaling(void){
         Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
         if (i == 0 && debug > 2) std::cout << ((TString)setup->DecodeCellID(aTile->GetCellID())).Data() << std::endl;
         long currCellID = aTile->GetCellID();
+      
+        //-------------------------------------------------------------------------------
+        // possibly reevaluate waveform
+        //-------------------------------------------------------------------------------
+        if (GetHGCROCOptInteg() > 99){
+          // pedestals
+          double ped    = calib.GetPedestalMeanL(currCellID);
+          double pedErr = calib.GetPedestalSigL(currCellID);
+          if (ped == -1000){
+            ped     = calib.GetPedestalMeanH(currCellID);
+            pedErr  = calib.GetPedestalSigH(currCellID);
+            if (ped == -1000){
+              ped     = aTile->GetPedestal();
+              pedErr  = 5;
+            }
+          }
+          // reevaluate waveform
+          waveform_builder->set_waveform(aTile->GetADCWaveform());
+          waveform_builder->fit_with_average_ped(ped);
+          aTile->SetIntegratedADC(waveform_builder->get_E());
+          aTile->SetPedestal(waveform_builder->get_pedestal());
+        }
+        
         
         ithSpectraTrigg=hSpectraTrigg.find(aTile->GetCellID());
         // double adc = aTile->GetPedestal()+aTile->GetIntegratedADC();
@@ -4666,6 +4766,16 @@ bool Analyses::RunEvalLocalTriggers(void){
   double avLGHGCorr   = calib.GetAverageLGHGCorr();
   std::cout << "average HG mip: " << averageScale << "\t per tile: " <<  averageScalePerTile << "\t active ch: "<< actCh1st << "\t av NTiles/seg: " << averageNTiles << std::endl;
   
+  //==================================================================================
+  // setup waveform builder for HGCROC data
+  //==================================================================================
+  waveform_fit_base *waveform_builder = nullptr;
+  if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101){
+    waveform_builder = new max_sample_fit();
+  } else {
+    waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+  }
+  
   // setup local trigger sel
   TRandom3* rand    = new TRandom3();
   Int_t localTriggerTiles     = 4;
@@ -4768,6 +4878,28 @@ bool Analyses::RunEvalLocalTriggers(void){
         Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
         int currCellID = aTile->GetCellID();  
         
+        //-------------------------------------------------------------------------------
+        // possibly reevaluate waveform
+        //-------------------------------------------------------------------------------
+        if (GetHGCROCOptInteg() > 99){
+          // pedestals
+          double ped    = calib.GetPedestalMeanL(currCellID);
+          double pedErr = calib.GetPedestalSigL(currCellID);
+          if (ped == -1000){
+            ped     = calib.GetPedestalMeanH(currCellID);
+            pedErr  = calib.GetPedestalSigH(currCellID);
+            if (ped == -1000){
+              ped     = aTile->GetPedestal();
+              pedErr  = 5;
+            }
+          }
+          // reevaluate waveform
+          waveform_builder->set_waveform(aTile->GetADCWaveform());
+          waveform_builder->fit_with_average_ped(ped);
+          aTile->SetIntegratedADC(waveform_builder->get_E());
+          aTile->SetPedestal(waveform_builder->get_pedestal());
+        }
+      
         // calculate trigger primitives
         aTile->SetLocalTriggerPrimitive(event.CalculateLocalMuonTrigg(calib, rand, currCellID, localTriggerTiles, 0.));
         
@@ -4801,9 +4933,9 @@ bool Analyses::RunEvalLocalTriggers(void){
         double tot = aTile->GetRawTOT();
         double toa = aTile->GetRawTOA();
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        //-------------------------------------------------------------------------------
         // filling single tile spectra for monitoring
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        //-------------------------------------------------------------------------------
         ithSpectraTrigg = hSpectraTrigg.find(currCellID);
         ithSpectra      = hSpectra.find(currCellID);
         
@@ -5168,8 +5300,12 @@ bool Analyses::Calibrate(void){
   // setup waveform builder for HGCROC data
   //==================================================================================
   waveform_fit_base *waveform_builder = nullptr;
-  waveform_builder = new max_sample_fit();
-  
+  if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101){
+    waveform_builder = new max_sample_fit();
+  } else {
+    waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+  }
+      
   //=============================================================================================
   // Run over all events in tree
   //=============================================================================================
@@ -5820,7 +5956,6 @@ bool Analyses::OverWriteSetupTree(void){
   
   return true;
 }
-
 
 //***********************************************************************************************
 //*********************** Save local muon triggers only ***************************************************

@@ -123,6 +123,7 @@ add_library(WaveformFitting STATIC
   waveform_fitting/waveform_fit_base.cc
   waveform_fitting/crystal_ball_fit.cc
   waveform_fitting/max_sample_fit.cc
+  waveform_fitting/max_sample_fit_n_integ.cc
 )
 target_include_directories(WaveformFitting PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(WaveformFitting ${ROOT_LIBRARIES})

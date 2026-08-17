@@ -294,6 +294,10 @@ bool EvaluateRecoEffiGHCROC::DoEvaluateRecoEffiHGCROC(){
     for (const auto& run : rED){
       std::cout << (TString)(PrintRunRecData(run.second, true)).Data();
     }
+    
+    Double_t maxPlotEffi = 1.05;
+    if (minEffi < 0.3)
+      maxPlotEffi        = 1.2;
   
     graphRecTrigger->Sort();
     graphRecTrigger->GetXaxis()->SetTitle("Run Nr.");
@@ -334,9 +338,9 @@ bool EvaluateRecoEffiGHCROC::DoEvaluateRecoEffiHGCROC(){
       minTrigg             = 1;
     
     PlotTrendingCorr (canvas, 0.95,  0.95, relSize, textSizePixel, 
-                  graphRecEffi, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, minEffi*0.9, 1.05, Form("%s/RecEffi",outputDir.Data()) , it->second);
+                  graphRecEffi, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, minEffi*0.9, maxPlotEffi, Form("%s/RecEffi",outputDir.Data()) , it->second);
     PlotTrendingMultiSpecies (canvas, 0.95,  0.95, relSize, textSizePixel, 
-                  graphRecEffiSpecies, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, minEffi*0.9, 1.05, Form("%s/RecEffiSpecies",outputDir.Data()) , it->second);
+                  graphRecEffiSpecies, graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2, minEffi*0.9, maxPlotEffi, Form("%s/RecEffiSpecies",outputDir.Data()) , it->second);
     PlotTrendingCorr (canvas2, 0.95,  0.95, relSize, textSizePixel, 
                   graphRecEffiVsNAttemp, minEffi*0.95 , 1, 1e3, maxTrigg*2, Form("%s/RecEffiVsAttempTriggers",outputDir.Data()) , it->second);
     PlotTrendingMultiSpecies (canvas2, 0.95,  0.95, relSize, textSizePixel, 
@@ -345,7 +349,7 @@ bool EvaluateRecoEffiGHCROC::DoEvaluateRecoEffiHGCROC(){
     PlotTrendingMultiGraph (canvas3, 0.95,  0.95, relSize, textSizePixel, 
                             graphTrigger, graphRecTrigger, graphRecEffi,
                             graphTrigger->GetX()[0]-2 , graphTrigger->GetX()[graphTrigger->GetN()-1]+2, 
-                            minTrigg, TMath::MaxElement(graphTrigger->GetN(),graphTrigger->GetY())*50. , minEffi*0.9, 1.05, 
+                            minTrigg, TMath::MaxElement(graphTrigger->GetN(),graphTrigger->GetY())*50. , minEffi*0.9, maxPlotEffi, 
                             Form("%s/TriggersRecComp",outputDir.Data()), it->second, 
                             "received", "reco.", "#varepsilon_{rec}" );
     for (int f = 0; f < maxFPGA; f++){
@@ -362,7 +366,7 @@ bool EvaluateRecoEffiGHCROC::DoEvaluateRecoEffiHGCROC(){
       PlotTrendingMultiGraph (canvas3, 0.95,  0.95, relSize, textSizePixel, 
                               graphTriggerFPGA[f], graphRecTriggerFPGA[f], graphEffiFPGA[f],
                               graphTriggerFPGA[f]->GetX()[0]-2 , graphTriggerFPGA[f]->GetX()[graphTriggerFPGA[f]->GetN()-1]+2, 
-                              minTrigg, TMath::MaxElement(graphTriggerFPGA[f]->GetN(),graphTriggerFPGA[f]->GetY())*50. , minEffi*0.9, 1.05, 
+                              minTrigg, TMath::MaxElement(graphTriggerFPGA[f]->GetN(),graphTriggerFPGA[f]->GetY())*50. , minEffi*0.9, maxPlotEffi, 
                               Form("%s/TriggersRecComp_FPGA_%d",outputDir.Data(),f), it->second, 
                               "received", "reco.", "#varepsilon_{rec, FPGA}" );
     }
@@ -382,7 +386,7 @@ bool EvaluateRecoEffiGHCROC::DoEvaluateRecoEffiHGCROC(){
     PlotTrendingMultiFPGA (canvas, 0.95,  0.95, relSize, textSizePixel, 
                         graphRecEffi,  graphEffiFPGA, maxFPGA,
                         graphRecEffi->GetX()[0]-2 , graphRecEffi->GetX()[graphRecEffi->GetN()-1]+2,
-                        minEffi*0.9, 1.05, 
+                        minEffi*0.9, maxPlotEffi, 
                         Form("%s/EffiFPGAOverview",outputDir.Data()),
                         it->second);    
     

@@ -16,6 +16,7 @@
 #include "waveform_fitting/waveform_fit_base.h"
 #include "waveform_fitting/crystal_ball_fit.h"
 #include "waveform_fitting/max_sample_fit.h"
+#include "waveform_fitting/max_sample_fit_n_integ.h"
 
 
 // ****************************************************************************

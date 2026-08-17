@@ -51,6 +51,8 @@ class HGCROC_Waveform_Analysis{
   inline int GetMaxEvents(void)                 const {return maxEvents;};
   inline int GetFixedTOASample(void)            const {return fixedTOASample;};
   inline int GetFixedROChannel(void)            const {return fixedROCh;};
+  inline int GetHGCROCNSampleInteg(void)        const {return nSampelHGCROCInt;};
+  inline int GetHGCROCOptInteg(void)            const {return optHGCROCInt;};
   
   //setter methods
   //Overload method for boolean...or is it too dangerous?
@@ -78,6 +80,12 @@ class HGCROC_Waveform_Analysis{
   inline void SetFixedTOASample(int s)            {fixedTOASample = s;};
   inline void SetFixedROChannel(int r)            {fixedROCh = r;};
   inline void SetCellList(TString name)           {cellList=name;};  
+  inline void SetHGCROCNSampleInteg(int n)       {optHGCROCInt      = 1; 
+                                                  nSampelHGCROCInt  = n;
+                                                  };
+  inline void SetHGCROCNSampleIntegForced(int n) {optHGCROCInt      = 101; 
+                                                  nSampelHGCROCInt  = n;
+                                                  };
   
   //General methods
   bool CreateOutputRootFile(void);
@@ -122,6 +130,9 @@ class HGCROC_Waveform_Analysis{
   int maxEvents               = -1;
   int fixedTOASample          = -1;
   int fixedROCh               = -1;
+  int optHGCROCInt            = 0;
+  int nSampelHGCROCInt        = 1;
+
   
   TTree* TsetupIn=nullptr;
   TTree* TsetupOut=nullptr;

@@ -24,6 +24,7 @@
 #include "waveform_fitting/waveform_fit_base.h"
 #include "waveform_fitting/crystal_ball_fit.h"
 #include "waveform_fitting/max_sample_fit.h"
+#include "waveform_fitting/max_sample_fit_n_integ.h"
 
 // ****************************************************************************
 // Checking and opening input and output files
@@ -287,7 +288,12 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   // setup waveform builder for HGCROC data
   //==================================================================================
   waveform_fit_base *waveform_builder = nullptr;
-  waveform_builder = new max_sample_fit();
+  if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101 ){
+    waveform_builder = new max_sample_fit();
+  } else {
+    waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+  }
+
   double minNSigma = 5;
   int nCellsAboveTOA  = 0;
   int nCellsAboveMADC = 0;

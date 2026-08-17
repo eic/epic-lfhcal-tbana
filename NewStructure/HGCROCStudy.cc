@@ -39,7 +39,8 @@ void PrintHelp(char* exe){
   std::cout<<"-L LLL   enable testing with only limited number of events"<<std::endl;
   std::cout<<"-o vvv   Output file name (mandatory)"<<std::endl;
   std::cout<<"-O kkk   Output directory name for plots (mandatory)"<<std::endl;
-  std::cout<<"-w       Analyse waveform of HGCROC data"<<std::endl;
+  std::cout<<"-q q     switch HGCROC signal to $q samples surrounding max sample "<<std::endl;
+  std::cout<<"-Q q     switch HGCROC signal to $q samples surrounding max sample, force signal reevaluation "<<std::endl;
   std::cout<<"-s sss   Plot correlation plots TOA only for TOA sample sss "<<std::endl;
   std::cout<<"-t ttt   Use external ToA offset calib-file "<<std::endl;
   std::cout<<"-T       extract time walk "<<std::endl;
@@ -57,7 +58,7 @@ int main(int argc, char* argv[]){
   }
   HGCROC_Waveform_Analysis AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"B:c:d:E:fF:i:hk:l:L:o:O:r:s:t:Twx"))!=-1){
+  while((c=getopt(argc,argv,"B:c:d:E:fF:i:hk:l:L:o:O:q:Q:r:s:t:Twx"))!=-1){
     switch(c){
     
     case 'B':
@@ -108,6 +109,14 @@ int main(int argc, char* argv[]){
     case 'O':
       std::cout<<"HGCROCStudy: Outputdir plots to be saved in: "<<optarg<<std::endl;
       AnAnalysis.SetPlotOutputDir(Form("%s",optarg));
+      break;
+    case 'q':
+      std::cout<<"HGCROCStudy: Switch HGCROC waveform integration"<<std::endl;
+      AnAnalysis.SetHGCROCNSampleInteg(atoi(optarg));
+      break;
+    case 'Q':
+      std::cout<<"HGCROCStudy: Switch HGCROC waveform integration"<<std::endl;
+      AnAnalysis.SetHGCROCNSampleIntegForced(atoi(optarg));
       break;
     case 'r':
       std::cout<<"HGCROCStudy: run list file from: "<<optarg<<std::endl;
