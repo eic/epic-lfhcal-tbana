@@ -266,9 +266,9 @@ bool Analyses::Process(void){
       // waveform_builder->set_parameter(25, 160);
 
       if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101){
-        waveform_builder = new max_sample_fit();
-      } else {
         waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+      } else {
+        waveform_builder = new max_sample_fit();
       }
       std::cout << "Running HGCROC conversion" << std::endl;
       status=run_hgcroc_conversion(this, waveform_builder);
@@ -1491,9 +1491,9 @@ bool Analyses::EvaluateHGCROCToAPhases(void){
   //==================================================================================
   waveform_fit_base *waveform_builder = nullptr;
   if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101){
-    waveform_builder = new max_sample_fit();
-  } else {
     waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+  } else {
+    waveform_builder = new max_sample_fit();
   }
   
   //==================================================================================
@@ -1869,9 +1869,9 @@ bool Analyses::TransferCalib(void){
   //==================================================================================
   waveform_fit_base *waveform_builder = nullptr;
   if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101){
-    waveform_builder = new max_sample_fit();
-  } else {
     waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+  } else {
+    waveform_builder = new max_sample_fit();
   }
   double minNSigma = 5;
   int nCellsAboveTOA  = 0;
@@ -2703,9 +2703,9 @@ bool Analyses::VisualizeWaveform(void){
   //==================================================================================
   waveform_fit_base *waveform_builder = nullptr;
   if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101 ){
-    waveform_builder = new max_sample_fit();
-  } else {
     waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+  } else {
+    waveform_builder = new max_sample_fit();
   }
   
   //==================================================================================
@@ -2894,9 +2894,9 @@ bool Analyses::GetScaling(void){
   //==================================================================================
   waveform_fit_base *waveform_builder = nullptr;
   if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101){
-    waveform_builder = new max_sample_fit();
-  } else {
     waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+  } else {
+    waveform_builder = new max_sample_fit();
   }
   
   //==================================================================================
@@ -4771,9 +4771,9 @@ bool Analyses::RunEvalLocalTriggers(void){
   //==================================================================================
   waveform_fit_base *waveform_builder = nullptr;
   if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101){
-    waveform_builder = new max_sample_fit();
-  } else {
     waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+  } else {
+    waveform_builder = new max_sample_fit();
   }
   
   // setup local trigger sel
@@ -5301,9 +5301,9 @@ bool Analyses::Calibrate(void){
   //==================================================================================
   waveform_fit_base *waveform_builder = nullptr;
   if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101){
-    waveform_builder = new max_sample_fit();
-  } else {
     waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+  } else {
+    waveform_builder = new max_sample_fit();
   }
       
   //=============================================================================================

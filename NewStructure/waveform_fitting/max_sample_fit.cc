@@ -16,7 +16,7 @@ max_sample_fit::~max_sample_fit() {
 
 void max_sample_fit::fit() {
     if (waveform.empty()) {
-        std::cerr << "Waveform has not been set" << std::endl;
+        std::cerr << "max_sample_fit: Waveform has not been set" << std::endl;
         return;
     }
     pedestal_value      = waveform[0];
@@ -37,7 +37,7 @@ void max_sample_fit::fit() {
 
 void max_sample_fit::fit_with_average_ped(double ped) {
     if (waveform.empty()) {
-        std::cerr << "Waveform has not been set" << std::endl;
+        std::cerr << "max_sample_fit: Waveform has not been set" << std::endl;
         return;
     }
     pedestal_value      = ped;

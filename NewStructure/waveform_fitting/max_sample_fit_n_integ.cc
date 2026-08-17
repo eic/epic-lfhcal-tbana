@@ -24,7 +24,7 @@ max_sample_fit_n_integ::max_sample_fit_n_integ( int n) : waveform_fit_base{} {
     stale             = true;
     nSample           = n;
     if (!( nSample == 3 || nSample == 5)) {
-      std::cerr << "Waveform has not been set" << std::endl;
+      std::cerr << "max_sample_fit_n_integ: Waveform has not been set" << std::endl;
       return;
     }
 }
@@ -34,7 +34,7 @@ max_sample_fit_n_integ::~max_sample_fit_n_integ() {
 
 void max_sample_fit_n_integ::fit() {
     if (waveform.empty()) {
-        std::cerr << "Waveform has not been set" << std::endl;
+        std::cerr << "max_sample_fit_n_integ: Waveform has not been set" << std::endl;
         return;
     }
     pedestal_value      = waveform[0];
@@ -74,7 +74,7 @@ void max_sample_fit_n_integ::fit() {
 
 void max_sample_fit_n_integ::fit_with_average_ped(double ped) {
     if (waveform.empty()) {
-        std::cerr << "Waveform has not been set" << std::endl;
+        std::cerr << "max_sample_fit_n_integ: Waveform has not been set" << std::endl;
         return;
     }
     pedestal_value      = ped;

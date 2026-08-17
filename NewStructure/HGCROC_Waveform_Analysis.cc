@@ -289,9 +289,9 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   //==================================================================================
   waveform_fit_base *waveform_builder = nullptr;
   if (GetHGCROCOptInteg() == 1 || GetHGCROCOptInteg() == 101 ){
-    waveform_builder = new max_sample_fit();
-  } else {
     waveform_builder = new max_sample_fit_n_integ(GetHGCROCNSampleInteg());
+  } else {
+    waveform_builder = new max_sample_fit();
   }
 
   double minNSigma = 5;
