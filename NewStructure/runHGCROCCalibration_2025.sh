@@ -67,9 +67,20 @@ if [ $2 = "pedestal" ]; then
 		runs='ped_MuonScan2'
   fi
 
-  for runNr in $runs; do 
-    printf -v runNrPed "%03d" "$runNr"
-    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNrPed.root -f -o $dataDirOut/rawHGCROC_wPed_$runNrPed.root -O $PlotBaseDir/PlotsPedestal/Run$runNrPed -r $runNrFile
+  for runNr in $runs; do
+
+    if [[ "$runNr" =~ ^[0-9]+$ ]]; then
+        printf -v runNrPed "%03d" "$((10#$runNr))"
+    else
+        runNrPed="$runNr"
+    fi
+
+    ./DataPrep -a -d 1 -p \
+        -i "$dataDirRaw/rawHGCROC_$runNrPed.root" \
+        -f \
+        -o "$dataDirOut/rawHGCROC_wPed_$runNrPed.root" \
+        -O "$PlotBaseDir/PlotsPedestal/Run$runNrPed" \
+        -r "$runNrFile"
   done
 fi
 
