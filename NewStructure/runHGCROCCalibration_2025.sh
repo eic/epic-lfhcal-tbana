@@ -67,10 +67,10 @@ if [ $2 = "pedestal" ]; then
 	elif [ $3 = "HVScan2" ]; then
 		runs='ped_MuonScan2'
   fi
-
-    for runNr in $runs; do 
+  
+  for runNr in $runs; do 
     ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNrPed.root -f -o $dataDirOut/rawHGCROC_wPed_$runNrPed.root -O $PlotBaseDir/PlotsPedestal/Run$runNrPed -r $runNrFile
-  	done
+  done
 fi
 
 if [ $2 = "toaPhase" ]; then 
