@@ -27,13 +27,15 @@ elif [ $1 = "egpott" ]; then
   PlotBaseDir=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan2/plots
   PlotDirCompCal=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan2/plots/CompareCalib
 elif [ $1 = "yale" ]; then	
-  dataDirRaw=/mnt/wwn-0x5000c500d93c8d2c-part2/Test_Beams/202511_PST09/rawroot
-  dataDirOut=/mnt/wwn-0x5000c500d93c8d2c-part2/Test_Beams/202511_PST09/rawroot
-  PlotBaseDir=/mnt/wwn-0x5000c500d93c8d2c-part2/Test_Beams/202511_PST09/plots
+  dataDirRaw=/media/lfhcal/LFHCal_Backup_1/Test_Beams/202511_PST09/rawroot
+  dataDirOut=/media/lfhcal/LFHCal_Backup_1/Test_Beams/202511_PST09/rawroot
+  PlotBaseDir=/media/lfhcal/LFHCal_Backup_1/Test_Beams/202511_PST09/plots
+	
 else
   echo "Please select a known user name, otherwise I don't know where the data is"
   exit
 fi
+
 
 # run pedest extraction for different run numbers
 if [ $2 = "pedestal" ]; then
@@ -44,7 +46,6 @@ if [ $2 = "pedestal" ]; then
   # reference pedestal runs for various campaigns
   elif [ $3 = "Ref" ]; then
     runs='270'
-
   elif [ $3 = "FullSetA" ]; then
     runs='Muon1_ped_FullSetA Muon2_ped_FullSetA'
  	elif [ $3 = "FullSetB" ]; then
@@ -67,45 +68,38 @@ if [ $2 = "pedestal" ]; then
 		runs='ped_MuonScan2'
   fi
 
-  for runNr in $runs; do
-
-    if [[ "$runNr" =~ ^[0-9]+$ ]]; then
-        printf -v runNrPed "%03d" "$((10#$runNr))"
-    else
-        runNrPed="$runNr"
-    fi
-
-    ./DataPrep -a -d 1 -p \
-        -i "$dataDirRaw/rawHGCROC_$runNrPed.root" \
-        -f \
-        -o "$dataDirOut/rawHGCROC_wPed_$runNrPed.root" \
-        -O "$PlotBaseDir/PlotsPedestal/Run$runNrPed" \
-        -r "$runNrFile"
-  done
+    for runNr in $runs; do 
+    ./DataPrep -a -d 1 -p -i $dataDirRaw/rawHGCROC_$runNrPed.root -f -o $dataDirOut/rawHGCROC_wPed_$runNrPed.root -O $PlotBaseDir/PlotsPedestal/Run$runNrPed -r $runNrFile
+  	done
 fi
 
 if [ $2 = "toaPhase" ]; then 
-  runNrPed='161'
-  if [ $3 = "Hadron" ]; then 
+  if [ $3 = "Hadron" ]; then
+		runPed='161'
     runs='178'
-    for rn in $runs; do 
-      printf -v runNr "%03d" "$rn"
-      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirOut/rawHGCROC_wPed_$runNrPed.root #-F png
-    done
   elif [ $3 = "Electron" ]; then 
-    for runNr in $runs; do 
-      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
-    done
-  elif [ $3 = "Muon" ]; then 
-    #runs='028 029 030 031 032 033 034 035' # 1st HV scan
-    runNrPed='161'
-    runs='070'
-    for runNr in $runs; do 
-      ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_wPed_$runNrPed.root
-      #./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root #-F png
-    done
+    runPed=''
+		runs=''
+	elif [ $3 = "Muon" ]; then
+		runPed='161'
+		runs='070'
+	elif [ $3 = "FullSetA_1" ]; then
+		runPed='Muon1_ped_FullSetA'
+		runs=''
+	elif [ $3 = "FullSetA_2" ]; then
+		runPed='Muon2_ped_FullSetA'
+		runs=''
+	elif [ $3 = "FullSetB_1" ]; then
+		runPed='Muon1_ped_FullSetB'
+		runs=''
+	elif [ $3 = "FullSetB_2" ]; then
+		runPed='Muon2_ped_FullSetB'
+		runs=''
   fi
-
+	for runNr in $runs; do
+    ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseD    ir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_wPed_$runNrPed.root
+  done
+	#./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$    runNr.root -O $PlotBaseDir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_miptrigg_wPedwMuon_wBC_$ru    nNr.root #-F png done
 fi
 
 if [ $2 = "wave" ]; then  
