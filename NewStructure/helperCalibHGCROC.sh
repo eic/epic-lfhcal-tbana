@@ -20,7 +20,7 @@ function MuonCalibHGCROC()
     echo "badchannelMap:" $7
     echo "ToAPhase-Offset:" $8
   fi
-  printf -v runNrPed "%03d" "$2"
+  # printf -v runNrPed "%03d" "$2"
   runNrPed=$2
   runNrMuon=$3
   echo "run list:" $runList
