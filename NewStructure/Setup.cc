@@ -235,8 +235,12 @@ double Setup::GetZ(int cellID) const{
     return cellD/2 + lay*cellD/*cm*/;
   } else {
     double tempZ = 0;
+    int row = GetRow(cellID);
+    int col = GetColumn(cellID);
+    int mod = GetModule(cellID);
     for (int l = 0; l < lay; l++){
-      tempZ = tempZ+GetSegmentDepth(cellID);
+      long tempCellID = GetCellID(row, col,l, mod);
+      tempZ = tempZ+GetSegmentDepth(tempCellID);
     }  
     tempZ = tempZ+GetSegmentDepth(cellID)/2.;
     return tempZ;

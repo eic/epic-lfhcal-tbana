@@ -51,7 +51,7 @@ class HGCROC_Waveform_Analysis{
   inline int GetMaxEvents(void)                 const {return maxEvents;};
   inline int GetFixedTOASample(void)            const {return fixedTOASample;};
   inline int GetFixedROChannel(void)            const {return fixedROCh;};
-  inline int GetHGCROCNSampleInteg(void)        const {return nSampelHGCROCInt;};
+  inline int GetHGCROCNSampleInteg(void)        const {return nSampleHGCROCInt;};
   inline int GetHGCROCOptInteg(void)            const {return optHGCROCInt;};
   
   //setter methods
@@ -81,10 +81,10 @@ class HGCROC_Waveform_Analysis{
   inline void SetFixedROChannel(int r)            {fixedROCh = r;};
   inline void SetCellList(TString name)           {cellList=name;};  
   inline void SetHGCROCNSampleInteg(int n)       {optHGCROCInt      = 1; 
-                                                  nSampelHGCROCInt  = n;
+                                                  nSampleHGCROCInt  = n;
                                                   };
   inline void SetHGCROCNSampleIntegForced(int n) {optHGCROCInt      = 101; 
-                                                  nSampelHGCROCInt  = n;
+                                                  nSampleHGCROCInt  = n;
                                                   };
   
   //General methods
@@ -131,7 +131,7 @@ class HGCROC_Waveform_Analysis{
   int fixedTOASample          = -1;
   int fixedROCh               = -1;
   int optHGCROCInt            = 0;
-  int nSampelHGCROCInt        = 1;
+  int nSampleHGCROCInt        = 1;
 
   
   TTree* TsetupIn=nullptr;

@@ -401,8 +401,18 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
   
   double fitrange[2]      = {50, 2000};
   if (ROType == ReadOut::Type::Hgcroc){
+    // default with max peak only
     fitrange[0] = 16;
     fitrange[1] = 200; 
+    // 3 samples around maximum
+    if (integSample == 3){
+      fitrange[0] = 50;
+      fitrange[1] = 450; 
+    // 5 samples around maximum
+    } else if (integSample == 5){
+      fitrange[0] = 70;
+      fitrange[1] = 650; 
+    } 
   }
   if (impE){
     fitrange[0] = 0.6*avmip;
@@ -439,8 +449,17 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
     parlimitslo[0]  = 0.1;
     parlimitslo[1]  = 2;    
     parlimitshi[0]  = 100;    
-    parlimitshi[1]  = 200;  
+    parlimitshi[1]  = 200;
     parlimitshi[3]  = calib->PedestalSigH*30;    
+    if (integSample == 3){
+      startvalues[1]  = 100; 
+      parlimitslo[1]  = 20;    
+      parlimitshi[1]  = 400;
+    } else if (integSample == 5){
+      startvalues[1]  = 250; 
+      parlimitslo[1]  = 50;    
+      parlimitshi[1]  = 500;
+    } 
   }
   
   if (impE && (avmip =! -1000)){

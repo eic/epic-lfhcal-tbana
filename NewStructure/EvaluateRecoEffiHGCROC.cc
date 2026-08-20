@@ -403,10 +403,27 @@ bool EvaluateRecoEffiGHCROC::DoEvaluateRecoEffiHGCROC(){
     graphResetsOffset->GetXaxis()->SetTitle("Run Nr.");
     graphResetsOffset->GetYaxis()->SetTitle("offset resets");
     
+    double maxBrokenPack  = 0;
+    double maxReadPack    = 0;
+    double maxFracBroken  = 0;
+    double maxOffset  = 0;
+    if (graphReadPackets->GetN() > 0){
+      maxReadPack = TMath::MaxElement(graphReadPackets->GetN(),graphReadPackets->GetY());
+    }
+    if (graphBrokenPackets->GetN() > 0){
+      maxBrokenPack = TMath::MaxElement(graphBrokenPackets->GetN(),graphBrokenPackets->GetY());
+    }
+    if (graphFracBrokenPackets->GetN() > 0){
+      maxFracBroken = TMath::MaxElement(graphFracBrokenPackets->GetN(),graphFracBrokenPackets->GetY());
+    }
+    if (graphResetsOffset->GetN() > 0){
+      maxOffset = TMath::MaxElement(graphResetsOffset->GetN(),graphResetsOffset->GetY());
+    }
+    
     PlotTrendingCorr (canvas2, 0.95,  0.95, relSize, textSizePixel, 
-                  graphBrokenPackets, graphBrokenPackets->GetX()[0]-2 , graphBrokenPackets->GetX()[graphBrokenPackets->GetN()-1]+2, 1, TMath::MaxElement(graphBrokenPackets->GetN(),graphBrokenPackets->GetY())*10. , Form("%s/DataBrokenPackets",outputDir.Data()) , it->second);
+                  graphBrokenPackets, graphBrokenPackets->GetX()[0]-2 , graphBrokenPackets->GetX()[graphBrokenPackets->GetN()-1]+2, 1, maxBrokenPack*10. , Form("%s/DataBrokenPackets",outputDir.Data()) , it->second);
     PlotTrendingCorr (canvas2, 0.95,  0.95, relSize, textSizePixel, 
-                  graphReadPackets, graphReadPackets->GetX()[0]-2 , graphReadPackets->GetX()[graphReadPackets->GetN()-1]+2, 1, TMath::MaxElement(graphReadPackets->GetN(),graphReadPackets->GetY())*10. , Form("%s/DataReadPacket",outputDir.Data()) , it->second);
+                  graphReadPackets, graphReadPackets->GetX()[0]-2 , graphReadPackets->GetX()[graphReadPackets->GetN()-1]+2, 1, maxReadPack*10. , Form("%s/DataReadPacket",outputDir.Data()) , it->second);
     PlotTrendingCorr (canvas, 0.95,  0.95, relSize, textSizePixel, 
                   graphFracBrokenPackets, graphFracBrokenPackets->GetX()[0]-2 , graphFracBrokenPackets->GetX()[graphFracBrokenPackets->GetN()-1]+2, 0, 10.5, Form("%s/FracBrokenPackset",outputDir.Data()) , it->second);
 
@@ -414,12 +431,12 @@ bool EvaluateRecoEffiGHCROC::DoEvaluateRecoEffiHGCROC(){
     PlotTrendingMultiGraph (canvas3, 0.95,  0.95, relSize, textSizePixel, 
                             graphReadPackets, graphBrokenPackets, graphFracBrokenPackets,
                             graphReadPackets->GetX()[0]-2 , graphReadPackets->GetX()[graphReadPackets->GetN()-1]+2, 
-                            1, TMath::MaxElement(graphReadPackets->GetN(),graphReadPackets->GetY())*10. , 0.00, 10.5, 
+                            1, maxReadPack*10. , 0.00, 10.5, 
                             Form("%s/DataPacketsComp",outputDir.Data()), it->second, 
                             "read", "invalid", "f = invalid/read" );
 
     PlotTrendingCorr (canvas, 0.95,  0.95, relSize, textSizePixel, 
-                  graphResetsOffset, graphResetsOffset->GetX()[0]-2 , graphResetsOffset->GetX()[graphResetsOffset->GetN()-1]+2, 0, TMath::MaxElement(graphResetsOffset->GetN(),graphResetsOffset->GetY())*1.2, Form("%s/OffsetResets",outputDir.Data()) , it->second);
+                  graphResetsOffset, graphResetsOffset->GetX()[0]-2 , graphResetsOffset->GetX()[graphResetsOffset->GetN()-1]+2, 0, maxOffset*1.2, Form("%s/OffsetResets",outputDir.Data()) , it->second);
     
     if (unconvertedDir.CompareTo("") != 0){
       Double_t minSize = 1;

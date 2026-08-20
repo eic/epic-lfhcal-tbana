@@ -1405,9 +1405,10 @@
           } else {
             tempHistT = ithSpectraTrigg->second.GetLG();
           }
-          SetMarkerDefaults(tempHistT, 24, 1, kRed+1, kRed+1, kFALSE);   
-          tempHistT->Draw("same,pe");
-          
+          if (tempHistT){
+            SetMarkerDefaults(tempHistT, 24, 1, kRed+1, kRed+1, kFALSE);   
+            tempHistT->Draw("same,pe");
+          }
           TString label           = Form("r:%d c:%d m:%d", r, c, m);
           if (p == 47){
             label = Form("r:%d c:%d m:%d layer %d", r, c, m, layer);

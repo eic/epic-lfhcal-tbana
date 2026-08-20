@@ -43,6 +43,8 @@ class DataAnalysis{
   inline double GetTimeMax(void)                const {return timemax;};
   inline double GetPercentMin(void)             const {return percentmin;};
   inline double GetPercentMax(void)             const {return percentmax;};
+  inline int GetHGCROCNSampleInteg(void)        const {return nSampleHGCROCInt;};
+  inline int GetHGCROCOptInteg(void)            const {return optHGCROCInt;};
   
   //setter methods
   //Overload method for boolean...or is it too dangerous?
@@ -67,6 +69,14 @@ class DataAnalysis{
   inline void SetPlotExtension(TString name)     {plotSuffix = name;};
   inline void SetMaximumEvents(int numevents)    {eventNumber = numevents;};
   
+  inline void SetHGCROCNSampleInteg(int n)       {optHGCROCInt      = 1; 
+                                                  nSampleHGCROCInt  = n;
+                                                  };
+  inline void SetHGCROCNSampleIntegForced(int n) {optHGCROCInt      = 101; 
+                                                  nSampleHGCROCInt  = n;
+                                                  };
+
+  
   //General methods
   bool CreateOutputRootFile(void);
   bool CreateOutputRootFileHist(void);
@@ -79,23 +89,26 @@ class DataAnalysis{
   TString OutputNameDirPlots;             // directory name of output for plots
   TString RootInputName;                  // file name of input root file 
   TString RunListInputName;               // file name run list 
-  TString plotSuffix        = "pdf";      // plot extension
-  TFile* RootOutput         =nullptr;     // root file output tree
-  TFile* RootOutputHist     =nullptr;     // root file output histos
-  TFile* RootInput          =nullptr;     // root file input 
-  bool RunQA                  = false;    // Flag to run QA routine
-  bool RunSimpleQA            = false;    // Flag to run QA routine
-  bool SaveCalibToFile        =false;     // Flag to save calib objects to text file
-  short ExtPlot               =0;         // Enable extended plotting
-  bool DeltaTimePlot         =false;         // Enable deltatime plotting
-  bool Overwrite              =false;     // Flag to overwrite outputs
-  int debug                   =0;         // debug level 
-  int yearData                =-1;        // data taking year externally set
-  int eventNumber             =-1;        // maximum events externally set
-  double timemin              =0;         // set min cut for deltatime
-  double timemax              =35000;     // set max cut for deltatime
-  double percentmax           =100;       // set min percent cut for deltatime
-  double percentmin           =0;         // set max percent cut for deltatime
+  TString plotSuffix          = "pdf";     // plot extension
+  TFile* RootOutput           = nullptr;   // root file output tree
+  TFile* RootOutputHist       = nullptr;   // root file output histos
+  TFile* RootInput            = nullptr;   // root file input 
+  bool RunQA                  = false;     // Flag to run QA routine
+  bool RunSimpleQA            = false;     // Flag to run QA routine
+  bool SaveCalibToFile        = false;     // Flag to save calib objects to text file
+  short ExtPlot               = 0;         // Enable extended plotting
+  bool DeltaTimePlot          = false;     // Enable deltatime plotting
+  bool Overwrite              = false;     // Flag to overwrite outputs
+  int debug                   = 0;         // debug level 
+  int yearData                = -1;        // data taking year externally set
+  int eventNumber             = -1;        // maximum events externally set
+  double timemin              = 0;         // set min cut for deltatime
+  double timemax              = 35000;     // set max cut for deltatime
+  double percentmax           = 100;       // set min percent cut for deltatime
+  double percentmin           = 0;         // set max percent cut for deltatime
+  int optHGCROCInt            = 0;
+  int nSampleHGCROCInt        = 1;
+
   RootSetupWrapper rsw;                   // Wrapper singleton class for setup
   RootSetupWrapper* rswptr;               // Pointer to wrapper for singleton class for setup
   Setup* setup;                           // geometry setup
@@ -104,12 +117,12 @@ class DataAnalysis{
   Event event;
   Event* eventptr;
   
-  TTree* TsetupIn=nullptr;
-  TTree* TsetupOut=nullptr;
-  TTree* TdataIn=nullptr;
-  TTree* TdataOut=nullptr;
-  TTree* TcalibIn=nullptr;
-  TTree* TcalibOut=nullptr;
+  TTree* TsetupIn   = nullptr;
+  TTree* TsetupOut  = nullptr;
+  TTree* TdataIn    = nullptr;
+  TTree* TdataOut   = nullptr;
+  TTree* TcalibIn   = nullptr;
+  TTree* TcalibOut  = nullptr;
 
  protected:
 

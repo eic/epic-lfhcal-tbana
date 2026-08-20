@@ -202,11 +202,11 @@ int main(int argc, char* argv[]){
       AnAnalysis.IsToTransferCalib(true);
       break;
     case 'q':
-      std::cout<<"DataPrep: Switch HGCROC waveform integration"<<std::endl;
+      std::cout<<"DataPrep: Switch HGCROC waveform integration, integrate " << optarg << " samples"<<std::endl;
       AnAnalysis.SetHGCROCNSampleInteg(atoi(optarg));
       break;
     case 'Q':
-      std::cout<<"DataPrep: Switch HGCROC waveform integration"<<std::endl;
+      std::cout<<"DataPrep: Switch HGCROC waveform integration, forced, integrate " << optarg << " samples"<<std::endl;
       AnAnalysis.SetHGCROCNSampleIntegForced(atoi(optarg));
       break;
     case 'r':

@@ -1113,7 +1113,7 @@ bool Analyses::GetPedestal(void){
           ithSpectra->second.FillCAEN(aTile->GetADCLow(),aTile->GetADCHigh());
         } else {
           RootOutputHist->cd("IndividualCells");
-          hSpectra[aTile->GetCellID()]=TileSpectra("1stExtraction",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()), event.GetROtype(), debug);
+          hSpectra[aTile->GetCellID()]=TileSpectra("1stExtraction",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()), event.GetROtype(), nSampleHGCROCInt, debug);
           hSpectra[aTile->GetCellID()].FillCAEN(aTile->GetADCLow(),aTile->GetADCHigh());
           RootOutput->cd();
         }
@@ -1143,7 +1143,7 @@ bool Analyses::GetPedestal(void){
         } else {
           // Make a new tile spectra if it isn't found
           RootOutputHist->cd("IndividualCells");
-          hSpectra[aTile->GetCellID()]= TileSpectra("1stExtraction", 4, aTile->GetCellID(), calib.GetTileCalib(aTile->GetCellID()), event.GetROtype(), debug);
+          hSpectra[aTile->GetCellID()]= TileSpectra("1stExtraction", 4, aTile->GetCellID(), calib.GetTileCalib(aTile->GetCellID()), event.GetROtype(), nSampleHGCROCInt, debug);
           hSpectra[aTile->GetCellID()].FillExtHGCROCPed(aTile->GetADCWaveform(),aTile->GetPedestal());
           RootOutput->cd();
         }
@@ -1925,7 +1925,7 @@ bool Analyses::TransferCalib(void){
             ithSpectra->second.FillExtCAEN(lgCorr,hgCorr, 0., 0.);
           } else {
             RootOutputHist->cd("IndividualCells");
-            hSpectra[aTile->GetCellID()]=TileSpectra("All",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectra[aTile->GetCellID()]=TileSpectra("All",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(), nSampleHGCROCInt, debug);
             hSpectra[aTile->GetCellID()].FillExtCAEN(lgCorr,hgCorr, 0., 0.);
             RootOutput->cd();
           }
@@ -1934,7 +1934,7 @@ bool Analyses::TransferCalib(void){
             ithSpectraTrigg->second.FillExtCAEN(lgCorr,hgCorr, 0., 0.);
           } else {
             RootOutputHist->cd("IndividualCellsRejected");
-            hSpectraTrigg[aTile->GetCellID()]=TileSpectra("Rejected",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectraTrigg[aTile->GetCellID()]=TileSpectra("Rejected",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(), nSampleHGCROCInt, debug);
             hSpectraTrigg[aTile->GetCellID()].FillExtCAEN(lgCorr,hgCorr, 0., 0.);
             RootOutput->cd();
           }
@@ -2024,7 +2024,7 @@ bool Analyses::TransferCalib(void){
           ithSpectra->second.FillWaveform(aTile->GetADCWaveform(),0);
         } else {
           RootOutputHist->cd("IndividualCells");
-          hSpectra[cellID]=TileSpectra("All",2,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+          hSpectra[cellID]=TileSpectra("All",2,cellID,calib.GetTileCalib(cellID),event.GetROtype(), nSampleHGCROCInt, debug);
           hSpectra[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
           hSpectra[cellID].FillWaveform(aTile->GetADCWaveform(),0);
           RootOutput->cd();
@@ -2038,7 +2038,7 @@ bool Analyses::TransferCalib(void){
             ithSpectraTrigg->second.FillWaveform(aTile->GetADCWaveform(),0);
           } else {
             RootOutputHist->cd("IndividualCellsTrigg");
-            hSpectraTrigg[cellID]=TileSpectra("signal",2,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+            hSpectraTrigg[cellID]=TileSpectra("signal",2,cellID,calib.GetTileCalib(cellID),event.GetROtype(), nSampleHGCROCInt, debug);
             hSpectraTrigg[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
             hSpectraTrigg[cellID].FillWaveform(aTile->GetADCWaveform(),0);
             RootOutput->cd();
@@ -2418,7 +2418,7 @@ bool Analyses::ReevaluateLGHGCorr(void){
         ithSpectra->second.FillExtCAEN(lgCorr,hgCorr, 0., 0.);
       } else {
         RootOutputHist->cd("IndividualCells");
-        hSpectra[aTile->GetCellID()]=TileSpectra("All",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+        hSpectra[aTile->GetCellID()]=TileSpectra("All",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(), nSampleHGCROCInt, debug);
         hSpectra[aTile->GetCellID()].FillExtCAEN(lgCorr,hgCorr, 0., 0.);
         RootOutput->cd();
       }
@@ -2765,7 +2765,7 @@ bool Analyses::VisualizeWaveform(void){
         ithSpectra->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
       } else {
         RootOutputHist->cd("IndividualCells");
-        hSpectra[cellID]=TileSpectra("full",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+        hSpectra[cellID]=TileSpectra("full",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(), nSampleHGCROCInt, debug);
         hSpectra[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
         hSpectra[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
       }
@@ -2776,7 +2776,7 @@ bool Analyses::VisualizeWaveform(void){
           ithSpectraTrigg->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
         } else {
           RootOutputHist->cd("IndividualCellsTrigg");
-          hSpectraTrigg[cellID]=TileSpectra("signal",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+          hSpectraTrigg[cellID]=TileSpectra("signal",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(), nSampleHGCROCInt, debug);
           hSpectraTrigg[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
           hSpectraTrigg[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
         }
@@ -2951,7 +2951,7 @@ bool Analyses::GetScaling(void){
             ithSpectra->second.FillCorrCAEN(lgCorr,hgCorr);
         } else {
           RootOutputHist->cd("IndividualCells");
-          hSpectra[aTile->GetCellID()]=TileSpectra("mip1st",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(), debug);
+          hSpectra[aTile->GetCellID()]=TileSpectra("mip1st",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(), nSampleHGCROCInt, debug);
           hSpectra[aTile->GetCellID()].FillSpectraCAEN(lgCorr,hgCorr);;
           if (hgCorr > 3*calib.GetPedestalSigH(aTile->GetCellID()) && lgCorr > 3*calib.GetPedestalSigL(aTile->GetCellID() && hgCorr < 3900) )
             hSpectra[aTile->GetCellID()].FillCorrCAEN(lgCorr,hgCorr);
@@ -3001,7 +3001,7 @@ bool Analyses::GetScaling(void){
           ithSpectra->second.FillHGCROC(adc,toa,tot);
         } else {
           RootOutputHist->cd("IndividualCells");
-          hSpectra[cellID]=TileSpectra("mip1st",cellID,calib.GetTileCalib(cellID),event.GetROtype(), debug);
+          hSpectra[cellID]=TileSpectra("mip1st",cellID,calib.GetTileCalib(cellID),event.GetROtype(), nSampleHGCROCInt, debug);
           hSpectra[cellID].FillHGCROC(adc,toa,tot);
           RootOutput->cd();
         }
@@ -3341,7 +3341,7 @@ bool Analyses::GetScaling(void){
             ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
           } else {
             RootOutputHist->cd("IndividualCellsTrigg");
-            hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+            hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(), nSampleHGCROCInt, debug);
             hSpectraTrigg[currCellID].FillTrigger(aTile->GetLocalTriggerPrimitive());;
             RootOutput->cd();
           }
@@ -3409,7 +3409,7 @@ bool Analyses::GetScaling(void){
             ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
           } else {
             RootOutputHist->cd("IndividualCellsTrigg");
-            hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+            hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),nSampleHGCROCInt, debug);
             hSpectraTrigg[currCellID].FillTrigger(aTile->GetLocalTriggerPrimitive());;
             RootOutput->cd();
           }
@@ -3820,7 +3820,7 @@ bool Analyses::GetScaling(void){
   // setup plotting ranges
   Int_t textSizePixel = 30;
   Double_t minSpec = -100;
-  Double_t maxHG = ReturnMipPlotRangeDepVov(calib.GetVov(),true, typeRO);
+  Double_t maxHG = ReturnMipPlotRangeDepVov(calib.GetVov(),true, typeRO)*nSampleHGCROCInt;
   Double_t maxLG = ReturnMipPlotRangeDepVov(calib.GetVov(),false, typeRO);
   std::cout << "plotting single layers" << std::endl;
   Double_t maxTriggPPlot = maxHG*2;
@@ -3919,6 +3919,10 @@ bool Analyses::GetImprovedScaling(void){
       factorMinTrigg    = 0.5;
     } else if (yearData == 2026){
       factorMinTrigg    = 0.8;
+      if (nSampleHGCROCInt == 3)
+        factorMinTrigg    = 0.4;
+      else if (nSampleHGCROCInt == 5)
+        factorMinTrigg    = 0.4;
     }
   }
   std::cout << "trigger limits set to: " << factorMinTrigg <<"\t" << factorMaxTrigg << std::endl;
@@ -3991,7 +3995,7 @@ bool Analyses::GetImprovedScaling(void){
           ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
         } else {
           RootOutputHist->cd("IndividualCellsTrigg");
-          hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+          hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),nSampleHGCROCInt,debug);
           hSpectraTrigg[currCellID].FillTrigger(aTile->GetLocalTriggerPrimitive());;
           RootOutput->cd();
         }
@@ -4003,7 +4007,7 @@ bool Analyses::GetImprovedScaling(void){
             ithSpectra->second.FillCorrCAEN(lgCorr,hgCorr);
         } else {
           RootOutputHist->cd("IndividualCells");
-          hSpectra[currCellID]=TileSpectra("mip1st",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+          hSpectra[currCellID]=TileSpectra("mip1st",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),nSampleHGCROCInt, debug);
           hSpectra[currCellID].FillSpectraCAEN(lgCorr,hgCorr);;
           if (hgCorr > 3*calib.GetPedestalSigH(currCellID) && lgCorr > 3*calib.GetPedestalSigL(currCellID && hgCorr < 3900) )
             hSpectra[currCellID].FillCorrCAEN(lgCorr,hgCorr);;
@@ -4041,7 +4045,7 @@ bool Analyses::GetImprovedScaling(void){
           ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
         } else {
           RootOutputHist->cd("IndividualCellsTrigg");
-          hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+          hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(), nSampleHGCROCInt,debug);
           hSpectraTrigg[currCellID].FillTrigger(aTile->GetLocalTriggerPrimitive());;
           RootOutput->cd();
         }
@@ -4051,7 +4055,7 @@ bool Analyses::GetImprovedScaling(void){
           ithSpectra->second.FillHGCROC(adc, toa, tot);
         } else {
           RootOutputHist->cd("IndividualCells");
-          hSpectra[currCellID]=TileSpectra("mip1st",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+          hSpectra[currCellID]=TileSpectra("mip1st",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(), nSampleHGCROCInt, debug);
           hSpectra[currCellID].FillHGCROC(adc, toa, tot);
           RootOutput->cd();
         }
@@ -4427,7 +4431,7 @@ bool Analyses::GetImprovedScaling(void){
     PlotSimple2D( canvas2DCorr, hspectraLGGSigmaVsLayer, -10000, -10000, textSizeRel, Form("%s/LG_GaussSigMip.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   }
 
-  Double_t maxHG          = ReturnMipPlotRangeDepVov(calib.GetVov(),true, typeRO);
+  Double_t maxHG          = ReturnMipPlotRangeDepVov(calib.GetVov(),true, typeRO)*nSampleHGCROCInt;
   Double_t minHG          = ReturnMipMinPlotRangeDepVov(calib.GetVov(),true, typeRO);
   Double_t maxLG          = ReturnMipPlotRangeDepVov(calib.GetVov(),false, typeRO);
   Double_t maxTriggPPlot  = maxHG*2;
@@ -4547,7 +4551,7 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
         ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
       } else {
         RootOutputHist->cd("IndividualCellsTrigg");
-        hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+        hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(), nSampleHGCROCInt, debug);
         hSpectraTrigg[currCellID].FillTrigger(aTile->GetLocalTriggerPrimitive());;
         RootOutput->cd();
       }
@@ -4557,7 +4561,7 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
         ithSpectra->second.FillSpectraCAEN(aTile->GetADCLow(),aTile->GetADCHigh());
       } else {
         RootOutputHist->cd("IndividualCells");
-        hSpectra[currCellID]=TileSpectra("mip1st",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+        hSpectra[currCellID]=TileSpectra("mip1st",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(), nSampleHGCROCInt, debug);
         hSpectra[aTile->GetCellID()].FillSpectraCAEN(aTile->GetADCLow(),aTile->GetADCHigh());;
 
         RootOutput->cd();
@@ -4944,7 +4948,7 @@ bool Analyses::RunEvalLocalTriggers(void){
           ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
         } else {
           RootOutputHist->cd("IndividualCellsTrigg");
-          hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+          hSpectraTrigg[currCellID]=TileSpectra("mipTrigg",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(), nSampleHGCROCInt, debug);
           hSpectraTrigg[currCellID].FillTrigger(aTile->GetLocalTriggerPrimitive());;
           RootOutput->cd();
         }
@@ -4959,7 +4963,7 @@ bool Analyses::RunEvalLocalTriggers(void){
           ithSpectra->second.FillHGCROC(adc, toa, tot);
         } else {
           RootOutputHist->cd("IndividualCells");
-          hSpectra[currCellID]=TileSpectra("mip1st",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(),debug);
+          hSpectra[currCellID]=TileSpectra("mip1st",currCellID,calib.GetTileCalib(currCellID),event.GetROtype(), nSampleHGCROCInt,  debug);
           hSpectra[currCellID].FillHGCROC(adc, toa, tot);
           RootOutput->cd();
         }
@@ -5397,7 +5401,7 @@ bool Analyses::Calibrate(void){
           ithSpectra->second.FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
         } else {
           RootOutputHist->cd("IndividualCells");
-          hSpectra[aTile->GetCellID()]=TileSpectra("Calibrate",1,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+          hSpectra[aTile->GetCellID()]=TileSpectra("Calibrate",1,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(), nSampleHGCROCInt, debug);
           hSpectra[aTile->GetCellID()].FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
           RootOutput->cd();
         }
@@ -5409,7 +5413,7 @@ bool Analyses::Calibrate(void){
             ithSpectraLocalTrigg->second.FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
           } else {
             RootOutputHist->cd("IndividualCellsLocalTrigg");
-            hSpectraLocalTrigg[aTile->GetCellID()]=TileSpectra("CalibrateLocalTrigg",1,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectraLocalTrigg[aTile->GetCellID()]=TileSpectra("CalibrateLocalTrigg",1,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(), nSampleHGCROCInt, debug);
             hSpectraLocalTrigg[aTile->GetCellID()].FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
             RootOutput->cd();
           }
@@ -5421,7 +5425,7 @@ bool Analyses::Calibrate(void){
             ithSpectraNoise->second.FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
           } else {
             RootOutputHist->cd("IndividualCellsNoise");
-            hSpectraNoise[aTile->GetCellID()]=TileSpectra("CalibrateNoise",1,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectraNoise[aTile->GetCellID()]=TileSpectra("CalibrateNoise",1,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(), nSampleHGCROCInt, debug);
             hSpectraNoise[aTile->GetCellID()].FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
             RootOutput->cd();
           }
@@ -5431,7 +5435,7 @@ bool Analyses::Calibrate(void){
             ithSpectraNotNoise->second.FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
           } else {
             RootOutputHist->cd("IndividualCellsNoise");
-            hSpectraNotNoise[aTile->GetCellID()]=TileSpectra("CalibrateNotNoise",1,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectraNotNoise[aTile->GetCellID()]=TileSpectra("CalibrateNotNoise",1,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(), nSampleHGCROCInt, debug);
             hSpectraNotNoise[aTile->GetCellID()].FillExtCAEN(corrLG,corrHG,energy,corrLG_HGeq);
             RootOutput->cd();
           }          
@@ -5558,7 +5562,7 @@ bool Analyses::Calibrate(void){
           ithSpectra->second.FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
         } else {
           RootOutputHist->cd("IndividualCells");
-          hSpectra[aTile->GetCellID()]=TileSpectra("Calibrated",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+          hSpectra[aTile->GetCellID()]=TileSpectra("Calibrated",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(), nSampleHGCROCInt, debug);
           hSpectra[aTile->GetCellID()].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
           RootOutput->cd();
         }
@@ -5571,7 +5575,7 @@ bool Analyses::Calibrate(void){
           ithSpectraLocalTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
         } else {
           RootOutputHist->cd("IndividualCellsLocalTrigg");
-          hSpectraLocalTrigg[aTile->GetCellID()]=TileSpectra("CalibratedLocalTrigg",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+          hSpectraLocalTrigg[aTile->GetCellID()]=TileSpectra("CalibratedLocalTrigg",aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(), nSampleHGCROCInt, debug);
           if (localMuonTrigg) hSpectraLocalTrigg[aTile->GetCellID()].FillHGCROC(adc,toa,tot);
           hSpectraLocalTrigg[aTile->GetCellID()].FillTrigger(aTile->GetLocalTriggerPrimitive());
           RootOutput->cd();
@@ -5584,7 +5588,7 @@ bool Analyses::Calibrate(void){
             ithSpectraNoise->second.FillHGCROC(adc,toa,tot);
           } else {
             RootOutputHist->cd("IndividualCellsNoise");
-            hSpectraNoise[aTile->GetCellID()]=TileSpectra("CalibratedNoise",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectraNoise[aTile->GetCellID()]=TileSpectra("CalibratedNoise",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(), nSampleHGCROCInt, debug);
             hSpectraNoise[aTile->GetCellID()].FillHGCROC(adc,toa,tot);
             RootOutput->cd();
           }
@@ -5594,7 +5598,7 @@ bool Analyses::Calibrate(void){
             ithSpectraNotNoise->second.FillHGCROC(adc,toa,tot);
           } else {
             RootOutputHist->cd("IndividualCells");
-            hSpectraNotNoise[aTile->GetCellID()]=TileSpectra("CalibratedNotNoise",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(),debug);
+            hSpectraNotNoise[aTile->GetCellID()]=TileSpectra("CalibratedNotNoise",2,aTile->GetCellID(),calib.GetTileCalib(aTile->GetCellID()),event.GetROtype(), nSampleHGCROCInt, debug);
             hSpectraNotNoise[aTile->GetCellID()].FillHGCROC(adc,toa,tot);
             RootOutput->cd();
           }

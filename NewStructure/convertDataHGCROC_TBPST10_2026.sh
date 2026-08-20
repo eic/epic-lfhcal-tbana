@@ -28,8 +28,8 @@ mapConDefV1=../configs/TB2026/mapping_HGCROC_PST10TB_sumV1_default_inv.csv   # v
 
 
 if [ $1 = "fbockTB" ]; then 
-  dataRaw=/media/fbock/Lennard4TB/202604_PST10/raw/      # source directory for output files from DAQ system
-  dataDir=/media/fbock/Lennard4TB/202604_PST10/HGCROCData           # base directory for root trees
+  dataRaw=/media/fbock/ALICE2-4TB/202604_PST10/raw/      # source directory for output files from DAQ system
+  dataDir=/media/fbock/ALICE2-4TB/202604_PST10/HGCROCData           # base directory for root trees
 
 elif [ $1 = "egpott" ]; then # bla bla bla test test test
   dataRaw=/Users/egpott/rhig/lfhcal/data/TB2025_HVscan1/raw
@@ -200,11 +200,11 @@ elif [ $2 = "SetA-PosScanMuons" ]; then
 # 43 V, summing board V2, original default preamp settings
 elif [ $2 = "FullSetA" ]; then 
   if [ $3 = "convert" ]; then 
-#     runs='085 086 087 088 089 090 091 092 094 095 096 097 098 099 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126' #full list
+    runs='085 086 087 088 089 090 091 092 094 095 096 097 098 099 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126' #full list
 #     runs='122' 
 #         runs='107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 123 124 125 126' 
     #   runs='085 120' #pedestals
-      runs='088 086 087 090 089 092 091' #muons set 1
+#       runs='088 086 087 090 089 092 091' #muons set 1
     #   runs='121 122 123 124 125 126' #muons set 2
     #   runs='098 096 099 100 101 101 102 103 104 105 106 097 108' #pi-
     #   runs='109 110 111 112 113 114 115 116 117 118 119 095 094 093' #h+

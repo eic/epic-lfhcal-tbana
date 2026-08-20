@@ -1007,7 +1007,7 @@ bool CalibSampleParser::ProcessAndPlotWaveforms(){
       hSpectra[aTile->GetCellID()].FillTOAProfile(aTile->GetTOAWaveform());
     } else {
       RootOutputHist->cd("IndividualCells");
-      hSpectra[aTile->GetCellID()]=TileSpectra("inj",8,aTile->GetCellID(),nullptr,event.GetROtype(),debug);
+      hSpectra[aTile->GetCellID()]=TileSpectra("inj",8,aTile->GetCellID(),nullptr,event.GetROtype(), 1, debug);
       hSpectra[aTile->GetCellID()].FillExtHGCROC(adc, toa, tot, 0,-1);
       hSpectra[aTile->GetCellID()].FillWaveformVsTimeParser(aTile->GetADCWaveform(),ped-20);
       hSpectra[aTile->GetCellID()].FillTOTProfile(aTile->GetTOTWaveform());
@@ -1147,7 +1147,7 @@ bool CalibSampleParser::ProcessAndPlotWaveformsDAC(){
         hSpectra[aTile->GetCellID()].FillTOAProfile(aTile->GetTOAWaveform());
       } else {
         RootOutputHist->cd("IndividualCells");
-        hSpectra[aTile->GetCellID()]=TileSpectra("inj",8,aTile->GetCellID(),nullptr,event.GetROtype(),debug);
+        hSpectra[aTile->GetCellID()]=TileSpectra("inj",8,aTile->GetCellID(),nullptr,event.GetROtype(), 1, debug);
         hSpectra[aTile->GetCellID()].FillExtHGCROC(adc, toa, tot, 0,-1);
         hSpectra[aTile->GetCellID()].FillWaveformVsTimeParser(aTile->GetADCWaveform(),ped-20);
         hSpectra[aTile->GetCellID()].FillTOTProfile(aTile->GetTOTWaveform());

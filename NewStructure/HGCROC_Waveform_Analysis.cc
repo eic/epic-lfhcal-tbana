@@ -438,7 +438,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
           if(fillToACorr) ithSpectra->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
         } else {
           RootOutputHist->cd("IndividualCells");
-          hSpectra[cellID]=TileSpectra("full",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+          hSpectra[cellID]=TileSpectra("full",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),nSampleHGCROCInt,debug);
           hSpectra[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA, fixedTOASample);
           if(fillToACorr) hSpectra[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
         }
@@ -450,7 +450,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
             if(fillToACorr) ithSpectraTrigg->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
           } else {
             RootOutputHist->cd("IndividualCellsTrigg");
-            hSpectraTrigg[cellID]=TileSpectra("signal",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+            hSpectraTrigg[cellID]=TileSpectra("signal",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),nSampleHGCROCInt,debug);
             hSpectraTrigg[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,fixedTOASample);
             if(fillToACorr) hSpectraTrigg[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
           }
@@ -785,7 +785,7 @@ bool HGCROC_Waveform_Analysis::ExtractTimeWalk(void){
         ithSpectra->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped, nOffEmpty);
       } else {
         RootOutputHist->cd("IndividualCells");
-        hSpectra[cellID]=TileSpectra("full",6,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+        hSpectra[cellID]=TileSpectra("full",6,cellID,calib.GetTileCalib(cellID),event.GetROtype(),nSampleHGCROCInt,debug);
         hSpectra[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped, nOffEmpty);
       }
       // fill spectra histos for signals with ToA
@@ -800,7 +800,7 @@ bool HGCROC_Waveform_Analysis::ExtractTimeWalk(void){
           ithSpectraAlt->second.FillMaxVsTime(tempADC, aTile->GetCorrectedTOA(),nOffEmpty, nMaxADC);
         } else {
           RootOutputHist->cd("IndividualCellsAlt");
-          hSpectraAlt[cellID]=TileSpectra("maxADC",5,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+          hSpectraAlt[cellID]=TileSpectra("maxADC",5,cellID,calib.GetTileCalib(cellID),event.GetROtype(),nSampleHGCROCInt,debug);
           hSpectraAlt[cellID].FillExtHGCROC(tempADC,toa,-1,nSampTOA,-1);
           hSpectraAlt[cellID].FillMaxVsTime(tempADC, aTile->GetCorrectedTOA(), nOffEmpty, nMaxADC);
         }
@@ -1170,7 +1170,7 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
             ithSampleSat->second.FillWaveform(aTile->GetADCWaveform(), ped);
           } else {
             RootOutputHist->cd("IndividualCellsSat");
-            hSampleSat[cellID]=TileSpectra("SatSample",7,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+            hSampleSat[cellID]=TileSpectra("SatSample",7,cellID,calib.GetTileCalib(cellID),event.GetROtype(),nSampleHGCROCInt,debug);
             hSampleSat[cellID].FillWaveform(aTile->GetADCWaveform(), ped);
           }
         }
@@ -1179,7 +1179,7 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
             ithSampleXtalk->second.FillWaveform(aTile->GetADCWaveform(), ped);
           } else {
             RootOutputHist->cd("IndividualCellsXtalk");
-            hSampleXtalk[cellID]=TileSpectra("XtalkSample",7,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+            hSampleXtalk[cellID]=TileSpectra("XtalkSample",7,cellID,calib.GetTileCalib(cellID),event.GetROtype(),nSampleHGCROCInt,debug);
             hSampleXtalk[cellID].FillWaveform(aTile->GetADCWaveform(), ped);
           }
         }
@@ -1189,7 +1189,7 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
             ithSampleSat->second.FillWaveform(aTile->GetADCWaveform(), ped);
           } else {
             RootOutputHist->cd("IndividualCellsSat");
-            hSampleSat[cellID]=TileSpectra("SatSample",7,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+            hSampleSat[cellID]=TileSpectra("SatSample",7,cellID,calib.GetTileCalib(cellID),event.GetROtype(),nSampleHGCROCInt, debug);
             hSampleSat[cellID].FillWaveform(aTile->GetADCWaveform(), ped);
           }
         }
@@ -1199,7 +1199,7 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
             ithSampleXtalk->second.FillWaveform(aTile->GetADCWaveform(), ped);
           } else {
             RootOutputHist->cd("IndividualCellsXtalk");
-            hSampleXtalk[cellID]=TileSpectra("XtalkSample",7,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+            hSampleXtalk[cellID]=TileSpectra("XtalkSample",7,cellID,calib.GetTileCalib(cellID),event.GetROtype(),nSampleHGCROCInt,debug);
             hSampleXtalk[cellID].FillWaveform(aTile->GetADCWaveform(), ped);
           }
         }         
@@ -1218,7 +1218,7 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
             ithSpectraSat->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped, nOffEmpty);
           } else {
             RootOutputHist->cd("IndividualCellsSat");
-            hSpectraSat[cellID]=TileSpectra("Saturated",6,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+            hSpectraSat[cellID]=TileSpectra("Saturated",6,cellID,calib.GetTileCalib(cellID),event.GetROtype(),nSampleHGCROCInt,debug);
             hSpectraSat[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped, nOffEmpty);
           }
           
@@ -1228,7 +1228,7 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
             ithSpectraXtalk->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped, nOffEmpty);
           } else {
             RootOutputHist->cd("IndividualCellsXtalk");
-            hSpectraXtalk[cellID]=TileSpectra("Xtalk",6,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+            hSpectraXtalk[cellID]=TileSpectra("Xtalk",6,cellID,calib.GetTileCalib(cellID),event.GetROtype(),nSampleHGCROCInt, debug);
             hSpectraXtalk[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped, nOffEmpty);
           }
         }
@@ -1238,7 +1238,7 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
             ithSpectraSat->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped, nOffEmpty);
           } else {
             RootOutputHist->cd("IndividualCellsSat");
-            hSpectraSat[cellID]=TileSpectra("Saturated",6,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+            hSpectraSat[cellID]=TileSpectra("Saturated",6,cellID,calib.GetTileCalib(cellID),event.GetROtype(), nSampleHGCROCInt, debug);
             hSpectraSat[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped, nOffEmpty);
           }
         }
@@ -1248,7 +1248,7 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
             ithSpectraXtalk->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped, nOffEmpty);
           } else {
             RootOutputHist->cd("IndividualCellsXtalk");
-            hSpectraXtalk[cellID]=TileSpectra("Xtalk",6,cellID,calib.GetTileCalib(cellID),event.GetROtype(),debug);
+            hSpectraXtalk[cellID]=TileSpectra("Xtalk",6,cellID,calib.GetTileCalib(cellID),event.GetROtype(), nSampleHGCROCInt, debug);
             hSpectraXtalk[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped, nOffEmpty);
           }
         } 
@@ -1307,16 +1307,16 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
     ithSampleXtalk  = hSampleXtalk.find(id);
     
     if(ithSpectraXtalk==hSpectraXtalk.end()){
-      hSpectraXtalk[id]=TileSpectra("Xtalk",6,id,calib.GetTileCalib(id),typeRO,debug);
+      hSpectraXtalk[id]=TileSpectra("Xtalk",6,id,calib.GetTileCalib(id),typeRO, nSampleHGCROCInt, debug);
     }
     if(ithSpectraSat==hSpectraSat.end()){
-      hSpectraSat[id]=TileSpectra("Saturated",6,id,calib.GetTileCalib(id),typeRO,debug);
+      hSpectraSat[id]=TileSpectra("Saturated",6,id,calib.GetTileCalib(id),typeRO, nSampleHGCROCInt, debug);
     }
     if(ithSampleXtalk==hSampleXtalk.end()){
-      hSampleXtalk[id]=TileSpectra("XtalkSample",7,id,calib.GetTileCalib(id),typeRO,debug);
+      hSampleXtalk[id]=TileSpectra("XtalkSample",7,id,calib.GetTileCalib(id),typeRO, nSampleHGCROCInt, debug);
     }
     if(ithSampleSat==hSampleSat.end()){
-      hSampleSat[id]=TileSpectra("SatSample",7,id,calib.GetTileCalib(id),typeRO,debug);
+      hSampleSat[id]=TileSpectra("SatSample",7,id,calib.GetTileCalib(id),typeRO, nSampleHGCROCInt, debug);
     }
   }
   

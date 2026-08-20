@@ -72,7 +72,7 @@ class Analyses{
   inline bool GetOverWriteSetup(void)           const {return OverWriteSetup;};
   inline int GetMaxEvents(void)                 const {return maxEvents;};
   inline bool GetHGCROCTrunctation(void)        const {return truncateHGCROC;};
-  inline int GetHGCROCNSampleInteg(void)        const {return nSampelHGCROCInt;};
+  inline int GetHGCROCNSampleInteg(void)        const {return nSampleHGCROCInt;};
   inline int GetHGCROCOptInteg(void)            const {return optHGCROCInt;};
   
   //setter methods
@@ -106,10 +106,10 @@ class Analyses{
   inline void EnableDebug(int i)                 {debug=i;};
   inline void SetHGCROCTruncation(bool b)        {truncateHGCROC = b;};
   inline void SetHGCROCNSampleInteg(int n)       {optHGCROCInt      = 1; 
-                                                  nSampelHGCROCInt  = n;
+                                                  nSampleHGCROCInt  = n;
                                                   };
   inline void SetHGCROCNSampleIntegForced(int n) {optHGCROCInt      = 101; 
-                                                  nSampelHGCROCInt  = n;
+                                                  nSampleHGCROCInt  = n;
                                                   };
   
   inline void SetYear(int year)                  {yearData=year;};
@@ -195,7 +195,7 @@ class Analyses{
   double minMipFrac           = 0.3;
   double minFracTriggThre     = 3.;
   int optHGCROCInt            = 0;
-  int nSampelHGCROCInt        = 1;
+  int nSampleHGCROCInt        = 1;
   
   RootSetupWrapper rsw;                   // Wrapper singleton class for setup
   RootSetupWrapper* rswptr;               // Pointer to wrapper for singleton class for setup

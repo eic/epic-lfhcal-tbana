@@ -1360,12 +1360,14 @@
     dummyhist1->GetYaxis()->SetRangeUser(minY_1st, maxY_1st);
     dummyhist1->Draw("axis");
     
-    
-    SetMarkerDefaultsTGraph(graph1, 20, 1, kBlue+1, kBlue+1);   
-    SetMarkerDefaultsTGraph(graph2, 25, 1, kRed+1, kRed+1);   
-    graph1->Draw("pe, same");
-    graph2->Draw("pe, same");
-
+    if (graph1->GetN() >0){
+      SetMarkerDefaultsTGraph(graph1, 20, 1, kBlue+1, kBlue+1);   
+      graph1->Draw("pe, same");
+    }
+    if (graph2->GetN() >0){
+      SetMarkerDefaultsTGraph(graph2, 25, 1, kRed+1, kRed+1);   
+      graph2->Draw("pe, same");
+    }
     // 2. Create Transparent Overlay Pad for Graph 3 (Linear Y-scale)
     canvas2Panel->cd();
     TPad *pad2 = new TPad("pad2", "", 0, 0, 1, 1);
@@ -1392,8 +1394,10 @@
     // Draw frame on right side
     dummyhist2->Draw("Y+ axis"); 
 
-    SetMarkerDefaultsTGraph(graph3, 24, 1, kGreen+2, kGreen+2);
-    graph3->Draw("pe, same");
+    if (graph3->GetN() >0){
+      SetMarkerDefaultsTGraph(graph3, 24, 1, kGreen+2, kGreen+2);
+      graph3->Draw("pe, same");
+    }
     
     TLegend* legend = GetAndSetLegend2( 0.6, 0.97, 1-canvas2Panel->GetRightMargin()-0.03, 0.97-2*0.85*relSizeP,0.85*relSizeP, 2, "", 42,0.15);
     if (graph1->GetN() >0 )legend->AddEntry(graph1, label1.Data(),"p");

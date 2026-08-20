@@ -17,7 +17,7 @@ class TileSpectra: public TObject{
 
  public:
   TileSpectra():TObject(){}
-  TileSpectra(TString name, int id, TileCalib* cal, ReadOut::Type type, int deb=0):TObject()
+  TileSpectra(TString name, int id, TileCalib* cal, ReadOut::Type type, int integ = 1, int deb=0):TObject()
   {
     TileName      = name;
     ROType        = type;
@@ -32,33 +32,47 @@ class TileSpectra: public TObject{
     bcorrLGHG     = false;
     bpedWave      = false;
     bwave         = false;
+    integSample   = integ;
     if (ROType == ReadOut::Type::Caen){
-      hspectraHG    = TH1D(Form("hspectra%sHGCellID%d",name.Data(),id),Form("ADC spectrum High Gain CellID %d; HG ADC (arb. units); counts ",id),4200,-200,4000);
+      hspectraHG    = TH1D(Form("hspectra%sHGCellID%d",name.Data(),id),Form("ADC spectrum High Gain CellID %d; HG ADC (arb. units); counts ",id),
+                           4200,-200,4000);
       hspectraHG.SetDirectory(0);
-      hspectraLG    = TH1D(Form("hspectra%sLGCellID%d",name.Data(),id),Form("ADC spectrum Low  Gain CellID %d; LG ADC (arb. units); counts",id),4200,-200,4000);
+      hspectraLG    = TH1D(Form("hspectra%sLGCellID%d",name.Data(),id),Form("ADC spectrum Low  Gain CellID %d; LG ADC (arb. units); counts",id),
+                           4200,-200,4000);
       hspectraLG.SetDirectory(0);
-      hTriggPrim    = TH1D(Form("hTriggerPrimitive%sCellID%d",name.Data(),id),Form("Trigger primitive CellID %d; HG ADC (arb. units); counts ",id),500,0,4000);
+      hTriggPrim    = TH1D(Form("hTriggerPrimitive%sCellID%d",name.Data(),id),Form("Trigger primitive CellID %d; HG ADC (arb. units); counts ",id),
+                           500,0,4000);
       hTriggPrim.SetDirectory(0);
-      hspectraLGHG  = TProfile(Form("hCoorspectra%sLGHGCellID%d",name.Data(),id),Form("ADC Low  Gain/High Gain correlation CellID %d; LG ADC (arb. units); HG ADC (arb. units)",id),800,0,800);
+      hspectraLGHG  = TProfile(Form("hCoorspectra%sLGHGCellID%d",name.Data(),id),
+                               Form("ADC Low  Gain/High Gain correlation CellID %d; LG ADC (arb. units); HG ADC (arb. units)",id),
+                               800,0,800);
       hspectraLGHG.SetDirectory(0); 
-      hspectraHGLG  = TProfile(Form("hCoorspectra%sHGLGCellID%d",name.Data(),id),Form("ADC High  Gain/Low Gain correlation CellID %d; HG ADC (arb. units); LG ADC (arb. units)",id),4100,-100,4000);
+      hspectraHGLG  = TProfile(Form("hCoorspectra%sHGLGCellID%d",name.Data(),id),
+                               Form("ADC High  Gain/Low Gain correlation CellID %d; HG ADC (arb. units); LG ADC (arb. units)",id),
+                               4100,-100,4000);
       hspectraHGLG.SetDirectory(0);
     } else if (ROType == ReadOut::Type::Hgcroc){
-      hspectraHG    = TH1D(Form("hspectra%sADCCellID%d",name.Data(),id),Form("ADC spectrum CellID %d; ADC (arb. units); counts ",id),1124,-100,1024);
+      hspectraHG    = TH1D(Form("hspectra%sADCCellID%d",name.Data(),id),Form("ADC spectrum CellID %d; ADC (arb. units); counts ",id),
+                           1024*integ+100,-100,1024*integ);
       hspectraHG.SetDirectory(0);      
-      hspectraTOT    = TH1D(Form("hspectra%sTOTCellID%d",name.Data(),id),Form("ToT spectrum CellID %d; TOT (arb. units); counts",id),4197,-100,4097);
+      hspectraTOT    = TH1D(Form("hspectra%sTOTCellID%d",name.Data(),id),Form("ToT spectrum CellID %d; TOT (arb. units); counts",id),
+                            4197,-100,4097);
       hspectraTOT.SetDirectory(0);
-      hspectraTOA    = TH1D(Form("hspectra%sTOACellID%d",name.Data(),id),Form("ToA spectrum CellID %d; TOA (arb. units); counts",id),1124,-100,1024);
+      hspectraTOA    = TH1D(Form("hspectra%sTOACellID%d",name.Data(),id),Form("ToA spectrum CellID %d; TOA (arb. units); counts",id),
+                            1124,-100,1024);
       hspectraTOA.SetDirectory(0);
-      hTriggPrim    = TH1D(Form("hTriggerPrimitive%sCellID%d",name.Data(),id),Form("Trigger primitive CellID %d; ADC (arb. units); counts ",id),500,0,500);
+      hTriggPrim    = TH1D(Form("hTriggerPrimitive%sCellID%d",name.Data(),id),Form("Trigger primitive CellID %d; ADC (arb. units); counts ",id),
+                           500,0,500);
       hTriggPrim.SetDirectory(0);
-      hADCTOT  = TProfile(Form("hCoorspectra%sTOTADCCellID%d",name.Data(),id),Form("TOT-ADC correlation CellID %d; ADC (arb. units); TOT (arb. units)",id),1124,-100,1024);
+      hADCTOT  = TProfile(Form("hCoorspectra%sTOTADCCellID%d",name.Data(),id),Form("TOT-ADC correlation CellID %d; ADC (arb. units); TOT (arb. units)",id),
+                          1024+100,-100,1024*integ);
       hADCTOT.SetDirectory(0); 
-      hTOAADC  = TProfile(Form("hCoorspectra%sTOAADCCellID%d",name.Data(),id),Form("ADC-TOA correlation CellID %d; TOA (arb. units); ADC (arb. units)",id),1024,0,1024);
+      hTOAADC  = TProfile(Form("hCoorspectra%sTOAADCCellID%d",name.Data(),id),Form("ADC-TOA correlation CellID %d; TOA (arb. units); ADC (arb. units)",id),
+                          1024,0,1024);
       hTOAADC.SetDirectory(0);
     }
   }
-  TileSpectra(TString name, int ext, int id, TileCalib* cal, ReadOut::Type type, int deb=0):TObject()
+  TileSpectra(TString name, int ext, int id, TileCalib* cal, ReadOut::Type type, int integ = 1, int deb=0):TObject()
   {
     TileName      = name;
     extend        = ext;
@@ -74,45 +88,71 @@ class TileSpectra: public TObject{
     bcorrLGHG     = false;
     bpedWave      = false;
     bwave         = false;
+    integSample   = integ;
     // Calibrated output
     if (extend == 1){
       if (type == ReadOut::Type::Caen){
-        hspectraHG    = TH1D(Form("hspectra%sHGCellID%d",name.Data(),id),Form("ADC spectrum High Gain CellID %d; Corr HG ADC (arb. units); counts ",id),4200,-200,4000);
+        hspectraHG    = TH1D(Form("hspectra%sHGCellID%d",name.Data(),id),
+                             Form("ADC spectrum High Gain CellID %d; Corr HG ADC (arb. units); counts ",id),
+                             4200,-200,4000);
         hspectraHG.SetDirectory(0);
-        hspectraLG    = TH1D(Form("hspectra%sLGCellID%d",name.Data(),id),Form("ADC spectrum Low  Gain CellID %d; Corr LG ADC (arb. units); counts",id),4200,-200,4000);
+        hspectraLG    = TH1D(Form("hspectra%sLGCellID%d",name.Data(),id),
+                             Form("ADC spectrum Low  Gain CellID %d; Corr LG ADC (arb. units); counts",id),
+                             4200,-200,4000);
         hspectraLG.SetDirectory(0);
-        hcombined     = TH1D(Form("hspectra%sCombCellID%d",name.Data(),id),Form("Energy CellID %d; E (mip eq./tile); counts",id),8000,-5,1000);
+        hcombined     = TH1D(Form("hspectra%sCombCellID%d",name.Data(),id),
+                             Form("Energy CellID %d; E (mip eq./tile); counts",id),
+                             8000,-5,1000);
         hcombined.SetDirectory(0);
-        hspectraLGHG  = TProfile(Form("hCoorspectra%sLGHGCellID%d",name.Data(),id),Form("ADC Low  Gain/High Gain correlation CellID %d; Corr LG  (arb. units); HG E (mip eq./tile)",id),800,0,800);
+        hspectraLGHG  = TProfile(Form("hCoorspectra%sLGHGCellID%d",name.Data(),id),
+                                 Form("ADC Low  Gain/High Gain correlation CellID %d; Corr LG  (arb. units); HG E (mip eq./tile)",id),
+                                 800,0,800);
         hspectraLGHG.SetDirectory(0);
-        hspectraHGLG  = TProfile(Form("hCoorspectra%sHGLGCellID%d",name.Data(),id),Form("ADC Low Gain converted CellID %d; LG (arb. units); LG ( HG eq.)- HG",id),700,-100,600);
+        hspectraHGLG  = TProfile(Form("hCoorspectra%sHGLGCellID%d",name.Data(),id),
+                                 Form("ADC Low Gain converted CellID %d; LG (arb. units); LG ( HG eq.)- HG",id),
+                                 700,-100,600);
         hspectraHGLG.SetDirectory(0);
       }
     // Detailed output after transfering the calibration
     } else if (extend == 2){
       if (type == ReadOut::Type::Caen){
-        hspectraHG    = TH1D(Form("hspectra%sHGCellID%d",name.Data(),id),Form("ADC spectrum High Gain CellID %d; Corr HG ADC (arb. units); counts ",id),1050,-200,4000);
+        hspectraHG    = TH1D(Form("hspectra%sHGCellID%d",name.Data(),id),
+                             Form("ADC spectrum High Gain CellID %d; Corr HG ADC (arb. units); counts ",id),
+                             1050,-200,4000);
         hspectraHG.SetDirectory(0);
-        hspectraLG    = TH1D(Form("hspectra%sLGCellID%d",name.Data(),id),Form("ADC spectrum Low  Gain CellID %d; Corr LG ADC (arb. units); counts",id),1050,-200,4000);
+        hspectraLG    = TH1D(Form("hspectra%sLGCellID%d",name.Data(),id),
+                             Form("ADC spectrum Low  Gain CellID %d; Corr LG ADC (arb. units); counts",id),
+                             1050,-200,4000);
         hspectraLG.SetDirectory(0);
-        hspectraLGHG  = TProfile(Form("hCorrProf%sLGHGCellID%d",name.Data(),id),Form("ADC Low Gain/High Gain correlation CellID %d; Corr LG  (arb. units); HG E (arb. units)",id),400,0,400);
+        hspectraLGHG  = TProfile(Form("hCorrProf%sLGHGCellID%d",name.Data(),id),
+                                 Form("ADC Low Gain/High Gain correlation CellID %d; Corr LG  (arb. units); HG E (arb. units)",id),
+                                 400,0,400);
         hspectraLGHG.SetDirectory(0);
-        hcorr         = TH2D(Form("hCorr2D%sLGHGCellID%d",name.Data(),id),Form("2D ADC Low  Gain/High Gain correlation CellID %d; Corr LG  (arb. units); HG E (arb. units)",id),400,0,400, 525, -200, 4000 );
+        hcorr         = TH2D(Form("hCorr2D%sLGHGCellID%d",name.Data(),id),
+                             Form("2D ADC Low  Gain/High Gain correlation CellID %d; Corr LG  (arb. units); HG E (arb. units)",id), 
+                             400,0,400, 525, -200, 4000 );
         hcorr.SetDirectory(0);
       } else if (type == ReadOut::Type::Hgcroc){
-        hspectraHG    = TH1D(Form("hspectra%sADCCellID%d",name.Data(),id),Form("ADC spectrumCellID %d; ADC (arb. units); counts ",id),1124,-100,1024);
+        hspectraHG    = TH1D(Form("hspectra%sADCCellID%d",name.Data(),id),Form("ADC spectrumCellID %d; ADC (arb. units); counts ",id),
+                             1024*integ+100,-100,1024*integ);
         hspectraHG.SetDirectory(0);
-        hspectraTOA    = TH1D(Form("hspectra%sTOACellID%d",name.Data(),id),Form("TOA spectrumCellID %d; TOA (arb. units); counts",id),1024,0,1024);
+        hspectraTOA    = TH1D(Form("hspectra%sTOACellID%d",name.Data(),id),Form("TOA spectrumCellID %d; TOA (arb. units); counts",id),
+                              1024,0,1024);
         hspectraTOA.SetDirectory(0);
-        hspectraTOT    = TH1D(Form("hspectra%sTOTCellID%d",name.Data(),id),Form("TOT spectrumCellID %d; TOT (arb. units); counts",id),4096,0,4096);
+        hspectraTOT    = TH1D(Form("hspectra%sTOTCellID%d",name.Data(),id),Form("TOT spectrumCellID %d; TOT (arb. units); counts",id),
+                              4096,0,4096);
         hspectraTOT.SetDirectory(0);
-        hADCTOT  = TProfile(Form("h%sTOTADCCellID%d",name.Data(),id),Form("TOT-ADC correlation CellID %d; ADC (arb. units); TOT  (arb. units)",id),1128/8,-100,1028);
+        hADCTOT  = TProfile(Form("h%sTOTADCCellID%d",name.Data(),id),Form("TOT-ADC correlation CellID %d; ADC (arb. units); TOT  (arb. units)",id),
+                            (1024+100)/8,-100,1024*integ); 
         hADCTOT.SetDirectory(0);
-        hcorr         = TH2D(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; sample ; ADC (arb. units)",id),20,0,20, 1034, -10, 1024);
+        hcorr         = TH2D(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; sample ; ADC (arb. units)",id),
+                             20,0,20, 1034, -10, 1024);
         hcorr.SetDirectory(0);
-        hcorrADCTOT   = TH2D(Form("hCorr2DTOTADC%sCellID%d",name.Data(),id),Form("2D TOT-ADC CellID %d;  ADC (arb. units); TOT  (arb. units)",id),1128/8,-100,1028,4096/8,0,4096);
+        hcorrADCTOT   = TH2D(Form("hCorr2DTOTADC%sCellID%d",name.Data(),id),Form("2D TOT-ADC CellID %d;  ADC (arb. units); TOT  (arb. units)",id),
+                             (1024+100)/8,-100,1024*integ, 4096/8,0,4096);
         hcorrADCTOT.SetDirectory(0);
-        hWaveForm     = TProfile(Form("waveform1D%sCellID%d",name.Data(),id),Form("1D waveform CellID %d;  sample ; ADC (arb. units)",id),20,0,20);
+        hWaveForm     = TProfile(Form("waveform1D%sCellID%d",name.Data(),id),Form("1D waveform CellID %d;  sample ; ADC (arb. units)",id),
+                                 20,0,20);
         hWaveForm.SetDirectory(0);
         
         
@@ -120,20 +160,26 @@ class TileSpectra: public TObject{
     // Waveform analysis
     } else if (extend == 3){
       if (type == ReadOut::Type::Hgcroc){
-        hspectraHG    = TH1D(Form("hspectra%sADCCellID%d",name.Data(),id),Form("ADC spectrumCellID %d; ADC (arb. units); counts ",id),1124,-100,1024);
+        hspectraHG    = TH1D(Form("hspectra%sADCCellID%d",name.Data(),id),Form("ADC spectrumCellID %d; ADC (arb. units); counts ",id),
+                             1024*integ+100,-100,1024*integ);
         hspectraHG.SetDirectory(0);
         hspectraTOA    = TH1D(Form("hspectra%sTOACellID%d",name.Data(),id),Form("TOA spectrumCellID %d; TOA (arb. units); counts",id),1024,0,1024);
         hspectraTOA.SetDirectory(0);
         hspectraTOT    = TH1D(Form("hspectra%sTOTCellID%d",name.Data(),id),Form("TOT spectrumCellID %d; TOT (arb. units); counts",id),4096,0,4096);
-        hWaveForm     = TProfile(Form("waveform1D%sCellID%d",name.Data(),id),Form("1D waveform CellID %d;  t (ns) ; ADC (arb. units)",id),550,-50,500);
+        hWaveForm     = TProfile(Form("waveform1D%sCellID%d",name.Data(),id),Form("1D waveform CellID %d;  t (ns) ; ADC (arb. units)",id),
+                                 550,-50,500);
         hWaveForm.SetDirectory(0);
-        hcorr         = TH2D(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; t (ns) ; ADC (arb. units)",id),550,-50,500, 1034, -10, 1024);
+        hcorr         = TH2D(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; t (ns) ; ADC (arb. units)",id),
+                             550,-50,500, 1034, -10, 1024);
         hcorr.SetDirectory(0);
-        hcorrTOAADC   = TH2D(Form("h2DADCTOA%sCellID%d",name.Data(),id),Form("2D ADC vs TOA CellID %d; TOA (arb. units); ADC (arb. units)",id), 1024/8,0,1024,1124,-100,1024);
+        hcorrTOAADC   = TH2D(Form("h2DADCTOA%sCellID%d",name.Data(),id),Form("2D ADC vs TOA CellID %d; TOA (arb. units); ADC (arb. units)",id),
+                             1024/8,0,1024, (1024+100)/8,-100,1024*integ);
         hcorrTOAADC.SetDirectory(0);
-        hcorrTOASample = TH2D(Form("h2DTOASample%sCellID%d",name.Data(),id),Form("2D Sample vs TOA CellID %d; TOA (arb. units); #sample",id), 1024/8,0,1024,20,0,20);
+        hcorrTOASample = TH2D(Form("h2DTOASample%sCellID%d",name.Data(),id),Form("2D Sample vs TOA CellID %d; TOA (arb. units); #sample",id),
+                              1024/8,0,1024,20,0,20);
         hcorrTOASample.SetDirectory(0);
-        hTOAADC       = TProfile(Form("h%sADCTOACellID%d",name.Data(),id),Form("ADC-TOA correlation CellID %d; TOA (arb. units); ADC (arb. units)",id),1024/8,0,1024, "");
+        hTOAADC       = TProfile(Form("h%sADCTOACellID%d",name.Data(),id),Form("ADC-TOA correlation CellID %d; TOA (arb. units); ADC (arb. units)",id),
+                                 1024/8,0,1024, "");
         hTOAADC.SetDirectory(0);
       }
     // extended pedestal output
@@ -257,6 +303,7 @@ class TileSpectra: public TObject{
   TileCalib* calib;
   int debug             = 0;
   int extend            = 0;
+  int integSample       = 1;
   bool resetAxisLabels  = false;
   bool bpedHG           = false;
   bool bpedLG           = false;

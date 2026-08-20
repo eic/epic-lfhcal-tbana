@@ -61,8 +61,8 @@ if [ $2 = "pedestal" ]; then
   elif [ $3 = "HadronScan" ]; then
     runs='207' #pedestals
   elif [ $3 = "ParamScan" ]; then
-#     runs='294 296 299 301 303 305 307 309 328 330 332 334 336 338 340 342 344 346 348 350 352 354 356 358 360 362 364 367' #pedestals
-    runs='328' #pedestals
+    runs='294 296 299 301 303 305 307 309 328 330 332 334 336 338 340 342 344 346 348 350 352 354 356 358 360 362 364 367' #pedestals
+#     runs='328' #pedestals
   fi
   for runNr in $runs; do 
     printf -v runNrPed "%03d" "$runNr"
