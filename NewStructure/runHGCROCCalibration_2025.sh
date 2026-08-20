@@ -86,17 +86,17 @@ if [ $2 = "toaPhase" ]; then
 		runPed='161'
 		runs='070'
 	elif [ $3 = "FullSetA_1" ]; then
-		runPed='Muon1_ped_FullSetA'
-		runs=''
+		runPed=''
+		runs='Muon1_ped_FullSetA'
 	elif [ $3 = "FullSetA_2" ]; then
-		runPed='Muon2_ped_FullSetA'
-		runs=''
+		runPed=''
+		runs='Muon2_ped_FullSetA'
 	elif [ $3 = "FullSetB_1" ]; then
-		runPed='Muon1_ped_FullSetB'
-		runs=''
+		runPed=''
+		runs='Muon1_ped_FullSetB'
 	elif [ $3 = "FullSetB_2" ]; then
-		runPed='Muon2_ped_FullSetB'
-		runs=''
+		runPed=''
+		runs='Muon2_ped_FullSetB'
   fi
 	for runNr in $runs; do
     ./DataPrep -d 1 -f -i $dataDirRaw/rawHGCROC_$runNr.root -o $dataDirOut/rawHGCROC_toaPhase_$runNr.root -O $PlotBaseD    ir/ToAPhaseExtraction/Run$runNr -r $runNrFile -g $dataDirRaw/rawHGCROC_wPed_$runNrPed.root
