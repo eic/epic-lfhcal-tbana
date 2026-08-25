@@ -75,11 +75,11 @@ function MuonCalibHGCROC()
   elif [ $1 == "imp1st_red3Int" ]; then 
     time ./DataPrep -a -f -d 1 -q 3 -S -i $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_3Int_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_ImpR_3Int_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved_Red3Int/$6 -r $runList
   elif [ $1 == "imp2nd_red3Int" ]; then 
-    time ./DataPrep -a -f -d 1 -q 3 -S -i $4/rawHGCROC_wPedwMuon_wBC_ImpR_3Int_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp2R_3Int_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved2nd_Red3Int/$6 -r $runList
+    time ./DataPrep -a -f -d 2 -q 3 -S -i $4/rawHGCROC_wPedwMuon_wBC_ImpR_3Int_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp2R_3Int_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved2nd_Red3Int/$6 -r $runList
   elif [ $1 == "imp1st_red5Int" ]; then 
     time ./DataPrep -a -f -d 1 -q 5 -S -i $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_5Int_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_ImpR_5Int_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved_Red5Int/$6 -r $runList
   elif [ $1 == "imp2nd_red5Int" ]; then 
-    time ./DataPrep -a -f -d 1 -q 5 -S -i $4/rawHGCROC_wPedwMuon_wBC_ImpR_5Int_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp2R_5Int_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved2nd_Red5Int/$6 -r $runList
+    time ./DataPrep -a -f -d 2 -q 5 -S -i $4/rawHGCROC_wPedwMuon_wBC_ImpR_5Int_$runNrMuon.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp2R_5Int_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved2nd_Red5Int/$6 -r $runList
   fi
 }
 
