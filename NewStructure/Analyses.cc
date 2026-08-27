@@ -272,6 +272,7 @@ bool Analyses::Process(void){
       }
       std::cout << "Running HGCROC conversion" << std::endl;
       status=run_hgcroc_conversion(this, waveform_builder);
+      delete waveform_builder;
     } else {
       if (!(GetASCIIinputName().EndsWith(".root"))){
         status=ConvertASCII2Root();

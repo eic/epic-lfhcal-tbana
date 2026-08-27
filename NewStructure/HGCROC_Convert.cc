@@ -220,7 +220,8 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     hEvents->SetBinContent(4, decoder->get_corrupted_packets());
     hEvents->SetBinContent(5, decoder->get_n_reset_offsets());
     hEvents->Write();
-    
+
+    delete decoder;
     analysis->RootOutput->Close();
     return true;
 
