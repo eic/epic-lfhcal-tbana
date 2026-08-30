@@ -40,6 +40,120 @@ bool CalibSummary::Fill(TileCalib* tc){
   return true;
 }
 
+bool CalibSummary::FillRefRunProps(const TileCalib& tc, const TileCalib& tcRef ){
+  if (tc.PedestalMeanH == -1000.)
+    hHGpedDiffRef   .Fill(-1000);
+  else if (tcRef.PedestalMeanH == -1000.)
+    hHGpedDiffRef   .Fill(1000);
+  else 
+    hHGpedDiffRef   .Fill(tc.PedestalMeanH-tcRef.PedestalMeanH);
+  
+  if (tc.PedestalSigH == -1000.)
+    hHGpedwidthDiffRef   .Fill(-1000);
+  else if (tcRef.PedestalSigH == -1000.)
+    hHGpedwidthDiffRef   .Fill(1000);
+  else 
+    hHGpedwidthDiffRef   .Fill(tc.PedestalSigH-tcRef.PedestalSigH);
+   
+  if (tc.PedestalMeanL == -1000.)
+    hLGpedDiffRef   .Fill(-1000);
+  else if (tcRef.PedestalMeanL == -1000.)
+    hLGpedDiffRef   .Fill(1000);
+  else 
+    hLGpedDiffRef   .Fill(tc.PedestalMeanL-tcRef.PedestalMeanL);
+  
+  if (tc.ScaleH == -1000.)
+    hHGscaleDiffRef   .Fill(-1000);
+  else if (tcRef.ScaleH == -1000.)
+    hHGscaleDiffRef   .Fill(1000);
+  else 
+    hHGscaleDiffRef .Fill(tc.ScaleH-tcRef.ScaleH);
+  
+  hHGscaleCorrRef.Fill(tc.ScaleH, tcRef.ScaleH);
+  pHGscaleCorrRef.Fill(tc.ScaleH, tcRef.ScaleH);
+
+  
+  if (tc.ScaleL == -1000.)
+    hLGscaleDiffRef   .Fill(-1000);
+  else if (tcRef.ScaleL == -1000.)
+    hLGscaleDiffRef   .Fill(1000);
+  else 
+    hLGscaleDiffRef .Fill(tc.ScaleL-tcRef.ScaleL);
+  
+  if (tc.LGHGCorr == 0. || tc.LGHGCorr == -1000.|| tc.ScaleH == -1000. )
+    hLGscaleCalcDiffRef .Fill(-1000);
+  else if (tcRef.LGHGCorr == 0. || tcRef.LGHGCorr == -1000. || tcRef.ScaleH == -1000. )
+    hLGscaleCalcDiffRef .Fill(1000);
+  else 
+    hLGscaleCalcDiffRef .Fill((tc.ScaleH/tc.LGHGCorr)-(tcRef.ScaleH/tcRef.LGHGCorr));
+  
+  if (tc.LGHGCorr == 0. || tc.LGHGCorr == -1000. )
+    hLGHGcorrDiffRef .Fill(-1000);
+  else if (tcRef.LGHGCorr == 0. || tcRef.LGHGCorr == -1000. )
+    hLGHGcorrDiffRef .Fill(1000);
+  else   
+    hLGHGcorrDiffRef  .Fill(tc.LGHGCorr-tcRef.LGHGCorr);
+  
+  return true;
+}
+
+
+bool CalibSummary::FillRefRunProps(TileCalib* tc, TileCalib* tcRef ){
+  if (tc->PedestalMeanH == -1000.)
+    hHGpedDiffRef   .Fill(-1000);
+  else if (tcRef->PedestalMeanH == -1000.)
+    hHGpedDiffRef   .Fill(1000);
+  else 
+    hHGpedDiffRef   .Fill(tc->PedestalMeanH-tcRef->PedestalMeanH);
+ 
+ if (tc->PedestalSigH == -1000.)
+    hHGpedwidthDiffRef   .Fill(-1000);
+  else if (tcRef->PedestalSigH == -1000.)
+    hHGpedwidthDiffRef   .Fill(1000);
+  else 
+    hHGpedwidthDiffRef   .Fill(tc->PedestalSigH-tcRef->PedestalSigH);
+   
+  if (tc->PedestalMeanL == -1000.)
+    hLGpedDiffRef   .Fill(-1000);
+  else if (tcRef->PedestalMeanL == -1000.)
+    hLGpedDiffRef   .Fill(1000);
+  else 
+    hLGpedDiffRef   .Fill(tc->PedestalMeanL-tcRef->PedestalMeanL);
+  
+  if (tc->ScaleH == -1000.)
+    hHGscaleDiffRef   .Fill(-1000);
+  else if (tcRef->ScaleH == -1000.)
+    hHGscaleDiffRef   .Fill(1000);
+  else 
+    hHGscaleDiffRef .Fill(tc->ScaleH-tcRef->ScaleH);
+  
+  hHGscaleCorrRef.Fill(tc->ScaleH, tcRef->ScaleH);
+  pHGscaleCorrRef.Fill(tc->ScaleH, tcRef->ScaleH);
+  
+  if (tc->ScaleL == -1000.)
+    hLGscaleDiffRef   .Fill(-1000);
+  else if (tcRef->ScaleL == -1000.)
+    hLGscaleDiffRef   .Fill(1000);
+  else 
+    hLGscaleDiffRef .Fill(tc->ScaleL-tcRef->ScaleL);
+  
+  if (tc->LGHGCorr == 0. || tc->LGHGCorr == -1000.|| tc->ScaleH == -1000. )
+    hLGscaleCalcDiffRef .Fill(-1000);
+  else if (tcRef->LGHGCorr == 0. || tcRef->LGHGCorr == -1000. || tcRef->ScaleH == -1000. )
+    hLGscaleCalcDiffRef .Fill(1000);
+  else 
+    hLGscaleCalcDiffRef .Fill((tc->ScaleH/tc->LGHGCorr)-(tcRef->ScaleH/tcRef->LGHGCorr));
+  
+  if (tc->LGHGCorr == 0. || tc->LGHGCorr == -1000. )
+    hLGHGcorrDiffRef .Fill(-1000);
+  else if (tcRef->LGHGCorr == 0. || tcRef->LGHGCorr == -1000. )
+    hLGHGcorrDiffRef .Fill(1000);
+  else   
+    hLGHGcorrDiffRef  .Fill(tc->LGHGCorr-tcRef->LGHGCorr);
+  
+  return true;
+}
+
 bool CalibSummary::Write(TFile* f){
   f->cd();
   hLGped          .Write();
@@ -55,6 +169,18 @@ bool CalibSummary::Write(TFile* f){
   hHGLGOffcorr    .Write();
   hLGHGcorr       .Write();
   hLGHGOffcorr    .Write();
+  
+  if (RunNr != RunNrRef){
+    hHGpedDiffRef       .Write();
+    hHGpedwidthDiffRef  .Write();
+    hLGpedDiffRef       .Write();
+    hHGscaleDiffRef     .Write();
+    hLGscaleDiffRef     .Write();
+    hLGscaleCalcDiffRef .Write();
+    hLGHGcorrDiffRef    .Write();
+    hHGscaleCorrRef     .Write();
+    pHGscaleCorrRef     .Write();
+  }
   return true;
 }
 
@@ -133,3 +259,68 @@ int CalibSummary::Analyse(int debug){
   }
   return calibStatus;
 } // end CalibSummary::Analyse()
+
+//*************************************************************************
+// Set Run Property information
+//*************************************************************************
+void CalibSummary::SetRunProperties( RunInfo currRunInfo){
+  rf      = ReturnRFValue(currRunInfo.rf);
+  cf      = ReturnCFValue(currRunInfo.cf);
+  cfcomp  = ReturnCFCompValue(currRunInfo.cfcomp);
+  cc      = ReturnCCValue(currRunInfo.cc);
+  injDAC  = currRunInfo.injDAC;
+  energy  = currRunInfo.energy;
+  temp    = currRunInfo.temp;
+}
+
+
+//*************************************************************************
+// Labeling legend entries
+//*************************************************************************
+TString CalibSummary::GetLabelLegend( RunInfo commonRunInfo, int nSameSettings){
+  
+  TString labelLegend = "";
+  if (commonRunInfo.species.Contains("injection")){
+    if (nSameSettings == 6){
+      if (commonRunInfo.vop < -9999)    labelLegend = Form("%.1f",(double)Voltage);
+      if (commonRunInfo.rf < -9999)     labelLegend = Form("%.1f",rf);
+      if (commonRunInfo.cf < -9999)     labelLegend = Form("%.0f",cf);
+      if (commonRunInfo.cfcomp < -9999) labelLegend = Form("%.0f",cfcomp);
+      if (commonRunInfo.cc < -9999)     labelLegend = Form("%.3f",cc);
+      if (commonRunInfo.injDAC < -9999)  labelLegend = Form("%.0f",injDAC);
+      if (commonRunInfo.energy < -9999)  labelLegend = Form("%.0f",energy);
+    } else if (nSameSettings == 5){
+      if (commonRunInfo.vop < -9999) labelLegend = Form("%.1f ",(double)Voltage);
+      if (commonRunInfo.rf < -9999) labelLegend = labelLegend+Form("%.1f ",rf);
+      if (commonRunInfo.cf < -9999) labelLegend = labelLegend+Form("%.0f ",cf);
+      if (commonRunInfo.cfcomp < -9999) labelLegend = labelLegend+Form("%.0f ",cfcomp);
+      if (commonRunInfo.cc < -9999)  labelLegend = labelLegend+Form("%.3f ",cc);
+      if (commonRunInfo.injDAC < -9999)  labelLegend = labelLegend+Form("%.0f",injDAC);
+      if (commonRunInfo.energy < -9999)  labelLegend = labelLegend+Form("%.0f",energy);
+    }
+  } else if (commonRunInfo.species.Contains("laser")){
+    if (commonRunInfo.energy < -9999)  labelLegend = Form("%.0f",energy);
+    if (commonRunInfo.temp < -9999)  labelLegend = Form("%.0f",temp);
+  // labeling for waveform compare from beam data 5 same settings
+  } else if (nSameSettings == 5){
+    if (commonRunInfo.vop < -9999) labelLegend = Form("%.1f",(double)Voltage);
+    if (commonRunInfo.rf < -9999) labelLegend = Form("%.1f",rf);
+    if (commonRunInfo.cf < -9999) labelLegend = Form("%.0f",cf);
+    if (commonRunInfo.cfcomp < -9999) labelLegend = Form("%.0f",cfcomp);
+    if (commonRunInfo.cc < -9999)  labelLegend = Form("%.3f",cc);
+    if (commonRunInfo.energy < -9999)  labelLegend = Form("%.0f",energy);
+  // labeling for waveform compare from beam data 4 same settings    
+  } else if (nSameSettings == 4){
+    if (commonRunInfo.vop < -9999) labelLegend = Form("%.1f ",(double)Voltage);
+    if (commonRunInfo.rf < -9999) labelLegend = labelLegend+Form("%.1f ",rf);
+    if (commonRunInfo.cf < -9999) labelLegend = labelLegend+Form("%.0f ",cf);
+    if (commonRunInfo.cfcomp < -9999) labelLegend = labelLegend+Form("%.0f ",cfcomp);
+    if (commonRunInfo.cc < -9999)  labelLegend = labelLegend+Form("%.3f ",cc);
+    if (commonRunInfo.energy < -9999)  labelLegend = labelLegend+Form("%.0f",energy);
+  }
+    
+  if (labelLegend.CompareTo("") == 0)
+    labelLegend = Form("%i",RunNr );
+    
+  return   labelLegend;
+}

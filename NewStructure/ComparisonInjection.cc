@@ -194,7 +194,7 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     calib.PrintGlobalInfo();
     CalibSummary aSum = CalibSummary(nRun, runNumber,calib.GetVop(), 0);
-    
+    aSum.SetRunProperties(itRun->second);
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // Reading additional summary histos from 2nd file
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -281,8 +281,18 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
   }
   
   // ******************************************************************************************
+  // Extract common run infos
+  // ******************************************************************************************
+  
+  RunInfo commonRunInfo = GetCommonRunInfoFromList(runList);
+  PrintSettingsRunInfo(commonRunInfo);
+  int labelOpt        = 0;
+  Int_t nSameSettings = GetNSameSettings(commonRunInfo, labelOpt);
+  
+  // ******************************************************************************************
   // Set X axis title and ranges 
   // ******************************************************************************************
+  
   if (Xaxis == 0){
     Xmin= Xmin-10;
     Xmax= Xmax+10;
@@ -298,10 +308,26 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
     itrend->second.SetXAxisTitle(xaxisTitle);
     // write graphs for each cell to output
     itrend->second.Write(RootOutput);
+    // set labels for plots per run
+    for (int i = 0; i <itrend->second.GetNRuns(); i++ ){
+      itrend->second.SetLabelPerRun(itrend->second.GetLabelLegend( commonRunInfo, i, nSameSettings));
+      // std::cout << i << "\t Run: "<<itrend->second.GetRunNr(i) << "\t Label: " << itrend->second.GetLabel(i) << std::endl;     
+    }
   }
   
-  RunInfo commonRunInfo = GetCommonRunInfoFromList(runList);
-  PrintSettingsRunInfo(commonRunInfo);
+  int cCalib = 0;
+  for (isumCalibs = sumCalibs.begin(); isumCalibs!=sumCalibs.end(); ++isumCalibs){
+    if (Xaxis == 3){
+      isumCalibs->second.SetLabel(Form("it. %d", cCalib));
+    } else if (Xaxis == 4){
+      isumCalibs->second.SetLabel(Form("int. %d", cCalib));
+    } else {
+      isumCalibs->second.SetLabel(isumCalibs->second.GetLabelLegend( commonRunInfo,  nSameSettings));
+    }
+    // std::cout << cCalib << "\t Run: "<<isumCalibs->second.GetRunNumber() << "\t Label: " << isumCalibs->second.GetLabel() << std::endl;     
+    cCalib++;
+  }
+
   
   //******************************************************************************
   // plotting overview for each run overlayed
@@ -342,6 +368,17 @@ bool ComparisonInjection::ProcessInjectionCompare(void){
 // Create the output file 
 // ===========================================================================================
 bool ComparisonInjection::CreateOutputRootFile(void){
+
+  std::string testing = RootOutputName.Data();
+  std::size_t found = testing.find_last_of("/\\");
+  std::cout << " path: " << testing.substr(0,found) << '\n';
+  std::cout << " file: " << testing.substr(found+1) << '\n';
+  std::string path = testing.substr(0,found);
+  if (path.size() > 0){
+    std::cout << "Checking whether directory needs to be created: " << path.data() << std::endl;
+    gSystem->Exec(Form("mkdir -p %s",path.data()));
+  }
+  
   if(Overwrite){
     RootOutput=new TFile(RootOutputName.Data(),"RECREATE");
   } else{

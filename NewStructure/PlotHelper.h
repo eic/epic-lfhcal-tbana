@@ -834,7 +834,7 @@
   //__________________________________________________________________________________________________________  
   inline void PlotCalibRunOverlay( TCanvas* canvas2D, Int_t option, 
                             std::map<int, CalibSummary> sumRuns, 
-                            Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo,
+                            Float_t textSizeRel, TString nameOutput, RunInfo commonRunInfo,
                             TString additionalLabel = "", int debug = 0, int labelOpt = 1
                             ){
       
@@ -842,16 +842,26 @@
     Double_t maxY         = 0;
     Double_t minX         = 9999;
     Double_t maxX         = 0;
-    bool isSameVoltage    = true;
+    bool isSameVoltage    = false;
     double commonVoltage  = 0;
-    bool isSameRun        = true;
-    int commonRun         = 0;
-    bool isSamePart       = true;
-    int commonPart        = 0;
+    bool isSameRun        = false;
+    bool isSamePart       = false;
+      if (commonRunInfo.runNr != -10000) isSameRun  = true;    
+      if (commonRunInfo.pdg != -10000.)  isSamePart = true; 
+      if (commonRunInfo.vop != -10000.){
+      isSameVoltage = true; 
+      commonVoltage = commonRunInfo.vop;
+    }
+  
+    
     
     std::map<int, CalibSummary>::iterator itrun;
     Int_t nruns = 0;
     for(itrun=sumRuns.begin(); itrun!=sumRuns.end(); ++itrun){
+      if (nruns == 0 && option > 12){
+        nruns++;
+        continue;
+      }
       TH1D* tempH = nullptr; 
       if (option==0) tempH = itrun->second.GetHGped();
       else if (option==1) tempH = itrun->second.GetHGpedwidth();
@@ -866,28 +876,28 @@
       else if (option==10) tempH = itrun->second.GetLGScaleCalc();
       else if (option==11) tempH = itrun->second.GetLGHGOffcorr();
       else if (option==12) tempH = itrun->second.GetHGLGOffcorr();
+      // differences to ref run
+      else if (option==13) tempH =  itrun->second.GetHGpedDiffRef();
+      else if (option==14) tempH =  itrun->second.GetLGpedDiffRef();
+      else if (option==15) tempH = itrun->second.GetHGscaleDiffRef();
+      else if (option==16) tempH = itrun->second.GetLGscaleDiffRef();
+      else if (option==17) tempH = itrun->second.GetLGscaleCalcDiffRef();
+      else if (option==18) tempH = itrun->second.GetLGHGcorrDiffRef();
+      else if (option==19) tempH = itrun->second.GetHGpedwidthDiffRef();
+      
       if (maxY < tempH->GetMaximum()) maxY = tempH->GetMaximum();
       if ( maxX < FindLastBinXAboveMin(tempH)) maxX = FindLastBinXAboveMin(tempH);
       if ( minX > FindFirstBinXAboveMin(tempH)) minX = FindFirstBinXAboveMin(tempH);
-      if (nruns==0){
-        commonVoltage = itrun->second.GetVoltage();
-        commonRun     = itrun->second.GetRunNumber();
-        commonPart    = itrun->second.GetPdg();
-      } else {
-        if (commonVoltage != itrun->second.GetVoltage())  isSameVoltage = false;
-        if (commonRun != itrun->second.GetRunNumber())  isSameRun = false;
-        if (commonPart != itrun->second.GetPdg())  isSamePart = false;
-      }
       nruns++;
     }
     // std::cout << "min X\t"  << minX << "\t max X \t" << maxX << std::endl;
     
     TString label2          = Form("Common V_{op} = %2.1f V", commonVoltage);
-    TString label3          = GetSpeciesStringFromPDG(currRunInfo.pdg);
+    TString label3          = GetSpeciesStringFromPDG(commonRunInfo.pdg);
     if (isSameRun)
-      label3  = label3+ Form(", Run %2d", commonRun);
-    
-    
+      label3  = label3+ Form(", Run %2d", commonRunInfo.runNr);
+    if (option > 12)
+      label3  = label3+ Form(", Ref Run %2d", sumRuns[1].GetRunRefNumber());
     canvas2D->cd();
         
       TH1D* histos[30];
@@ -930,6 +940,11 @@
                                           0.70*textSizeRel, columns, "",42,colwidth);;
       int currRun = 0;
       for(itrun=sumRuns.begin(); (itrun!=sumRuns.end()) && (currRun < 30); ++itrun){
+        // abort for case of run comparsions
+        if (option > 12 && currRun == 0){
+          currRun++;
+          continue;
+        }
         histos[currRun] = nullptr;
         if (option==0) histos[currRun] = itrun->second.GetHGped();
         else if (option==1) histos[currRun]  = itrun->second.GetHGpedwidth();
@@ -944,10 +959,18 @@
         else if (option==10) histos[currRun] = itrun->second.GetLGScaleCalc();
         else if (option==11) histos[currRun] = itrun->second.GetLGHGOffcorr();
         else if (option==12) histos[currRun] = itrun->second.GetHGLGOffcorr();
+        else if (option==13) histos[currRun] = itrun->second.GetHGpedDiffRef();
+        else if (option==14) histos[currRun] = itrun->second.GetLGpedDiffRef();
+        else if (option==15) histos[currRun] = itrun->second.GetHGscaleDiffRef();
+        else if (option==16) histos[currRun] = itrun->second.GetLGscaleDiffRef();
+        else if (option==17) histos[currRun] = itrun->second.GetLGscaleCalcDiffRef();
+        else if (option==18) histos[currRun] = itrun->second.GetLGHGcorrDiffRef();
+        else if (option==19) histos[currRun] = itrun->second.GetHGpedwidthDiffRef();
+        
         SetStyleHistoTH1ForGraphs( histos[currRun], histos[currRun]->GetXaxis()->GetTitle(), histos[currRun]->GetYaxis()->GetTitle(), 0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.95, 1.02);  
         SetLineDefaults(histos[currRun], GetColorLayer(currRun,altStyle), lineWidth, GetLineStyleLayer(currRun,altStyle));   
         
-        if(currRun == 0){
+        if(currRun == 0 || (currRun == 1 && option > 12)){
           histos[currRun]->GetXaxis()->SetRangeUser(minX-5*histos[currRun]->GetBinWidth(1),maxX+5*histos[currRun]->GetBinWidth(1));
           histos[currRun]->GetYaxis()->SetRangeUser(minY,maxY*1.1);
           histos[currRun]->Draw("hist");
@@ -955,23 +978,27 @@
           histos[currRun]->Draw("same,hist");
         }
 
+        TString labelBase = itrun->second.GetLabel();
         if (labelOpt == 3) {
           legend->AddEntry(histos[currRun],Form("%2.1f V", itrun->second.GetVoltage()), "l");
         } else if (isSameRun){
-          legend->AddEntry(histos[currRun],Form("it. %d,#mu=%.2f,#sigma=%.2f, no cal.=%d", currRun, histos[currRun]->GetMean(), histos[currRun]->GetRMS(), (int)(histos[currRun]->GetBinContent(0)+histos[currRun]->GetBinContent(currRun,histos[currRun]->GetNbinsX()+1))), "l");
+          legend->AddEntry(histos[currRun],Form("%s,#mu=%.2f,#sigma=%.2f, no cal.=%d", labelBase.Data(), histos[currRun]->GetMean(), histos[currRun]->GetRMS(), (int)(histos[currRun]->GetBinContent(0)+histos[currRun]->GetBinContent(currRun,histos[currRun]->GetNbinsX()+1))), "l");
         } else if (isSamePart ){  
           legend->AddEntry(histos[currRun],Form("Run %d,#mu=%.2f,#sigma=%.2f, no cal.=%d", itrun->second.GetRunNumber(), histos[currRun]->GetMean(), histos[currRun]->GetRMS(), (int)(histos[currRun]->GetBinContent(0)+histos[currRun]->GetBinContent(currRun,histos[currRun]->GetNbinsX()+1))), "l");
-          
         } else {
-          legend->AddEntry(histos[currRun],Form("%d",itrun->second.GetRunNumber()),"l");
+          legend->AddEntry(histos[currRun],Form("%s",labelBase.Data()),"l");
         }
         currRun++;  
       }  
-      histos[0]->DrawCopy("axis,same");
+      // plot org hist on top for axis
+      if(option > 12)
+        histos[1]->DrawCopy("axis,same");
+      else 
+        histos[0]->DrawCopy("axis,same");
       legend->Draw();
       
-      DrawLatex(0.95, 0.92, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(currRunInfo,7).Data()), true, 0.85*textSizeRel, 42);
-      DrawLatex(0.95, 0.885, GetStringFromRunInfo(currRunInfo,8), true, 0.85*textSizeRel, 42);
+      DrawLatex(0.95, 0.92, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(commonRunInfo,7).Data()), true, 0.85*textSizeRel, 42);
+      DrawLatex(0.95, 0.885, GetStringFromRunInfo(commonRunInfo,8), true, 0.85*textSizeRel, 42);
       if (isSameVoltage)
         DrawLatex(0.95, 0.88-0.5*0.85*textSizeRel-lineBottom*textSizeRel , label2, true, 0.85*textSizeRel, 42);
       if ((isSameRun||isSamePart) && isSameVoltage)

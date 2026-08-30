@@ -48,8 +48,8 @@ void PrintHelp(char* exe){
   std::cout<<"-R       Trending plots versus run #"<<std::endl;
   std::cout<<"-s       Flag HV scan (put Vop in legend)"<<std::endl;
   std::cout<<"-V       Trending plots versus Vop"<<std::endl;
-  //std::cout<<"-t       Trending plots versus BoR time"<<std::endl;
   std::cout<<"-T       Trending plots versus iteration for mips"<<std::endl;
+  std::cout<<"-t       Trending plots versus diff integrations"<<std::endl;
   std::cout<<"-h       this help"<<std::endl<<std::endl;
   std::cout<<"Examples:"<<std::endl;
   std::cout<<exe<<" (-f) -o TrendingOutput.root -i input_list.txt (-f to overwrite existing output)"<<std::endl;
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]){
   }
   ComparisonCalib CompAnalysis;
   int c;
-  while((c=getopt(argc,argv,"c:d:e:E:fF:Hi:I:L:o:O:r:RstTVh"))!=-1){
+  while((c=getopt(argc,argv,"c:d:e:E:fF:Hi:I:L:o:O:r:RstTtVh"))!=-1){
     switch(c){
     case 'c':
       std::cout<<"Compare: set list of cells for detailed plotting " << optarg <<std::endl;
@@ -198,6 +198,12 @@ int main(int argc, char* argv[]){
       std::cout<<"Compare: Trending plots versus iteration, this option should only be used for the same calib set"<<std::endl;
       CompAnalysis.SetTrendingAxis(3);
       it=std::find(RootRegexp.begin(),RootRegexp.end(),"-T");
+      RootRegexp.erase(it);
+      break;
+    case 't':
+      std::cout<<"Compare: Trending plots versus iteration, this option should only be used for the same calib set"<<std::endl;
+      CompAnalysis.SetTrendingAxis(4);
+      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-t");
       RootRegexp.erase(it);
       break;
     //case 't':

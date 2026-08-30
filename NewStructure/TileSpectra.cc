@@ -462,7 +462,7 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
     } 
   }
   
-  if (impE && (avmip =! -1000)){
+  if (impE && (avmip != -1000)){
     startvalues[1]  = avmip;    
     parlimitslo[1]  = 0.5*avmip;    
     parlimitshi[1]  = 1.7*avmip;

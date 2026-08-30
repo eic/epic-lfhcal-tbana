@@ -22,8 +22,10 @@ class ComparisonCalib{
   ComparisonCalib(){
     TsetupIn = new TChain("Setup");
     TcalibIn = new TChain("Calib");
-    rswptr=&rsw;
-    calibptr=&calib;
+    TcalibRef = new TChain("Calib");
+    rswptr      =&rsw;
+    calibptr    =&calib;
+    calibRefptr =&calibRef;
   }
   ~ComparisonCalib(){
     if(RootOutput) RootOutput->Close();
@@ -88,9 +90,12 @@ class ComparisonCalib{
   Setup* setup;                           // geometry setup
   Calib calib;                            // calibration object
   Calib* calibptr;                        // pointer to calib object
+  Calib calibRef;                         // reference calibration object
+  Calib* calibRefptr;                     // pointer to reference calib object
   
-  TChain* TsetupIn=nullptr;
-  TChain* TcalibIn=nullptr;
+  TChain* TsetupIn  =nullptr;
+  TChain* TcalibIn  =nullptr;
+  TChain* TcalibRef =nullptr;
 
  protected:
 

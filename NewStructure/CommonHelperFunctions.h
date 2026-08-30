@@ -569,6 +569,8 @@
     bool isSameInj        = true;
     bool isSameTemp       = true;
     bool isSameE          = true;
+    bool isSameRun        = true;
+    bool isSamePDG        = true;
     double commonRF       = runList.at(0).rf;
     double commonCF       = runList.at(0).cf;
     double commonCFcomp   = runList.at(0).cfcomp;
@@ -576,7 +578,9 @@
     double commonInj      = (double)GetInjectionfCEquivalent(runList.at(0).injDAC, runList.at(0).injMode); 
     double commonTemp     = runList.at(0).temp;
     double commonE        = runList.at(0).energy;
-
+    int commonRun         = runList.at(0).runNr;
+    int commonPDG         = runList.at(0).pdg;
+    
     std::cout << runList.at(0).runNr << "\t"<<  commonVoltage << "\t" << commonE << "\t"<< commonTemp << "\t Sett: "<< commonRF << "\t" << commonCF << "\t"<< commonCC << "\t" << commonCFcomp << "\tinj:"<< commonInj << std::endl;
     
     for (Int_t r = 1; r< (int)runList.size(); r++){
@@ -588,7 +592,9 @@
       double currentInj = (double)GetInjectionfCEquivalent(runList.at(r).injDAC, runList.at(r).injMode);
       if (commonInj != currentInj)              isSameInj     = false;
       if (commonE   != runList.at(r).energy)    isSameE       = false;
-      if (commonTemp   != runList.at(r).temp)   isSameTemp    = false;
+      if (commonTemp != runList.at(r).temp)   isSameTemp    = false;
+      if (commonRun != runList.at(r).runNr)   isSameRun    = false;
+      if (commonPDG != runList.at(r).pdg)   isSamePDG    = false;
       std::cout << runList.at(r).runNr << "\t" <<  runList.at(r).vop << "\t" << runList.at(r).energy << "\t"<< runList.at(r).temp << "\t Sett: "<< runList.at(r).rf << "\t" << runList.at(r).cf << "\t"<<  runList.at(r).cc << "\t" << runList.at(r).cfcomp << "\tinj:"<< currentInj << std::endl;
     }
     
@@ -606,8 +612,6 @@
     RunInfo commonRunInfo;
     commonRunInfo.nFPGA       = runList.at(0).nFPGA;
     commonRunInfo.nASIC       = runList.at(0).nASIC;
-    commonRunInfo.pdg         = runList.at(0).pdg;
-    commonRunInfo.species     = runList.at(0).species;
     commonRunInfo.detector    = runList.at(0).detector;
     commonRunInfo.beamline    = runList.at(0).beamline;
     commonRunInfo.facility    = runList.at(0).facility;
@@ -616,6 +620,7 @@
     commonRunInfo.year        = runList.at(0).year;
     commonRunInfo.samples     = runList.at(0).samples;
     commonRunInfo.vbr         = runList.at(0).vbr;
+    commonRunInfo.species     = runList.at(0).species;
   
     if (isSameRF)
       commonRunInfo.rf        = commonRF;
@@ -652,7 +657,17 @@
       commonRunInfo.temp    = commonTemp;
     else 
       commonRunInfo.temp    = -10000.;
-
+    
+    if (isSameRun)
+      commonRunInfo.runNr    = commonRun;
+    else 
+      commonRunInfo.runNr    = -10000;
+   
+    if (isSamePDG){
+      commonRunInfo.pdg      = commonPDG;
+    } else { 
+      commonRunInfo.pdg      = -10000.;
+    }
     return commonRunInfo;
     
   }

@@ -303,12 +303,14 @@ class TileTrend: public TObject{
   bool SetMarkerColor (uint);
   bool SetMarkerStyle (uint);
   bool SetXAxisTitle  (TString);
+  void SetLabelPerRun (TString);
   
   // Sort graph according to voltage or run number
   void Sort          ();
   // Write graphs to file
   bool Write          (TFile*);
   bool Write          ();
+  void PrintMinMaxRanges ();
   
   inline double GetExtOpt()       {return extended;};
 
@@ -384,6 +386,7 @@ class TileTrend: public TObject{
   inline int GetFirstRun()        {if (runNrs.size()> 0) return runNrs[0]; else return -1;};
   inline int GetLastRun()         {if (runNrs.size()> 0) return runNrs[runNrs.size()-1]; else return -1;};
   inline int GetRunNr(int i)      {if (runNrs.size()> 0 && i < (int)runNrs.size()) return runNrs[i]; else return -1;}
+  inline TString GetLabel(int i)      {if (labels.size()> 0 && i < (int)labels.size()) return labels[i]; else return "";}
   inline int GetPdg(int i)        {if (pdgs.size()> 0 && i < (int)pdgs.size()) return pdgs[i]; else return -1;}
   inline int GetVoltage(int i)    {if (voltages.size()> 0 && i < (int)voltages.size()) return voltages[i]; else return -1;}
   inline int GetRF(int i)         {if (rf.size()> 0 && i < (int)rf.size()) return rf[i]; else return -1;}
@@ -422,6 +425,10 @@ class TileTrend: public TObject{
   inline TGraphErrors* GetTOA()       {return &gTrendTOA;};
   inline TGraphErrors* GetNSampTOA()  {return &gTrendNSampTOA;};
   inline TGraphErrors* GetNTOA()      {return &gTrendNTOA;};
+  
+  // trending options dependencies
+  TGraphErrors* GetTrendingBasedOnOption(int option);
+  void GetMinMaxBasedOnOptionAndCompare(int, Double_t &, Double_t &);
   
   // Getters for individual graph histgrams
   TH1D* GetHGTriggRun(int);
@@ -525,6 +532,7 @@ class TileTrend: public TObject{
   double MinNSampTOA  =9999.;
   double MinNTOA      =9999.;
   
+  std::vector<TString> labels;
   std::vector<int> runNrs;
   std::vector<int> pdgs;
   std::vector<double> voltages;
@@ -542,7 +550,7 @@ class TileTrend: public TObject{
   std::map<int, TProfile> TOAProf;
   std::map<int, TProfile> TOTProf;
   
-  ClassDef(TileTrend,10);
+  ClassDef(TileTrend,11);
 };
 
 #endif

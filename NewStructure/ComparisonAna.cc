@@ -252,6 +252,17 @@ bool ComparisonAna::ProcessAna(void){
 
 // Make Output File
 bool ComparisonAna::CreateOutputRootFile(void){
+
+  std::string testing = RootOutputName.Data();
+  std::size_t found = testing.find_last_of("/\\");
+  std::cout << " path: " << testing.substr(0,found) << '\n';
+  std::cout << " file: " << testing.substr(found+1) << '\n';
+  std::string path = testing.substr(0,found);
+  if (path.size() > 0){
+    std::cout << "Checking whether directory needs to be created: " << path.data() << std::endl;
+    gSystem->Exec(Form("mkdir -p %s",path.data()));
+  }
+  
   if(Overwrite){
     RootOutput=new TFile(RootOutputName.Data(),"RECREATE");
   } else{

@@ -1746,9 +1746,14 @@ bool Analyses::TransferCalib(void){
   TdataIn->GetEntry(0);     // use first event to get infos
   int runNr             = event.GetRunNumber();
   ReadOut::Type typeRO  = event.GetROtype();
+  double Vop            = event.GetVop();
   std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
   calib.SetRunNumber(runNr);
   calib.SetBeginRunTime(event.GetBeginRunTimeAlt());
+  if (Vop != calib.GetVop()){
+    std::cout << "Calibration applied and current run have different Vop: \n \t - calib: "  << calib.GetVop() << "\n \t- current: " << Vop << "\n \t\t RESETTING to current run Vop!!" << std::endl;
+  }
+  calib.SetVop(Vop);
   std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
   std::map<int,RunInfo>::iterator it=ri.find(runNr);
 

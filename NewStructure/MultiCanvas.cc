@@ -1699,135 +1699,37 @@ void MultiCanvas::PlotTriggerPrim(  std::map<int,TileSpectra> spectra,
 void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
                                  Double_t xPMin, Double_t xPMax,
                                  TString nameOutputBase, TString namePlot, TString suffix, 
-                                 RunInfo currRunInfo, int ExtPlot,
+                                 RunInfo commonRunInfo, int ExtPlot,
                                  int debug){
   
   
   std::cout << "plotting: " << nameOutputBase.Data() << "\t"<<  namePlot.Data()<< std::endl;
-  // std::cout << avMip << "\t" << facLow << "\t" << facHigh << std::endl;
-  // std::cout << xPMin << "\t" << xPMax << "\t" << scaleYMax << std::endl;
-  
-  Double_t minY = 9999;
-  Double_t maxY = 0.;
-  bool isSameVoltage    = true;
+
+  // evaluate commonalities
+  bool isSameVoltage    = false;
   double commonVoltage  = 0;
-  bool isSameRun        = true;
-  int commonRun         = 0;
-  bool isSamePart       = true;
-  int commonPart        = 0;
-    
-  std::map<int, TileTrend>::iterator itrend;
-  for(itrend=trend.begin(); itrend!=trend.end(); ++itrend){      
-    if (option == 0){
-      if(minY>itrend->second.GetMinHGped()) minY=itrend->second.GetMinHGped();
-      if(maxY<itrend->second.GetMaxHGped()) maxY=itrend->second.GetMaxHGped();
-    } else if (option == 1){
-      if(minY>itrend->second.GetMinLGped()) minY=itrend->second.GetMinLGped();
-      if(maxY<itrend->second.GetMaxLGped()) maxY=itrend->second.GetMaxLGped();
-    } else if (option == 2){
-      if(minY>itrend->second.GetMinHGscale()) minY=itrend->second.GetMinHGscale();
-      if(maxY<itrend->second.GetMaxHGscale()) maxY=itrend->second.GetMaxHGscale();
-    } else if (option == 3){
-      if(minY>itrend->second.GetMinLGscale()) minY=itrend->second.GetMinLGscale();
-      if(maxY<itrend->second.GetMaxLGscale()) maxY=itrend->second.GetMaxLGscale();
-    } else if (option == 4){
-      if(minY>itrend->second.GetMinLGHGcorr()) minY=itrend->second.GetMinLGHGcorr();
-      if(maxY<itrend->second.GetMaxLGHGcorr()) maxY=itrend->second.GetMaxLGHGcorr();
-    } else if (option == 5){
-      if(minY>itrend->second.GetMinHGLGcorr()) minY=itrend->second.GetMinHGLGcorr();
-      if(maxY<itrend->second.GetMaxHGLGcorr()) maxY=itrend->second.GetMaxHGLGcorr();          
-    } else if (option == 6){
-      if(minY>itrend->second.GetMinTrigg()) minY=itrend->second.GetMinTrigg();
-      if(maxY<itrend->second.GetMaxTrigg()) maxY=itrend->second.GetMaxTrigg();          
-    } else if (option == 7){
-      if(minY>itrend->second.GetMinSBSignal()) minY=itrend->second.GetMinSBSignal();
-      if(maxY<itrend->second.GetMaxSBSignal()) maxY=itrend->second.GetMaxSBSignal();          
-    } else if (option == 8){
-      if(minY>itrend->second.GetMinSBNoise()) minY=itrend->second.GetMinSBNoise();
-      if(maxY<itrend->second.GetMaxSBNoise()) maxY=itrend->second.GetMaxSBNoise();          
-    } else if (option == 9){
-      if(minY>itrend->second.GetMinHGMPV()) minY=itrend->second.GetMinHGMPV();
-      if(maxY<itrend->second.GetMaxHGMPV()) maxY=itrend->second.GetMaxHGMPV();          
-    } else if (option == 10){
-      if(minY>itrend->second.GetMinLGMPV()) minY=itrend->second.GetMinLGMPV();
-      if(maxY<itrend->second.GetMaxLGMPV()) maxY=itrend->second.GetMaxLGMPV();          
-    } else if (option == 11){
-      if(minY>itrend->second.GetMinHGLSigma()) minY=itrend->second.GetMinHGLSigma();
-      if(maxY<itrend->second.GetMaxHGLSigma()) maxY=itrend->second.GetMaxHGLSigma();          
-    } else if (option == 12){
-      if(minY>itrend->second.GetMinLGLSigma()) minY=itrend->second.GetMinLGLSigma();
-      if(maxY<itrend->second.GetMaxLGLSigma()) maxY=itrend->second.GetMaxLGLSigma();          
-    } else if (option == 13){
-      if(minY>itrend->second.GetMinHGGSigma()) minY=itrend->second.GetMinHGGSigma();
-      if(maxY<itrend->second.GetMaxHGGSigma()) maxY=itrend->second.GetMaxHGGSigma();          
-    } else if (option == 14){
-      if(minY>itrend->second.GetMinLGGSigma()) minY=itrend->second.GetMinLGGSigma();
-      if(maxY<itrend->second.GetMaxLGGSigma()) maxY=itrend->second.GetMaxLGGSigma();          
-    } else if (option == 15){
-      if(minY>itrend->second.GetMinHGpedwidth()) minY=itrend->second.GetMinHGpedwidth();
-      if(maxY<itrend->second.GetMaxHGpedwidth()) maxY=itrend->second.GetMaxHGpedwidth();          
-    } else if (option == 16){
-      if(minY>itrend->second.GetMinLGpedwidth()) minY=itrend->second.GetMinLGpedwidth();
-      if(maxY<itrend->second.GetMaxLGpedwidth()) maxY=itrend->second.GetMaxLGpedwidth();          
-    } else if (option == 17){
-      if(minY>itrend->second.GetMinLGHGOffset()) minY=itrend->second.GetMinLGHGOffset();
-      if(maxY<itrend->second.GetMaxLGHGOffset()) maxY=itrend->second.GetMaxLGHGOffset();          
-    } else if (option == 18){
-      if(minY>itrend->second.GetMinHGLGOffset()) minY=itrend->second.GetMinHGLGOffset();
-      if(maxY<itrend->second.GetMaxHGLGOffset()) maxY=itrend->second.GetMaxHGLGOffset();          
-    } else if (option == 19){
-      if(minY>itrend->second.GetMinHGped()) minY=itrend->second.GetMinHGped();
-      if(maxY<itrend->second.GetMaxHGped()) maxY=itrend->second.GetMaxHGped();
-      if(minY>itrend->second.GetMinLGped()) minY=itrend->second.GetMinLGped();
-      if(maxY<itrend->second.GetMaxLGped()) maxY=itrend->second.GetMaxLGped();
-    } else if (option == 20){
-      if(minY>itrend->second.GetMinHGpedwidth()) minY=itrend->second.GetMinHGpedwidth();
-      if(maxY<itrend->second.GetMaxHGpedwidth()) maxY=itrend->second.GetMaxHGpedwidth();          
-      if(minY>itrend->second.GetMinLGpedwidth()) minY=itrend->second.GetMinLGpedwidth();
-      if(maxY<itrend->second.GetMaxLGpedwidth()) maxY=itrend->second.GetMaxLGpedwidth();          
-    } else if (option == 30){
-      if(minY>itrend->second.GetMinADCmax()) minY=itrend->second.GetMinADCmax();
-      if(maxY<itrend->second.GetMaxADCmax()) maxY=itrend->second.GetMaxADCmax();          
-    } else if (option == 31){
-      if(minY>itrend->second.GetMinADCsat()) minY=itrend->second.GetMinADCsat();
-      if(maxY<itrend->second.GetMaxADCsat()) maxY=itrend->second.GetMaxADCsat();          
-    } else if (option == 32){
-      if(minY>itrend->second.GetMinTOT()) minY=itrend->second.GetMinTOT();
-      if(maxY<itrend->second.GetMaxTOT()) maxY=itrend->second.GetMaxTOT();          
-    } else if (option == 33){
-      if(minY>itrend->second.GetMinTOTsat()) minY=itrend->second.GetMinTOTsat();
-      if(maxY<itrend->second.GetMaxTOTsat()) maxY=itrend->second.GetMaxTOTsat();          
-    } else if (option == 34){
-      if(minY>itrend->second.GetMinTOA()) minY=itrend->second.GetMinTOA();
-      if(maxY<itrend->second.GetMaxTOA()) maxY=itrend->second.GetMaxTOA();          
-    } else if (option == 35){ 
-      if(minY>itrend->second.GetMinNSampTOA()) minY=itrend->second.GetMinNSampTOA();
-      if(maxY<itrend->second.GetMaxNSampTOA()) maxY=itrend->second.GetMaxNSampTOA();          
-    } else if (option == 36){
-      if(minY>itrend->second.GetMinNTOA()) minY=itrend->second.GetMinNTOA();
-      if(maxY<itrend->second.GetMaxNTOA()) maxY=itrend->second.GetMaxNTOA();          
-    }
+  bool isSameRun        = false;
+  bool isSamePart       = false;
+  if (commonRunInfo.runNr != -10000) isSameRun  = true;    
+  if (commonRunInfo.pdg != -10000.)  isSamePart = true; 
+  if (commonRunInfo.vop != -10000.){
+    isSameVoltage = true; 
+    commonVoltage = commonRunInfo.vop;
   }
-  itrend=trend.begin();
-  for (int rc = 0; rc < itrend->second.GetNRuns() && rc < 30; rc++ ){
-    if (rc == 0){
-      commonVoltage = itrend->second.GetVoltage(rc);
-      commonRun     = itrend->second.GetRunNr(rc);
-      commonPart    = itrend->second.GetPdg(rc);
-      std::cout << itrend->second.GetRunNr(rc) << "\t" << isSameRun<< "\t" << itrend->second.GetVoltage(rc) << "\t" << isSameVoltage<< "\t" << itrend->second.GetPdg(rc)<< "\t" << isSamePart << std::endl;
-    } else {
-      if (commonVoltage != itrend->second.GetVoltage(rc))  isSameVoltage = false;
-      if (commonRun != itrend->second.GetRunNr(rc))  isSameRun = false;
-      if (commonPart != itrend->second.GetPdg(rc))  isSamePart = false;
-      std::cout << itrend->second.GetRunNr(rc) << "\t" << isSameRun<< "\t" << itrend->second.GetVoltage(rc) << "\t" << isSameVoltage<< "\t" << itrend->second.GetPdg(rc)<< "\t" << isSamePart << std::endl;
-    }
-  }    
-  
   int isSame = 0;
   if (isSameVoltage) isSame++;
   if (isSameRun) isSame++;
   if (isSamePart) isSame++;
-  
+  std::cout << "Common informations: " << commonRunInfo.runNr << "\t" << isSameRun<< "\t" << commonVoltage << "\t" << isSameVoltage<< "\t" << commonRunInfo.pdg<< "\t" << isSamePart << "\t nSame: " << isSame << std::endl;
+    
+  // finding optimum ranges
+  Double_t minY = 9999;
+  Double_t maxY = 0.;
+  std::map<int, TileTrend>::iterator itrend;
+  for(itrend=trend.begin(); itrend!=trend.end(); ++itrend){      
+    itrend->second.GetMinMaxBasedOnOptionAndCompare(option, minY, maxY );
+  }
+  itrend=trend.begin();
   std::cout << "resetting  range  "  << minY << "\t"<< maxY << std::endl;
 
   Setup* setup = Setup::GetInstance();
@@ -1855,7 +1757,7 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
                                   trend, option, xPMin,xPMax, minY, maxY, isSame, commonVoltage, l, m,
                                   Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()), 
                                   Form("%s/Trend%s" ,nameOutputBase.Data(),namePlot.Data()), 
-                                  currRunInfo, ExtPlot);        
+                                  commonRunInfo, ExtPlot);        
       }
     }
   // Dual 8M plotting - 2025 TB setup
@@ -1871,7 +1773,7 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
                              trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commonVoltage, l,
                              Form("%s/SingleLayer/%s_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), l, suffix.Data()), 
                              Form("%s/Trend%s" ,nameOutputBase.Data(),namePlot.Data()), 
-                             currRunInfo, ExtPlot);
+                             commonRunInfo, ExtPlot);
     }
   // 2x3 8M module plotting - 2026 TB setup
   } else if ( detType == DetConf::Type::MediumTB){
@@ -1886,7 +1788,7 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
                              trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commonVoltage, l,
                              Form("%s/SingleLayer/%s_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), l, suffix.Data()), 
                              Form("%s/Trend%s" ,nameOutputBase.Data(),namePlot.Data()), 
-                             currRunInfo, ExtPlot);
+                             commonRunInfo, ExtPlot);
     } 
   // 2x4 8M module plotting - 2028 TB setup
   } else if ( detType == DetConf::Type::LargeTB){
@@ -1904,7 +1806,7 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
                              trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commonVoltage, a,
                              Form("%s/SingleLayer/%s_Asic%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), a, suffix.Data()), 
                              Form("%s/Trend%s" ,nameOutputBase.Data(),namePlot.Data()), 
-                             currRunInfo, ExtPlot);
+                             commonRunInfo, ExtPlot);
     }
   }  
 }

@@ -143,6 +143,7 @@ class Calib{
   
   inline std::map<int, TileCalib>::const_iterator begin() {return CaloCalib.cbegin();};
   inline std::map<int, TileCalib>::const_iterator end()   {return CaloCalib.cend();};
+  inline std::map<int, TileCalib>::const_iterator find(int id)  {return CaloCalib.find(id);};
   
  private:
    

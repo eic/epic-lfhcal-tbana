@@ -1,5 +1,7 @@
 #include "ComparisonCalib.h"
-#include <vector>
+#include <vector>         // std::vector
+#include <string>         // std::string
+#include <cstddef>         // std::size_t
 #include "TROOT.h"
 #ifdef __APPLE__
 #include <unistd.h>
@@ -52,6 +54,7 @@ bool ComparisonCalib::CheckAndOpenIO(void){
       // read files from text file
       int goodsetup;
       int goodcalib;
+      int nRuns = 0;
       while(dummyTxt.good()){
         std::cout << dummyRootName.data() << std::endl;
         // check that file exists and can be opened
@@ -70,8 +73,18 @@ bool ComparisonCalib::CheckAndOpenIO(void){
         if(goodsetup==0){
           std::cout<<"Issues retrieving Setup tree from "<<dummyRootName<<", file is ignored"<<std::endl;
         }
+        // set first run as reference calib
+        if (nRuns == 0){
+          goodcalib=TcalibRef->AddFile(dummyRootName.c_str());
+          if(goodcalib==0){
+            std::cout<<"Issues retrieving reference Calib tree from "<<dummyRootName<<", file is ignored"<<std::endl;
+          } else {
+            std::cout<<"Added " << dummyRootName << " as reference calib!" << std::endl;
+          }
+        }
         // set next root file name
         dummyTxt>>dummyRootName;
+        nRuns++;
       }
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // text file with 2 files per line 1 calib file & 1 histo file
@@ -90,19 +103,20 @@ bool ComparisonCalib::CheckAndOpenIO(void){
       
       int goodsetup;
       int goodcalib;
+      int nRuns = 0;
       while(dummyTxt.good()){
         std::cout << dummyRootCalibName.data() << "\t" << dummyRootHistName.data() << std::endl;
         
         // check that files exist and can be opened
         TFile dummyRootCalib=TFile(dummyRootCalibName.c_str(),"READ");
         if(dummyRootCalib.IsZombie()){
-          std::cout<<"Error opening '"<<dummyRootCalibName<<", does the file exist?"<<std::endl;
+          std::cout<<"Error opening calib file: '"<<dummyRootCalibName<<", does the file exist?"<<std::endl;
           return false;
         }
         dummyRootCalib.Close();
         TFile dummyRootHist=TFile(dummyRootHistName.c_str(),"READ");
         if(dummyRootHist.IsZombie()){
-          std::cout<<"Error opening '"<<dummyRootHistName<<", does the file exist?"<<std::endl;
+          std::cout<<"Error opening hist file'"<<dummyRootHistName<<", does the file exist?"<<std::endl;
           return false;
         }
         dummyRootHist.Close();
@@ -117,8 +131,19 @@ bool ComparisonCalib::CheckAndOpenIO(void){
         if(goodsetup==0){
           std::cout<<"Issues retrieving Setup tree from "<<dummyRootCalibName<<", file is ignored"<<std::endl;
         }
+        // set first run as reference calib
+        if (nRuns == 0){
+          goodcalib=TcalibRef->AddFile(dummyRootCalibName.c_str());
+          if(goodcalib==0){
+            std::cout<<"Issues retrieving reference Calib tree from "<<dummyRootCalibName<<", file is ignored"<<std::endl;
+          } else {
+            std::cout<<"Added " << dummyRootCalibName << " as reference calib!" << std::endl;
+          }
+        }
+        
         // set next root file names
         dummyTxt>>dummyRootCalibName >> dummyRootHistName;
+        nRuns++;
       }
     }
   } // end read input from text file
@@ -160,6 +185,13 @@ bool ComparisonCalib::CheckAndOpenIO(void){
         std::cout<<"Issues retrieving Setup tree from "<<it->Data()<<", file is ignored"<<std::endl;
       }
     }
+    it=RootInputNames.begin();
+    goodcalib=TcalibRef->AddFile(it->Data());
+    if(goodcalib==0){
+      std::cout<<"Issues retrieving reference Calib tree from "<<it->Data()<<", file is ignored"<<std::endl;
+    }
+    
+    
   } // end read files by auto-extension
   // *****************************************************************************************
   // Setup Output files
@@ -192,6 +224,11 @@ bool ComparisonCalib::CheckAndOpenIO(void){
     std::cout<<"Error retrieving calibration info from the tree"<<std::endl;
     return false;
   }
+  matchingbranch=TcalibRef->SetBranchAddress("calib",&calibRefptr);
+  if(matchingbranch<0){
+    std::cout<<"Error retrieving calibration info from the for reference run"<<std::endl;
+    return false;
+  }
   
   return true;    
 } // end CheckAndOpenIO()
@@ -207,7 +244,11 @@ bool ComparisonCalib::ProcessCalib(void){
   if (ExtPlot > 0) gSystem->Exec("mkdir -p "+OutputNameDirPlots+"/SingleLayer");
   StyleSettingsBasics("pdf");
   SetPlotStyle();  
-
+  std::cout << "*************************************************" << std::endl;
+  std::cout << "expandedList:\t" << expandedList << std::endl;
+  std::cout << "ExtPlot:\t" << ExtPlot << std::endl;
+  std::cout << "Xaxis:\t" << Xaxis << std::endl;
+  std::cout << "*************************************************" << std::endl;
   // *****************************************************************************************
   // Some general setup
   // *****************************************************************************************
@@ -223,7 +264,8 @@ bool ComparisonCalib::ProcessCalib(void){
   std::map<int, TileTrend> trend;
   std::map<int, TileTrend>::iterator itrend;
   std::map<int, TileCalib>::const_iterator itcalib;
-
+  std::map<int, TileCalib>::const_iterator itcalibRef;
+  
   std::map<int, CalibSummary> sumCalibs;
   std::map<int, CalibSummary>::iterator isumCalibs;
   
@@ -262,7 +304,13 @@ bool ComparisonCalib::ProcessCalib(void){
   std::map<int,RunInfo>::iterator it; // basic infos
   std::map<int,RunInfo>::iterator cit; // basic infos
   std::vector<RunInfo> runList;
+
+  // plotting individual layers/asics
+  DetConf::Type detConf; 
   
+  // set reference calib to first file 
+  TcalibRef->GetEntry(0);
+  std::cout << "Reference file run number: " << calibRef.GetRunNumber() << std::endl;
   // ******************************************************************************************
   // Iterate over all entries (runs) in the calib tree
   // ******************************************************************************************
@@ -272,12 +320,16 @@ bool ComparisonCalib::ProcessCalib(void){
     
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // set global iterator for runs to first run number in list to obtain beam-line, dates...
-    if (ientry==0) it = ri.find(calib.GetRunNumber());
+    if (ientry==0){
+      it = ri.find(calib.GetRunNumber());
+      detConf = setup->GetDetectorConfig();
+      if (it->second.detector.Contains("FoCal-H"))
+        detConf = DetConf::Type::FocalH;
+    }
     // find current run infos
     cit = ri.find(calib.GetRunNumber());
     runList.push_back(cit->second);
-    std::cout << "Energy \t" <<  cit->second.energy << "\t run " << calib.GetRunNumber() << std::endl;
-    
+    std::cout << "Energy \t" <<  cit->second.energy << "\t run " << calib.GetRunNumber()<< "\t vop" << calib.GetVop() << std::endl;
     
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // Set X-values according to option
@@ -285,17 +337,22 @@ bool ComparisonCalib::ProcessCalib(void){
     //        0 - Run number dependence
     //        1 - Operational Voltage dependence
     //        2 - Time dependence
+    //        3 - iterations
+    //        4 - integration option
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     Int_t runNumber = calib.GetRunNumber();
     if(Xaxis==0){//depending on run #
       Xvalue=calib.GetRunNumber();
     } else if(Xaxis==1){
-      Xvalue=calib.GetVop();
+      Xvalue=cit->second.vop;
     } else if(Xaxis==2){
       Xvalue=calib.GetBeginRunTime()->GetSec();
     } else if(Xaxis==3){
       Xvalue=nRun; 
+    } else if(Xaxis==4){
+      Xvalue=nRun; 
     }
+    
     if(Xvalue<Xmin) Xmin=Xvalue;
     if(Xvalue>Xmax) Xmax=Xvalue;
 
@@ -303,7 +360,15 @@ bool ComparisonCalib::ProcessCalib(void){
     // Initialize calib summary
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     calib.PrintGlobalInfo();
-    CalibSummary aSum = CalibSummary(nRun, runNumber,calib.GetVop(), cit->second.pdg);
+    CalibSummary aSum = CalibSummary(nRun, runNumber,cit->second.vop, cit->second.pdg);
+    aSum.SetRunProperties(cit->second);
+    if (ientry != 0){
+      if (Xaxis == 3 || Xaxis == 4)
+        aSum.SetRefRunNr(0);
+      else 
+        aSum.SetRefRunNr(calibRef.GetRunNumber());
+      std::cout << "Will use: " << calibRef.GetRunNumber() << " as reference run." << std::endl;
+    }
     
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // Reading additional summary histos from 2nd file
@@ -377,6 +442,19 @@ bool ComparisonCalib::ProcessCalib(void){
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     for(itcalib=calib.begin(); itcalib!=calib.end(); ++itcalib){
 
+      // skip if cell is marked as bad or off
+      if (itcalib->second.BadChannel == 0 || itcalib->second.BadChannel == 1 )
+        continue;
+
+      bool foundRef = false;
+      if (ientry != 0){
+        itcalibRef  = calibRef.find(itcalib->first);
+        if (itcalibRef!=calibRef.end())
+          foundRef  = true;
+        else 
+          std::cout << "Cell:  "<< itcalib->first << " not contained in Reference object" << std::endl;
+      }
+      
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       // Reading additional cell histos from 2nd file
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
@@ -402,6 +480,9 @@ bool ComparisonCalib::ProcessCalib(void){
       double hgmaxErr   = -10000.;
       double lgmaxErr   = -10000.;
       
+      int layer     = setup->GetLayer(itcalib->first);
+      int chInLayer = setup->GetChannelInLayerFull(itcalib->first, detConf);
+
       TH1D* histCellHG      = nullptr;
       TH1D* histCellLG      = nullptr;
       TProfile* profCellLGHG= nullptr;
@@ -409,14 +490,14 @@ bool ComparisonCalib::ProcessCalib(void){
       TF1* fitHGLG          = nullptr;
       if (expandedList == 1){
         if (ExtPlot > 1){
-          histCellHG      = (TH1D*)tempFile->Get(Form("IndividualCellsTrigg/hspectramipTriggHGCellID%i",itcalib->first));
           if (!isHGCROC){
+            histCellHG      = (TH1D*)tempFile->Get(Form("IndividualCellsTrigg/hspectramipTriggHGCellID%i",itcalib->first));
             histCellLG      = (TH1D*)tempFile->Get(Form("IndividualCellsTrigg/hspectramipTriggLGCellID%i",itcalib->first));
             profCellLGHG    = (TProfile*)tempFile->Get(Form("IndividualCellsTrigg/hCoorspectramipTriggLGHGCellID%i",itcalib->first));
+          } else {
+            histCellHG      = (TH1D*)tempFile->Get(Form("IndividualCellsTrigg/hspectramipTriggADCCellID%i",itcalib->first));
           }
         }
-        int layer     = setup->GetLayer(itcalib->first);
-        int chInLayer = setup->GetChannelInLayer(itcalib->first);
         triggers      = hTrigger2D->GetBinContent(hTrigger2D->FindBin(layer,chInLayer));
         hgLMPV        = hHG_LMPV2D->GetBinContent(hHG_LMPV2D->FindBin(layer,chInLayer));
         hgLMPV_E      = hHG_LMPV2D->GetBinError(hHG_LMPV2D->FindBin(layer,chInLayer));
@@ -438,6 +519,7 @@ bool ComparisonCalib::ProcessCalib(void){
         sbNoise       = hSB_Noise2D->GetBinError(hSB_Noise2D->FindBin(layer,chInLayer));
         sbSignal      = hSB_Signal2D->GetBinError(hSB_Signal2D->FindBin(layer,chInLayer)); 
         
+        if (debug > 5) std::cout << itcalib->first << "\t"<< triggers << "\t" << hgLMPV << "\t" << hgLSigma << "\t" << hgGSigma << "\t" << sbNoise << "\t" << sbSignal << std::endl;
       } // end if expandedList == 1 
       else if (expandedList == 2){
         if (ExtPlot > 1){
@@ -447,8 +529,6 @@ bool ComparisonCalib::ProcessCalib(void){
         }
         fitLGHG         = (TF1*)tempFile->Get(Form("IndividualCells/fcorrmip1stLGHGCellID%i",itcalib->first));
         fitHGLG         = (TF1*)tempFile->Get(Form("IndividualCells/fcorrmip1stHGLGCellID%i",itcalib->first));
-        int layer     = setup->GetLayer(itcalib->first);
-        int chInLayer = setup->GetChannelInLayer(itcalib->first);
         triggers      = hTrigger2D->GetBinContent(hTrigger2D->FindBin(layer,chInLayer));
         sbNoise       = hSB_Noise2D->GetBinError(hSB_Noise2D->FindBin(layer,chInLayer));
         sbSignal      = hSB_Signal2D->GetBinError(hSB_Signal2D->FindBin(layer,chInLayer));
@@ -482,54 +562,60 @@ bool ComparisonCalib::ProcessCalib(void){
       // fill calib summary object for specific cell
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
       aSum.Fill(itcalib->second); 
+      if (ientry!= 0 && foundRef){
+        aSum.FillRefRunProps(itcalib->second, itcalibRef->second); 
+      }
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       // fill trending object for a single cell
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       // check if iterator points to end of map
       itrend=trend.find(itcalib->first);
+      int nFillExtNr = (int)calib.GetRunNumber();
+      if (Xaxis==3 || Xaxis==4 )
+        nFillExtNr    = nRun;
       if(itrend!=trend.end()){
         // fill minimal object
-        itrend->second.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(), (int)cit->second.pdg, hgmaxErr, lgmaxErr, cit->second.energy, cit->second.temp);
+        itrend->second.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)cit->second.vop, (int)cit->second.pdg, hgmaxErr, lgmaxErr, cit->second.energy, cit->second.temp);
         // fill with additional information
         if (expandedList == 1){
-          itrend->second.FillExtended(Xvalue,triggers, (int)calib.GetRunNumber(), histCellHG, histCellLG, profCellLGHG); 
+          itrend->second.FillExtended(Xvalue,triggers, nFillExtNr, histCellHG, histCellLG, profCellLGHG); 
           itrend->second.FillMPV(Xvalue, hgLMPV, hgLMPV_E, lgLMPV, lgLMPV_E);
           itrend->second.FillLSigma(Xvalue, hgLSigma, hgLSigma_E, lgLSigma, lgLSigma_E);
           itrend->second.FillGSigma(Xvalue, hgGSigma, hgGSigma_E, lgGSigma, lgGSigma_E);
           itrend->second.FillSB(Xvalue, sbSignal, sbNoise);
         } else if (expandedList == 2){
-          itrend->second.FillExtended(Xvalue,triggers, (int)calib.GetRunNumber(), histCellHG, histCellLG, profCellLGHG); 
+          itrend->second.FillExtended(Xvalue,triggers, nFillExtNr, histCellHG, histCellLG, profCellLGHG); 
           itrend->second.FillSB(Xvalue, sbSignal, sbNoise);
         } else if (expandedList == 3){
           // std::cerr<<"Run Num: " << (int)calib.GetRunNumber()<<std::endl;
-          itrend->second.FillExtended(Xvalue,1, (int)calib.GetRunNumber(), nullptr, nullptr, profCellLGHG); 
+          itrend->second.FillExtended(Xvalue,1, nFillExtNr, nullptr, nullptr, profCellLGHG); 
           // itrend->second.FillCorrOffset(Xvalue, lghgOff, lghgOff_E, hglgOff, hglgOff_E);
         } else if (expandedList == 4){
           std::cerr<<"Run Num: " << (int)calib.GetRunNumber()<<": "<< histCellHG << "\t"<< histCellLG<< " \t" << profCellLGHG <<std::endl;
-          itrend->second.FillExtended(Xvalue,1, (int)calib.GetRunNumber(), histCellHG, histCellLG, nullptr, profCellLGHG); 
+          itrend->second.FillExtended(Xvalue,1, nFillExtNr, histCellHG, histCellLG, nullptr, profCellLGHG); 
         }
       // create new TileTrend object if not yet available in map
       } else {
-        TileTrend atrend=TileTrend(itcalib->first,0, expandedList);
+        TileTrend atrend=TileTrend(itcalib->first,0, isHGCROC);
         // fill minimal object
-        atrend.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(), (int)cit->second.pdg, hgmaxErr, lgmaxErr, cit->second.energy, cit->second.temp);
+        atrend.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)cit->second.vop, (int)cit->second.pdg, hgmaxErr, lgmaxErr, cit->second.energy, cit->second.temp);
         // fill with additional information
         if (expandedList == 1){
-          atrend.FillExtended(Xvalue,triggers, (int)calib.GetRunNumber(), histCellHG, histCellLG, profCellLGHG); 
+          atrend.FillExtended(Xvalue,triggers, nFillExtNr, histCellHG, histCellLG, profCellLGHG); 
           atrend.FillMPV(Xvalue, hgLMPV, hgLMPV_E, lgLMPV, lgLMPV_E);
           atrend.FillLSigma(Xvalue, hgLSigma, hgLSigma_E, lgLSigma, lgLSigma_E);
           atrend.FillGSigma(Xvalue, hgGSigma, hgGSigma_E, lgGSigma, lgGSigma_E);
           atrend.FillSB(Xvalue, sbSignal, sbNoise);
         } else if (expandedList == 2){
-          atrend.FillExtended(Xvalue,triggers, (int)calib.GetRunNumber(), histCellHG, histCellLG, profCellLGHG); 
+          atrend.FillExtended(Xvalue,triggers, nFillExtNr, histCellHG, histCellLG, profCellLGHG); 
           atrend.FillSB(Xvalue, sbSignal, sbNoise);
           // atrend.FillCorrOffset(Xvalue, lghgOff, lghgOff_E, hglgOff, hglgOff_E);
         } else if (expandedList == 3){
           // std::cout<<"Layer Filling: " << calib.GetRunNumber()<<": "<<setup->GetLayer(itcalib->first) <<std::endl;
-          atrend.FillExtended(Xvalue,1, (int)calib.GetRunNumber(), nullptr, nullptr, profCellLGHG); 
+          atrend.FillExtended(Xvalue,1, nFillExtNr, nullptr, nullptr, profCellLGHG); 
         } else if (expandedList == 4){
-          std::cerr<<"Run Num: " << (int)calib.GetRunNumber()<<": "<< histCellHG << "\t"<< histCellLG<< " \t" << profCellLGHG <<std::endl;
-          atrend.FillExtended(Xvalue,1, (int)calib.GetRunNumber(), histCellHG, histCellLG, nullptr,  profCellLGHG); 
+          std::cerr<<"Run Num: " << nFillExtNr<<": "<< histCellHG << "\t"<< histCellLG<< " \t" << profCellLGHG <<std::endl;
+          atrend.FillExtended(Xvalue,1, nFillExtNr, histCellHG, histCellLG, nullptr,  profCellLGHG); 
         }
         // append TileTrend object to map
         trend[itcalib->first]=atrend;
@@ -567,6 +653,8 @@ bool ComparisonCalib::ProcessCalib(void){
   // ******************************************************************************************
   RunInfo commonRunInfo = GetCommonRunInfoFromList(runList);
   PrintSettingsRunInfo(commonRunInfo);  
+  int labelOpt        = 0;
+  Int_t nSameSettings = GetNSameSettings(commonRunInfo, labelOpt);
   
   // ******************************************************************************************
   // Set X axis title and ranges 
@@ -574,7 +662,7 @@ bool ComparisonCalib::ProcessCalib(void){
   if (Xaxis == 0){
     Xmin= Xmin-10;
     Xmax= Xmax+10;
-  } else if (Xaxis == 1 || Xaxis == 3){
+  } else if (Xaxis == 1 || Xaxis == 3 || Xaxis == 4){
     Xmin= Xmin-0.5;
     Xmax= Xmax+0.5;
   } 
@@ -583,6 +671,7 @@ bool ComparisonCalib::ProcessCalib(void){
   if (Xaxis==0)       xaxisTitle = "Run Nr. ";
   else if (Xaxis==1)  xaxisTitle = "V (V) ";
   else if (Xaxis==3)  xaxisTitle = "iteration";
+  else if (Xaxis==4)  xaxisTitle = "integ. option";
   else                xaxisTitle = "date";  
   
   for(itrend=trend.begin(); itrend!=trend.end(); ++itrend){    
@@ -592,6 +681,30 @@ bool ComparisonCalib::ProcessCalib(void){
     itrend->second.SetXAxisTitle(xaxisTitle);
     // write graphs for each cell to output
     itrend->second.Write(RootOutput);
+    for (int i = 0; i <itrend->second.GetNRuns(); i++ ){
+      if (Xaxis == 3){
+        itrend->second.SetLabelPerRun(Form("it. %d", i));
+      } else if (Xaxis == 4){
+        itrend->second.SetLabelPerRun(Form("int. %d", i));
+      } else {
+        itrend->second.SetLabelPerRun(itrend->second.GetLabelLegend( commonRunInfo, i, nSameSettings));
+      }
+      if (debug > 5 )itrend->second.PrintMinMaxRanges();
+    }
+  }
+  
+  int cCalib = 0;
+  for (isumCalibs = sumCalibs.begin(); isumCalibs!=sumCalibs.end(); ++isumCalibs){
+    if (Xaxis == 3){
+      isumCalibs->second.SetLabel(Form("it. %d", cCalib));
+    } else if (Xaxis == 4){
+      isumCalibs->second.SetLabel(Form("int. %d", cCalib));
+    } else {
+      std::cout << isumCalibs->second.GetLabelLegend( commonRunInfo, nSameSettings) << std::endl;
+      isumCalibs->second.SetLabel(isumCalibs->second.GetLabelLegend( commonRunInfo,  nSameSettings));
+    }
+    std::cout << cCalib << "\t Run: "<<isumCalibs->second.GetRunNumber() << "\t Label: " << isumCalibs->second.GetLabel() << std::endl;     
+    cCalib++;
   }
 
   //******************************************************************************
@@ -601,6 +714,9 @@ bool ComparisonCalib::ProcessCalib(void){
   Float_t textSizeRel   = 0.04;  
   TCanvas* canvas1DRunsOverlay = new TCanvas("canvas1DRunsOverlay","",0,0,1450,1300);  // gives the page size
   DefaultCanvasSettings( canvas1DRunsOverlay, 0.075, 0.015, 0.025, 0.09);
+  TCanvas* canvas2DCorr        = new TCanvas("canvas2DCorr","",0,0,1450,1300);  // gives 
+  DefaultCanvasSettings( canvas2DCorr, 0.085, 0.095, 0.045, 0.08);  
+  
 
   PlotCalibRunOverlay( canvas1DRunsOverlay, 0, sumCalibs, textSizeRel, 
                       Form("%s/HGPedSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
@@ -610,36 +726,77 @@ bool ComparisonCalib::ProcessCalib(void){
                       Form("%s/LGPedSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
   PlotCalibRunOverlay( canvas1DRunsOverlay, 3, sumCalibs, textSizeRel, 
                       Form("%s/LGPedWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
+  
+  
+  PlotCalibRunOverlay( canvas1DRunsOverlay, 13, sumCalibs, textSizeRel, 
+                      Form("%s/HGPedDiffRefRunSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
+  PlotCalibRunOverlay( canvas1DRunsOverlay, 19, sumCalibs, textSizeRel, 
+                      Form("%s/HGPedWidthDiffRefRunSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
+  PlotCalibRunOverlay( canvas1DRunsOverlay, 14, sumCalibs, textSizeRel, 
+                      Form("%s/LGPedDiffRefRunSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
+  
   if (globalStatus > 1){
     PlotCalibRunOverlay( canvas1DRunsOverlay, 4, sumCalibs, textSizeRel, 
                       Form("%s/HGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
     PlotCalibRunOverlay( canvas1DRunsOverlay, 5, sumCalibs, textSizeRel, 
                       Form("%s/HGScaleWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
+    PlotCalibRunOverlay( canvas1DRunsOverlay, 15, sumCalibs, textSizeRel, 
+                      Form("%s/HGScaleDiffRefRunSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
+    
+    cCalib = 0;
+    for (isumCalibs = sumCalibs.begin(); isumCalibs!=sumCalibs.end(); ++isumCalibs){
+      if (cCalib == 0){
+        cCalib++;
+        continue;
+      }
+      cit = ri.find(isumCalibs->second.GetRunNumber());
+      double maxADC = 500;
+      if (isHGCROC)
+        maxADC = 220;
+      TString addLabel = Form("Ref Run %d",isumCalibs->second.GetRunRefNumber());
+      if (Xaxis == 3){
+        addLabel = Form("Ref it. 0");
+      } else if (Xaxis == 4){
+        addLabel = Form("Ref int. 0");
+      } else if (Xaxis == 1){
+        addLabel = Form("Ref V= %.1f V", sumCalibs[0].GetVoltage());
+      }
+      Plot2DWithProfile( canvas2DCorr, 
+                         isumCalibs->second.Get2DHGscaleCorrRef(), 
+                         nullptr,
+                         // isumCalibs->second.GetProfHGscaleCorrRef(), 
+                         maxADC, maxADC, textSizeRel,
+                         Form("%s/CorrelationHGScale_RefRun_vs_Run%d.%s",OutputNameDirPlots.Data(),isumCalibs->second.GetRunNumber() ,plotSuffix.Data()), 
+                         cit->second, 1, kFALSE, "colz", 
+                         true, addLabel, -1);
+      cCalib++;
+    } 
     if (!isHGCROC){
       
       PlotCalibRunOverlay( canvas1DRunsOverlay, 6, sumCalibs, textSizeRel, 
                           Form("%s/LGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
       PlotCalibRunOverlay( canvas1DRunsOverlay, 7, sumCalibs, textSizeRel, 
                           Form("%s/LGScaleWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
+      PlotCalibRunOverlay( canvas1DRunsOverlay, 16, sumCalibs, textSizeRel, 
+                      Form("%s/LGScaleDiffRefRunSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
+
       PlotCalibRunOverlay( canvas1DRunsOverlay, 8, sumCalibs, textSizeRel, 
                           Form("%s/LGHGCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
+      PlotCalibRunOverlay( canvas1DRunsOverlay, 18, sumCalibs, textSizeRel, 
+                          Form("%s/LGHGCorrDiffRefRun_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
       PlotCalibRunOverlay( canvas1DRunsOverlay, 9, sumCalibs, textSizeRel, 
                           Form("%s/HGLGCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
       PlotCalibRunOverlay( canvas1DRunsOverlay, 10, sumCalibs, textSizeRel, 
                           Form("%s/LGScaleCalcSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);  
+      PlotCalibRunOverlay( canvas1DRunsOverlay, 17, sumCalibs, textSizeRel, 
+                          Form("%s/LGScaleCalcDiffRefRunSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);  
       PlotCalibRunOverlay( canvas1DRunsOverlay, 11, sumCalibs, textSizeRel, 
                           Form("%s/LGHGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
       PlotCalibRunOverlay( canvas1DRunsOverlay, 12, sumCalibs, textSizeRel, 
                           Form("%s/HGLGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
     }
   }
-  std::cout << "row max: " << setup->GetNMaxRow() << "\t column max: "  << setup->GetNMaxColumn() << std::endl;
   
-  
-  // plotting individual layers/asics
-  DetConf::Type detConf = setup->GetDetectorConfig();
-  if (it->second.detector.Contains("FoCal-H"))
-    detConf = DetConf::Type::FocalH;
   
   MultiCanvas panelPlot(detConf, "Compare");
   bool init1D = panelPlot.Initialize(3);
@@ -694,6 +851,8 @@ bool ComparisonCalib::ProcessCalib(void){
       TString nameADC = "MuonTriggers_HGDist";
       if (isHGCROC){
         maxADC = 350;
+        if (Xaxis == 4)
+          maxADC = 650;
         nameADC = "MuonTriggers_ADCDist";
       }
       panelPlot.PlotRunOverlaySpectra(trend, nRun, 0, -15, maxADC, OutputNameDirPlots, nameADC, plotSuffix, commonRunInfo, ExtPlot);
@@ -704,7 +863,7 @@ bool ComparisonCalib::ProcessCalib(void){
       if (globalStatus > 1) panelPlot2D.PlotRunOverlayProfile(trend, nRun, 0, -20, 340, -20, 3900, OutputNameDirPlots, "LGHGCorr", plotSuffix, commonRunInfo, ExtPlot );
     }
     
-    if (expandedList > 0 && isHGCROC && globalStatus > 1){
+    if (expandedList > 1 && isHGCROC && globalStatus > 1){
       panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, -20, 450000, -20, 1024, OutputNameDirPlots, "WaveOverlay", plotSuffix, commonRunInfo, ExtPlot );
       panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, -20, 450000, -0.01, 0.05, OutputNameDirPlots, "WaveOverlayScaled", plotSuffix, commonRunInfo, ExtPlot, 1, true);
     }    
@@ -738,13 +897,23 @@ bool ComparisonCalib::ProcessCalib(void){
 // Create the output file 
 // ===========================================================================================
 bool ComparisonCalib::CreateOutputRootFile(void){
+  std::string testing = RootOutputName.Data();
+  std::size_t found = testing.find_last_of("/\\");
+  std::cout << " path: " << testing.substr(0,found) << '\n';
+  std::cout << " file: " << testing.substr(found+1) << '\n';
+  std::string path = testing.substr(0,found);
+  if (path.size() > 0){
+    std::cout << "Checking whether directory needs to be created: " << path.data() << std::endl;
+    gSystem->Exec(Form("mkdir -p %s",path.data()));
+  }
+  
   if(Overwrite){
     RootOutput=new TFile(RootOutputName.Data(),"RECREATE");
   } else{
     RootOutput = new TFile(RootOutputName.Data(),"CREATE");
   }
   if(RootOutput->IsZombie()){
-    std::cout<<"Error opening '"<<RootOutput<<"'no reachable path? Exist without force mode to overwrite?..."<<std::endl;
+    std::cout<<"Error opening output files: '"<<RootOutput<<"'no reachable path? Exist without force mode to overwrite?..."<<std::endl;
     return false;
   }
   return true;
