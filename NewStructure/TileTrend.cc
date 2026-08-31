@@ -758,6 +758,10 @@ void TileTrend::Sort(){
 //************************************************************************
 bool TileTrend::Write(TFile* f){
   f->cd();
+  TDirectoryFile* dirIndCells = (TDirectoryFile*)f->Get("IndividualCells");
+  if (!dirIndCells)
+    f->mkdir("IndividualCells");
+  f->cd("IndividualCells");
   if (extended < 3){
     gTrendLGped    .Write();
     gTrendHGped    .Write();

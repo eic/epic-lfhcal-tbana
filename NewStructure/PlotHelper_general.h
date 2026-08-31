@@ -943,8 +943,11 @@
               if (beam.CompareTo("Electron") == 0) beam = "e^{-}";              
               if (beam.CompareTo("Positron") == 0) beam = "e^{+}";              
               if (beam.CompareTo("Pion -") == 0) beam = "#pi^{-}";              
-              if (beam.CompareTo("Hadron +") == 0) beam = "h^{+}";              
-              return  Form("%s-beam, #it{E}_{#it{b}}= %.0f GeV, Run %d, #it{V}_{#it{op}} = %1.1f V", beam.Data(), currRunInfo.energy, currRunInfo.runNr, currRunInfo.vop  );
+              if (beam.CompareTo("Hadron +") == 0) beam = "h^{+}";
+              if (currRunInfo.runNr != -10000)
+                return  Form("%s-beam, #it{E}_{#it{b}}= %.0f GeV, Run %d, #it{V}_{#it{op}} = %1.1f V", beam.Data(), currRunInfo.energy, currRunInfo.runNr, currRunInfo.vop  );
+              else 
+                return  Form("%s-beam, #it{E}_{#it{b}}= %.0f GeV, #it{V}_{#it{op}} = %1.1f V", beam.Data(), currRunInfo.energy, currRunInfo.vop  );
           }
       } else if (option == 2){
           if (currRunInfo.species.CompareTo("cosmics") == 0){

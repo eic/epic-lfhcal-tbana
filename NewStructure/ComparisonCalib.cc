@@ -360,7 +360,7 @@ bool ComparisonCalib::ProcessCalib(void){
     // Initialize calib summary
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     calib.PrintGlobalInfo();
-    CalibSummary aSum = CalibSummary(nRun, runNumber,cit->second.vop, cit->second.pdg);
+    CalibSummary aSum = CalibSummary(nRun, runNumber, setup->GetNMaxLayer()+1, cit->second.vop, cit->second.pdg, (int)isHGCROC);
     aSum.SetRunProperties(cit->second);
     if (ientry != 0){
       if (Xaxis == 3 || Xaxis == 4)
@@ -562,9 +562,11 @@ bool ComparisonCalib::ProcessCalib(void){
       // fill calib summary object for specific cell
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
       aSum.Fill(itcalib->second); 
+      aSum.FillLayerProps(itcalib->second, itcalib->first);
       if (ientry!= 0 && foundRef){
         aSum.FillRefRunProps(itcalib->second, itcalibRef->second); 
       }
+
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       // fill trending object for a single cell
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -674,6 +676,24 @@ bool ComparisonCalib::ProcessCalib(void){
   else if (Xaxis==4)  xaxisTitle = "integ. option";
   else                xaxisTitle = "date";  
   
+  // additional summary graphs
+  TGraphErrors* graphAllHGScale = new TGraphErrors();
+  graphAllHGScale->GetXaxis()->SetTitle(xaxisTitle);
+  graphAllHGScale->GetYaxis()->SetTitle("Max_{HG} (arb. units)");
+  graphAllHGScale->SetName("Summary_HGScale_All");
+  TGraphErrors* graphAllHGScalePerLayer[64];
+  TF1* fitAllHGScalePerLayer[64];
+  std::cout <<"*********************** "<< setup->GetNMaxLayer()+1 << std::endl;
+  for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+    graphAllHGScalePerLayer[l] = new TGraphErrors();
+    graphAllHGScalePerLayer[l]->GetXaxis()->SetTitle(xaxisTitle);
+    graphAllHGScalePerLayer[l]->GetYaxis()->SetTitle("Max_{HG} (arb. units)");
+    graphAllHGScalePerLayer[l]->SetName(Form("Summary_HGScale_Layer_%d", l));
+  }
+  
+  
+  double minYScale = 9999;
+  double maxYScale = -5;
   for(itrend=trend.begin(); itrend!=trend.end(); ++itrend){    
     // sort graphs
     itrend->second.Sort();
@@ -691,7 +711,25 @@ bool ComparisonCalib::ProcessCalib(void){
       }
       if (debug > 5 )itrend->second.PrintMinMaxRanges();
     }
+    int layer = setup->GetLayer(itrend->first);
+    for (int k = 0; k< (itrend->second.GetHGScale())->GetN();k++ ){
+      if (minYScale > (itrend->second.GetHGScale())->GetY()[k] && (itrend->second.GetHGScale())->GetY()[k] > 0) 
+        minYScale = (itrend->second.GetHGScale())->GetY()[k];
+      if (maxYScale < (itrend->second.GetHGScale())->GetY()[k])
+        maxYScale = (itrend->second.GetHGScale())->GetY()[k];
+      graphAllHGScale->AddPoint((itrend->second.GetHGScale())->GetX()[k], (itrend->second.GetHGScale())->GetY()[k]);
+      graphAllHGScale->SetPointError(graphAllHGScale->GetN()-1,(itrend->second.GetHGScale())->GetEX()[k],(itrend->second.GetHGScale())->GetEY()[k]);
+      if (graphAllHGScalePerLayer[layer]){
+        // std::cout << "filling layer " << layer << std::endl;
+        graphAllHGScalePerLayer[layer]->AddPoint((itrend->second.GetHGScale())->GetX()[k], (itrend->second.GetHGScale())->GetY()[k]);
+        graphAllHGScalePerLayer[layer]->SetPointError(graphAllHGScalePerLayer[layer]->GetN()-1,(itrend->second.GetHGScale())->GetEX()[k],(itrend->second.GetHGScale())->GetEY()[k]);
+      } else {
+        std::cout << "this layer doesn't exist: " << layer << std::endl;
+      } 
+    }
   }
+  
+  
   
   int cCalib = 0;
   for (isumCalibs = sumCalibs.begin(); isumCalibs!=sumCalibs.end(); ++isumCalibs){
@@ -703,10 +741,45 @@ bool ComparisonCalib::ProcessCalib(void){
       std::cout << isumCalibs->second.GetLabelLegend( commonRunInfo, nSameSettings) << std::endl;
       isumCalibs->second.SetLabel(isumCalibs->second.GetLabelLegend( commonRunInfo,  nSameSettings));
     }
+    isumCalibs->second.Write(RootOutput);
     std::cout << cCalib << "\t Run: "<<isumCalibs->second.GetRunNumber() << "\t Label: " << isumCalibs->second.GetLabel() << std::endl;     
     cCalib++;
   }
-
+  RootOutput->cd();
+  
+  graphAllHGScale->Sort();
+  std::cout << "Total " << graphAllHGScale->GetN() << " data points available" << std::endl;
+  graphAllHGScale->Write();
+  Double_t yZero[64] = {0.};
+  for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+    graphAllHGScalePerLayer[l]->Sort();
+    graphAllHGScalePerLayer[l]->GetYaxis()->SetRangeUser(minYScale,maxYScale);
+    graphAllHGScalePerLayer[l]->GetXaxis()->SetRangeUser(Xmin,Xmax);
+    graphAllHGScalePerLayer[l]->Write();
+    std::cout << "in layer  " << l  << "\t" << graphAllHGScalePerLayer[l]->GetN() << " data points available" << std::endl;
+    if (Xaxis == 1){
+      fitAllHGScalePerLayer[l]    = new TF1(Form("Fit_Summary_HGScale_Layer_%d", l), "[0]+[1]*x",Xmin, Xmax );
+      graphAllHGScalePerLayer[l]->Fit(fitAllHGScalePerLayer[l]);
+      fitAllHGScalePerLayer[l]->Print();
+      fitAllHGScalePerLayer[l]->Write();
+      yZero[l] = (0. - fitAllHGScalePerLayer[l]->GetParameter(0))/fitAllHGScalePerLayer[l]->GetParameter(1);
+      std::cout << "f(x) = 0, x = \t" << yZero[l] << std::endl;
+    } else {
+      fitAllHGScalePerLayer[l] = nullptr;
+    }
+  }
+  double XminSum = Xmin;
+  if (fitAllHGScalePerLayer[0]){
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+      if (XminSum > yZero[l]) XminSum = yZero[l]-0.5;
+    }
+    minYScale = -10;
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+      fitAllHGScalePerLayer[l]->SetRange(XminSum,Xmax);
+    }
+  }
+  
+  
   //******************************************************************************
   // plotting overview for each run overlayed
   //******************************************************************************
@@ -714,6 +787,8 @@ bool ComparisonCalib::ProcessCalib(void){
   Float_t textSizeRel   = 0.04;  
   TCanvas* canvas1DRunsOverlay = new TCanvas("canvas1DRunsOverlay","",0,0,1450,1300);  // gives the page size
   DefaultCanvasSettings( canvas1DRunsOverlay, 0.075, 0.015, 0.025, 0.09);
+  TCanvas* canvas1DTrend = new TCanvas("canvas1DTrend","",0,0,1450,1300);  // gives the page size
+  DefaultCanvasSettings( canvas1DTrend, 0.085, 0.025, 0.025, 0.09);
   TCanvas* canvas2DCorr        = new TCanvas("canvas2DCorr","",0,0,1450,1300);  // gives 
   DefaultCanvasSettings( canvas2DCorr, 0.085, 0.095, 0.045, 0.08);  
   
@@ -753,11 +828,15 @@ bool ComparisonCalib::ProcessCalib(void){
       double maxADC = 500;
       if (isHGCROC)
         maxADC = 220;
-      TString addLabel = Form("Ref Run %d",isumCalibs->second.GetRunRefNumber());
+      TString addLabel    = Form("Ref Run %d",isumCalibs->second.GetRunRefNumber());
+      TString addoutname  = Form("Run%d",isumCalibs->second.GetRunNumber());
       if (Xaxis == 3){
-        addLabel = Form("Ref it. 0");
+        addLabel    = Form("Ref it. 0");
+        addoutname  = Form("Ite%d",cCalib);
       } else if (Xaxis == 4){
-        addLabel = Form("Ref int. 0");
+        addLabel    = Form("Ref int. 0");
+        addoutname  = Form("Integ%d",cCalib);
+        maxADC      = 350;
       } else if (Xaxis == 1){
         addLabel = Form("Ref V= %.1f V", sumCalibs[0].GetVoltage());
       }
@@ -766,11 +845,23 @@ bool ComparisonCalib::ProcessCalib(void){
                          nullptr,
                          // isumCalibs->second.GetProfHGscaleCorrRef(), 
                          maxADC, maxADC, textSizeRel,
-                         Form("%s/CorrelationHGScale_RefRun_vs_Run%d.%s",OutputNameDirPlots.Data(),isumCalibs->second.GetRunNumber() ,plotSuffix.Data()), 
+                         Form("%s/CorrelationHGScale_RefRun_vs_%s.%s",OutputNameDirPlots.Data(), addoutname.Data() ,plotSuffix.Data()), 
                          cit->second, 1, kFALSE, "colz", 
                          true, addLabel, -1);
       cCalib++;
     } 
+    
+    PlotCalibRunPerLayerOverlay(  canvas1DRunsOverlay, 0, sumCalibs, setup->GetNMaxLayer()+1, textSizeRel, 
+                                  Form("%s/HGScaleSummary_RunOverlay",OutputNameDirPlots.Data()), plotSuffix.Data(), commonRunInfo );
+    PlotCalibRunPerLayerOverlay(  canvas1DRunsOverlay, 1, sumCalibs, setup->GetNMaxLayer()+1, textSizeRel, 
+                                  Form("%s/HGScaleWidthSummary_RunOverlay",OutputNameDirPlots.Data()), plotSuffix.Data(), commonRunInfo );
+    
+    PlotTrendingPerLayer( canvas1DTrend, graphAllHGScalePerLayer, fitAllHGScalePerLayer,
+                          XminSum, Xmax, minYScale*0.4, maxYScale*1.5,
+                          textSizeRel, 
+                          Form("%s/TrendingHGScalPerLayer.%s",OutputNameDirPlots.Data(),plotSuffix.Data() ), commonRunInfo, 2);
+    
+    
     if (!isHGCROC){
       
       PlotCalibRunOverlay( canvas1DRunsOverlay, 6, sumCalibs, textSizeRel, 

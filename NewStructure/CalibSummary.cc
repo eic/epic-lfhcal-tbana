@@ -154,6 +154,22 @@ bool CalibSummary::FillRefRunProps(TileCalib* tc, TileCalib* tcRef ){
   return true;
 }
 
+bool CalibSummary::FillLayerProps(const TileCalib& tc, int cellID){
+  Setup* setupT = Setup::GetInstance();
+  int layer     =  setupT->GetLayer(cellID);
+  hHGscaleLayer[layer]      .Fill(tc.ScaleH);
+  hHGscalewidthLayer[layer] .Fill(tc.ScaleWidthH);
+  return true;
+}
+
+bool CalibSummary::FillLayerProps(TileCalib* tc, int cellID){
+  Setup* setupT = Setup::GetInstance();
+  int layer     =  setupT->GetLayer(cellID);
+  hHGscaleLayer[layer]      .Fill(tc->ScaleH);
+  hHGscalewidthLayer[layer] .Fill(tc->ScaleWidthH);
+  return true;
+}
+
 bool CalibSummary::Write(TFile* f){
   f->cd();
   hLGped          .Write();
@@ -181,6 +197,18 @@ bool CalibSummary::Write(TFile* f){
     hHGscaleCorrRef     .Write();
     pHGscaleCorrRef     .Write();
   }
+  
+  if (hHGscaleLayer.size() > 0){
+    for (int l = 0; l < (int)hHGscaleLayer.size(); l++){
+      hHGscaleLayer[l]  .Write();
+    }
+  }
+  if (hHGscalewidthLayer.size() > 0){
+    for (int l = 0; l < (int)hHGscalewidthLayer.size(); l++){
+      hHGscalewidthLayer[l]  .Write();
+    }
+  }
+  
   return true;
 }
 
@@ -323,4 +351,29 @@ TString CalibSummary::GetLabelLegend( RunInfo commonRunInfo, int nSameSettings){
     labelLegend = Form("%i",RunNr );
     
   return   labelLegend;
+}
+
+
+//===============================================================================
+TH1D* CalibSummary::GetHGScaleLayer(int layer){
+  // std::cout << "Searching for HG Scale for layer: " << layer << std::endl;
+  std::map<int, TH1D>::iterator currLayer;
+  currLayer=hHGscaleLayer.find(layer);
+  if(currLayer!=hHGscaleLayer.end()){
+    return &currLayer->second;
+  } else {
+    return nullptr;
+  }
+}
+
+//===============================================================================
+TH1D* CalibSummary::GetHGScalewidthLayer(int layer){
+  // std::cout << "Searching for HG Scale width for layer: " << layer << std::endl;
+  std::map<int, TH1D>::iterator currLayer;
+  currLayer=hHGscalewidthLayer.find(layer);
+  if(currLayer!=hHGscalewidthLayer.end()){
+    return &currLayer->second;
+  } else {
+    return nullptr;
+  }
 }

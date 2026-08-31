@@ -1007,6 +1007,139 @@
         
     canvas2D->SaveAs(nameOutput.Data());
   }  
+
+  
+  //__________________________________________________________________________________________________________
+  // Plot Calib overlay per layer
+  //__________________________________________________________________________________________________________  
+  inline void PlotCalibRunPerLayerOverlay(  TCanvas* canvas2D, Int_t option, 
+                                            std::map<int, CalibSummary> sumRuns, 
+                                            int layers, 
+                                            Float_t textSizeRel, TString nameOutputBase, TString suffix, RunInfo commonRunInfo,
+                                            int debug = 0
+                                          ){
+      
+    bool isSameVoltage    = false;
+    double commonVoltage  = 0;
+    bool isSameRun        = false;
+    bool isSamePart       = false;
+      if (commonRunInfo.runNr != -10000) isSameRun  = true;    
+      if (commonRunInfo.pdg != -10000.)  isSamePart = true; 
+      if (commonRunInfo.vop != -10000.){
+      isSameVoltage = true; 
+      commonVoltage = commonRunInfo.vop;
+    }
+  
+    std::map<int, CalibSummary>::iterator itrun;
+    // Produce Plots for all layers
+    for (int l = 0; l < layers; l++){
+      std::cout << "Producing summary plot for layer " << l << std::endl;
+      Double_t minY         = 0;
+      Double_t maxY         = 0;
+      Double_t minX         = 9999;
+      Double_t maxX         = 0;
+      Int_t nruns = 0;
+      for(itrun=sumRuns.begin(); itrun!=sumRuns.end(); ++itrun){
+        TH1D* tempH = nullptr; 
+        if (option==0) tempH = itrun->second.GetHGScaleLayer(l);
+        else if (option==1) tempH = itrun->second.GetHGScalewidthLayer(l);
+        
+        if (!tempH){
+         std::cout << "Histo not available for " << nruns << "\t layer \t" << l << std::endl;  
+         nruns++;
+         continue;
+        }
+        
+        if (maxY < tempH->GetMaximum()) maxY = tempH->GetMaximum();
+        if ( maxX < FindLastBinXAboveMin(tempH)) maxX = FindLastBinXAboveMin(tempH);
+        if ( minX > FindFirstBinXAboveMin(tempH)) minX = FindFirstBinXAboveMin(tempH);
+        nruns++;
+      }
+      std::cout << "min X\t"  << minX << "\t max X \t" << maxX << std::endl;
+      
+      TString label2          = Form("Common V_{op} = %2.1f V", commonVoltage);
+      TString label3          = GetSpeciesStringFromPDG(commonRunInfo.pdg);
+      if (isSameRun)
+        label3  = label3+ Form(", Run %2d", commonRunInfo.runNr);
+      canvas2D->cd();
+          
+        TH1D* histos[30];
+        if (debug > 0){
+          if (nruns > 30) std::cout << "more than 30 runs are included in this, only 30 will be plotted, currently " << nruns << "\t runs were requested" << std::endl;
+          else std::cout << nruns << " will be plotted" << std::endl;
+        }
+        double lineBottom  = 6;
+        if (nruns < 6) lineBottom = 1;
+        else if (nruns < 11) lineBottom = 2;
+        else if (nruns < 16) lineBottom = 3;
+        else if (nruns < 21) lineBottom = 4;
+        else if (nruns < 26) lineBottom = 5;
+        
+        int columns         = 5;
+        double colwidth     = 0.25;
+        int altStyle        = 0;
+        int lineWidth       = 4;
+        if (isSameRun ){
+          columns     = 1;
+          lineBottom  = nruns;
+          altStyle    = 1;
+          colwidth    = 0.12;
+          lineWidth   = 8;
+        } else if (isSamePart ){
+          columns     = 1;
+          lineBottom  = nruns;
+          altStyle    = 1;
+          colwidth    = 0.12;
+          lineWidth   = 8;
+        }
+        TLegend* legend = GetAndSetLegend2( 0.12, 0.88-lineBottom*textSizeRel, 0.52, 0.88,
+                                            0.70*textSizeRel, columns, "",42,colwidth);;
+        int currRun = 0;
+        for(itrun=sumRuns.begin(); (itrun!=sumRuns.end()) && (currRun < 30); ++itrun){
+          // abort for case of run comparsions
+          histos[currRun] = nullptr;
+          if (option==0) histos[currRun] = itrun->second.GetHGScaleLayer(l);
+          else if (option==1) histos[currRun]  = itrun->second.GetHGScalewidthLayer(l);
+
+          if (!histos[currRun]){
+            std::cout << "Histo not available for " << currRun << "\t layer \t" << l << std::endl;  
+            currRun++;
+            continue;
+          }
+
+          SetStyleHistoTH1ForGraphs( histos[currRun], histos[currRun]->GetXaxis()->GetTitle(), histos[currRun]->GetYaxis()->GetTitle(), 0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.95, 1.02);  
+          SetLineDefaults(histos[currRun], GetColorLayer(currRun,altStyle), lineWidth, GetLineStyleLayer(currRun,altStyle));   
+          histos[currRun]->GetXaxis()->SetRangeUser(minX,maxX);
+          histos[currRun]->GetYaxis()->SetRangeUser(minY,maxY*1.2);
+          if(currRun == 0 ){
+            histos[currRun]->Draw("hist");
+          } else {
+            histos[currRun]->Draw("same,hist");
+          }
+
+          TString labelBase = itrun->second.GetLabel();
+          if (isSameRun){
+            legend->AddEntry(histos[currRun],Form("%s,#mu=%.2f,#sigma=%.2f, no cal.=%d", labelBase.Data(), histos[currRun]->GetMean(), histos[currRun]->GetRMS(), (int)(histos[currRun]->GetBinContent(0)+histos[currRun]->GetBinContent(currRun,histos[currRun]->GetNbinsX()+1))), "l");
+          } else if (isSamePart ){  
+            legend->AddEntry(histos[currRun],Form("Run %d,#mu=%.2f,#sigma=%.2f, no cal.=%d", itrun->second.GetRunNumber(), histos[currRun]->GetMean(), histos[currRun]->GetRMS(), (int)(histos[currRun]->GetBinContent(0)+histos[currRun]->GetBinContent(currRun,histos[currRun]->GetNbinsX()+1))), "l");
+          } else {
+            legend->AddEntry(histos[currRun],Form("%s",labelBase.Data()),"l");
+          }
+          currRun++;  
+        }  
+        histos[0]->DrawCopy("axis,same");
+        legend->Draw();
+        
+        TString label4 = GetStringFromRunInfo(commonRunInfo,8);
+        DrawLatex(0.12, 0.92, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(commonRunInfo,7).Data()), false, 0.85*textSizeRel, 42);
+        DrawLatex(0.12, 0.885, Form("Layer %d, %s", l, label4.Data()), false, 0.85*textSizeRel, 42);
+        if (isSameVoltage)
+          DrawLatex(0.12, 0.88-0.5*0.85*textSizeRel-lineBottom*textSizeRel , label2, false, 0.85*textSizeRel, 42);
+        if ((isSameRun||isSamePart) && isSameVoltage)
+          DrawLatex(0.12, 0.88-0.5*0.85*textSizeRel-(lineBottom+1)*textSizeRel , label3, false, 0.85*textSizeRel, 42);
+      canvas2D->SaveAs(Form("%s_Layer_%d.%s", nameOutputBase.Data(), l, suffix.Data()));
+    }
+  }  
   
   //__________________________________________________________________________________________________________
   // Plot 1D distribution
@@ -1440,6 +1573,71 @@
     canvas2Panel->SaveAs(Form("%s.pdf",nameOutput.Data()));
     canvas2Panel->SaveAs(Form("%s.png",nameOutput.Data()));
   }
+  
+  //__________________________________________________________________________________________________________
+  // Plot Trending for different layers
+  //__________________________________________________________________________________________________________  
+  inline void PlotTrendingPerLayer( TCanvas* canvas2D, 
+                                    TGraphErrors** graphLayer, 
+                                    TF1** fitLayer, 
+                                    double minX, double maxX, double minY, double maxY,
+                                    Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
+                                    int labelOpt = 1
+                                  ){
+      canvas2D->cd();
+      TH1D* tempHist = new TH1D("dummyhist", "", 100, minX, maxX);
+      SetStyleHistoTH1ForGraphs(tempHist, graphLayer[0]->GetXaxis()->GetTitle(), graphLayer[0]->GetYaxis()->GetTitle(),  0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.9, 1.05);
+      tempHist->GetYaxis()->SetRangeUser(minY,maxY);
+      tempHist->DrawCopy("axis");
+      
+      bool hasFits = false;
+      if (fitLayer[0])
+        hasFits = true;
+      Setup* setup = Setup::GetInstance();
+      
+      TLegend* legend   = nullptr;
+      Int_t lineBottom  = (2+8);
+      if (setup->GetNMaxLayer()+1 == 8 && hasFits)
+        lineBottom      = (2+4);
+      else if (setup->GetNMaxLayer()+1 == 8 && hasFits)
+        lineBottom      = (2+2);
+      else if (setup->GetNMaxLayer()+1 == 32)
+        lineBottom      = (2+5);
+      else if (!(setup->GetNMaxLayer()+1 == 64))
+        lineBottom      = (2+4);
+        
+      if (setup->GetNMaxLayer()+1 == 64 ){
+        legend = GetAndSetLegend2( 0.4, 0.93-lineBottom*0.85*textSizeRel, 0.95, 0.93-2*0.85*textSizeRel,0.75*textSizeRel, 8, "Layer", 42,0.4);
+      } else if (setup->GetNMaxLayer()+1 == 32 ){
+        legend = GetAndSetLegend2( 0.4, 0.93-lineBottom*0.85*textSizeRel, 0.95, 0.93-2*0.85*textSizeRel,0.75*textSizeRel, 6, "Layer", 42,0.4);
+      } else if (setup->GetNMaxLayer()+1 == 8 && hasFits ){
+        legend = GetAndSetLegend2( 0.35, 0.93-lineBottom*0.85*textSizeRel, 0.95, 0.93-2*0.85*textSizeRel,0.75*textSizeRel, 2, "Layer, f(x) = a + bx", 42,0.1);
+      } else {
+        legend = GetAndSetLegend2( 0.4, 0.93-lineBottom*0.85*textSizeRel, 0.95, 0.93-2*0.85*textSizeRel,0.75*textSizeRel, 8, "Layer", 42,0.2);
+      }
+      for (int l = 0; l< setup->GetNMaxLayer()+1; l++){
+        SetMarkerDefaultsTGraph(graphLayer[l], GetMarkerLayer(l), 1,  GetColorLayer(l), GetColorLayer(l), 2, 1);   
+        graphLayer[l]->Draw("same,pe");
+        if (fitLayer[l]){
+          SetLineDefaultsTF1(fitLayer[l], GetColorLayer(l), 4, GetLineStyleLayer(l) );
+          fitLayer[l]->Draw("same");
+          legend->AddEntry(graphLayer[l],Form("%d, a=%.1f, b=%.1f",l, fitLayer[l]->GetParameter(0), fitLayer[l]->GetParameter(1)),"pl");
+        } else {
+          legend->AddEntry(graphLayer[l],Form("%d",l),"p");
+        }
+      }  
+      if (hasFits){
+        DrawLines(minX, maxX, 0, 0, 2, 1, 7 );
+      }
+      tempHist->DrawCopy("axis,same");
+      legend->Draw();
+      
+      DrawLatex(0.95, 0.92, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(currRunInfo,7).Data()), true, 0.85*textSizeRel, 42);
+      DrawLatex(0.95, 0.885, GetStringFromRunInfo(currRunInfo,labelOpt), true, 0.85*textSizeRel, 42);
+        
+    canvas2D->SaveAs(nameOutput.Data());
+  }
+
   
   
 #endif

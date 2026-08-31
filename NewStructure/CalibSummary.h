@@ -58,6 +58,55 @@ class CalibSummary: public TObject{
     }
     
   }
+
+  CalibSummary(int id, int RunNum, int layers, double v, int p = 0,  int optHGCROC = 0):TObject()
+  {
+    std::cout << "Initializing with layer histos: " << RunNum << "\t" << layers << std::endl;
+    
+    RunNr             = RunNum;
+    RunNrRef          = RunNum;
+    Voltage           = v;
+    pdg               = p;
+    hHGped            = TH1D(Form("hMeanPedHG_%i",id),"; #mu_{noise, HG} (arb. units); counts ", 500, -0.5, 500-0.5);
+    hHGpedwidth       = TH1D(Form("hMeanPedHGwidth_%i",id),"; #sigma_{noise, HG} (arb. units); counts ", 400, -0.5*50/400, 50-(0.5*50/400));
+    hLGped            = TH1D(Form("hMeanPedLG_%i",id),"; #mu_{noise, LG} (arb. units); counts ", 500, -0.5, 500-0.5);
+    hLGpedwidth       = TH1D(Form("hMeanPedLGwidth_%i",id),"; #sigma_{noise, LG} (arb. units); counts ", 400, -0.5*20/400, 20-(0.5*20/400));
+    hHGscale          = TH1D(Form("hHGScale_%i",id),";Max_{HG} (arb. units) ; counts ", 2000, -0.25, 1000-0.25);
+    hHGscalewidth     = TH1D(Form("hHGScalewidth_%i",id),";Width_{HG} (arb. units) ; counts ", 2000, -0.25, 1000-0.25);
+    hLGscale          = TH1D(Form("hLGScale_%i",id),";Max_{LG} (arb. units) ; counts ", 2000, -0.5*250/2000, 250-(0.5*250/2000));
+    hLGscaleCalc      = TH1D(Form("hLGScaleCalc_%i",id),";Max_{LG,calc} (arb. units) ; counts ", 2000, -0.5*250/2000, 250-(0.5*250/2000));
+    hLGscalewidth     = TH1D(Form("hHGScalewidth_%i",id),";Width_{LG} (arb. units) ; counts ", 2000, -0.5*250/2000, 250-(0.5*250/2000));
+    hLGHGcorr         = TH1D(Form("hLGHGCorr_%i",id),"; a_{LG-HG} (arb. units) ; counts ", 400, 0, 20);
+    hLGHGOffcorr      = TH1D(Form("hLGHGOffCorr_%i",id),"; b_{LG-HG} (arb. units) ; counts ", 1000, -200, 100);
+    hHGLGcorr         = TH1D(Form("hHGLGCorr_%i",id),"; a_{HG-LG} (arb. units) ; counts ", 400, 0., 1.);
+    hHGLGOffcorr      = TH1D(Form("hHGLGOffCorr_%i",id),"; b_{HG-LG} (arb. units) ; counts ", 1000, -100., 100.);
+    
+    hHGpedDiffRef     = TH1D(Form("hDiffPedvsRefHG_%i",id),"; #mu_{noise, HG}-#mu_{noise, HG, ref run} (arb. units); counts ", 501, -100, 100);
+    hHGpedwidthDiffRef= TH1D(Form("hDiffPedWidthvsRefHG_%i",id),"; #sigma_{noise, HG}-#sigma_{noise, HG, ref run} (arb. units); counts ", 501, -100, 100);
+    hLGpedDiffRef     = TH1D(Form("hDiffPedvsRefLG_%i",id),"; #mu_{noise, LG}-#mu_{noise, LG, ref run} (arb. units); counts ", 501, -100, 100);
+    hHGscaleDiffRef   = TH1D(Form("hDiffHGScalevsRefHG_%i",id),"; Max_{HG}-Max_{HG,ref run} (arb. units); counts ", 1001, -250, 250);
+    hLGscaleDiffRef   = TH1D(Form("hDiffLGScalevsRefHG_%i",id),"; Max_{LG}-Max_{LG,ref run} (arb. units); counts ", 501, -100, 100);
+    hLGscaleCalcDiffRef   = TH1D(Form("hDiffLGScaleCalcvsRefHG_%i",id),"; Max_{LG,calc}-Max_{LG,calc,ref run} (arb. units); counts ", 501, -100, 100);
+    hLGHGcorrDiffRef  = TH1D(Form("hDiffLGScalevsRefHG_%i",id),"; Max_{LG}-Max_{LG,ref run} (arb. units); counts ", 501, -10, 10);
+
+    if (optHGCROC > 0){
+      hHGscaleCorrRef   = TH2D(Form("hHGscaleCorrRef_%i",id),";Max_{ADC} (arb. units); Max_{ADC, ref run} (arb. units); Max_{ADC, ref run} (arb. units) ; counts ", 350, -0.25, 350-0.25, 350, -0.25, 350-0.25);
+      pHGscaleCorrRef   = TProfile(Form("pHGscaleCorrRef_%i",id),";Max_{ADC} (arb. units); Max_{ADC, ref run} (arb. units)", 350, -0.25, 350-0.25);
+    } else {
+      hHGscaleCorrRef   = TH2D(Form("hHGscaleCorrRef_%i",id),";Max_{HG} (arb. units); Max_{ADC, ref run} (arb. units) ; counts ", 1000, -0.25, 1000-0.25, 1000, -0.25, 1000-0.25);
+      pHGscaleCorrRef   = TProfile(Form("pHGscaleCorrRef_%i",id), ";Max_{ADC} (arb. units); Max_{ADC, ref run} (arb. units)", 1000, -0.25, 1000-0.25);
+    }    
+    
+    for (int l = 0; l < layers; l++){
+      TH1D tempHScale   = TH1D(Form("hHGScale_layer_%d_%i",l,id),
+                               ";Max_{HG} (arb. units) ; counts ", 1000, -0.25, 1000-0.25);
+      hHGscaleLayer[l]  = tempHScale;
+      TH1D tempHScaleWidth   =  TH1D(Form("hHGScalewidth_layer_%d_%i",l,id),
+                                     ";Width_{HG} (arb. units) ; counts ", 1000, -0.25, 1000-0.25);
+      hHGscalewidthLayer[l]  = tempHScaleWidth;
+    }
+  }
+
   ~CalibSummary(){}
 
   int Analyse(int );
@@ -68,6 +117,9 @@ class CalibSummary: public TObject{
   
   bool FillRefRunProps( const TileCalib&, const TileCalib&);
   bool FillRefRunProps( TileCalib*, TileCalib*);
+  
+  bool FillLayerProps(const TileCalib&, int);
+  bool FillLayerProps(TileCalib*, int);
   
   inline void SetRefRunNr(int runNr)  { RunNrRef = runNr; };
   inline void SetLabel(TString lab)   { label = lab; }
@@ -101,6 +153,8 @@ class CalibSummary: public TObject{
   inline TH1D* GetLGHGcorrDiffRef()     {return &hLGHGcorrDiffRef;};
   inline TH2D* Get2DHGscaleCorrRef()    {return &hHGscaleCorrRef; };
   inline TProfile* GetProfHGscaleCorrRef()    {return &pHGscaleCorrRef; };
+  TH1D* GetHGScaleLayer(int )  ;
+  TH1D* GetHGScalewidthLayer(int );
   
   inline double GetVoltage()      {return Voltage;};
   inline int GetRunNumber()       {return RunNr;};
@@ -147,6 +201,9 @@ class CalibSummary: public TObject{
   TH1D hLGHGcorrDiffRef     ;
   TH2D hHGscaleCorrRef      ;
   TProfile pHGscaleCorrRef  ;
+  
+  std::map<int, TH1D> hHGscaleLayer;
+  std::map<int, TH1D> hHGscalewidthLayer;
   
   ClassDef(CalibSummary,5);
 };
