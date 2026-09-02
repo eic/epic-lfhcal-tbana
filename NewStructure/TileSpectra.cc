@@ -866,7 +866,7 @@ TProfile* TileSpectra::GetADCTOT(){
   return &hADCTOT;
 }
 
-TH2D* TileSpectra::GetCorr(){
+TH2F* TileSpectra::GetCorr(){
   return &hcorr;
 }
 

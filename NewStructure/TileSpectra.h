@@ -5,6 +5,7 @@
 #include "TString.h"
 #include "TH1D.h"
 #include "TH2D.h"
+#include "TH2F.h"
 #include "TProfile.h"
 #include "TF1.h"
 #include "TPad.h" 
@@ -128,7 +129,7 @@ class TileSpectra: public TObject{
                                  Form("ADC Low Gain/High Gain correlation CellID %d; Corr LG  (arb. units); HG E (arb. units)",id),
                                  400,0,400);
         hspectraLGHG.SetDirectory(0);
-        hcorr         = TH2D(Form("hCorr2D%sLGHGCellID%d",name.Data(),id),
+        hcorr         = TH2F(Form("hCorr2D%sLGHGCellID%d",name.Data(),id),
                              Form("2D ADC Low  Gain/High Gain correlation CellID %d; Corr LG  (arb. units); HG E (arb. units)",id), 
                              400,0,400, 525, -200, 4000 );
         hcorr.SetDirectory(0);
@@ -145,7 +146,7 @@ class TileSpectra: public TObject{
         hADCTOT  = TProfile(Form("h%sTOTADCCellID%d",name.Data(),id),Form("TOT-ADC correlation CellID %d; ADC (arb. units); TOT  (arb. units)",id),
                             (1024+100)/8,-100,1024*integ); 
         hADCTOT.SetDirectory(0);
-        hcorr         = TH2D(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; sample ; ADC (arb. units)",id),
+        hcorr         = TH2F(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; sample ; ADC (arb. units)",id),
                              20,0,20, 1034, -10, 1024);
         hcorr.SetDirectory(0);
         hcorrADCTOT   = TH2D(Form("hCorr2DTOTADC%sCellID%d",name.Data(),id),Form("2D TOT-ADC CellID %d;  ADC (arb. units); TOT  (arb. units)",id),
@@ -169,7 +170,7 @@ class TileSpectra: public TObject{
         hWaveForm     = TProfile(Form("waveform1D%sCellID%d",name.Data(),id),Form("1D waveform CellID %d;  t (ns) ; ADC (arb. units)",id),
                                  550,-50,500);
         hWaveForm.SetDirectory(0);
-        hcorr         = TH2D(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; t (ns) ; ADC (arb. units)",id),
+        hcorr         = TH2F(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; t (ns) ; ADC (arb. units)",id),
                              550,-50,500, 1034, -10, 1024);
         hcorr.SetDirectory(0);
         hcorrTOAADC   = TH2D(Form("h2DADCTOA%sCellID%d",name.Data(),id),Form("2D ADC vs TOA CellID %d; TOA (arb. units); ADC (arb. units)",id),
@@ -189,7 +190,7 @@ class TileSpectra: public TObject{
         hspectraHG.SetDirectory(0);
         hspectraLG    = TH1D(Form("hspectra%sADCAllCellID%d",name.Data(),id),Form("ADC spectrumCellID %d; ADC (arb. units) all samples; counts ",id),1124,-100,1024);
         hspectraLG.SetDirectory(0);
-        hcorr         = TH2D(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; sample ; ADC (arb. units)",id),20,0,20, 1034, -10, 1024);
+        hcorr         = TH2F(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; sample ; ADC (arb. units)",id),20,0,20, 1034, -10, 1024);
         hcorr.SetDirectory(0);
       }
     // Waveform analysis option 2  
@@ -197,7 +198,7 @@ class TileSpectra: public TObject{
       if (type == ReadOut::Type::Hgcroc){
         hWaveForm     = TProfile(Form("waveform1D%sCellID%d",name.Data(),id),Form("1D waveform CellID %d;  t (ns) ; ADC (arb. units)",id),550,-50,500);
         hWaveForm.SetDirectory(0);
-        hcorr         = TH2D(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; t (ns) ; ADC (arb. units)",id),550,-50,500, 1124/4, -100, 1024);
+        hcorr         = TH2F(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; t (ns) ; ADC (arb. units)",id),550,-50,500, 1124/4, -100, 1024);
         hcorr.SetDirectory(0);
         hcorrTOAADC   = TH2D(Form("h2DADCLinTOA%sCellID%d",name.Data(),id),Form("2D ADC vs TOA CellID %d; TOA (arb. units); ADC (arb. units)",id), 1024/2,-6*1024,-2*1024,1124/4,-100,1024);
         hcorrTOAADC.SetDirectory(0);
@@ -208,21 +209,21 @@ class TileSpectra: public TObject{
       if (type == ReadOut::Type::Hgcroc){
         hWaveForm     = TProfile(Form("waveform1D%sCellID%d",name.Data(),id),Form("1D waveform CellID %d;  t (ns) ; ADC (arb. units)",id),550,-50,500);
         hWaveForm.SetDirectory(0);
-        hcorr         = TH2D(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; t (ns) ; ADC (arb. units)",id),550,-50,500, 1124/4, -100, 1024);
+        hcorr         = TH2F(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; t (ns) ; ADC (arb. units)",id),550,-50,500, 1124/4, -100, 1024);
         hcorr.SetDirectory(0);
       }
     } else if (extend == 7){
       if (type == ReadOut::Type::Hgcroc){
         hWaveForm     = TProfile(Form("waveform1D%sCellID%d",name.Data(),id),Form("1D waveform CellID %d;  sample ; ADC (arb. units)",id),20,0,20);
         hWaveForm.SetDirectory(0);
-        hcorr         = TH2D(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; sample ; ADC (arb. units)",id),20,0,20, 1124/4, -100, 1024);
+        hcorr         = TH2F(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; sample ; ADC (arb. units)",id),20,0,20, 1124/4, -100, 1024);
         hcorr.SetDirectory(0);
       }
     // Waveform analysis for the HG2Calib parser 
     } else if(extend == 8){
         hWaveForm     = TProfile(Form("waveform1D%sCellID%d",name.Data(),id),Form("1D waveform CellID %d;  t (ns) ; ADC (arb. units)",id),550,-50,500);
         hWaveForm.SetDirectory(0);
-        hcorr         = TH2D(Form("waveform%sCellID%d",name.Data(),id),Form("2D f CellID %d; t (ns) ; ADC (arb. units)",id),550,-50,500, 1034, -10, 1024);
+        hcorr         = TH2F(Form("waveform%sCellID%d",name.Data(),id),Form("2D f CellID %d; t (ns) ; ADC (arb. units)",id),550,-50,500, 1034, -10, 1024);
         hcorr.SetDirectory(0);
         hProfileTOT   = TProfile( Form("TOT%sCellID%d",name.Data(),id),Form("TOT CellID %d; t(ns); TOT (arb.units)",id),4400,-50,500,-10,4300,""); 
         hProfileTOT.SetDirectory(0);
@@ -275,7 +276,7 @@ class TileSpectra: public TObject{
   TH1D* GetTriggPrim();
   TProfile* GetLGHGcorr();
   TProfile* GetHGLGcorr();
-  TH2D* GetCorr();
+  TH2F* GetCorr();
   // HGCROC specific
   TH1D* GetTOT();
   TH1D* GetTOA();
@@ -333,7 +334,9 @@ class TileSpectra: public TObject{
   TProfile hWaveForm;   // only in HGCROC case
   TProfile hADCTOT;
   TProfile hTOAADC;
-  TH2D hcorr; 
+  // These dense waveform maps dominate memory. Float_t retains exact integer
+  // bin counts through 2^24 while using half the storage of Double_t.
+  TH2F hcorr; 
   TH2D hcorrTOAADC;     // only in HGCROC case
   TH2D hcorrTOASample;  // only in HGCROC case
   TH2D hcorrADCTOT;     // only in HGCROC case
@@ -342,7 +345,7 @@ class TileSpectra: public TObject{
   static double langaufun(double */*x*/, double */*par*/);
   static int langaupro(double */*params*/, double &/*maxx*/, double &/*FWHM*/);
 
-  ClassDef(TileSpectra,3);
+  ClassDef(TileSpectra,4);
 };
 
 

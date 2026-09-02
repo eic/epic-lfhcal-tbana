@@ -216,7 +216,7 @@
         rotype = ithSpectra->second.GetROType();
       }
       TProfile* tempProfile = nullptr;
-      TH2D* temp2D          = nullptr;        
+      TH2* temp2D          = nullptr;        
       // LG-HG correlation CAEN
       if (option == 0){
         tempProfile     = ithSpectra->second.GetLGHGcorr();

@@ -1,6 +1,7 @@
 #include "HGCROC_Waveform_Analysis.h"
 #include <vector>
 #include "TROOT.h"
+#include "TSystem.h"
 #include <bitset>
 #ifdef __APPLE__
 #include <unistd.h>

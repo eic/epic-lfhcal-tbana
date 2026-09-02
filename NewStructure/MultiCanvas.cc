@@ -916,7 +916,7 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
 //_____________________________________________________________________________________________________________
 // plotting wrapper for 2D correlation plots
 //_____________________________________________________________________________________________________________
-void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int option, 
+void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra>& spectra, int option,
                                     Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, 
                                     TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, 
                                     int noCalib, int triggerCha, int skiplayers, int debug ){
