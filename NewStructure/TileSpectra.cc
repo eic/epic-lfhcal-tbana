@@ -503,9 +503,9 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
 
   TString fitOption = "";
   if (impE){ 
-    fitOption = "QRLMNE0";
+    fitOption = "QRLNS";
     if (verbosity > 2) 
-      fitOption = "RLMNE0";
+      fitOption = "RLNS";
   } else {
     fitOption = "QRLN0";
     if (verbosity > 2) 
@@ -608,9 +608,9 @@ bool TileSpectra::FitMipLG(double* out, double* outErr, int verbosity, int year,
 
   TString fitOption = "";
   if (impE){ 
-    fitOption = "QRLMNE0";
+    fitOption = "QRLNS";
     if (verbosity > 1) 
-      fitOption = "RLMNE0";
+      fitOption = "RLNS";
   } else {
     fitOption = "QRLN0";
     if (verbosity > 1) 
