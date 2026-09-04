@@ -1731,11 +1731,39 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
   }
   itrend=trend.begin();
   std::cout << "resetting  range  "  << minY << "\t"<< maxY << std::endl;
-
+  if (option == 32)
+    maxY = maxY*1.2;
+  
   Setup* setup = Setup::GetInstance();
   // Single tile plotting
   if (detType ==  DetConf::Type::SingleTile){
-    std::cout << "PlotTrending: this option hasn't been implemented yet!" << std::endl;
+    if (cells.size() > 0){
+      for (int c = 0; c<(int)cells.size(); c++ ){
+        std::cout << "plotting cell " << cells.at(c) << std::endl;
+
+        PlotTrending1MLayer(      canvasMulti,legPlace_X[0], legPlace_X[0]-0.8, legPlace_Y[0], relTextSize[0]*0.9, textSize*0.9,
+                                  trend, option, xPMin,xPMax, minY, maxY, isSame, commonVoltage, -1, -1,
+                                  Form("%s/SingleLayer/%s_Cell%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), cells.at(c), suffix.Data()),  
+                                  commonRunInfo, cells.at(c));        
+      }
+    } else {
+      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
+        for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
+          if (l%5 == 0 && l > 0 && debug > 0)
+            std::cout << "============================== layer " <<  l << " / " << setup->GetNMaxLayer() << " layers" << std::endl;     
+          if (!setup->IsLayerOn(l,m)){
+            std::cout << "====> layer " << l << " in module " << m << " not enabled" << std::endl;
+            continue;
+          }    
+
+          PlotTrending1MLayer(    canvasMulti,legPlace_X[0], legPlace_X[0]-0.8, legPlace_Y[0], relTextSize[0]*0.9, textSize*0.9,
+                                  trend, option, xPMin,xPMax, minY, maxY, isSame, commonVoltage, l, m,
+                                  Form("%s/SingleLayer/%s_Mod%02d_Layer%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), m, l, suffix.Data()),
+                                  commonRunInfo);        
+        }
+      }
+    }
+
   // Single 2M horizontal plotting    
   } else if (detType ==  DetConf::Type::Single2MH){    
     std::cout << "PlotTrending: this option hasn't been implemented yet!" << std::endl;

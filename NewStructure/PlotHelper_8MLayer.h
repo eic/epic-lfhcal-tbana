@@ -5,19 +5,40 @@
   // dedicated class for all 8M layer plotting functions
   // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   //*****************************************************************
-    // Test beam geometry (beam coming from viewer)
-    //===========================================================
-    //||    8 (4)    ||    7 (5)   ||    6 (6)   ||    5 (7)   ||  row 0
-    //===========================================================
-    //||    1 (0)    ||    2 (1)   ||    3 (2)   ||    4 (3)   ||  row 1
-    //===========================================================
-    //    col 0     col 1       col 2     col  3
-    // rebuild pad geom in similar way (numbering -1)
+  // Test beam geometry (beam coming from viewer)
+  //===========================================================
+  //||    8 (4)    ||    7 (5)   ||    6 (6)   ||    5 (7)   ||  row 0
+  //===========================================================
+  //||    1 (0)    ||    2 (1)   ||    3 (2)   ||    4 (3)   ||  row 1
+  //===========================================================
+  //    col 0     col 1       col 2     col  3
+  // rebuild pad geom in similar way (numbering -1)
   //*****************************************************************
 
-  //__________________________________________________________________________________________________________
-  // Plot Trigger Primitive with Fits for Full layer
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot trigger primitives for a single 8M layer using the 8-panel layout.
+   *
+   * For each pad in the 8-panel arrangement this helper draws the trigger-primitive
+   * histogram for the corresponding cell, overlays the trigger threshold window
+   * and annotates the panel with row/column (and layer for pad 7) information.
+   * The function is a pure drawing helper: it expects properly prepared pads[],
+   * canvas8Panel and geometry/top-corner coordinates (topRCornerX/topRCornerY).
+   *
+   * Parameters (summarized):
+   *  - canvas8Panel : canvas with the 8-panel layout
+   *  - pads         : array of pads indexed by channel-in-layer
+   *  - topRCornerX/Y: label anchor coordinates per pad
+   *  - relSize8P    : relative text/label size per pad
+   *  - spectra      : map of cellID -> TileSpectra providing histograms
+   *  - avMip, facLow, facHigh : values used to draw the trigger-box
+   *  - xPMin,xPMax,scaleYMax : axis ranges and vertical scaling factor
+   *  - layer, mod   : layer/module identifiers used to compute cellID
+   *  - nameOutput, currRunInfo : used only for panel labeling and final SaveAs
+   *
+   * Notes:
+   *  - This helper changes pad log/axis state and draws on the provided pads.
+   *  - It will call canvas8Panel->SaveAs(nameOutput) if the drawing was non-empty.
+   */
   inline void PlotTriggerPrim8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, 
                                       Double_t* relSize8P, Int_t textSizePixel, 
                                       std::map<int,TileSpectra> spectra, 
@@ -105,9 +126,23 @@
       canvas8Panel->SaveAs(nameOutput.Data());
   }
     
-  //__________________________________________________________________________________________________________
-  // Plot Noise with Fits for Full layer
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot noise spectra with fits for one 8M layer (8-panel layout).
+   *
+   * Draws noise histograms (HG/LG/TOA/TOT depending on `option`) for every cell
+   * in the provided layer/module. When available, Gaussian background fits are
+   * drawn and a small legend with fit parameters is added.
+   *
+   * Important arguments:
+   *  - spectra: map of cellID -> TileSpectra (provides the histograms and fit TF1s)
+   *  - option : selects which histogram to plot (HG/LG/TOA/TOT)
+   *  - xPMin/xPMax, scaleYMax : control axis ranges and vertical scaling
+   *  - layer, mod : used to compute each cellID and channel mapping
+   *
+   * Side effects:
+   *  - Alters pad log/axis state, draws labels and fit legends, and may call
+   *    canvas8Panel->SaveAs(nameOutput) if there was drawable content.
+   */
   inline void PlotNoiseWithFits8MLayer (TCanvas* canvas8Panel, TPad** pads, 
                                  Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                  std::map<int,TileSpectra> spectra, int option, 
@@ -220,9 +255,22 @@
   }
   
   
-  //__________________________________________________________________________________________________________
-  // Plot Noise extracted from collision data
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot noise spectra extracted from collision data (advanced mode).
+   *
+   * This variant compares noise spectra extracted from standard and triggered
+   * samples (spectra vs spectraTrigg) and overlays fits where available. It is
+   * intended for collision-derived noise studies and uses the same 8-panel layout.
+   *
+   * Key parameters:
+   *  - spectra, spectraTrigg : per-cell TileSpectra maps for baseline/triggered data
+   *  - opt : selects HG/LG option used for plotting and fitting
+   *  - xPMin/xPMax, scaleYMax : axis ranges and scale
+   *  - layer, mod : geometry identifiers
+   *
+   * Side effects: modifies pads, draws legends/text and may call SaveAs on the
+   * provided canvas when content was drawn.
+   */
   inline void PlotNoiseAdvWithFits8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                       std::map<int,TileSpectra> spectra, std::map<int,TileSpectra> spectraTrigg, int opt, 
                                       Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
@@ -363,9 +411,23 @@
       canvas8Panel->SaveAs(nameOutput.Data());
   }  
   
-  //__________________________________________________________________________________________________________
-  // Plot Mip with Fits for Full layer
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot MIP distributions with signal+background fits for a full 8M layer.
+   *
+   * Draws per-cell MIP histograms (triggered and non-triggered when available),
+   * overlays Landau-Gauss (or fallback) fits and annotates each pad with
+   * the fitted MPV and other useful values. This is the place to inspect
+   * per-channel signal-shape and compare triggered vs untriggered response.
+   *
+   * Parameters of note:
+   *  - spectra, spectraTrigg : per-cell TileSpectra maps used for fits and overlays
+   *  - opt : selects HG/LG; fit selection prefers triggered fits when present
+   *  - xPMin/xPMax, scaleYMax : axis range and vertical scaling
+   *  - layer, mod : geometry identifiers used to compute cell IDs
+   *
+   * Behavior: changes pad log/axis state, draws fits and legends and may call
+   * canvas8Panel->SaveAs(nameOutput) if results were produced.
+   */
   inline void PlotMipWithFits8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                   std::map<int,TileSpectra> spectra, std::map<int,TileSpectra> spectraTrigg, int opt, 
                                   Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
@@ -512,9 +574,22 @@
       canvas8Panel->SaveAs(nameOutput.Data());
   }
 
-  //__________________________________________________________________________________________________________
-  // Plot Spectra with Fits for Full layer
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot spectra (HG/LG/combined/TOA/TOT) with optional fits for a full 8M layer.
+   *
+   * Each pad shows one cell's chosen spectrum and -- when present -- fit objects
+   * are drawn and annotated. This helper centralizes style calls used across
+   * per-cell spectra plots (axis ranges, markers, fit-styling, bad-channel boxes).
+   *
+   * Inputs:
+   *  - spectra: map<int,TileSpectra> providing all histograms and calibration info
+   *  - option: which spectrum to draw (0 HG, 1 LG, 2 combined, 3 TOA, 4 TOT)
+   *  - xPMin/xPMax, scaleYMax: axis control parameters
+   *  - layer, mod: geometry identifiers used to lookup cell IDs
+   *
+   * Side-effects: touches pads[], draws legends/labels and may call SaveAs
+   * on the provided canvas when any panels contain content.
+   */
   inline void PlotSpectra8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                   std::map<int,TileSpectra> spectra, int option, 
                                   Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
@@ -620,9 +695,23 @@
       canvas8Panel->SaveAs(nameOutput.Data());
   }
   
-  //__________________________________________________________________________________________________________
-  // Plot Corr with Fits for Full layer
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot correlation profiles (1D) with optional fit overlays for a full layer.
+   *
+   * This helper draws TProfile objects produced from various correlation
+   * calculations (e.g. LG-HG correlations) and overlays fitted functions when
+   * present. The function sets up an axis-only dummy histogram to normalize
+   * axes across pads and draws per-cell profiles in the 8-panel layout.
+   *
+   * Important parameters:
+   *  - spectra : map of TileSpectra that holds the profiles and calibration
+   *  - option  : selects which correlation/profile to draw
+   *  - xPMin/xPMax, maxY : axis extents used for the dummy/axis histogram
+   *  - layer, mod : geometry specifiers used to compute cell ID
+   *
+   * Side effects: changes pad scales, draws fit objects and legends, and may
+   * call canvas8Panel->SaveAs(nameOutput) when content exists.
+   */
   inline void PlotCorrWithFits8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                   std::map<int,TileSpectra> spectra, int option, 
                                   Double_t xPMin, Double_t xPMax, Double_t maxY, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
@@ -727,9 +816,22 @@
       canvas8Panel->SaveAs(nameOutput.Data());
   }
 
-  //__________________________________________________________________________________________________________
-  // Plot Corr with Fits for Full layer 2D
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot correlation maps and 2D correlation histograms for a full 8M layer.
+   *
+   * Draws TH2D correlation maps (or profile-based visualizations) for each
+   * cell in the 8-panel layout. The helper handles different correlation
+   * options (CAEN/TOA/ADC-TOT etc.) and sets appropriate log/axis settings.
+   *
+   * Parameters of interest:
+   *  - spectra : per-cell TileSpectra providing TH2D/TProfile objects
+   *  - option  : selects the type of 2D correlation to plot
+   *  - xPMin/xPMax, maxY : axis extents used for the 2D plots
+   *  - noCalib : when true, do not apply per-cell calibration/bad-channel boxes
+   *
+   * Side effects: sets pad logz/logy, draws color maps, optional fit overlays
+   * and may call canvas8Panel->SaveAs(nameOutput) when panels were rendered.
+   */
   inline void PlotCorr2D8MLayer (TCanvas* canvas8Panel, TPad** pads, 
                           Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                           std::map<int,TileSpectra> spectra, int option,
@@ -865,9 +967,24 @@
       canvas8Panel->SaveAs(nameOutput.Data());
   }
   
-  //__________________________________________________________________________________________________________
-  // Plot Corr with Fits for Full layer
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot trending quantities for a full 8M layer using the 8-panel layout.
+   *
+   * This helper draws time/voltage/parameter trends as TGraphErrors per cell and
+   * supports multiple trend options (including HG/LG comparisons and waveform
+   * derived quantities). It manages axis scaling (including log-mode for rates)
+   * and produces a per-layer summary to nameOutputSummary when detailedPlot is set.
+   *
+   * Key inputs:
+   *  - trending : map<int,TileTrend> providing per-cell TGraphErrors/Profiles
+   *  - optionTrend : selects which trend to extract for plotting
+   *  - xPMin/xPMax, minY/maxY : axis extents (adjusted internally for some options)
+   *  - isSameVoltage/commonVoltage : used for common-voltage annotation
+   *  - layer/mod : geometry identifiers used to compute cell IDs
+   *
+   * Side effects: toggles pad log scale for certain trend types, draws legends/
+   * annotations, and may print to both nameOutput and a summary PDF (nameOutputSummary).
+   */
   inline void PlotTrending8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                               std::map<int,TileTrend> trending, int optionTrend, 
                               Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, int isSameVoltage, double commonVoltage, 
@@ -1004,9 +1121,24 @@
     }
   }
   
-  //__________________________________________________________________________________________________________
-  // Plot Run overlay for all 8 tiles for all runs available
-  //__________________________________________________________________________________________________________
+  /**
+   * Overlay run-by-run spectra for all 8 tiles in a layer.
+   *
+   * For each cell this helper overlays histograms from multiple runs (up to
+   * nruns or the number of available entries) using distinct line/colour
+   * styles and produces a per-layer legend when pad 7 is used as the summary
+   * location. Useful to inspect run-to-run stability or systematic shifts.
+   *
+   * Important arguments:
+   *  - trending : map<int,TileTrend> containing per-cell per-run histograms
+   *  - nruns : number of runs to consider/overlay
+   *  - optionTrend : selects HG/LG overlay behavior
+   *  - xPMin/xPMax : horizontal axis extent used for all overlays
+   *  - commonRunInfo : when provided, used to evaluate 'same-run' drawing modes
+   *
+   * Side effects: uses log-scale drawing, manages per-pad legends, and may
+   * call canvas8Panel->SaveAs(nameOutput) and append/print to the summary PDF.
+   */
   inline void PlotRunOverlay8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                               std::map<int,TileTrend> trending, int nruns, int optionTrend, 
                               Double_t xPMin, Double_t xPMax, int layer, int mod,  TString nameOutput, TString nameOutputSummary, RunInfo commonRunInfo, Int_t detailedPlot = 1){
@@ -1164,9 +1296,23 @@
     }
   }
   
-  //__________________________________________________________________________________________________________
-  // Plot Run overlay for all 8 tiles for all runs available
-  //__________________________________________________________________________________________________________
+  /**
+   * Overlay per-run profiles (TProfile/1D) for all 8 tiles across multiple runs.
+   *
+   * Similar to PlotRunOverlay8MLayer but designed for profile-like quantities
+   * (waveforms/profiles/TOA/TOT) where each run contributes a TProfile. This
+   * helper supports optional normalization (scaleInt) and configurable axis
+   * ranges so overlays are comparable across runs.
+   *
+   * Key arguments:
+   *  - trending : map<int,TileTrend> providing per-run profile objects
+   *  - nruns, option : which runs/options to draw and which profile type
+   *  - xPMin/xPMax, yPMin/yPMax : axis ranges to use for overlays
+   *  - scaleInt : when true, normalize profiles by integral before plotting
+   *
+   * Side effects: draws per-pad legends, sets pad state and may append pages
+   * to the provided summary PDF (nameOutputSummary).
+   */
   inline void PlotRunOverlayProfile8MLayer (TCanvas* canvas8Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                       std::map<int,TileTrend> trending, int nruns, int option,
                                       Double_t xPMin, Double_t xPMax, Double_t yPMin, Double_t yPMax,  int layer, int mod,  TString nameOutput, TString nameOutputSummary, 

@@ -90,6 +90,7 @@ class Analyses{
   inline void IsHGCROC(bool b)                   {HGCROC=b;};
   inline void IsToReextractNoise(bool b)         {ReextractNoise=b;};
   inline void IsToReextractLGHGCorr(bool b)      {ReextractLGHGCorr=b;};
+  inline void IsNoEventTree(bool b)              {NoEventTreeWrite=b;};
   
   inline void IsToSaveNoiseOnly(bool b)          {SaveNoiseOnly = b;};
   inline void IsToSaveMipsOnly(bool b)           {SaveMipsOnly = b;};
@@ -168,6 +169,7 @@ class Analyses{
   bool ExtractScalingImproved =false;     // Flag for mip scaling extraction 2nd pass
   bool ReextractNoise         =false;     // Flag to enable noise trigger extraction and alternative pass for pedestals
   bool ReextractLGHGCorr      =false;     // Flag to enable reevaluation of LG-HG extraction 
+  bool NoEventTreeWrite       =false;     // Flat to disable the event tree writing
   bool ExtractToAPhase        =false;     // Flag to enable the ToA Phase extraction
   bool ApplyTransferCalib     =false;     // Flag for application of pedestals
   bool IsVisualizeWaveform    =false;     // Flag for routine with waveform visualization

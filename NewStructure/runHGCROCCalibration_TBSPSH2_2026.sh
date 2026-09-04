@@ -7,7 +7,7 @@ PlotBaseDir=..
 runList=../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
 
 # running example:
-# bash runCalibration_2024.sh fbockExt2 muoncalibA1 improvedWBC4th
+# ash runHGCROCCalibration_TBSPSH2_2026.sh fbockTB calibMuon default FullSetF_2
 
 
 dataDirRaw=""
@@ -96,6 +96,13 @@ if [ $2 = "toaPhase" ]; then
     elif [ $4 = "Muon" ]; then 
       runs='Muon_FullSetC_1' #
     fi
+  elif [ $3 = "FullSetC3" ]; then
+    runNrPed='278'
+    if [ $4 = "Hadron" ]; then 
+      runs='281' #100 GeV pi FullSet D
+    elif [ $4 = "Muon" ]; then 
+      runs='Muon_FullSetD_1' #
+    fi
   elif [ $3 = "FullSetD" ]; then
     runNrPed='206'
     if [ $4 = "Hadron" ]; then 
@@ -170,6 +177,26 @@ if [ $2 == "calibMuon" ]; then
     runPed='126'
     runs='Muon_FullSetB_2'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetB.csv'
+  elif [ $4 = "FullSetC_1" ]; then
+    runPed='137'
+    runs='Muon_FullSetC_1'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetC.csv'
+  elif [ $4 = "FullSetC_2" ]; then
+    runPed='188'
+    runs='Muon_FullSetC_2'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetC.csv'
+  elif [ $4 = "FullSetC_3" ]; then
+    runPed='278'
+    runs='Muon_FullSetC_3'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetC_2.csv'
+  elif [ $4 = "FullSetD_1" ]; then
+    runPed='206'
+    runs='Muon_FullSetD_1'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetD.csv'
+  elif [ $4 = "FullSetD_2" ]; then
+    runPed='264'
+    runs='Muon_FullSetD_2'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetD.csv'
   elif [ $4 = "FullSetE_1" ]; then
     runPed='372'
     runs='Muon_FullSetE_1'
@@ -190,16 +217,29 @@ if [ $2 == "calibMuon" ]; then
     runPed='471'
     runs='Muon_FullSetF_2'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetF.csv'
+  elif [ $4 = "FullSetG_1" ]; then
+    runPed='485'
+    runs='Muon_FullSetG_1'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetG.csv'
+  elif [ $4 = "FullSetG_2" ]; then
+    runPed='529'
+    runs='Muon_FullSetG_2'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetG.csv'
   elif [ $4 = "HVScan" ]; then
     runPed='188'
-    runs='194 195 196 197 198 199 200 201 202'
+#     runs='194 195 196 197 198 199 200 201 202'
+    runs='200 201 202'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_HVScan.csv'
   else 
     echo "No run selected, exiting..."
     exit
   fi
 
-  badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_dummy.txt  
+  if [ $4 = "HVScan" ]; then
+    badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_OnlyCenter4x6.txt
+  else 
+    badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_dummy.txt  
+  fi
   for runNr in $runs; do
     echo "$runNr   $runPed"
     MuonCalibHGCROC $3 $runPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset 	

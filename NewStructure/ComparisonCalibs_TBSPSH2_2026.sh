@@ -7,15 +7,24 @@
 # ./CompareCalib -d 0 -e 2 -H -f -T -I configsComparison/comparisonInterations_FullSetB_2.txt -o ../Trending/MuonIterationsB2.root -O ../Trending/MuonIterationsB2 -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
 # ./CompareCalib -d 0 -e 2 -H -f -T -I configsComparison/comparisonInterations_FullSetB_1.txt -o ../Trending/MuonIterationsB1.root -O ../Trending/MuonIterationsB1 -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
 # ./CompareCalib -d 0 -e 2 -H -f -T -I configsComparison/comparisonInterations_FullSetE_1.txt -o ../Trending/MuonIterationsE1.root -O ../Trending/MuonIterationsE1 -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
+# ./CompareCalib -d 0 -e 2 -H -f -T -I configsComparison/comparisonInterations_FullSetE_2.txt -o ../Trending/MuonIterationsE2.root -O ../Trending/MuonIterationsE2 -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
+# ./CompareCalib -d 0 -e 2 -H -f -T -I configsComparison/comparisonInterations_FullSetE_3.txt -o ../Trending/MuonIterationsE3.root -O ../Trending/MuonIterationsE3 -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
+# ./CompareCalib -d 0 -e 2 -H -f -T -I configsComparison/comparisonInterations_FullSetF_1.txt -o ../Trending/MuonIterationsF1.root -O ../Trending/MuonIterationsF1 -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
 
 # #muon calibs 2ndIte Set B
 # ./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparison2ndIte_FullSetB.txt -o ../Trending/MuonsSetB_2nd.root -O ../Trending/MuonsSetB_2nd -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
 # #muon calibs 4th Ite Set B
 # ./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparison4thIte_FullSetB.txt -o ../Trending/MuonsSetB_4th.root -O ../Trending/MuonsSetB_4th -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
-# 
+
+#muon calibs 4th Ite Set E
+# ./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparison4thIte_FullSetE.txt -o ../Trending/MuonsSetE_4th.root -O ../Trending/MuonsSetE_4th -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
+
+# #muon calibs 43V comparison 195 cc 9, set B cc 10
+./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparisonFinal_43V_setttingsA.txt -o ../Trending/Muons43V_SettingsA.root -O ../Trending/Muons43V_SettingsA -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
+
 # #muon calibs 2ndIte Set B
-# ./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparison2ndIte_HVScan.txt -o ../Trending/MuonsHVScan_vs_Run_2nd.root -O ../Trending/MuonsHVScan_vs_Run_2nd -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
-./CompareCalib -d 0 -e 2 -H -f -V -I configsComparison/comparison2ndIte_HVScan.txt -o ../Trending/MuonsHVScan_vs_Voltage_2nd.root -O ../Trending/MuonsHVScan_vs_Voltage_2nd -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
+./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparison4thIte_HVScan.txt -o ../Trending/MuonsHVScan_vs_Run_2nd.root -O ../Trending/MuonsHVScan_vs_Run_2nd -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
+./CompareCalib -d 0 -e 2 -H -f -V -I configsComparison/comparison4thIte_HVScan.txt -o ../Trending/MuonsHVScan_vs_Voltage_2nd.root -O ../Trending/MuonsHVScan_vs_Voltage_2nd -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
 # 
 # #muon calibs diff settings param scan
 # ./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparisonWaveformMips_All.txt -o ../Trending/MuonsDiffSettings.root -O ../Trending/MuonsDiffSettings -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv

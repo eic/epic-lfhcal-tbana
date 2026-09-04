@@ -6,9 +6,14 @@
   //===========================================================
 
   
-  //__________________________________________________________________________________________________________
-  // Plot Corr with Fits for Full Asic 2D
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot noise/spectra for a full ASIC layout (per-ASIC histograms and fits).
+   *
+   * Draws per-channel noise histograms for a given ASIC and overlays fit
+   * objects and calibration annotations when available. Intended as a helper
+   * to inspect ASIC-level distributions; toggles pad log/axis state and
+   * may call canvas->SaveAs(nameOutput) after rendering.
+   */
   inline void PlotNoiseWithFitsAsicLFHCal (TCanvas* canvas, TPad** pads, 
                                           Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                           std::map<int,TileSpectra> spectra, int option, 
@@ -156,9 +161,14 @@
   
   
   
-  //__________________________________________________________________________________________________________
-  // Plot Corr with Fits for Full Asic 2D
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot 2D correlation maps for ASIC-level channels and optional profiles.
+   *
+   * Draws TH2D correlation maps (or TProfile-derived visualizations) for the
+   * selected ASIC's channels. Supports toggling of calibration overlays and
+   * per-panel annotations. The helper sets pad log/z styles and may call
+   * canvas->SaveAs(nameOutput) for output files.
+   */
   inline void PlotCorr2DAsicLFHCal (TCanvas* canvas, TPad** pads, 
                               Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                               std::map<int,TileSpectra> spectra, int option,
@@ -394,10 +404,12 @@
         
       int cp         = layer%8*8+chInLayer;
       if ((TString)(currRunInfo.detector).Contains("FoCal-H"))
-        cp         = mod%8*8+chInLayer;
+        cp         = chInLayer;
+      std::cout << "Detector: " << (TString)(currRunInfo.detector).Data() << std::endl;
+      
       
       TString label           = Form("r:%d c:%d, ro-ch:%d", row, col, ch);
-      std::cout << "cell ID:\t"<< tempCellID <<"\t panel nr:\t"<<  cp<< "\t"<< label.Data() << std::endl;
+      std::cout << "cell ID:\t"<< tempCellID <<"\t panel nr:\t"<<  cp<< "\t"<< label.Data() << "\t" << layer%8*8+chInLayer << "\t" << mod%8*8+chInLayer << "\t" << chInLayer << std::endl;
       TString labelAsic       = "";
       if (cp%8 == 7)
         labelAsic = Form("layer:%d", layer);
@@ -410,6 +422,7 @@
       pads[cp]->Draw();
       
       if (optionTrend == 6){ 
+
         pads[cp]->SetLogy(1);
       } else {
         pads[cp]->SetLogy(0);          

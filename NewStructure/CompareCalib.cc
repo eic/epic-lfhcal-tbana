@@ -32,6 +32,7 @@ void PrintHelp(char* exe){
   std::cout<<"Usage:"<<std::endl;
   std::cout<<exe<<" [-option (arguments)]"<<std::endl;
   std::cout<<"Options:"<<std::endl;
+  std::cout<<"-a       Trending lots versus laser intensity" << std::endl;
   std::cout<<"-c ccc   list of cell to be plotted separately"<<std::endl;
   std::cout<<"-d [0-3] Debugging mode"<<std::endl;
   std::cout<<"-e [0-1] extended plotting"<<std::endl;
@@ -69,8 +70,14 @@ int main(int argc, char* argv[]){
   }
   ComparisonCalib CompAnalysis;
   int c;
-  while((c=getopt(argc,argv,"c:d:e:E:fF:Hi:I:L:o:O:r:RstTtVh"))!=-1){
+  while((c=getopt(argc,argv,"ac:d:e:E:fF:Hi:I:L:o:O:r:RstTtVh"))!=-1){
     switch(c){
+    case 'a':
+      std::cout<<"Compare: plot as function of laser intensity " <<std::endl;
+      CompAnalysis.SetTrendingAxis(5);
+      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-a");
+      RootRegexp.erase(it);
+      break;
     case 'c':
       std::cout<<"Compare: set list of cells for detailed plotting " << optarg <<std::endl;
       CompAnalysis.SetCellList(optarg);

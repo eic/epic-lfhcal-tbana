@@ -7,6 +7,11 @@ ClassImp(TileTrend);
 //************************************************************************
 // Fill functions for the trending objects
 //************************************************************************
+/**
+ * Fill calibration data for one run.
+ * Stores pedestal, scale, and correlation values in the time trends and keeps
+ * the min/max ranges used for later plotting in sync.
+ */
 //===============================================================================
 bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt, int pdg,  double hgmaxerr, double lgmaxerr, double tempE, double temper){
   gTrendLGped   .AddPoint     (x,tc.PedestalMeanL);
@@ -74,6 +79,20 @@ bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt, int 
 }
 
 //===============================================================================
+/**
+ * FillExtended: add per-run histograms and profiles for extended trend options.
+ * - Copies supplied histograms/profiles into internal maps keyed by run number.
+ * - Adjusts scalers and updates min/max statistics for spectrum-related graphs.
+ * @param x x position used for the trend graphs
+ * @param triggers number of triggers for normalization
+ * @param runNr run number used as map key
+ * @param histHG pointer to HG per-run TH1D (may be nullptr)
+ * @param histLG pointer to LG per-run TH1D (may be nullptr)
+ * @param profLGHG pointer to per-run TProfile (may be nullptr)
+ * @param wave pointer to waveform TProfile (may be nullptr)
+ * @return true on success
+ */
+//===============================================================================
 bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH1D* histLG, TProfile* profLGHG, TProfile* wave ){
   
   if (extended == 1 || extended == 2 ){
@@ -105,8 +124,6 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
     }
   }
   if (profLGHG){
-    // std::cout << "filling profile " <<  profLGHG->GetName() << std::endl;
-    //std::cout << "setting LG-HG profile " << profLGHG->GetName() << std::endl;
     TProfile temp3 = *profLGHG;
     temp3.SetName(Form("%s_Run%i",profLGHG->GetName(),runNr));
     temp3.SetDirectory(0);
@@ -116,7 +133,6 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
   
   if (wave){
       TProfile temp = *wave;
-      // std::cout << "filling wave " <<  wave->GetName() << std::endl;
       temp.SetName(Form("%s_Run%i",wave->GetName(),runNr));
       temp.SetDirectory(0);
       if (MaxInjADC < temp.GetMaximum()) MaxInjADC = temp.GetMaximum();
@@ -132,9 +148,9 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
       temp.Scale(scaler);
       temp.GetYaxis()->SetTitle("Counts/ trigger");
       TString name = histHG->GetName();
-      if (name.Contains("TOT"))
+      if (name.Contains("TOT")){
         temp.Rebin(8);
-      else 
+      } else 
         temp.Rebin(2);
       if (MinHGSpec > scaler) MinHGSpec = (double)scaler;
       if (MaxHGSpec < temp.GetMaximum()) MaxHGSpec = temp.GetMaximum();
@@ -163,6 +179,20 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
   return true;
 }
 
+//===============================================================================
+/**
+ * FillInjection: record injection-mode pedestal and associated per-run profiles.
+ * - Only valid when extended==3 (injection mode); returns false otherwise.
+ * - Stores waveform/TOA/TOT profiles and appends HGCROC setting metadata.
+ * @param x x position used for the trend graphs
+ * @param ped pedestal value to add to HG pedestal trend
+ * @param runNr run number used as map key
+ * @param wave waveform profile (may be nullptr)
+ * @param toa time-of-arrival profile (may be nullptr)
+ * @param tot time-over-threshold profile (may be nullptr)
+ * @param val_rf, val_cf, val_cfcomp, val_cc, val_inj metadata values appended to metadata vectors
+ * @return true on success, false if extended mode unsupported
+ */
 //===============================================================================
 bool TileTrend::FillInjection(
                                 double x, double ped, int runNr, 
@@ -214,6 +244,11 @@ bool TileTrend::FillInjection(
 }
 
 //===============================================================================
+/**
+ * FillHGCROCSetting: append HGCROC/ injection-related setting values to metadata vectors.
+ * This is a lightweight helper used when injection metadata is collected separately
+ * from the main Fill/FillInjection call paths.
+ */
 void TileTrend::FillHGCROCSetting (double val_rf, double val_cf, double val_cfcomp, double val_cc, double val_inj){
   rf.push_back(val_rf);
   cf.push_back(val_cf);
@@ -222,6 +257,41 @@ void TileTrend::FillHGCROCSetting (double val_rf, double val_cf, double val_cfco
   inj.push_back(val_inj);
 }
 
+//===============================================================================
+/**
+ * FillHGCROCVals: append TOT values to the TOT trend (used by injection/DAC modes).
+ * Updates min/max bounds and clamps MaxTOT to ADC range when necessary.
+ * @param x x position used for the trend graphs
+ * @param tot TOT value to record
+ * @return true on success
+ */
+//===============================================================================
+bool TileTrend::FillHGCROCVals (double x, double tot){
+  gTrendTOT.AddPoint     (x,tot     );
+  gTrendTOT.SetPointError     (gTrendTOT.GetN()-1,0.,0.);
+  if(tot<MinTOT) MinTOT  = tot;
+  if(tot>MaxTOT) MaxTOT  = tot;
+ 
+  if (MaxTOT > 4095 ) MaxTOT = 4095;  
+  return true;
+}
+
+//===============================================================================
+/**
+ * FillInjectionDACVal: record per-run injection DAC derived metrics.
+ * - Valid only when extended==4 (DAC/injection scanning mode).
+ * - Updates multiple injection-related trend graphs (ADC max, TOA, TOT, saturation counts).
+ * @param x x position used for trend graphs
+ * @param ped pedestal value
+ * @param adc ADC max value for the run
+ * @param toa TOA value for the run
+ * @param tot TOT value for the run
+ * @param adcSatN number of saturated ADC samples
+ * @param totSatN number of saturated TOT samples
+ * @param nTOA number of TOA events
+ * @param nSampToA number of samples firing TOA
+ * @return true on success, false if extended mode unsupported
+ */
 //===============================================================================
 bool  TileTrend::FillInjectionDACVal  ( double x, double ped, double adc, double toa, double tot, 
                                         int adcSatN, int totSatN, int nTOA, int nSampToA){
@@ -278,6 +348,11 @@ bool  TileTrend::FillInjectionDACVal  ( double x, double ped, double adc, double
 }
 
 //===============================================================================
+/**
+ * FillMPV: add MPV (most-probable-value) measurements for HG and LG to their graphs.
+ * Updates associated min/max trackers.
+ */
+//===============================================================================
 void TileTrend::FillMPV(double x, double hgmpv, double ehgmpv, double lgmpv, double elgmpv){
   gTrendHGLMPV.AddPoint     (x,hgmpv     );
   gTrendHGLMPV.SetPointError(gTrendHGLMPV.GetN()-1,0.,ehgmpv);
@@ -290,6 +365,11 @@ void TileTrend::FillMPV(double x, double hgmpv, double ehgmpv, double lgmpv, dou
   if(lgmpv>MaxLGMPV) MaxLGMPV  = lgmpv;
 }
 
+//===============================================================================
+/**
+ * FillLSigma: add low-range sigma estimates (L channel) for HG and LG to trend graphs.
+ * Updates min/max bounds used for plotting ranges.
+ */
 //===============================================================================
 void TileTrend::FillLSigma(double x, double hglsig, double ehglsig, double lglsig, double elglsig){
   gTrendHGLSigma.AddPoint     (x,hglsig     );
@@ -304,6 +384,11 @@ void TileTrend::FillLSigma(double x, double hglsig, double ehglsig, double lglsi
 }
 
 //===============================================================================
+/**
+ * FillGSigma: add gain-range sigma estimates (G channel) for HG and LG to trend graphs.
+ * Updates min/max bounds used for plotting ranges.
+ */
+//===============================================================================
 void TileTrend::FillGSigma(double x, double hggsig, double ehggsig, double lggsig, double elggsig){
   gTrendHGGSigma.AddPoint     (x,hggsig     );
   gTrendHGGSigma.SetPointError(gTrendHGGSigma.GetN()-1,0.,ehggsig);
@@ -317,6 +402,11 @@ void TileTrend::FillGSigma(double x, double hggsig, double ehggsig, double lggsi
 }
 
 //===============================================================================
+/**
+ * FillSB: populate S/B (signal-to-background) signal and noise trend graphs.
+ * Keeps min/max counters for later range calculations.
+ */
+//===============================================================================
 void TileTrend::FillSB(double x, double sbsig, double sbnoise){
   gTrendSBNoise.AddPoint     (x,sbnoise     );
   gTrendSBNoise.SetPointError(gTrendSBNoise.GetN()-1,0.,0.);
@@ -329,6 +419,11 @@ void TileTrend::FillSB(double x, double sbsig, double sbnoise){
   if(sbsig>MaxSBSignal) MaxSBSignal  = sbsig;  
 }
 
+//===============================================================================
+/**
+ * FillCorrOffset: add correlation offsets between HG/LG to the corresponding graphs.
+ * Stores values with associated uncertainties and updates min/max offsets.
+ */
 //===============================================================================
 void TileTrend::FillCorrOffset(double x, double lghgoff, double lghgoff_e, double hglgoff,double hglgoff_e ){
   gTrendLGHGOffset.AddPoint     (x,lghgoff     );
@@ -345,7 +440,17 @@ void TileTrend::FillCorrOffset(double x, double lghgoff, double lghgoff_e, doubl
 //************************************************************************
 // Getter functions for individual run histograms
 //************************************************************************
+/**
+ * The Get*Run methods return per-run copies of TH1D/TProfile objects that were
+ * stored during FillExtended/FillInjection. They return nullptr if the run
+ * is not found.
+ */
 //===============================================================================
+/**
+ * GetHGTriggRun: return pointer to stored per-run HG histogram.
+ * Returns nullptr if the run number is not present.
+ * @param run run number key
+ */
 TH1D* TileTrend::GetHGTriggRun(int run){
   std::map<int, TH1D>::iterator currRun;
   currRun=HGTriggRuns.find(run);
@@ -356,6 +461,11 @@ TH1D* TileTrend::GetHGTriggRun(int run){
   }
 }
 //===============================================================================
+/**
+ * GetLGTriggRun: return pointer to stored per-run LG histogram.
+ * Returns nullptr if the run number is not present.
+ * @param run run number key
+ */
 TH1D* TileTrend::GetLGTriggRun(int run){
   std::map<int, TH1D>::iterator currRun;
   currRun=LGTriggRuns.find(run);
@@ -367,6 +477,11 @@ TH1D* TileTrend::GetLGTriggRun(int run){
 }
 
 //===============================================================================
+/**
+ * GetLGHGTriggRun: return pointer to stored per-run LG/HG TProfile.
+ * Returns nullptr if the run number is not present.
+ * @param run run number key
+ */
 TProfile* TileTrend::GetLGHGTriggRun(int run){
   std::map<int, TProfile>::iterator currRun;
   currRun=LGHGTriggRuns.find(run);
@@ -378,6 +493,11 @@ TProfile* TileTrend::GetLGHGTriggRun(int run){
 }
 
 //===============================================================================
+/**
+ * GetWave1DRun: return stored per-run waveform profile (TProfile) pointer.
+ * Returns nullptr if not present.
+ * @param run run number key
+ */
 TProfile* TileTrend::GetWave1DRun(int run){
   std::map<int, TProfile>::iterator currRun;
   currRun=Wave1DProf.find(run);
@@ -389,6 +509,10 @@ TProfile* TileTrend::GetWave1DRun(int run){
 }
 
 //===============================================================================
+/**
+ * GetTOARun: return stored per-run TOA TProfile pointer, or nullptr if missing.
+ * @param run run number key
+ */
 TProfile* TileTrend::GetTOARun(int run){
   std::map<int, TProfile>::iterator currRun;
   currRun=TOAProf.find(run);
@@ -400,6 +524,10 @@ TProfile* TileTrend::GetTOARun(int run){
 }
 
 //===============================================================================
+/**
+ * GetTOTRun: return stored per-run TOT TProfile pointer, or nullptr if missing.
+ * @param run run number key
+ */
 TProfile* TileTrend::GetTOTRun(int run){
   std::map<int, TProfile>::iterator currRun;
   currRun=TOTProf.find(run);
@@ -413,129 +541,209 @@ TProfile* TileTrend::GetTOTRun(int run){
 //************************************************************************
 // Drawing functions for graphs
 //************************************************************************
+/**
+ * Simple draw wrappers that call the corresponding TGraphErrors::Draw
+ * method. The opt string is forwarded to ROOT's draw option parser.
+ * These helpers keep call sites uniform and make it easy to override
+ * drawing behavior if required later.
+ */
 //===============================================================================
+/**
+ * DrawLGped: draw the low-gain pedestal trend graph using ROOT draw options.
+ * @param opt ROOT draw option string forwarded to TGraphErrors::Draw
+ * @return true on success
+ */
 bool TileTrend::DrawLGped(TString opt){
   gTrendLGped.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawHGped: draw the high-gain pedestal trend graph.
+ */
 bool TileTrend::DrawHGped(TString opt){
   gTrendHGped.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawLGscale: draw the low-gain scale trend graph.
+ */
 bool TileTrend::DrawLGscale(TString opt){
   gTrendLGscale.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawHGscale: draw the high-gain scale trend graph.
+ */
 bool TileTrend::DrawHGscale(TString opt){
   gTrendHGscale.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawHGLGcorr: draw HG/LG correlation trend graph.
+ */
 bool TileTrend::DrawHGLGcorr(TString opt){
   gTrendHGLGcorr.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawLGHGcorr: draw LG/HG correlation trend graph.
+ */
 bool TileTrend::DrawLGHGcorr(TString opt){
   gTrendLGHGcorr.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawTrigger: draw trigger-count trend graph.
+ */
 bool TileTrend::DrawTrigger(TString opt){
   gTrendTrigger.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawSBNoise: draw S/B noise-region trend graph.
+ */
 bool TileTrend::DrawSBNoise(TString opt){
   gTrendSBNoise.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawSBSignal: draw S/B signal-region trend graph.
+ */
 bool TileTrend::DrawSBSignal(TString opt){
   gTrendSBSignal.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawHGLMPV: draw high-gain MPV trend graph.
+ */
 bool TileTrend::DrawHGLMPV(TString opt){
   gTrendHGLMPV.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawLGLMPV: draw low-gain MPV trend graph.
+ */
 bool TileTrend::DrawLGLMPV(TString opt){
   gTrendLGLMPV.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawHGLSigma: draw HG landau-fit sigma trend graph.
+ */
 bool TileTrend::DrawHGLSigma(TString opt){
   gTrendHGLSigma.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawLGLSigma: draw LG landau-fit sigma trend graph.
+ */
 bool TileTrend::DrawLGLSigma(TString opt){
   gTrendLGLSigma.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawHGGSigma: draw HG gaussian-fit sigma trend graph.
+ */
 bool TileTrend::DrawHGGSigma(TString opt){
   gTrendHGGSigma.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawLGGSigma: draw LG gaussian-fit sigma trend graph.
+ */
 bool TileTrend::DrawLGGSigma(TString opt){
   gTrendLGGSigma.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawHGLGOffset: draw HG-LG offset trend graph.
+ */
 bool TileTrend::DrawHGLGOffset(TString opt){
   gTrendHGLGOffset.Draw(opt.Data());
   return true;
 }
 //===============================================================================
+/**
+ * DrawLGHGOffset: draw LG-HG offset trend graph.
+ */
 bool TileTrend::DrawLGHGOffset(TString opt){
   gTrendLGHGOffset.Draw(opt.Data());
   return true;
 }
 
 //===============================================================================
+/**
+ * DrawADCmax: draw ADC max trend graph (injection/DAC mode).
+ */
 bool TileTrend::DrawADCmax(TString opt){
   gTrendADCMax.Draw(opt.Data());
   return true;
 }
 
 //===============================================================================
+/**
+ * DrawADCsat: draw ADC saturation counts trend graph.
+ */
 bool TileTrend::DrawADCsat(TString opt){
   gTrendADCSaturated.Draw(opt.Data());
   return true;
 }
 
 //===============================================================================
+/**
+ * DrawTOT: draw TOT (time-over-threshold) trend graph.
+ */
 bool TileTrend::DrawTOT(TString opt){
   gTrendTOT.Draw(opt.Data());
   return true;
 }
 
 //===============================================================================
+/**
+ * DrawTOTsat: draw TOT saturation counts trend graph.
+ */
 bool TileTrend::DrawTOTsat(TString opt){
   gTrendTOTSaturated.Draw(opt.Data());
   return true;
 }
 
 //===============================================================================
+/**
+ * DrawTOA: draw time-of-arrival trend graph.
+ */
 bool TileTrend::DrawTOA(TString opt){
   gTrendTOA.Draw(opt.Data());
   return true;
 }
 
 //===============================================================================
+/**
+ * DrawNSampTOA: draw number of samples firing TOA trend graph.
+ */
 bool TileTrend::DrawNSampTOA(TString opt){
   gTrendNSampTOA.Draw(opt.Data());
   return true;
 }
 
 //===============================================================================
+/**
+ * DrawNTOA: draw number of TOA events trend graph.
+ */
 bool TileTrend::DrawNTOA(TString opt){
   gTrendNTOA.Draw(opt.Data());
   return true;
@@ -544,7 +752,16 @@ bool TileTrend::DrawNTOA(TString opt){
 //************************************************************************
 // Set Drawing options
 //************************************************************************
+/**
+ * SetLineColor/SetMarkerColor/SetMarkerStyle/SetXAxisTitle are convenience
+ * functions to apply the same visual options to all relevant trend graphs
+ * depending on the current 'extended' display mode.
+ */
 //===============================================================================
+/**
+ * SetLineColor: apply a uniform line color to all relevant trend graphs
+ * depending on the current extended mode.
+ */
 bool TileTrend::SetLineColor(uint col){
   if (extended < 3){
     gTrendLGped    .SetLineColor(col);
@@ -557,6 +774,7 @@ bool TileTrend::SetLineColor(uint col){
     gTrendLGHGcorr .SetLineColor(col);
     gTrendHGLGOffset .SetLineColor(col);
     gTrendLGHGOffset .SetLineColor(col);
+    gTrendTOT .SetLineColor(col);
     if (extended == 1 || extended == 2 ){
       gTrendTrigger .SetLineColor(col);
       gTrendSBNoise .SetLineColor(col);
@@ -586,6 +804,10 @@ bool TileTrend::SetLineColor(uint col){
   return true;
 }
 //===============================================================================
+/**
+ * SetMarkerColor: apply a uniform marker color to all relevant trend graphs
+ * depending on the current extended mode.
+ */
 bool TileTrend::SetMarkerColor(uint col){
   if (extended < 3){
     gTrendLGped    .SetMarkerColor(col);
@@ -598,6 +820,7 @@ bool TileTrend::SetMarkerColor(uint col){
     gTrendLGHGcorr .SetMarkerColor(col);
     gTrendHGLGOffset .SetMarkerColor(col);
     gTrendLGHGOffset .SetMarkerColor(col);
+    gTrendTOT .SetMarkerColor(col);
     if (extended == 1 || extended == 2 ){
       gTrendTrigger .SetMarkerColor(col);
       gTrendSBNoise .SetMarkerColor(col);
@@ -627,6 +850,10 @@ bool TileTrend::SetMarkerColor(uint col){
   return true;
 }
 //===============================================================================
+/**
+ * SetMarkerStyle: apply a uniform marker style to all relevant trend graphs
+ * depending on the current extended mode.
+ */
 bool TileTrend::SetMarkerStyle(uint col){
   if (extended < 3){
     gTrendLGped    .SetMarkerStyle(col);
@@ -639,6 +866,7 @@ bool TileTrend::SetMarkerStyle(uint col){
     gTrendLGHGcorr .SetMarkerStyle(col);
     gTrendHGLGOffset .SetMarkerStyle(col);
     gTrendLGHGOffset .SetMarkerStyle(col);
+    gTrendTOT .SetMarkerStyle(col);
     if (extended == 1 || extended == 2 ){
       gTrendTrigger .SetMarkerStyle(col);
       gTrendSBNoise .SetMarkerStyle(col);
@@ -668,6 +896,10 @@ bool TileTrend::SetMarkerStyle(uint col){
   return true;
 }
 //===============================================================================
+/**
+ * SetXAxisTitle: set the X-axis title for all relevant trend graphs.
+ * @param title title string to apply
+ */
 bool TileTrend::SetXAxisTitle(TString title){
   if (extended < 3){
     gTrendLGped    .GetXaxis()->SetTitle(title.Data());
@@ -680,6 +912,7 @@ bool TileTrend::SetXAxisTitle(TString title){
     gTrendLGHGcorr .GetXaxis()->SetTitle(title.Data());
     gTrendHGLGOffset.GetXaxis()->SetTitle(title.Data());
     gTrendLGHGOffset.GetXaxis()->SetTitle(title.Data());
+    gTrendTOT .GetXaxis()->SetTitle(title.Data());
     if (extended == 1 || extended == 2 ){
       gTrendTrigger .GetXaxis()->SetTitle(title.Data());
       gTrendSBNoise .GetXaxis()->SetTitle(title.Data());
@@ -712,6 +945,12 @@ bool TileTrend::SetXAxisTitle(TString title){
 //************************************************************************
 // Sort
 //************************************************************************
+/**
+ * Sort: call TGraphErrors::Sort on all stored graphs. Sorting ensures
+ * the internal point order is increasing in X, which is required for
+ * some ROOT drawing/line interpolation behavior and for consistent
+ * min/max computation after appends.
+ */
 void TileTrend::Sort(){
   if (extended < 3){
     gTrendLGped    .Sort();
@@ -724,6 +963,7 @@ void TileTrend::Sort(){
     gTrendLGHGcorr .Sort();
     gTrendHGLGOffset .Sort();
     gTrendLGHGOffset .Sort();
+    gTrendTOT.Sort();
     if (extended == 1 || extended == 2 ){
       gTrendTrigger .Sort();
       gTrendSBNoise .Sort();
@@ -756,6 +996,13 @@ void TileTrend::Sort(){
 //************************************************************************
 // Write 
 //************************************************************************
+/**
+ * Write: serialize all configured trend graphs into the provided TFile
+ * under the "IndividualCells" directory. Only graphs relevant to the
+ * current 'extended' mode are written.
+ * @param f opened TFile pointer where graphs are written
+ * @return true on success
+ */
 bool TileTrend::Write(TFile* f){
   f->cd();
   TDirectoryFile* dirIndCells = (TDirectoryFile*)f->Get("IndividualCells");
@@ -773,6 +1020,7 @@ bool TileTrend::Write(TFile* f){
     gTrendLGHGcorr .Write();
     gTrendHGLGOffset .Write();
     gTrendLGHGOffset .Write();
+    gTrendTOT .Write();
     if (extended == 1 || extended == 2 ){
       gTrendTrigger .Write();
       gTrendSBNoise .Write();
@@ -809,7 +1057,13 @@ bool TileTrend::Write(TFile* f){
 //************************************************************************
 // Write 
 //************************************************************************
+/**
+ * Write (no-arg): write graphs using the current ROOT file context.
+ * Convenience wrapper matching the Write(TFile*) behavior but relying on an
+ * externally selected current file.
+ */
 bool TileTrend::Write(){
+
   if (extended < 3){
     gTrendLGped    .Write();
     gTrendHGped    .Write();
@@ -821,6 +1075,7 @@ bool TileTrend::Write(){
     gTrendLGHGcorr .Write();
     gTrendHGLGOffset .Write();
     gTrendLGHGOffset .Write();
+    gTrendTOT .Write();
     if (extended == 1 || extended == 2 ){
       gTrendTrigger .Write();
       gTrendSBNoise .Write();
@@ -854,6 +1109,10 @@ bool TileTrend::Write(){
   return true;
 }
 
+/**
+ * SetLabelPerRun: store a textual label associated with the next appended run.
+ * These labels are used for legend entries when plotting multiple runs.
+ */
 void TileTrend::SetLabelPerRun(TString label){
   labels.push_back(label);
 }
@@ -861,6 +1120,14 @@ void TileTrend::SetLabelPerRun(TString label){
 //*************************************************************************
 // Labeling legend entries
 //*************************************************************************
+/**
+ * GetLabelLegend: compose a brief legend label for a run depending on
+ * the provided RunInfo and how many settings are being compared.
+ * @param commonRunInfo metadata describing what to show
+ * @param runIndex index into stored run-vectors
+ * @param nSameSettings number of settings grouped for the comparison
+ * @return formatted label string
+ */
 TString TileTrend::GetLabelLegend( RunInfo commonRunInfo, int runIndex, int nSameSettings){
   
   TString labelLegend = "";
@@ -914,6 +1181,11 @@ TString TileTrend::GetLabelLegend( RunInfo commonRunInfo, int runIndex, int nSam
 //*************************************************************************
 // Printing min & max ranges for all properties
 //*************************************************************************
+/**
+ * PrintMinMaxRanges: debug helper that prints the collected min/max
+ * ranges for all tracked quantities to stdout. Useful for quick sanity checks
+ * when tuning plot ranges.
+ */
 void TileTrend::PrintMinMaxRanges(){
   std::cout << "=================================================" << std::endl;
   std::cout << "===== Printing min and max ranges ===============" << std::endl; 
@@ -955,6 +1227,15 @@ void TileTrend::PrintMinMaxRanges(){
   std::cout << "=================================================" << std::endl;
 }
 
+//*************************************************************************
+
+/**
+ * GetTrendingBasedOnOption: map an integer option code to the
+ * corresponding TGraphErrors pointer. Used by higher-level plotting
+ * helpers to select which trend to visualize.
+ * @param option numeric selector
+ * @return pointer to the chosen graph or nullptr if unknown
+ */
 TGraphErrors* TileTrend::GetTrendingBasedOnOption(int option){
   if (option == 0)       return GetHGped();
   else if (option == 1)  return GetLGped();
@@ -987,6 +1268,15 @@ TGraphErrors* TileTrend::GetTrendingBasedOnOption(int option){
   return nullptr;
 }
 
+//*************************************************************************
+/**
+ * GetMinMaxBasedOnOptionAndCompare: update provided min/max bounds using the
+ * stored min/max for the trend corresponding to 'option'. This is used when
+ * plotting multiple cells or aligning plot ranges across different trend types.
+ * @param option option selector
+ * @param min reference to min value to update
+ * @param max reference to max value to update
+ */
 void TileTrend::GetMinMaxBasedOnOptionAndCompare(int option, Double_t &min, Double_t &max){
   if (option == 0){
     if(min>GetMinHGped()) min=GetMinHGped();

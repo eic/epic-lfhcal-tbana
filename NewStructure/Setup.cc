@@ -327,18 +327,21 @@ int Setup::GetChannelInLayerFull(int cellID, DetConf::Type type) const{
   if (type == DetConf::Type::Unset){
     type = GetDetectorConfig();
   }
-  
+  // Dual 8M
   if ( type == DetConf::Type::Dual8M){
     absChL    = mod*((nMaxColumn+1)*(nMaxRow+1))+row*(nMaxColumn+1)+column;
+  // Medium TB
   } else if ( type == DetConf::Type::MediumTB){
     if (mod%2 == 0){
       absChL = mod%2*((nMaxColumn+1) *(nMaxRow+1))+row*(nMaxColumn+1)*2+column+(int)mod/2*16;
     } else {
       absChL = (mod%2-1)*((nMaxColumn+1) *(nMaxRow+1))+row*(nMaxColumn+1)*2+column+(int)(mod-1)/2*16 + (nMaxColumn+1);
     }
+  // Single 8M module
   } else if ( type == DetConf::Type::Single8M){
     absChL = row*(nMaxColumn+1)+column;
-  } else if ( type == DetConf::Type::FocalH){
+  // Focal or Asic geom
+  } else if ( type == DetConf::Type::FocalH || type == DetConf::Type::Asic){
     absChL = mod*((nMaxColumn+1)*(nMaxRow+1))+row*(nMaxColumn+1)+column;
   }
   return absChL;

@@ -65,6 +65,7 @@ void PrintHelp(char* exe){
   std::cout<<"-T ttt   evaluate local triggers before calibrating, use external calib file ttt"<<std::endl;
   std::cout<<"-u       disable trigger primitive calc"<<std::endl;
   std::cout<<"-w       Visualize waveform of HGCROC data"<<std::endl;
+  std::cout<<"-x       turn off event writing for improved mip calibration"<<std::endl;
   std::cout<<"-X       skim HGCROC events to a new file where there is at least a signal in the TOA "<<std::endl;
   std::cout<<"-y yyyy  setting year externally to narrow parameters"<<std::endl;
   std::cout<<"-h       this help"<<std::endl<<std::endl;
@@ -84,7 +85,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"aA:bB:c:C:d:DeE:fF:g:G:hi:k:K:l:L:m:MnNo:O:pP:q:Q:r:R:sStT:uwXy:"))!=-1){
+  while((c=getopt(argc,argv,"aA:bB:c:C:d:DeE:fF:g:G:hi:k:K:l:L:m:MnNo:O:pP:q:Q:r:R:sStT:uwxXy:"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"DataPrep: printing calib object to file"<<std::endl;
@@ -247,6 +248,10 @@ int main(int argc, char* argv[]){
     case 'X':
       std::cout<<"DataPrep: Skim HGCROC data: "<<std::endl;
       AnAnalysis.IsToSkimHGCROC(true);
+      break;
+    case 'x':
+      std::cout<<"DataPrep: Do not write event tree for improved step: "<<std::endl;
+      AnAnalysis.IsNoEventTree(true);
       break;
     case 'y':
       std::cout<<"DataPrep: Setting year externally: "<<optarg<<std::endl;

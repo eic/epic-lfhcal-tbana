@@ -129,8 +129,10 @@ bool Analyses::CheckAndOpenIO(void){
       setup=Setup::GetInstance();
       //TsetupOut->Branch("setup",&setup);
       TsetupOut->Branch("setup",&rsw);
-      TdataOut = new TTree("Data","Data");
-      TdataOut->Branch("event",&event);
+      if(!NoEventTreeWrite) {
+        TdataOut = new TTree("Data","Data");
+        TdataOut->Branch("event",&event);
+      }
       TcalibOut = new TTree("Calib","Calib");
       TcalibOut->Branch("calib",&calib);
     } else {
@@ -4076,10 +4078,10 @@ bool Analyses::GetImprovedScaling(void){
     }
     RootOutput->cd();
     // fill tree
-    TdataOut->Fill();
+    if(!NoEventTreeWrite) TdataOut->Fill();
   }
   // write tree
-  TdataOut->Write();
+  if(!NoEventTreeWrite) TdataOut->Write();
   TsetupIn->CloneTree()->Write();
   
   //==================================================================================

@@ -2,9 +2,15 @@
 #define PLOTHELPER_GENERAL_H
 
 
-  //__________________________________________________________________________________________________________
-  //__________________________________________________________________________________________________________
-  //__________________________________________________________________________________________________________
+  /**
+   * General plotting helper utilities used across PlotHelper_* modules.
+   *
+   * This file contains small helpers for axis/marker styling, simple histogram
+   * probes (FindLargestBin1DHist, FindFirst/LastBin...), and other reusable
+   * drawing utilities used by the per-layout PlotHelper headers. These
+   * functions are small, inline helpers and generally have no external
+   * side-effects beyond manipulating gStyle or the supplied TH1/TPad objects.
+   */
   inline TString ReturnDateStr(){
       TDatime today;
       int iDate           = today.GetDate();

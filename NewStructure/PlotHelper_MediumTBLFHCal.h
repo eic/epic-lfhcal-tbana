@@ -23,9 +23,14 @@
     // rebuild pad geom in similar way (numbering -1)
     //*****************************************************************
     
-  //__________________________________________________________________________________________________________
-  // Plot Trigger Primitive with Fits for MediumTB
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot trigger primitives with fits for Medium TB (multi-module) layouts.
+   *
+   * Iterates across rows/columns/modules in the MediumTB geometry and draws
+   * per-cell trigger-primitive histograms. Trigger windows are drawn and pads
+   * are annotated with row/col/mod labels. This helper changes pad log/axis
+   * state and may call canvas->SaveAs(nameOutput) when plotting succeeded.
+   */
   inline void PlotTriggerPrimMediumTBLayer (TCanvas* canvas, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, 
                                          Double_t* relSize8P, Int_t textSizePixel, 
                                          std::map<int,TileSpectra> spectra, 
@@ -117,9 +122,14 @@
       canvas->SaveAs(nameOutput.Data());
   }
   
-  //__________________________________________________________________________________________________________
-  // Plot Noise with Fits for MediumTBLayer
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot noise spectra with fits for Medium TB layer layouts.
+   *
+   * Draws noise histograms across the MediumTB multi-module geometry and,
+   * when available, overlays fit TF1 objects and per-panel legends. The
+   * function updates pad state and will call canvas->SaveAs(nameOutput)
+   * if content was rendered.
+   */
   inline void PlotNoiseWithFitsMediumTBLayer (TCanvas* canvas, TPad** pads, 
                                  Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                  std::map<int,TileSpectra> spectra, int option, 

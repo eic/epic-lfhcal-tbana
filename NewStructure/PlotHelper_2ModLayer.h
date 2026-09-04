@@ -20,9 +20,14 @@
   // dedicated class for all 2Mod layer plotting functions
   // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  //__________________________________________________________________________________________________________
-  // Plot Trigger Primitive with Fits for Full layer
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot trigger primitives with trigger-box overlay for a 2-module (full) layer.
+   *
+   * Iterates over every cell in the full-layer layout (including both modules),
+   * draws the trigger-primitive histogram for each pad, overlays a trigger-box
+   * (avMip * facLow..facHigh) and annotates pads with row/column/module info.
+   * Side effects: modifies pads[], toggles log-scale and may call canvas->SaveAs(nameOutput).
+   */
   inline void PlotTriggerPrim2ModLayer (TCanvas* canvas, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, 
                                          Double_t* relSize8P, Int_t textSizePixel, 
                                          std::map<int,TileSpectra> spectra, 
@@ -114,9 +119,14 @@
       canvas->SaveAs(nameOutput.Data());
   }
     
-  //__________________________________________________________________________________________________________
-  // Plot Noise with Fits for Full layer
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot noise spectra with fits for a 2-module/full layer.
+   *
+   * Draws per-cell noise histograms across both modules, applies fit overlays
+   * when present, and annotates panels with per-cell identifiers. The helper
+   * manipulates pad state and will call canvas->SaveAs(nameOutput) if panels
+   * contained drawable content.
+   */
   inline void PlotNoiseWithFits2ModLayer (TCanvas* canvas, TPad** pads, 
                                  Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                  std::map<int,TileSpectra> spectra, int option, 

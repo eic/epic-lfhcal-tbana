@@ -12,9 +12,14 @@
         // rebuild pad geom in similar way (numbering -1)
       //*****************************************************************
        
-  //__________________________________________________________________________________________________________
-  // Plot Noise with Fits for Full layer
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot noise spectra with fits for a 2-panel (2M) layer.
+   *
+   * Draws noise histograms for each column/pad in a 2-panel layout, applies
+   * optional fit overlays and annotates panels. The function manipulates pad
+   * log/axis state and will call canvas2Panel->SaveAs(nameOutput) when
+   * drawable content was produced.
+   */
   inline void PlotNoiseWithFits2MLayer (TCanvas* canvas2Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSizeP, Int_t textSizePixel, 
                                   std::map<int,TileSpectra> spectra, int option, 
                                   Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){
@@ -131,9 +136,13 @@
       canvas2Panel->SaveAs(nameOutput.Data());
   }
 
-  //__________________________________________________________________________________________________________
-  // Plot Spectra with Fits for Full layer
-  //__________________________________________________________________________________________________________
+  /**
+   * Plot spectra (HG/LG/combined/TOA/TOT) with optional fits for a 2-panel layer.
+   *
+   * Renders one selected spectrum per pad/column, applies consistent styling,
+   * draws fit objects and annotations, and may call canvas2Panel->SaveAs(nameOutput)
+   * after successful drawing.
+   */
   inline void PlotSpectra2MLayer (TCanvas* canvas2Panel, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSizeP, Int_t textSizePixel, 
                                   std::map<int,TileSpectra> spectra, int option, 
                                   Double_t xPMin, Double_t xPMax, Double_t scaleYMax, int layer, int mod,  TString nameOutput, RunInfo currRunInfo){

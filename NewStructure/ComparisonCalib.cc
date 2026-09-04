@@ -24,6 +24,11 @@
 // ===========================================================================================
 // Check input files and global settings
 // ===========================================================================================
+/**
+ * Open the input calibration/setup chains and validate the configured file list.
+ * This prepares the ROOT TChain objects and output file before the actual
+ * comparison/plotting workflow starts.
+ */
 bool ComparisonCalib::CheckAndOpenIO(void){
   
   int matchingbranch;
@@ -236,6 +241,12 @@ bool ComparisonCalib::CheckAndOpenIO(void){
 // ===========================================================================================
 // Main function of this calibration comparison 
 // ===========================================================================================
+/**
+ * Drive the full calibration comparison workflow.
+ * The method reads all input runs, fills per-cell trend objects, computes
+ * summary plots, and writes the final comparison output for the selected
+ * calibration mode.
+ */
 bool ComparisonCalib::ProcessCalib(void){
   // *****************************************************************************************
   // plotting settings
@@ -339,6 +350,7 @@ bool ComparisonCalib::ProcessCalib(void){
     //        2 - Time dependence
     //        3 - iterations
     //        4 - integration option
+    //        5 - laser intensity
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     Int_t runNumber = calib.GetRunNumber();
     if(Xaxis==0){//depending on run #
@@ -351,6 +363,8 @@ bool ComparisonCalib::ProcessCalib(void){
       Xvalue=nRun; 
     } else if(Xaxis==4){
       Xvalue=nRun; 
+    } else if(Xaxis==5){
+      Xvalue=cit->second.energy;
     }
     
     if(Xvalue<Xmin) Xmin=Xvalue;
@@ -593,8 +607,14 @@ bool ComparisonCalib::ProcessCalib(void){
           itrend->second.FillExtended(Xvalue,1, nFillExtNr, nullptr, nullptr, profCellLGHG); 
           // itrend->second.FillCorrOffset(Xvalue, lghgOff, lghgOff_E, hglgOff, hglgOff_E);
         } else if (expandedList == 4){
-          std::cerr<<"Run Num: " << (int)calib.GetRunNumber()<<": "<< histCellHG << "\t"<< histCellLG<< " \t" << profCellLGHG <<std::endl;
+          if (debug > 2) std::cerr<<"Run Num: " << (int)calib.GetRunNumber()<<": "<< histCellHG << "\t"<< histCellLG<< " \t" << profCellLGHG <<std::endl;
           itrend->second.FillExtended(Xvalue,1, nFillExtNr, histCellHG, histCellLG, nullptr, profCellLGHG); 
+          if (histCellHG ){
+            double tot = 0;
+            int maxBin  = histCellHG->GetMaximumBin();
+            tot         = histCellHG->GetBinCenter(maxBin);
+            itrend->second.FillHGCROCVals(Xvalue, tot);
+          }
         }
       // create new TileTrend object if not yet available in map
       } else {
@@ -616,8 +636,14 @@ bool ComparisonCalib::ProcessCalib(void){
           // std::cout<<"Layer Filling: " << calib.GetRunNumber()<<": "<<setup->GetLayer(itcalib->first) <<std::endl;
           atrend.FillExtended(Xvalue,1, nFillExtNr, nullptr, nullptr, profCellLGHG); 
         } else if (expandedList == 4){
-          std::cerr<<"Run Num: " << nFillExtNr<<": "<< histCellHG << "\t"<< histCellLG<< " \t" << profCellLGHG <<std::endl;
+          if (debug > 2) std::cerr<<"Run Num: " << nFillExtNr<<": "<< histCellHG << "\t"<< histCellLG<< " \t" << profCellLGHG <<std::endl;
           atrend.FillExtended(Xvalue,1, nFillExtNr, histCellHG, histCellLG, nullptr,  profCellLGHG); 
+          if ( histCellHG ){
+            double tot = 0;
+            int maxBin  = histCellHG->GetMaximumBin();
+            tot         = histCellHG->GetBinCenter(maxBin);
+            atrend.FillHGCROCVals(Xvalue, tot);
+          }
         }
         // append TileTrend object to map
         trend[itcalib->first]=atrend;
@@ -661,9 +687,12 @@ bool ComparisonCalib::ProcessCalib(void){
   // ******************************************************************************************
   // Set X axis title and ranges 
   // ******************************************************************************************
-  if (Xaxis == 0){
+  if (Xaxis == 0 ){
     Xmin= Xmin-10;
     Xmax= Xmax+10;
+  } else if ( Xaxis == 5){
+    Xmin= Xmin-25;
+    Xmax= Xmax+25;
   } else if (Xaxis == 1 || Xaxis == 3 || Xaxis == 4){
     Xmin= Xmin-0.5;
     Xmax= Xmax+0.5;
@@ -674,6 +703,7 @@ bool ComparisonCalib::ProcessCalib(void){
   else if (Xaxis==1)  xaxisTitle = "V (V) ";
   else if (Xaxis==3)  xaxisTitle = "iteration";
   else if (Xaxis==4)  xaxisTitle = "integ. option";
+  else if (Xaxis==5)  xaxisTitle = "laser intensity";
   else                xaxisTitle = "date";  
   
   // additional summary graphs
@@ -728,8 +758,6 @@ bool ComparisonCalib::ProcessCalib(void){
       } 
     }
   }
-  
-  
   
   int cCalib = 0;
   for (isumCalibs = sumCalibs.begin(); isumCalibs!=sumCalibs.end(); ++isumCalibs){
@@ -861,7 +889,6 @@ bool ComparisonCalib::ProcessCalib(void){
                           textSizeRel, 
                           Form("%s/TrendingHGScalPerLayer.%s",OutputNameDirPlots.Data(),plotSuffix.Data() ), commonRunInfo, 2);
     
-    
     if (!isHGCROC){
       
       PlotCalibRunOverlay( canvas1DRunsOverlay, 6, sumCalibs, textSizeRel, 
@@ -896,16 +923,6 @@ bool ComparisonCalib::ProcessCalib(void){
   bool init2D = panelPlot2D.Initialize(2);
     
   if (expandedList != 3 ){
-//     TString pedAName = "HG";
-//     if (isHGCROC) pedAName = "0thSample";
-//     panelPlot.PlotTrending(trend, 0, Xmin,Xmax, OutputNameDirPlots, Form("%sped",pedAName.Data()), plotSuffix, commonRunInfo, ExtPlot );
-//     panelPlot.PlotTrending(trend, 15, Xmin,Xmax, OutputNameDirPlots, Form("%spedwidth",pedAName.Data()), plotSuffix, commonRunInfo, ExtPlot );
-//     
-//     TString pedBName = "LG";
-//     if (isHGCROC) pedBName = "Wave";
-//     panelPlot.PlotTrending(trend, 1, Xmin,Xmax, OutputNameDirPlots, Form("%sped", pedBName.Data()), plotSuffix, commonRunInfo, ExtPlot );
-//     panelPlot.PlotTrending(trend, 16, Xmin,Xmax, OutputNameDirPlots, Form("%sLGpedwidth", pedBName.Data()), plotSuffix, commonRunInfo, ExtPlot );
-
     panelPlot.PlotTrending(trend, 19, Xmin,Xmax, OutputNameDirPlots, "Ped", plotSuffix, commonRunInfo, ExtPlot );
     panelPlot.PlotTrending(trend, 20, Xmin,Xmax, OutputNameDirPlots, "Pedwidth", plotSuffix, commonRunInfo, ExtPlot );
     
@@ -935,6 +952,11 @@ bool ComparisonCalib::ProcessCalib(void){
     panelPlot.PlotTrending(trend, 7, Xmin,Xmax, OutputNameDirPlots, "SBSignal_MuonTriggers", plotSuffix, commonRunInfo, ExtPlot );
     panelPlot.PlotTrending(trend, 8, Xmin,Xmax, OutputNameDirPlots, "SBNoise_MuonTriggers", plotSuffix, commonRunInfo, ExtPlot );
   }
+  
+  if (expandedList == 4 && isHGCROC){
+    panelPlot.PlotTrending(trend, 32, Xmin,Xmax, OutputNameDirPlots, "TOT", plotSuffix, commonRunInfo, ExtPlot );
+  }
+
   
   if (ExtPlot > 1){
     if (expandedList == 1 || expandedList == 2 ){
@@ -968,7 +990,7 @@ bool ComparisonCalib::ProcessCalib(void){
   
   if (ExtPlot > 2 && expandedList == 4 && isHGCROC ){
     detConf = DetConf::Type::SingleTile;
-    MultiCanvas panelSingleTile(detConf, "InjectionTile");
+    MultiCanvas panelSingleTile(detConf, "SingleTile");
     if (cellVec.size() > 0){
       std::cout << "setting single cell list, will plot " << cellVec.size()  << std::endl;
       panelSingleTile.SetCellVector(cellVec);
@@ -978,6 +1000,8 @@ bool ComparisonCalib::ProcessCalib(void){
     panelSingleTile.PlotRunOverlaySpectra(trend, nRun, 1, 0, 1024, OutputNameDirPlots, "TileTOASpectra", plotSuffix, commonRunInfo, ExtPlot, debug, 0);
     panelSingleTile.PlotRunOverlayProfile(trend, nRun, 1, 0 , commonRunInfo.samples, -10, 1324, OutputNameDirPlots, "TileWaveOverlay", plotSuffix, commonRunInfo, ExtPlot );
 
+    panelSingleTile.PlotTrending(trend, 32, Xmin,Xmax, OutputNameDirPlots, "TileTOTProb", plotSuffix, commonRunInfo, ExtPlot );
+    
   }
   
   return status;
@@ -987,6 +1011,10 @@ bool ComparisonCalib::ProcessCalib(void){
 // ===========================================================================================
 // Create the output file 
 // ===========================================================================================
+/**
+ * Create the ROOT output file and ensure the target directory exists.
+ * This is the destination for the calibration summaries and per-cell trend data.
+ */
 bool ComparisonCalib::CreateOutputRootFile(void){
   std::string testing = RootOutputName.Data();
   std::size_t found = testing.find_last_of("/\\");
