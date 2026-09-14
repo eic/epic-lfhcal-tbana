@@ -255,7 +255,7 @@ class TileSpectra: public TObject{
   void FitFixedNoise();
   void InitializeNoiseFitsFromCalib();
   bool FitMipHG(double*, double*, int, int, bool, double, double );
-  bool FitMipLG(double*, double*, int, int, bool, double );
+  bool FitMipLG(double*, double*, int, int, bool, double, double );
   bool FitCorrCAEN(int);
   bool FitLGHGCorr(int , bool);
   bool FitPedConstWave(int);
@@ -265,9 +265,13 @@ class TileSpectra: public TObject{
   int GetCellID();
   void SetBadChannelInCalib(short);
   
+  void GetFitRange(double* , int, bool, bool, double, double);
+  void SetParametersFitHG (double*, double*, double*, int,  int, bool, double,  double);
+  
   double GetMaxXInRangeLG(double, double);
   double GetMaxXInRangeHG(double, double);
-
+  double GetMinimumInRangeSpectra(bool, float, float);
+  
   ReadOut::Type GetROType() {return ROType;};  
   TH1D* GetHG();
   TH1D* GetLG();

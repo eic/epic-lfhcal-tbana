@@ -283,3 +283,34 @@ function QARun()
     time ./DataAna -d 1 -Q -i $2/calibratedHGCROC_Run_$3.root -O $2/QAHists_Run_$3.root -a -f -r $runList -P $4/HGCROC_QAPlots/Run_$3
   fi
 }
+
+
+function FixSetupTreeDerived(){
+  echo "========================================================================="
+  echo "dataDir: $1"
+  echo "run-nr: $2"
+  echo "mappingFile: $3"
+  echo "========================================================================="
+  
+  
+  if [ -f "$1/rawHGCROC_wPed_wBC_$2.root" ]; then
+    ./DataPrep -R $3 -i $1/rawHGCROC_wPed_wBC_$2.root -o $1/rawHGCROC_wPed_wBC_$2_setupReplaced.root
+    mv $1/rawHGCROC_wPed_wBC_$2_setupReplaced.root $1/rawHGCROC_wPed_wBC_$2.root
+  else 
+    echo "$1/rawHGCROC_wPed_wBC_$2.root wasn't found"
+  fi
+
+  if [ -f "$1/rawHGCROC_wPedwMuon_wBC_$2.root" ]; then
+    ./DataPrep -R $3 -i $1/rawHGCROC_wPedwMuon_wBC_$2.root -o $1/rawHGCROC_wPedwMuon_wBC_$2_setupReplaced.root
+    mv $1/rawHGCROC_wPedwMuon_wBC_$2_setupReplaced.root $1/rawHGCROC_wPedwMuon_wBC_$2.root
+  else 
+    echo "$1/rawHGCROC_wPed_wBC_$2.root wasn't found"
+  fi
+  
+  if [ -f "$1/rawHGCROC_mipTrigg_wPedwMuon_wBC_$2.root" ]; then
+    ./DataPrep -R $3 -i $1/rawHGCROC_mipTrigg_wPedwMuon_wBC_$2.root -o $1/rawHGCROC_mipTrigg_wPedwMuon_wBC_$2_setupReplaced.root
+    mv $1/rawHGCROC_mipTrigg_wPedwMuon_wBC_$2_setupReplaced.root $1/rawHGCROC_mipTrigg_wPedwMuon_wBC_$2.root
+  else 
+    echo "$1/rawHGCROC_mipTrigg_wPedwMuon_wBC_$2.root wasn't found"
+  fi 
+}

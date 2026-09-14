@@ -472,7 +472,7 @@ bool ComparisonCalib::ProcessCalib(void){
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       // Reading additional cell histos from 2nd file
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
-      int triggers      = 0;
+      double triggers      = 0;
       double hgLMPV     = 0.;
       double hgLSigma   = 0.;
       double hgGSigma   = 0.;
@@ -572,6 +572,9 @@ bool ComparisonCalib::ProcessCalib(void){
           if (debug > 1)std::cout<<"Nothing to do in this case" <<std::endl;
       }
       
+      if (std::isnan(triggers) ){
+        triggers = 0.;
+      }
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       // fill calib summary object for specific cell
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
@@ -722,11 +725,54 @@ bool ComparisonCalib::ProcessCalib(void){
   }
   
   
-  double minYScale = 9999;
-  double maxYScale = -5;
+  double minYScale    = 9999;
+  double maxYScale    = -5;
+  bool haveHGFits     = false;
+  double minOffSetHG  = 1e6;
+  double maxOffSetHG  = -1e6;
+  double minSlopeHG   = 1e6;
+  double maxSlopeHG   = -1e6;
+  double minZPHG      = 1e6;
+  double maxZPHG      = -1e6;
+  bool haveLGFits     = false;
+  double minOffSetLG  = 1e6;
+  double maxOffSetLG  = -1e6;
+  double minSlopeLG   = 1e6;
+  double maxSlopeLG   = -1e6;
+  double minZPLG      = 1e6;
+  double maxZPLG      = -1e6;
   for(itrend=trend.begin(); itrend!=trend.end(); ++itrend){    
     // sort graphs
     itrend->second.Sort();
+    // linear fit for HV dependence
+    if (Xaxis == 1)
+      itrend->second.FitScale((int)isHGCROC, 1);  
+    // constant fit for iterations
+    if (Xaxis == 3)
+      itrend->second.FitScale((int)isHGCROC, 0);  
+    if (itrend->second.GetHGScaleFitSuccess()){
+      haveHGFits  = true;
+      if (itrend->second.GetHGScaleFitNPar() > 1){
+        if (minSlopeHG > itrend->second.GetLinCompHGFit()) minSlopeHG = itrend->second.GetLinCompHGFit();
+        if (maxSlopeHG < itrend->second.GetLinCompHGFit()) maxSlopeHG = itrend->second.GetLinCompHGFit();  
+        if (minZPHG > itrend->second.GetFuncZeroHGFit() && itrend->second.GetFuncZeroHGFit() > -10000.) minZPHG = itrend->second.GetFuncZeroHGFit();
+        if (maxZPHG < itrend->second.GetFuncZeroHGFit() && itrend->second.GetFuncZeroHGFit() > -10000.) maxZPHG = itrend->second.GetFuncZeroHGFit();  
+      }
+      if (minOffSetHG > itrend->second.GetConstCompHGFit()) minOffSetHG = itrend->second.GetConstCompHGFit();
+      if (maxOffSetHG < itrend->second.GetConstCompHGFit()) maxOffSetHG = itrend->second.GetConstCompHGFit();  
+    }
+    if (itrend->second.GetLGScaleFitSuccess()){
+      haveLGFits  = true;
+      if (itrend->second.GetLGScaleFitNPar() > 1){
+        if (minSlopeLG > itrend->second.GetLinCompLGFit()) minSlopeLG = itrend->second.GetLinCompLGFit();
+        if (maxSlopeLG < itrend->second.GetLinCompLGFit()) maxSlopeLG = itrend->second.GetLinCompLGFit();  
+        if (minZPLG > itrend->second.GetFuncZeroLGFit() && itrend->second.GetFuncZeroLGFit() > -10000.) minZPLG = itrend->second.GetFuncZeroLGFit();
+        if (maxZPLG < itrend->second.GetFuncZeroLGFit() && itrend->second.GetFuncZeroLGFit() > -10000.) maxZPLG = itrend->second.GetFuncZeroLGFit();  
+      }
+      if (minOffSetLG > itrend->second.GetConstCompLGFit()) minOffSetLG = itrend->second.GetConstCompLGFit();
+      if (maxOffSetLG < itrend->second.GetConstCompLGFit()) maxOffSetLG = itrend->second.GetConstCompLGFit();  
+    }
+    
     // set x axis title for trending graphs
     itrend->second.SetXAxisTitle(xaxisTitle);
     // write graphs for each cell to output
@@ -759,6 +805,113 @@ bool ComparisonCalib::ProcessCalib(void){
     }
   }
   
+  // **************************************************************************************
+  // Set up histos for monitoring fits to trending
+  // **************************************************************************************
+  // fitted Scale trends
+  TH1D* hHGscaleFitLin    = nullptr;
+  TH1D* hHGscaleFitConst  = nullptr;
+  TH1D* hHGscaleFitZP     = nullptr;
+  TH1D* hLGscaleFitLin    = nullptr;
+  TH1D* hLGscaleFitConst  = nullptr;
+  TH1D* hLGscaleFitZP     = nullptr;
+  // fitted Scale trends per layer
+  std::map<int, TH1D*> hHGscaleFitLinLayer;
+  std::map<int, TH1D*> hHGscaleFitConstLayer;
+  std::map<int, TH1D*> hHGscaleFitZPLayer;
+  std::map<int, TH1D*> hLGscaleFitLinLayer;
+  std::map<int, TH1D*> hLGscaleFitConstLayer;
+  std::map<int, TH1D*> hLGscaleFitZPLayer;
+  
+  // **************************************************************************************
+  // Print ranges of linear fits to trending
+  // **************************************************************************************
+  if (haveHGFits){
+    std::cout << "********************************************************************" << std::endl;
+    std::cout << "offset range: " << minOffSetHG << "\t" << maxOffSetHG << std::endl;
+    hHGscaleFitConst  = new TH1D("hFittedOffsetHG", "; const_{HG} (arb. units); counts", 
+                                1000, minOffSetHG, maxOffSetHG);
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+      TH1D* tempOffset          = new TH1D(Form("hFittedOffsetHG_Layer_%d",l), "; const_{HG} (arb. units); counts", 
+                                  1000, minOffSetHG, maxOffSetHG);
+      hHGscaleFitConstLayer[l]  = tempOffset;
+    }
+    if (Xaxis == 1){
+      hHGscaleFitConst->GetXaxis()->SetTitle("offset_{HG} (arb. units)");
+      std::cout << "slope range: " << minSlopeHG << "\t" << maxSlopeHG << std::endl;
+      std::cout << "zero point range: " << minZPHG << "\t" << maxZPHG << std::endl;
+      hHGscaleFitLin  = new TH1D("hFittedSlopeHG", "; slope_{HG} (arb. units); counts", 
+                                1000, minSlopeHG-10, maxSlopeHG+10);
+      hHGscaleFitZP   = new TH1D("hFittedZPHG", "; ZP_{HG} (arb. units); counts", 
+                                500, minZPHG-2, maxZPHG+2);
+      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+        hHGscaleFitConstLayer[l]->GetXaxis()->SetTitle("offset_{HG} (arb. units)");
+        TH1D* tempSlope     = new TH1D(Form("hFittedSlopeHG_Layer_%d",l), "; slope_{HG} (arb. units); counts", 
+                                   1000, minSlopeHG-10, maxSlopeHG+10);
+        hHGscaleFitLinLayer[l]  = tempSlope;
+        TH1D* tempZP     = new TH1D(Form("hFittedZPHG_Layer_%d",l), "; ZP_{HG} (arb. units); counts", 
+                                   500, minZPHG-2, maxZPHG+2);
+        hHGscaleFitZPLayer[l]  = tempZP;
+      }
+    }
+    std::cout << "********************************************************************" << std::endl;
+    
+  }
+  if (haveLGFits){
+    std::cout << "********************************************************************" << std::endl;
+    std::cout << "offset range: " << minOffSetLG << "\t" << maxOffSetLG << std::endl;
+    hLGscaleFitConst  = new TH1D("hFittedOffsetLG", "; const_{LG} (arb. units); counts", 
+                                1000, minOffSetLG, maxOffSetLG);
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+      TH1D* tempOffset          = new TH1D(Form("hFittedOffsetLG_Layer_%d",l), "; const_{LG} (arb. units); counts", 
+                                  1000, minOffSetLG, maxOffSetLG);
+      hLGscaleFitConstLayer[l]  = tempOffset;
+    }
+    if (Xaxis == 1){
+      hLGscaleFitConst->GetXaxis()->SetTitle("offset_{LG} (arb. units)");
+      std::cout << "slope range: " << minSlopeLG << "\t" << maxSlopeLG << std::endl;
+      std::cout << "zero point range: " << minZPLG << "\t" << maxZPLG << std::endl;
+      hLGscaleFitLin  = new TH1D("hFittedSlopeLG", "; slope_{LG} (arb. units); counts", 
+                                1000, minSlopeLG-10, maxSlopeLG+10);
+      hLGscaleFitZP   = new TH1D("hFittedZPLG", "; ZP_{LG} (arb. units); counts", 
+                                500, minZPLG-2, maxZPLG+2);
+      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+        hLGscaleFitConstLayer[l]->GetXaxis()->SetTitle("offset_{LG} (arb. units)");
+        TH1D* tempSlope     = new TH1D(Form("hFittedSlopeLG_Layer_%d",l), "; slope_{LG} (arb. units); counts", 
+                                   1000, minSlopeLG-10, maxSlopeLG+10);
+        hLGscaleFitLinLayer[l]  = tempSlope;
+        TH1D* tempZP     = new TH1D(Form("hFittedZPLG_Layer_%d",l), "; ZP_{LG} (arb. units); counts", 
+                                   500, minZPLG-2, maxZPLG+2);
+        hLGscaleFitZPLayer[l]  = tempZP;
+      }
+    }
+    std::cout << "********************************************************************" << std::endl;
+  }
+  
+  for(itrend=trend.begin(); itrend!=trend.end(); ++itrend){    
+    int layer = setup->GetLayer(itrend->first);
+    if (haveHGFits){
+      if (itrend->second.GetHGScaleFitNPar() > 1){
+        hHGscaleFitLin->Fill(itrend->second.GetLinCompHGFit());
+        hHGscaleFitZP->Fill(itrend->second.GetFuncZeroHGFit());
+        hHGscaleFitLinLayer[layer]->Fill(itrend->second.GetLinCompHGFit());
+        hHGscaleFitZPLayer[layer]->Fill(itrend->second.GetFuncZeroHGFit());
+      }      
+      hHGscaleFitConst->Fill(itrend->second.GetConstCompHGFit());
+      hHGscaleFitConstLayer[layer]->Fill(itrend->second.GetConstCompHGFit());
+    }
+    if (haveLGFits){
+      if (itrend->second.GetLGScaleFitNPar() > 1){
+        hLGscaleFitLin->Fill(itrend->second.GetLinCompLGFit());
+        hLGscaleFitZP->Fill(itrend->second.GetFuncZeroLGFit());
+        hLGscaleFitLinLayer[layer]->Fill(itrend->second.GetLinCompLGFit());
+        hLGscaleFitZPLayer[layer]->Fill(itrend->second.GetFuncZeroLGFit());
+      }      
+      hLGscaleFitConst->Fill(itrend->second.GetConstCompLGFit());
+      hLGscaleFitConstLayer[layer]->Fill(itrend->second.GetConstCompLGFit());
+    }
+  }
+  
   int cCalib = 0;
   for (isumCalibs = sumCalibs.begin(); isumCalibs!=sumCalibs.end(); ++isumCalibs){
     if (Xaxis == 3){
@@ -778,6 +931,12 @@ bool ComparisonCalib::ProcessCalib(void){
   graphAllHGScale->Sort();
   std::cout << "Total " << graphAllHGScale->GetN() << " data points available" << std::endl;
   graphAllHGScale->Write();
+  if (hHGscaleFitLin)   hHGscaleFitLin->Write();
+  if (hHGscaleFitZP)    hHGscaleFitZP->Write();
+  if (hHGscaleFitConst) hHGscaleFitConst->Write();
+  if (hLGscaleFitLin)   hLGscaleFitLin->Write();
+  if (hLGscaleFitZP)    hLGscaleFitZP->Write();
+  if (hLGscaleFitConst) hLGscaleFitConst->Write();
   Double_t yZero[64] = {0.};
   for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
     graphAllHGScalePerLayer[l]->Sort();
@@ -795,6 +954,21 @@ bool ComparisonCalib::ProcessCalib(void){
     } else {
       fitAllHGScalePerLayer[l] = nullptr;
     }
+    if (haveHGFits){
+      hHGscaleFitConstLayer[l]->Write();
+      if (hHGscaleFitLin){
+        hHGscaleFitLinLayer[l]->Write();
+        hHGscaleFitZPLayer[l]->Write();
+      }
+    }
+    if (haveLGFits){
+      hLGscaleFitConstLayer[l]->Write();
+      if (hLGscaleFitLin){
+        hLGscaleFitLinLayer[l]->Write();
+        hLGscaleFitZPLayer[l]->Write();
+      }
+    }
+    
   }
   double XminSum = Xmin;
   if (fitAllHGScalePerLayer[0]){
@@ -820,7 +994,35 @@ bool ComparisonCalib::ProcessCalib(void){
   TCanvas* canvas2DCorr        = new TCanvas("canvas2DCorr","",0,0,1450,1300);  // gives 
   DefaultCanvasSettings( canvas2DCorr, 0.085, 0.095, 0.045, 0.08);  
   
-
+  if (haveHGFits){
+    PlotSimpleWithFit1D( canvas1DRunsOverlay,  hHGscaleFitConst, nullptr, -10000, -10000, textSizeRel, 
+                         Form("%s/HGFitOffset.%s",OutputNameDirPlots.Data(),plotSuffix.Data()),
+                         commonRunInfo, 6, "");
+    if (hHGscaleFitLin){
+      PlotSimpleWithFit1D( canvas1DRunsOverlay,  hHGscaleFitLin, nullptr, -10000, -10000, textSizeRel, 
+                           Form("%s/HGFitSlope.%s",OutputNameDirPlots.Data(),plotSuffix.Data()),
+                           commonRunInfo, 6, "");
+      PlotSimpleWithFit1D( canvas1DRunsOverlay,  hHGscaleFitZP, nullptr, -10000, -10000, textSizeRel, 
+                           Form("%s/HGFitZeroPoint.%s",OutputNameDirPlots.Data(),plotSuffix.Data()),
+                           commonRunInfo, 6, "");
+      std::cout << "mean zero point: " << hHGscaleFitZP->GetMean() << "+-" << hHGscaleFitZP->GetRMS() << std::endl;
+    }
+  }
+  if (haveLGFits){
+    PlotSimpleWithFit1D( canvas1DRunsOverlay,  hLGscaleFitConst, nullptr, -10000, -10000, textSizeRel, 
+                         Form("%s/LGFitOffset.%s",OutputNameDirPlots.Data(),plotSuffix.Data()),
+                         commonRunInfo, 6, "");
+    if (hLGscaleFitLin){
+      PlotSimpleWithFit1D( canvas1DRunsOverlay,  hLGscaleFitLin, nullptr, -10000, -10000, textSizeRel, 
+                           Form("%s/LGFitSlope.%s",OutputNameDirPlots.Data(),plotSuffix.Data()),
+                           commonRunInfo, 6, "");
+      PlotSimpleWithFit1D( canvas1DRunsOverlay,  hLGscaleFitZP, nullptr, -10000, -10000, textSizeRel, 
+                           Form("%s/LGFitZeroPoint.%s",OutputNameDirPlots.Data(),plotSuffix.Data()),
+                           commonRunInfo, 6, "");
+      std::cout << "mean zero point: " << hLGscaleFitZP->GetMean() << "+-" << hLGscaleFitZP->GetRMS() << std::endl;
+    }
+  }  
+  
   PlotCalibRunOverlay( canvas1DRunsOverlay, 0, sumCalibs, textSizeRel, 
                       Form("%s/HGPedSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
   PlotCalibRunOverlay( canvas1DRunsOverlay, 1, sumCalibs, textSizeRel, 

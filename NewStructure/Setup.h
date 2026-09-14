@@ -86,7 +86,13 @@ class Setup{
   float     GetCellWidth  (void) const;
   float     GetCellHeight (void) const;
   float     GetCellDepth  (void) const;
+
   DetConf::Type GetDetectorConfig(void) const;
+  int GetAbsMaxRowsSetup( DetConf::Type);
+  int GetAbsMaxColumnsSetup( DetConf::Type);
+  int GetAbsColumn(int cellID /**/, DetConf::Type type = DetConf::Type::Unset ) const;
+  int GetAbsRow(int cellID /**/, DetConf::Type type = DetConf::Type::Unset ) const;
+  
   bool ContainedInSetup(int /**/) const;
   friend class RootSetupWrapper;
   

@@ -330,7 +330,11 @@
           return 165.;      
       }
     } else {
-      return 250.;
+      if (Vov < 4.5)
+        return 150.;
+      else
+        return 250.;
+      
     }
   }
 

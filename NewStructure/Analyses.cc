@@ -8,6 +8,7 @@
 #include "TF1.h"
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
+#include "TKey.h"
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TProfile.h"
@@ -1747,18 +1748,22 @@ bool Analyses::TransferCalib(void){
   // intialize run infos & reset calib object to correct run number
   TdataIn->GetEntry(0);     // use first event to get infos
   int runNr             = event.GetRunNumber();
+  std::map<int,RunInfo>::iterator it=ri.find(runNr);
   ReadOut::Type typeRO  = event.GetROtype();
-  double Vop            = event.GetVop();
+  double VopE            = event.GetVop();
+  double VopRL           = it->second.vop;
   std::cout<< "original run numbers calib: "<<calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
   calib.SetRunNumber(runNr);
   calib.SetBeginRunTime(event.GetBeginRunTimeAlt());
-  if (Vop != calib.GetVop()){
-    std::cout << "Calibration applied and current run have different Vop: \n \t - calib: "  << calib.GetVop() << "\n \t- current: " << Vop << "\n \t\t RESETTING to current run Vop!!" << std::endl;
+  if (VopE != calib.GetVop() || VopRL != calib.GetVop()){
+    std::cout << "Calibration applied and current run have different Vop: \n \t - calib: "  << calib.GetVop() << "\n \t- current: " << VopRL << "\n \t\t RESETTING to current run Vop & Vov!!" << std::endl;
+    calib.SetVop(VopRL);
+    calib.SetVov(VopRL-it->second.vbr);
   }
-  calib.SetVop(Vop);
   std::cout<< "reset run numbers calib: "<< calib.GetRunNumber() << "\t" << calib.GetRunNumberPed() << "\t" << calib.GetRunNumberMip() << std::endl;
-  std::map<int,RunInfo>::iterator it=ri.find(runNr);
+  
 
+  
   // Find detector config
   DetConf::Type detConf = setup->GetDetectorConfig();
   if (it->second.detector == "FoCal-H")
@@ -3626,7 +3631,7 @@ bool Analyses::GetScaling(void){
         parErrAndRes[p] = 0;
       }
       // fit MIP for CAEN LG
-      isGood=ithSpectraTrigg->second.FitMipLG(parameters, parErrAndRes, debug, yearData, false, 1);
+      isGood=ithSpectraTrigg->second.FitMipLG(parameters, parErrAndRes, debug, yearData, false, calib.GetVov(),1);
       /// fill cross-check histos
       if (isGood){
         hspectraLGMaxVsLayer2nd->SetBinContent(bin2D, parameters[4]);
@@ -4157,14 +4162,19 @@ bool Analyses::GetImprovedScaling(void){
   //hSNRTrigg->SetDirectory(0);
 
   // 2D beam profile -EP 
-  int thisbinxmax = setup->GetNMaxColumn()+1;
-  int thisbinymax = (int)(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
-  TH2D* hMipTriggXY = new TH2D( "hMipTriggXY", "MIP Triggers summed over layers; X (col); Y (row); Num triggers", thisbinxmax, -0.5, thisbinxmax-0.5, thisbinymax, -0.5, thisbinymax-0.5);
+  int absMaxCols = setup->GetAbsMaxColumnsSetup(detConf);
+  int absMaxRows = setup->GetAbsMaxRowsSetup(detConf);
+  std::cout << "Outer dimensions: " << std::endl;
+  std::cout << "\t x: " << setup->GetMinX() << " - " << setup->GetMaxX() << "\t" << setup->GetAbsMaxColumnsSetup(detConf)<< std::endl;
+  std::cout << "\t y: " << setup->GetMinY() << " - " << setup->GetMaxY() << "\t" << setup->GetAbsMaxRowsSetup(detConf)<< std::endl;
+  std::cout << "\t z: " << setup->GetMinZ() << " - " << setup->GetMaxZ() << "\t" << setup->GetNMaxLayer()+1<< std::endl;
+  
+  TH2D* hMipTriggXY = new TH2D( "hMipTriggXY", "MIP Triggers summed over layers; X (col); Y (row); Num triggers", absMaxCols, -0.5, absMaxCols-0.5, absMaxRows, -0.5, absMaxRows-0.5);
   hMipTriggXY->SetDirectory(0);
 
   // 3D beam profile -EP
-  int thisbinzmax = (int)setup->GetNMaxLayer()+1;
-  TH3D *hMipTriggXYZ = new TH3D( "hMipTriggXYZ", "MIP Triggers; X (col); Z (layer); Y (row); Num triggers", thisbinxmax, -0.5, thisbinxmax-0.5, thisbinzmax, -0.5, thisbinzmax-0.5, thisbinymax, -0.5, thisbinymax-0.5);
+  int absMaxLayers = (int)setup->GetNMaxLayer()+1;
+  TH3D *hMipTriggXYZ = new TH3D( "hMipTriggXYZ", "MIP Triggers; X (col); Z (layer); Y (row); Num triggers", absMaxCols, -0.5, absMaxCols-0.5, absMaxLayers, -0.5, absMaxLayers-0.5, absMaxRows, -0.5, absMaxRows-0.5);
   hMipTriggXYZ->SetDirectory(0);
 
   TH2D* hMPVvsNoisePeak = new TH2D( "hMPVvsNoisePeak", "Signal to noise peak ADC; noise peak (ADC); MIP MPV (ADC); ", 20, -5, 10, 20, 0, 50); // -EP
@@ -4195,8 +4205,12 @@ bool Analyses::GetImprovedScaling(void){
     currCells++;
     long cellID     = ithSpectraTrigg->second.GetCellID();    
     ithSpectra      = hSpectra.find(cellID);
+    if (calib.GetBadChannel(cellID) < 2){
+      if ( debug > 1)std::cout << "=======> skipped cell " << cellID << " masked in BC map" << std::endl;
+      continue;
+    }
     // HGCROC data has unphysical bin-to-bin jumps add XX% sys on top of individual for fitting
-    double relSysF  = 0.10;
+    double relSysF  = 0.15;
     if (typeRO == ReadOut::Type::Hgcroc){
       // ithSpectra->second.GetHG()->Rebin(2);
       // ithSpectraTrigg->second.GetHG()->Rebin(2);
@@ -4259,11 +4273,11 @@ bool Analyses::GetImprovedScaling(void){
     hSuppresionSignal->SetBinContent(bin2D, SB_SigR);
     hSNRTriggVsLayer->SetBinContent(bin2D, SNR_trigg);
   
-    // get 2D and 3D beam profiles -EP
-    // TODO: put this in PlotHelper or something
-    int thisbinx = col + 1; // the +1s are due to the 0th bin in root being underflow
-    int thisbiny = (mod*2) + row + 1;
+    // get 2D and 3D beam profiles 
+    int thisbinx = setup->GetAbsColumn(cellID, detConf)+1; // the +1s are due to the 0th bin in root being underflow
+    int thisbiny = setup->GetAbsRow(cellID, detConf) +1;
     int thisbinz = layer + 1;
+    std::cout << "position " << "\t" << thisbinx << "\t" << thisbiny << "\t" << thisbinz << std::endl;
     int numMipTrig = ithSpectraTrigg->second.GetHG()->GetEntries();
     hMipTriggXY->SetBinContent(thisbinx, thisbiny, hMipTriggXY->GetBinContent(thisbinx, thisbiny) + numMipTrig);
     hMipTriggXYZ->SetBinContent(thisbinx, thisbinz, thisbiny, numMipTrig);
@@ -4298,7 +4312,7 @@ bool Analyses::GetImprovedScaling(void){
         parameters[p]   = 0;
         parErrAndRes[p] = 0;
       }
-      isGood=ithSpectraTrigg->second.FitMipLG(parameters, parErrAndRes, debug, yearData, true, averageScaleLow);
+      isGood=ithSpectraTrigg->second.FitMipLG(parameters, parErrAndRes, debug, yearData, true, calib.GetVov(),  averageScaleLow);
       if (isGood){	
         hspectraLGMaxVsLayer->SetBinContent(bin2D, parameters[4]);
         hspectraLGFWHMVsLayer->SetBinContent(bin2D, parameters[5]);
@@ -5961,9 +5975,32 @@ bool Analyses::OverWriteSetupTree(void){
     fileCalibPrint         = fileCalibPrint.ReplaceAll(".root","_calib.txt");
     calib.PrintCalibToFile(fileCalibPrint);
   }
-
   TcalibOut->Fill();
   TcalibOut->Write();
+  
+  // Also copy all hists from source file
+  TIter next(RootInput->GetListOfKeys());
+  TKey *key;
+
+  while ((key = (TKey*)next())) {
+    // Check if the object inherits from TH1 (covers TH1F, TH1D, TH2F, etc.)
+    TClass *cl = TClass::GetClass(key->GetClassName());
+    if (!cl || !cl->InheritsFrom(TH1::Class())) continue;
+
+    // Read the histo
+    TH1 *hist = (TH1*)key->ReadObj();
+        
+    // change its ownership
+    RootOutput->cd();
+    TH1 *clonedHist = (TH1*)hist->Clone(); // Clone breaks dependency on sourceFile
+
+    //write to destination file
+    clonedHist->Write();
+        
+    // Clean up the memory for this iteration
+    delete hist;
+  }
+
   RootOutput->Close();
   
   return true;

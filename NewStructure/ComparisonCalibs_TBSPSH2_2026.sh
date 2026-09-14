@@ -1,40 +1,93 @@
 #ComparisonHGCROC SPS
 
+runList=../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
+folder=../Trending
+cfolder=configsComparison
+#########################################################################################################################
 #integrations ranges -t (-e extended plotting, -E expanded file list)
-# ./CompareCalib -d 0 -e 2 -H -f -t -I configsComparison/comparisonIntegrations.txt -o ../Trending/IntegrationVariation.root -O ../Trending/IntegrationVariation -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
+#########################################################################################################################
+BaseInt=IntegrationVariation
+# ./CompareCalib -d 0 -e 2 -H -f -t -I $cfolder/comparisonIntegrations.txt -o $folder/$BaseInt.root -O $folder/$BaseInt -r $runList
 
+#########################################################################################################################
 #iterations -T (-e extended plotting, -E expanded file list)
-# ./CompareCalib -d 0 -e 2 -H -f -T -I configsComparison/comparisonInterations_FullSetB_2.txt -o ../Trending/MuonIterationsB2.root -O ../Trending/MuonIterationsB2 -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
-# ./CompareCalib -d 0 -e 2 -H -f -T -I configsComparison/comparisonInterations_FullSetB_1.txt -o ../Trending/MuonIterationsB1.root -O ../Trending/MuonIterationsB1 -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
-# ./CompareCalib -d 0 -e 2 -H -f -T -I configsComparison/comparisonInterations_FullSetE_1.txt -o ../Trending/MuonIterationsE1.root -O ../Trending/MuonIterationsE1 -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
-# ./CompareCalib -d 0 -e 2 -H -f -T -I configsComparison/comparisonInterations_FullSetE_2.txt -o ../Trending/MuonIterationsE2.root -O ../Trending/MuonIterationsE2 -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
-# ./CompareCalib -d 0 -e 2 -H -f -T -I configsComparison/comparisonInterations_FullSetE_3.txt -o ../Trending/MuonIterationsE3.root -O ../Trending/MuonIterationsE3 -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
-# ./CompareCalib -d 0 -e 2 -H -f -T -I configsComparison/comparisonInterations_FullSetF_1.txt -o ../Trending/MuonIterationsF1.root -O ../Trending/MuonIterationsF1 -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
+#########################################################################################################################
+BaseIte=MuonIterations
+# Muon set B_1
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetB_1.txt -o $folder/$BaseIte\_B1.root -O $folder/$BaseIte\_B1 -r $runList
+# # Muon set B_2
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetB_2.txt -o $folder/$BaseIte\_B2.root -O $folder/$BaseIte\_B2 -r $runList
+# Muon set C_1
+./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetC_1.txt -o $folder/$BaseIte\_C1.root -O $folder/$BaseIte\_C1 -r $runList
+# Muon set C_2
+./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetC_2.txt -o $folder/$BaseIte\_C2.root -O $folder/$BaseIte\_C2 -r $runList
+# Muon set C_3
+./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetC_3.txt -o $folder/$BaseIte\_C3.root -O $folder/$BaseIte\_C3 -r $runList
+# # Muon set D_1
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetD_1.txt -o $folder/$BaseIte\_D1.root -O $folder/$BaseIte\_D1 -r $runList
+# # Muon set D_2
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetD_2.txt -o $folder/$BaseIte\_D2.root -O $folder/$BaseIte\_D2 -r $runList
+# # Muon set E_1
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetE_1.txt -o $folder/$BaseIte\_E1.root -O $folder/$BaseIte\_E1 -r $runList
+# # Muon set E_2
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetE_2.txt -o $folder/$BaseIte\_E2.root -O $folder/$BaseIte\_E2 -r $runList
+# # Muon set E_3
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetE_3.txt -o $folder/$BaseIte\_E3.root -O $folder/$BaseIte\_E3 -r $runList
+# # Muon set F_1
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetF_1.txt -o $folder/$BaseIte\_F1.root -O $folder/$BaseIte\_F1 -r $runList
+# # Muon set F_2
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetF_2.txt -o $folder/$BaseIte\_F2.root -O $folder/$BaseIte\_F2 -r $runList
+# # Muon set G_1
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetG_1.txt -o $folder/$BaseIte\_G1.root -O $folder/$BaseIte\_G1 -r $runList
+# # Muon set G_2
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetG_2.txt -o $folder/$BaseIte\_G2.root -O $folder/$BaseIte\_G2 -r $runList
 
-# #muon calibs 2ndIte Set B
-# ./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparison2ndIte_FullSetB.txt -o ../Trending/MuonsSetB_2nd.root -O ../Trending/MuonsSetB_2nd -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
-# #muon calibs 4th Ite Set B
-# ./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparison4thIte_FullSetB.txt -o ../Trending/MuonsSetB_4th.root -O ../Trending/MuonsSetB_4th -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
+#########################################################################################################################
+# Comparison same Campaign
+#########################################################################################################################
+BaseSet=MuonsSet
+# #muon calibs final Ite Set B
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_FullSetB.txt -o $folder/$BaseSet\_B_Final.root -O $folder/$BaseSet\_B_Final -r $runList
+#muon calibs final Ite Set C
+./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_FullSetC.txt -o $folder/$BaseSet\_C_Final.root -O $folder/$BaseSet\_C_Final -r $runList
+#muon calibs final Ite Set D
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_FullSetD.txt -o $folder/$BaseSet\_D_Final.root -O $folder/$BaseSet\_D_Final -r $runList
+# # #muon calibs final Ite Set E
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_FullSetE.txt -o $folder/$BaseSet\_E_Final.root -O $folder/$BaseSet\_E_Final -r $runList
+# # #muon calibs final Ite Set F
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_FullSetF.txt -o $folder/$BaseSet\_F_Final.root -O $folder/$BaseSet\_F_Final -r $runList
+# # #muon calibs final Ite Set G
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_FullSetG.txt -o $folder/$BaseSet\_G_Final.root -O $folder/$BaseSet\_G_Final -r $runList
 
-#muon calibs 4th Ite Set E
-# ./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparison4thIte_FullSetE.txt -o ../Trending/MuonsSetE_4th.root -O ../Trending/MuonsSetE_4th -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
-
-# #muon calibs 43V comparison 195 cc 9, set B cc 10
-./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparisonFinal_43V_setttingsA.txt -o ../Trending/Muons43V_SettingsA.root -O ../Trending/Muons43V_SettingsA -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
-
-# #muon calibs 2ndIte Set B
-./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparison4thIte_HVScan.txt -o ../Trending/MuonsHVScan_vs_Run_2nd.root -O ../Trending/MuonsHVScan_vs_Run_2nd -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
-./CompareCalib -d 0 -e 2 -H -f -V -I configsComparison/comparison4thIte_HVScan.txt -o ../Trending/MuonsHVScan_vs_Voltage_2nd.root -O ../Trending/MuonsHVScan_vs_Voltage_2nd -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
+#########################################################################################################################
+# Comparison same Vov (might have different gain settings)
+#########################################################################################################################
+# muon calibs 43V comparison
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_43V.txt -o $folder/Muons43V.root -O $folder/Muons43V -r $runList
+# muon calibs 44V comparison
+./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_44V.txt -o $folder/Muons43V.root -O $folder/Muons44V -r $runList
+# muon calibs 45V comparison
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_45V.txt -o $folder/Muons43V.root -O $folder/Muons45V -r $runList
 # 
-# #muon calibs diff settings param scan
-# ./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparisonWaveformMips_All.txt -o ../Trending/MuonsDiffSettings.root -O ../Trending/MuonsDiffSettings -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
-# ./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparisonWaveformMips_CCVariation.txt -o ../Trending/MuonsDiffSettings_CCVar.root -O ../Trending/MuonsDiffSettings_CCVar -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
-# ./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparisonWaveformMips_CFVariation.txt -o ../Trending/MuonsDiffSettings_CFVar.root -O ../Trending/MuonsDiffSettings_CFVar -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
-# ./CompareCalib -d 0 -e 2 -H -f -R -I configsComparison/comparisonWaveformMips_RFVariations.txt -o ../Trending/MuonsDiffSettings_RFVar.root -O ../Trending/MuonsDiffSettings_RFVar -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv
+#########################################################################################################################
+# Comparison vs Voltage
+#########################################################################################################################
+# #muon calibs final Ite HV Scan
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_HVScan.txt -o $folder/MuonsHVScan_vs_Run.root -O $folder/MuonsHVScan_vs_Run -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -V -I $cfolder/comparisonFinal_HVScan.txt -o $folder/MuonsHVScan_vs_Voltage.root -O $folder/MuonsHVScan_vs_Voltage -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -V -I $cfolder/comparison1stIte_HVScan.txt -o $folder/MuonsHVScan_vs_Voltage.root -O $folder/MuonsHVScan_vs_Voltage -r $runList
 
+#########################################################################################################################
+# Parameter scan
+#########################################################################################################################
+# #muon calibs diff settings param scan
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonWaveformMips_All.txt -o $folder/MuonsDiffSettings.root -O $folder/MuonsDiffSettings -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonWaveformMips_CCVariation.txt -o $folder/MuonsDiffSettings_CCVar.root -O $folder/MuonsDiffSettings_CCVar -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonWaveformMips_CFVariation.txt -o $folder/MuonsDiffSettings_CFVar.root -O $folder/MuonsDiffSettings_CFVar -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonWaveformMips_RFVariations.txt -o $folder/MuonsDiffSettings_RFVar.root -O $folder/MuonsDiffSettings_RFVar -r $runList
 
 # all runs transfer
-#./CompareCalib -d 0 -E 3 -e 2 -f -R -I runConfigs/comparisonTransfer_41VAll.txt -o ../Trending/LGHGCompare41V.root -O ../Trending/LGHGCompare41V -r ../configs/TB2024/DataTakingDB_202409_CAEN.csv
-#./CompareCalib -d 0 -E 3 -e 2 -f -R -I runConfigs/comparisonTransfer_42VAll.txt -o ../Trending/LGHGCompare42V.root -O ../Trending/LGHGCompare42V -r ../configs/TB2024/DataTakingDB_202409_CAEN.csv
-#./CompareCalib -d 0 -E 3 -e 2 -f -R -I runConfigs/comparisonTransfer_43_5VAll.txt -o ../Trending/LGHGCompare43_5V.root -O ../Trending/LGHGCompare43_5V -r ../configs/TB2024/DataTakingDB_202409_CAEN.csv
-#./CompareCalib -d 0 -E 3 -e 2 -f -R -I runConfigs/comparisonTransfer_45VSetA.txt -o ../Trending/LGHGCompare45VSetA.root -O ../Trending/LGHGCompare45VSetA -r ../configs/TB2024/DataTakingDB_202409_CAEN.csv
+#./CompareCalib -d 0 -E 3 -e 2 -f -R -I runConfigs/comparisonTransfer_41VAll.txt -o $folder/LGHGCompare41V.root -O $folder/LGHGCompare41V -r ../configs/TB2024/DataTakingDB_202409_CAEN.csv
+#./CompareCalib -d 0 -E 3 -e 2 -f -R -I runConfigs/comparisonTransfer_42VAll.txt -o $folder/LGHGCompare42V.root -O $folder/LGHGCompare42V -r ../configs/TB2024/DataTakingDB_202409_CAEN.csv
+#./CompareCalib -d 0 -E 3 -e 2 -f -R -I runConfigs/comparisonTransfer_43_5VAll.txt -o $folder/LGHGCompare43_5V.root -O $folder/LGHGCompare43_5V -r ../configs/TB2024/DataTakingDB_202409_CAEN.csv
+#./CompareCalib -d 0 -E 3 -e 2 -f -R -I runConfigs/comparisonTransfer_45VSetA.txt -o $folder/LGHGCompare45VSetA.root -O $folder/LGHGCompare45VSetA -r ../configs/TB2024/DataTakingDB_202409_CAEN.csv

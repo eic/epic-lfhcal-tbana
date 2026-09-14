@@ -371,7 +371,6 @@
     int skipped = 0;
 
     int nChA  = setupT->GetAbsNMaxROChannel()+1;
-    std::cout << "Max channel nr. readout: "<<  nChA << std::endl;
     ReadOut::Type rotype = ReadOut::Type::Undef;
     
     bool isTriggCh = false;
@@ -405,11 +404,8 @@
       int cp         = layer%8*8+chInLayer;
       if ((TString)(currRunInfo.detector).Contains("FoCal-H"))
         cp         = chInLayer;
-      std::cout << "Detector: " << (TString)(currRunInfo.detector).Data() << std::endl;
-      
-      
+            
       TString label           = Form("r:%d c:%d, ro-ch:%d", row, col, ch);
-      std::cout << "cell ID:\t"<< tempCellID <<"\t panel nr:\t"<<  cp<< "\t"<< label.Data() << "\t" << layer%8*8+chInLayer << "\t" << mod%8*8+chInLayer << "\t" << chInLayer << std::endl;
       TString labelAsic       = "";
       if (cp%8 == 7)
         labelAsic = Form("layer:%d", layer);
@@ -528,7 +524,7 @@
   }
   
   //__________________________________________________________________________________________________________
-  // Plot Run overlay for all 16 tiles for all runs available
+  // Plot Run overlay for all 64 channels of one asic
   //__________________________________________________________________________________________________________
   inline void PlotRunOverlayProfileAsicLFHCal ( TCanvas* canvas, TPad** pads, Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                                                 std::map<int,TileTrend> trending, int nruns, int option,

@@ -1,6 +1,7 @@
 #include "TileSpectra.h"
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
+#include "Math/MinimizerOptions.h"
 
 ClassImp(TileSpectra);
 
@@ -379,7 +380,220 @@ void TileSpectra::InitializeNoiseFitsFromCalib(){
 }
 
 
-bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year, bool impE = false, double vov = -1000, double avmip = -1000){
+//***********************************************************************************
+// Set Fit ranges depending on readout type and gain range
+//***********************************************************************************
+void TileSpectra::GetFitRange(  double* fitrange, int year, 
+                                bool bHG = true,  bool impE = false, double vov = -1000, double avmip = -1000
+                              ){
+  Setup* setupT=Setup::GetInstance();
+  //******************************************************
+  // separate by readout type 
+  //******************************************************
+  // HGCROC - Readout fit ranges
+  //******************************************************
+  if (ROType == ReadOut::Type::Hgcroc){
+    // default with max peak only
+    fitrange[0] = 16;
+    fitrange[1] = 200; 
+    // 3 samples around maximum
+    if (integSample == 3){
+      fitrange[0] = 50;
+      fitrange[1] = 450; 
+    // 5 samples around maximum
+    } else if (integSample == 5){
+      fitrange[0] = 70;
+      fitrange[1] = 650; 
+    } 
+    // modify if improved range is detected
+    if (impE && avmip != -1000 ){
+      // single layer
+      if (setupT->GetLayersInSegment(cellID) == 1){
+        fitrange[0] = 0.6*avmip;
+        fitrange[1] = 3*avmip;
+      // need to shift to lower end in case of multiple layers in segment & 5 layer sum
+      } else if (setupT->GetLayersInSegment(cellID) < 6){
+        fitrange[0] = 0.3*avmip;
+        fitrange[1] = 3*avmip;
+      // need to shift to upper end in case of multiple layers in segment & 10 layer sum
+      } else {
+        fitrange[0] = 0.6*avmip;
+        fitrange[1] = 4*avmip;
+      }
+    }
+    if ( vov > 6 )
+      fitrange[1] = fitrange[1]*1.2;
+    
+    if (impE && avmip != -1000){     
+      double min = GetMinimumInRangeSpectra(true, 0, 0.8*avmip);
+      if (fitrange[0] > min){
+        fitrange[0] = min;
+        std::cout << "reset min with min between pedestal & avmip" << std::endl;
+      }
+    }
+    return;
+  //******************************************************
+  // CAEN - Readout fit ranges
+  //******************************************************  
+  } else if (ROType == ReadOut::Type::Caen){
+    // high gain fitting ranges 
+    if (bHG){
+      fitrange[0] = 50;
+      fitrange[1] = 2000; 
+      // modify if improved range is detected
+      if (impE && avmip != -1000 ){
+        fitrange[0] = 0.6*avmip;
+        fitrange[1] = 3*avmip;
+      }
+      // prohibit fitting below 100 for 2023, even if avmip would be below
+      if (year == 2023 && fitrange[0] < 100)
+        fitrange[0] = 100;
+      // adjust according to vov
+      if (vov != -1000){
+        if (vov < 2.5)
+          fitrange[0]     = 15;
+        else if (vov > 5 )
+          fitrange[0]     = 150;      
+      }
+    // low gain fitting ranges   
+    } else {
+      fitrange[0] = 0;
+      fitrange[1] = 500; 
+      // modify if improved range is detected
+      if (impE && avmip != -1000 ){
+        fitrange[0] = 0.5*avmip;
+        fitrange[1] = 4*avmip;
+      }      
+    }
+    return;
+  }
+  return;
+}
+
+//***********************************************************************************
+// Set Fit Parameter ranges
+//***********************************************************************************
+void TileSpectra::SetParametersFitHG (double* startvalues, double* parlimitslo, double* parlimitshi,
+                                      int integ,  int year, 
+                                      bool impE = false, double vov = -1000,  double avmip = -1000
+                                      ){
+  Setup* setupT=Setup::GetInstance();
+  // total area (integral -inf to inf, normalization constant), starting point and parameter limits
+  startvalues[2] = integ; 
+  parlimitslo[2] = 1.;
+  parlimitshi[2] = integ*5.;
+  //******************************************************
+  // separate by readout type 
+  //******************************************************
+  // HGCROC - Readout fit ranges
+  //******************************************************
+  if (ROType == ReadOut::Type::Hgcroc){
+    // width of Landau starting point and parameter limits
+    startvalues[0] = calib->PedestalSigH*3; 
+    parlimitslo[0] = 0.1;
+    parlimitshi[0] = 100;
+    if (vov > 6)
+      parlimitshi[0] = 150;
+    if (vov < 4.5)
+      parlimitslo[0] = parlimitslo[0]*0.1;
+    // most probable (MP) value of Landau density starting point and parameter limits
+    startvalues[1] = 25; 
+    parlimitslo[1] = 2;
+    parlimitshi[1] = 200;    
+    if (integSample == 3){
+      startvalues[1]  = 100; 
+      parlimitslo[1]  = 20;    
+      parlimitshi[1]  = 400;
+    } else if (integSample == 5){
+      startvalues[1]  = 250; 
+      parlimitslo[1]  = 50;    
+      parlimitshi[1]  = 500;
+    }  
+    if (vov > 6)
+      parlimitshi[1] = parlimitshi[1]*1.2;
+    if (impE && (avmip != -1000)){
+      startvalues[1]  = avmip;    
+      // single layer
+      if (setupT->GetLayersInSegment(cellID) == 1){
+        parlimitslo[1]  = 0.5*avmip;    
+        parlimitshi[1]  = 1.7*avmip;
+      // need to shift to lower end in case of multiple layers in segment & 5 layer sum
+      } else if (setupT->GetLayersInSegment(cellID) < 6){
+        parlimitslo[1]  = 0.3*avmip;            
+        parlimitshi[1]  = 2.2*avmip;
+      // need to shift to upper end in case of multiple layers in segment & 10 layer sum
+      } else {
+        parlimitslo[1]  = 0.5*avmip;    
+        parlimitshi[1]  = 3.5*avmip;
+      }      
+    }
+    if (impE && avmip != -1000){      
+      double min = GetMinimumInRangeSpectra(true, 0, 0.8*avmip);
+      if (parlimitslo[1] > min){
+        parlimitslo[1] = min;
+        std::cout << "reset min with min between pedestal & avmip" << std::endl;
+      }
+    }
+
+    if ( vov > 6 )
+      parlimitshi[1]  = parlimitshi[1]*1.2;
+    
+    // width of Gaussian starting point and parameter limits
+    startvalues[3] = calib->PedestalSigH; 
+    parlimitslo[3] = calib->PedestalSigH*0.01;
+    parlimitshi[3] = calib->PedestalSigH*30;
+    if (setupT->GetLayersInSegment(cellID) > 5)
+      parlimitshi[3] = calib->PedestalSigH*50;
+    if (vov > 6)
+      parlimitshi[3] = parlimitshi[3]*2;
+    if (vov < 4.0)
+      parlimitslo[3] = parlimitslo[3]*0.1;
+    
+  //******************************************************
+  // CAEN - Readout fit ranges
+  //******************************************************  
+  } else if (ROType == ReadOut::Type::Caen){
+    // width of Landau starting point and parameter limits
+    startvalues[0] = 50; 
+    parlimitslo[0] = 0.5;
+    parlimitshi[0] = 500;
+    if (year == 2023){
+      startvalues[0]  = 200;
+      parlimitshi[0]  = 1000;
+    }
+    // most probable (MP) value of Landau density starting point and parameter limits
+    startvalues[1] = 300; 
+    parlimitslo[1] = 50;
+    parlimitshi[1] = 1000;   
+    if (year == 2023){
+      startvalues[1]  = 500;    
+      parlimitslo[1]  = 100;
+      parlimitshi[1]  = 1500;    
+    }
+    if (impE && (avmip != -1000)){
+      startvalues[1]  = avmip;    
+      parlimitslo[1]  = 0.5*avmip;    
+      parlimitshi[1]  = 1.7*avmip;
+    }
+    // adjust lower bound based on V_ov
+    if (vov != -1000){
+      if (vov < 2.5)
+        parlimitslo[1]  = 20;
+    }
+    // width of Gaussian starting point and parameter limits
+    startvalues[3] = calib->PedestalSigH; 
+    parlimitslo[3] = calib->PedestalSigH*0.01;
+    parlimitshi[3] = calib->PedestalSigH*40;
+  }
+  return;
+}
+
+//***********************************************************************************
+// fitting for minimum ionizing peak for HGCROC & HG CAEN readout
+//***********************************************************************************
+bool TileSpectra::FitMipHG( double* out, double* outErr, 
+                            int verbosity, int year, 
+                            bool impE = false, double vov = -1000, double avmip = -1000){
   
   // Once again, here are the Landau * Gaussian parameters:
   //   par[0]=Width (scale) parameter of Landau density
@@ -394,39 +608,15 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
   TString funcName = Form("fmip%sHGCellID%d",TileName.Data(),cellID);
   bmipHG           = false;
   
-  if (calib->BadChannel != -64 && calib->BadChannel < 1 ){
+  if (calib->BadChannel != -64 && calib->BadChannel < 2 ){
     if (verbosity > 0) std::cout << "==========> Skipped HG cell " << cellID << " channel dead" << std::endl;
     return false;
   }
   
-  double fitrange[2]      = {50, 2000};
-  if (ROType == ReadOut::Type::Hgcroc){
-    // default with max peak only
-    fitrange[0] = 16;
-    fitrange[1] = 200; 
-    // 3 samples around maximum
-    if (integSample == 3){
-      fitrange[0] = 50;
-      fitrange[1] = 450; 
-    // 5 samples around maximum
-    } else if (integSample == 5){
-      fitrange[0] = 70;
-      fitrange[1] = 650; 
-    } 
-  }
-  if (impE){
-    fitrange[0] = 0.6*avmip;
-    fitrange[1] = 3*avmip;
-    if (ROType == ReadOut::Type::Hgcroc)
-      // make fitting range for iterative improved fitting segment depth dependent for different summing options in the same stack
-      if (setupT->GetLayersInSegment(cellID) < 6)
-        fitrange[1] = 4*avmip;
-      else 
-        fitrange[1] = 4*avmip;
-  }
-  if (year == 2023 && fitrange[0] < 100)
-    fitrange[0] = 100;
-  
+  // Setting fit ranges
+  double* fitrange    = new double[2];
+  GetFitRange(fitrange, year, true,  impE, vov, avmip);
+    
   double intArea    = hspectraHG.Integral(hspectraHG.FindBin(fitrange[0]),hspectraHG.FindBin(fitrange[1]));
   double intNoise   = hspectraHG.Integral(hspectraHG.FindBin(-2*calib->PedestalSigH),hspectraHG.FindBin(+2*calib->PedestalSigH));
   double intAN3s    = hspectraHG.Integral(hspectraHG.FindBin(+3*calib->PedestalSigH),hspectraHG.FindBin(fitrange[1]));
@@ -435,60 +625,18 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
     if (verbosity > 0) std::cout << "==========> Skipped HG cell " << cellID << " S/B too small!" << std::endl;
     return false;
   }
-  double startvalues[4]   = {50, 300, intArea, calib->PedestalSigH};
-  double parlimitslo[4]   = {0.5, 50, 1.0, calib->PedestalSigH*0.01};
-  double parlimitshi[4]   = {500, 1000, intArea*5, calib->PedestalSigH*40};
-  if (year == 2023){
-    startvalues[0]  = 200;
-    startvalues[1]  = 500;    
-    parlimitslo[1]  = 100;
-    parlimitshi[0]  = 1000;
-    parlimitshi[1]  = 1500;
-  } else if (ROType == ReadOut::Type::Hgcroc){
-    startvalues[1]  = 25; 
-    parlimitslo[0]  = 0.1;
-    parlimitslo[1]  = 2;    
-    parlimitshi[0]  = 100;    
-    parlimitshi[1]  = 200;
-    parlimitshi[3]  = calib->PedestalSigH*30;    
-    if (integSample == 3){
-      startvalues[1]  = 100; 
-      parlimitslo[1]  = 20;    
-      parlimitshi[1]  = 400;
-    } else if (integSample == 5){
-      startvalues[1]  = 250; 
-      parlimitslo[1]  = 50;    
-      parlimitshi[1]  = 500;
-    } 
-  }
-  
-  if (impE && (avmip != -1000)){
-    startvalues[1]  = avmip;    
-    parlimitslo[1]  = 0.5*avmip;    
-    parlimitshi[1]  = 1.7*avmip;
-    if (ROType == ReadOut::Type::Hgcroc)
-      // make maximum Landau peak range for iterative improved fitting segment depth dependent for different summing options in the same stack
-      if (setupT->GetLayersInSegment(cellID) < 6)
-        parlimitshi[1]  = 2.2*avmip;
-      else 
-        parlimitshi[1]  = 3.5*avmip;
-  }
-  if (ROType == ReadOut::Type::Caen){
-    if (vov != -1000){
-      if (verbosity > 1) std::cout << "adjusting according to V_ov: " << vov<< std::endl;
-      if (vov < 2.5){
-        parlimitslo[1]  = 20;    
-        fitrange[0]     = 15;
-      } else if (vov > 5 ){
-        fitrange[0]     = 150;      
-      }
-    }  
-  }
+
+  // Setting parameter start values and limits
+  double* startvalues    = new double[4];
+  double* parlimitslo    = new double[4];
+  double* parlimitshi    = new double[4];
+  SetParametersFitHG (startvalues, parlimitslo, parlimitshi, intArea, year, impE, vov, avmip);
   
   if (verbosity > 1) {
+    std::cout << "Layer: "<< setupT->GetLayer(cellID) << std::endl;
     std::cout << "Fit range: " << fitrange[0] << "\t" << fitrange[1] << std::endl;
     for (int i=0; i<4; i++) {
-      std::cout << "parameter " << i << ": " << startvalues[i] << "\t" << fitrange[0] << "\t" << fitrange[1] << std::endl;
+      std::cout << "parameter " << i << ": " << startvalues[i] << "\t" << parlimitslo[i] << "\t" << parlimitshi[i] << std::endl;
     }
   }
   
@@ -500,17 +648,19 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
   for (int i=0; i<4; i++) {
     SignalHG.SetParLimits(i, parlimitslo[i], parlimitshi[i]);
   }
-
   TString fitOption = "";
   if (impE){ 
-    fitOption = "QRLMNE0";
+    fitOption = "QRLMN0";
     if (verbosity > 2) 
-      fitOption = "RLMNE0";
+      fitOption = "RVLMN0";
   } else {
     fitOption = "QRLN0";
     if (verbosity > 2) 
       fitOption = "RLN0";
   }
+  ROOT::Math::MinimizerOptions::SetDefaultMaxFunctionCalls(1000); 
+  ROOT::Math::MinimizerOptions::SetDefaultMaxIterations(100);
+  if (verbosity > 2) ROOT::Math::MinimizerOptions::SetDefaultPrintLevel(3); 
   
   int fitStatus = hspectraHG.Fit(&SignalHG,fitOption);   // fit within specified range, use ParLimits, do not plot
   // Minuit status codes:
@@ -521,18 +671,16 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
   // 
   if (!SignalHG.IsValid())
     return false;
-  
   int limitStatus = 0;
   for (int i=0; i<4; i++) {
     if ( TMath::Abs(SignalHG.GetParameter(i) - parlimitslo[i]) < 1e-5 || TMath::Abs(SignalHG.GetParameter(i) - parlimitshi[i]) < 1e-5 ) {
       limitStatus++;
-      if (verbosity > 0) std::cout << i << "\t" << SignalHG.GetParameter(i) << "\t : \t"<< parlimitslo[i] << "\t" << parlimitshi[i] << std::endl;
+      if (verbosity > 0) std::cout << i << "\t" << SignalHG.GetParameter(i) << "\t : \t"<< parlimitslo[i] << "\t" << parlimitshi[i] << "\t" << " layer: " << setupT->GetLayer(cellID) << std::endl;
     }
   }
   if (verbosity > 1){
     std::cout << "Fit status HG " << cellID << " \t" << fitStatus << "\t limit reached: " << limitStatus  << std::endl;
   }
-  
   if (!(fitStatus == 4000 || fitStatus == 0 || fitStatus == 4070 || fitStatus == 70 )){ // only accept fits which succeeded in general
     if (verbosity > 0) std::cout << "==========> Skipped HG cell " << cellID << " fit failed" << std::endl;
     return false;
@@ -559,11 +707,17 @@ bool TileSpectra::FitMipHG(double* out, double* outErr, int verbosity, int year,
     out[4]    = SNRPeak;
     out[5]    = SNRFWHM;
   }
+  delete fitrange;
+  delete startvalues;
+  delete parlimitslo;
+  delete parlimitshi;
   return bmipHG;
 }
 
-
-bool TileSpectra::FitMipLG(double* out, double* outErr, int verbosity, int year, bool impE = false, double avmip = 1){
+//***********************************************************************************
+// fitting for minimum ionizing peak for LG CAEN readout
+//***********************************************************************************
+bool TileSpectra::FitMipLG(double* out, double* outErr, int verbosity, int year, bool impE = false,  double vov = -1000, double avmip = 1){
   
   // Once again, here are the Landau * Gaussian parameters:
   //   par[0]=Width (scale) parameter of Landau density
@@ -574,11 +728,8 @@ bool TileSpectra::FitMipLG(double* out, double* outErr, int verbosity, int year,
 
   TString funcName = Form("fmip%sLGCellID%d",TileName.Data(),cellID);
   
-  double fitrange[2]      = {0, 500};
-  if (impE){
-    fitrange[0] = 0.5*avmip;
-    fitrange[1] = 4*avmip;
-  }
+  double* fitrange    = new double[2];
+  GetFitRange(fitrange, false,  impE, vov ,avmip);
 
   if (calib->BadChannel != -64 && calib->BadChannel < 1 ){
     if (verbosity > 0) std::cout << "==========> Skipped LG cell " << cellID << " channel dead" << std::endl;
@@ -664,6 +815,7 @@ bool TileSpectra::FitMipLG(double* out, double* outErr, int verbosity, int year,
     out[4]    = SNRPeak;
     out[5]    = SNRFWHM;
   }
+  delete fitrange;
   return bmipLG;
 }
 
@@ -1250,4 +1402,27 @@ short TileSpectra::DetermineBadChannel(){
 
 void TileSpectra::SetBadChannelInCalib(short s ){
   calib->BadChannel = s;
+}
+
+double TileSpectra::GetMinimumInRangeSpectra(bool isHG, float minX, float maxX){
+  double minY   = 1e6;
+  double xVal   = -10000;
+  if (isHG){
+    for (Int_t i = hspectraHG.FindBin(minX); i<hspectraHG.FindBin(maxX)+1; i++ ){
+      if (minY > hspectraHG.GetBinContent(i)){
+        minY = hspectraHG.GetBinContent(i);
+        xVal = hspectraHG.GetBinCenter(i);
+      }
+    }
+  } else {
+    for (Int_t i = hspectraLG.FindBin(minX); i<hspectraLG.FindBin(maxX)+1; i++ ){
+      if (minY > hspectraLG.GetBinContent(i)){
+        minY = hspectraLG.GetBinContent(i);
+        xVal = hspectraLG.GetBinCenter(i);
+      }
+    }
+    
+  }
+  return xVal;
+  
 }

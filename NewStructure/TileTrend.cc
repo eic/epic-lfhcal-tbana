@@ -105,10 +105,10 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
       TH1D temp = *histHG;
       temp.SetName(Form("%s_Run%i",histHG->GetName(),runNr));
       temp.SetDirectory(0);
-      temp.Scale(1./triggers);
+      if(triggers > 0. ) temp.Scale(1./triggers);
       temp.GetYaxis()->SetTitle("Counts/ local mip trigger");
       temp.Rebin(2);
-      if (MinHGSpec > 1./triggers) MinHGSpec = (double)1./triggers;
+      if (MinHGSpec > 1./triggers && triggers > 0.) MinHGSpec = (double)1./triggers;
       if (MaxHGSpec < temp.GetMaximum()) MaxHGSpec = temp.GetMaximum();
       HGTriggRuns[runNr] = temp;
     }
@@ -116,9 +116,9 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
       TH1D temp2 = *histLG;
       temp2.SetName(Form("%s_Run%i",histLG->GetName(),runNr));
       temp2.SetDirectory(0);
-      temp2.Scale(1./triggers);
+      if(triggers > 0. ) temp2.Scale(1./triggers);
       temp2.GetYaxis()->SetTitle("Counts/ local mip trigger");
-      if (MinLGSpec > 1./triggers) MinLGSpec = (double)1./triggers;
+      if (MinLGSpec > 1./triggers && triggers > 0.) MinLGSpec = (double)1./triggers;
       if (MaxLGSpec < temp2.GetMaximum()) MaxLGSpec = temp2.GetMaximum();
       LGTriggRuns[runNr] = temp2;
     }
@@ -145,7 +145,11 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
       temp.SetName(Form("%s_Run%i",histHG->GetName(),runNr));
       temp.SetDirectory(0);
       double scaler = 1./temp.GetEntries();
-      temp.Scale(scaler);
+      if(scaler > 0. ){ 
+        temp.Scale(scaler);
+      } else {
+        scaler = 1.;
+      }
       temp.GetYaxis()->SetTitle("Counts/ trigger");
       TString name = histHG->GetName();
       if (name.Contains("TOT")){
@@ -160,9 +164,9 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
       TH1D temp2 = *histLG;
       temp2.SetName(Form("%s_Run%i",histLG->GetName(),runNr));
       temp2.SetDirectory(0);
-      temp2.Scale(1./triggers);
+      if(triggers > 0. ) temp2.Scale(1./triggers);
       temp2.GetYaxis()->SetTitle("Counts/ trigger");
-      if (MinLGSpec > 1./triggers) MinLGSpec = (double)1./triggers;
+      if (MinLGSpec > 1./triggers && triggers > 0.) MinLGSpec = (double)1./triggers;
       if (MaxLGSpec < temp2.GetMaximum()) MaxLGSpec = temp2.GetMaximum();
       LGTriggRuns[runNr] = temp2;
     }
@@ -769,7 +773,9 @@ bool TileTrend::SetLineColor(uint col){
     gTrendLGpedwidth.SetLineColor(col);
     gTrendHGpedwidth.SetLineColor(col);
     gTrendLGscale  .SetLineColor(col);
+    if(fittedLG) fitLGScale.SetLineColor(col+1);
     gTrendHGscale  .SetLineColor(col);
+    if(fittedHG) fitHGScale.SetLineColor(col+1);
     gTrendHGLGcorr .SetLineColor(col);
     gTrendLGHGcorr .SetLineColor(col);
     gTrendHGLGOffset .SetLineColor(col);
@@ -815,7 +821,9 @@ bool TileTrend::SetMarkerColor(uint col){
     gTrendLGpedwidth.SetMarkerColor(col);
     gTrendHGpedwidth.SetMarkerColor(col);
     gTrendLGscale  .SetMarkerColor(col);
+    if(fittedLG) fitLGScale.SetMarkerColor(col+1);
     gTrendHGscale  .SetMarkerColor(col);
+    if(fittedHG) fitHGScale.SetMarkerColor(col+1);
     gTrendHGLGcorr .SetMarkerColor(col);
     gTrendLGHGcorr .SetMarkerColor(col);
     gTrendHGLGOffset .SetMarkerColor(col);
@@ -861,7 +869,9 @@ bool TileTrend::SetMarkerStyle(uint col){
     gTrendLGpedwidth.SetMarkerStyle(col);
     gTrendHGpedwidth.SetMarkerStyle(col);
     gTrendLGscale  .SetMarkerStyle(col);
+    if(fittedLG) fitLGScale.SetMarkerStyle(col);
     gTrendHGscale  .SetMarkerStyle(col);
+    if(fittedHG) fitHGScale.SetMarkerStyle(col);
     gTrendHGLGcorr .SetMarkerStyle(col);
     gTrendLGHGcorr .SetMarkerStyle(col);
     gTrendHGLGOffset .SetMarkerStyle(col);
@@ -1015,7 +1025,9 @@ bool TileTrend::Write(TFile* f){
     gTrendLGpedwidth.Write();
     gTrendHGpedwidth.Write();
     gTrendLGscale  .Write();
+    if(fittedLG) fitLGScale.Write();
     gTrendHGscale  .Write();
+    if(fittedHG) fitHGScale.Write();
     gTrendHGLGcorr .Write();
     gTrendLGHGcorr .Write();
     gTrendHGLGOffset .Write();
@@ -1070,7 +1082,9 @@ bool TileTrend::Write(){
     gTrendLGpedwidth.Write();
     gTrendHGpedwidth.Write();
     gTrendLGscale  .Write();
+    if(fittedLG) fitLGScale.Write();
     gTrendHGscale  .Write();
+    if(fittedHG) fitHGScale.Write();
     gTrendHGLGcorr .Write();
     gTrendLGHGcorr .Write();
     gTrendHGLGOffset .Write();
@@ -1369,3 +1383,97 @@ void TileTrend::GetMinMaxBasedOnOptionAndCompare(int option, Double_t &min, Doub
   }
   return;
 }
+
+
+//*************************************************************************
+/**
+ * Fitting of Scale graphs with constant or linear function
+*/
+void TileTrend::FitScale(int optionReadout, int optionFit){
+  
+  // HGCROC read-out
+  if (optionReadout == 1) { 
+    if (gTrendHGscale.GetN() == 0) return;
+    // linear fit 
+    if (optionFit == 1){  
+      fitHGScale  = TF1(Form("fitADCScale_CellID%d",CellID),"[0]+[1]*x",
+                        gTrendHGscale.GetX()[0], gTrendHGscale.GetX()[gTrendHGscale.GetN()-1]);
+      fitHGScale.SetParLimits(1, 0, 1000);
+      fitHGScale.SetParLimits(0, -2000, 2000);
+      gTrendHGscale.Fit(&fitHGScale,"NQEX0");
+      fittedHG  = true;
+    // constant fit
+    } else {
+      fitHGScale  = TF1(Form("fitADCScale_CellID%d",CellID),"[0]",
+                        gTrendHGscale.GetX()[0], gTrendHGscale.GetX()[gTrendHGscale.GetN()-1]);
+      gTrendHGscale.Fit(&fitHGScale,"NQEX0");
+      fittedHG  = true;      
+    }
+  // CAEN read-out
+  } else {
+    if (gTrendHGscale.GetN() > 0){ 
+      // linear fit 
+      if (optionFit == 1){  
+        fitHGScale  = TF1(Form("fitHGScale_CellID%d",CellID),"[0]+[1]*x",
+                          gTrendHGscale.GetX()[0], gTrendHGscale.GetX()[gTrendHGscale.GetN()-1]);
+        fitHGScale.SetParLimits(1, 0, 1000);
+        fitHGScale.SetParLimits(0, -2000, 2000);
+        gTrendHGscale.Fit(&fitHGScale,"NQEX0");
+        fittedHG  = true;
+      // constant fit
+      } else {
+        fitHGScale  = TF1(Form("fitHGScale_CellID%d",CellID),"[0]",
+                          gTrendHGscale.GetX()[0], gTrendHGscale.GetX()[gTrendHGscale.GetN()-1]);
+        gTrendHGscale.Fit(&fitHGScale,"NQEX0");
+        fittedHG  = true;      
+      }
+    }
+    if (gTrendLGscale.GetN() > 0){ 
+      // linear fit 
+      if (optionFit == 1){  
+        fitLGScale  = TF1(Form("fitLGScale_CellID%d",CellID),"[0]+[1]*x",
+                          gTrendLGscale.GetX()[0], gTrendLGscale.GetX()[gTrendLGscale.GetN()-1]);
+        fitLGScale.SetParLimits(1, 0, 1000);
+        fitLGScale.SetParLimits(0, -2000, 2000);
+        gTrendLGscale.Fit(&fitLGScale,"NQEX0");
+        fittedLG  = true;
+      // constant fit
+      } else {
+        fitLGScale  = TF1(Form("fitLGScale_CellID%d",CellID),"[0]",
+                          gTrendLGscale.GetX()[0], gTrendLGscale.GetX()[gTrendLGscale.GetN()-1]);
+        gTrendLGscale.Fit(&fitLGScale,"NQEX0");
+        fittedLG  = true;      
+      }
+    }
+  }
+  return;
+}
+
+
+double TileTrend::GetFuncZeroHGFit(){ 
+  if (fittedHG){
+    if (fitHGScale.GetNpar() > 1){
+      double zp = (0. - fitHGScale.GetParameter(0))/fitHGScale.GetParameter(1);
+      // limit zero point
+      if (zp > 200 || zp < -200)
+        return -10000.;
+      else 
+        return zp;
+    }
+  } 
+  return -10000.;
+};
+
+double TileTrend::GetFuncZeroLGFit()    { 
+  if (fittedLG){
+    if (fitLGScale.GetNpar() > 1){
+      double zp = (0. - fitLGScale.GetParameter(0))/fitLGScale.GetParameter(1);
+      // limit zero point
+      if (zp > 200 || zp < -200)
+        return -10000.;
+      else 
+        return zp;
+    }
+  } 
+  return -10000.;
+};

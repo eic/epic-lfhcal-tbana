@@ -347,6 +347,63 @@ int Setup::GetChannelInLayerFull(int cellID, DetConf::Type type) const{
   return absChL;
 }
 
+int Setup::GetAbsRow(int cellID, DetConf::Type type) const{
+  int row     = GetRow(cellID);
+  int mod     = GetModule(cellID);
+  int absRow  = row;
+  
+  if (type == DetConf::Type::Unset){
+    type = GetDetectorConfig();
+  }
+  // Dual 8M
+  if ( type == DetConf::Type::Dual8M){
+    absRow    = mod * (nMaxRow+1) + row;
+    
+  // Medium TB
+  } else if ( type == DetConf::Type::MediumTB){
+    if (mod%2 == 0){
+      absRow = int(mod/2) * (nMaxRow+1) + row;
+    } else {
+      absRow = int((mod-1)/2)* (nMaxRow+1) + row;
+    }
+  // Single 8M module
+  } else if ( type == DetConf::Type::Single8M){
+    absRow = row;
+  // Focal or Asic geom
+  } else if ( type == DetConf::Type::FocalH || type == DetConf::Type::Asic){
+    absRow = row;
+  }
+  return absRow;
+}
+
+int Setup::GetAbsColumn(int cellID, DetConf::Type type) const{
+  int col     = GetColumn(cellID);
+  int mod     = GetModule(cellID);
+  int absCol  = col;
+  
+  if (type == DetConf::Type::Unset){
+    type = GetDetectorConfig();
+  }
+  // Dual 8M
+  if ( type == DetConf::Type::Dual8M){
+    absCol    = col;
+  // Medium TB
+  } else if ( type == DetConf::Type::MediumTB){
+    
+    absCol = mod%2 * (nMaxColumn+1) + col;
+    
+  // Single 8M module
+  } else if ( type == DetConf::Type::Single8M){
+    absCol = col;
+  // Focal or Asic geom
+  } else if ( type == DetConf::Type::FocalH || type == DetConf::Type::Asic){
+    absCol = col;
+  }
+  return absCol;
+}
+
+
+
 int Setup::GetAbsNMaxROChannel() const{
   int max = -1;
   std::map<int, int>::const_iterator it;
@@ -481,8 +538,6 @@ float Setup::GetCellDepth() const{
   return cellD;
 }
 
-
-
 DetConf::Type Setup::GetDetectorConfig() const{
   DetConf::Type type;
   if (GetNMaxModule()+1 == 2){
@@ -518,6 +573,43 @@ DetConf::Type Setup::GetDetectorConfig() const{
   }
   return type;
 }
+
+int Setup::GetAbsMaxColumnsSetup( DetConf::Type type){
+  int maxCol = nMaxColumn+1;
+  // Dual 8M
+  if ( type == DetConf::Type::Dual8M){
+    maxCol = nMaxColumn+1;
+  // Medium TB
+  } else if ( type == DetConf::Type::MediumTB){
+    maxCol = (nMaxColumn+1)*2;
+  // Single 8M module
+  } else if ( type == DetConf::Type::Single8M){
+    maxCol = nMaxColumn+1;
+  // Focal or Asic geom
+  } else if ( type == DetConf::Type::FocalH || type == DetConf::Type::Asic){
+    maxCol = 8;   // fixed number
+  }
+  return maxCol;
+}
+
+int Setup::GetAbsMaxRowsSetup( DetConf::Type type){
+  int maxRow = nMaxRow+1;
+  // Dual 8M
+  if ( type == DetConf::Type::Dual8M){
+    maxRow = (nMaxRow+1)*2;
+  // Medium TB
+  } else if ( type == DetConf::Type::MediumTB){
+    maxRow = (nMaxRow+1)*3;
+  // Single 8M module
+  } else if ( type == DetConf::Type::Single8M){
+    maxRow = nMaxRow+1;
+  // Focal or Asic geom
+  } else if ( type == DetConf::Type::FocalH || type == DetConf::Type::Asic){
+    maxRow = 8;   // fixed number
+  }
+  return maxRow;
+}
+
 
 bool Setup::ContainedInSetup(int cellID) const{
   std::map<int, TString>::const_iterator it=assemblyID.find(cellID);

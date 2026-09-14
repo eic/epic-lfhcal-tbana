@@ -103,7 +103,7 @@ class TileTrend: public TObject{
 
   bool FillInjectionDACVal  ( double x, double ped, double adc, double toa, double tot, int adcSatN = 0, int totSatN = 0, int nTOA = 0, int nSampToA = 0) ;
   bool FillHGCROCVals (double x, double tot);
-  
+
   
   // Drawing functions for graphs
   bool DrawLGped      (TString);
@@ -168,7 +168,6 @@ class TileTrend: public TObject{
   inline double GetMinLGHGcorr() const  {return MinLGHGcorr;};
   inline double GetMaxLGHGcorr() const  {return MaxLGHGcorr;};
 
-   
   // Get minima and maxima for different graphs extended graphs
   inline double GetMinTrigg() const     {return MinTrigg;};
   inline double GetMaxTrigg() const     {return MaxTrigg;};
@@ -196,8 +195,7 @@ class TileTrend: public TObject{
   inline double GetMaxLGHGOffset() const {return MaxLGHGOff;};
   inline double GetMaxHGLGOffset() const {return MaxHGLGOff;};
   inline double GetMinHGLGOffset() const {return MinHGLGOff;};
-   
-   
+      
   // Get minima and maxima for different graphs injection related
   inline double GetMaxADCmax() const    {return MaxADCmax;};
   inline double GetMaxADCsat() const    {return MaxADCsat;};
@@ -261,7 +259,33 @@ class TileTrend: public TObject{
   inline TGraphErrors* GetTOA()       {return &gTrendTOA;};
   inline TGraphErrors* GetNSampTOA()  {return &gTrendNSampTOA;};
   inline TGraphErrors* GetNTOA()      {return &gTrendNTOA;};
-   
+  
+  // fitting trending and get back the parameters
+  void FitScale(int , int);
+  inline TF1* GetHGScaleFit()         {if (fittedHG) return &fitHGScale; else return nullptr; } 
+  inline TF1* GetLGScaleFit()         {if (fittedLG) return &fitLGScale; else return nullptr; } 
+  inline bool GetHGScaleFitSuccess()  {return fittedHG;}
+  inline bool GetLGScaleFitSuccess()  {return fittedLG;}
+  inline int GetHGScaleFitNPar()      {if(fittedHG) return fitHGScale.GetNpar(); else return -1;}
+  inline int GetLGScaleFitNPar()      {if(fittedLG) return fitLGScale.GetNpar(); else return -1;}
+  
+  inline double GetLinCompHGFit()     { if (fittedHG){ 
+                                          if (fitHGScale.GetNpar() > 1)
+                                            return fitHGScale.GetParameter(1);
+                                        } 
+                                        return 0.;
+                                      };
+  inline double GetLinCompLGFit()     { if (fittedLG){ 
+                                          if (fitLGScale.GetNpar() > 1)
+                                            return fitLGScale.GetParameter(1);
+                                        } 
+                                        return 0.;
+                                      };
+  double GetFuncZeroHGFit();
+  double GetFuncZeroLGFit();
+  inline double GetConstCompHGFit()     {if (fittedHG) return fitHGScale.GetParameter(0); else return 0.;}
+  inline double GetConstCompLGFit()     {if (fittedLG) return fitLGScale.GetParameter(0); else return 0.;}
+  
   // trending options dependencies
   TGraphErrors* GetTrendingBasedOnOption(int option);
   void GetMinMaxBasedOnOptionAndCompare(int, Double_t &, Double_t &);
@@ -324,6 +348,9 @@ class TileTrend: public TObject{
   TGraphErrors gTrendTOT;
   TGraphErrors gTrendTOTSaturated;
   
+  TF1 fitHGScale  ;
+  TF1 fitLGScale  ;
+  
   double MaxLGped    =0.;
   double MaxHGped    =0.;
   double MaxLGpedwidth =0.;
@@ -384,6 +411,9 @@ class TileTrend: public TObject{
   double MinNSampTOA  =9999.;
   double MinNTOA      =9999.;
   
+  bool fittedHG       = false;
+  bool fittedLG       = false;
+  
   std::vector<TString> labels;
   std::vector<int> runNrs;
   std::vector<int> pdgs;
@@ -402,7 +432,7 @@ class TileTrend: public TObject{
   std::map<int, TProfile> TOAProf;
   std::map<int, TProfile> TOTProf;
   
-  ClassDef(TileTrend,12);
+  ClassDef(TileTrend,13);
 };
 
 #endif

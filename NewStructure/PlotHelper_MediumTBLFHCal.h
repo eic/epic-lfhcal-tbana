@@ -975,6 +975,9 @@
           int tempCellID = setupT->GetCellID(r,c, layer, m);
           int p = setupT->GetChannelInLayerFull(tempCellID, DetConf::Type::MediumTB);
 
+          TString lab1 = Form("#it{#bf{LFHCal TB:}} %s", GetStringFromRunInfo(currRunInfo, 9).Data());
+          TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
+          TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
           TString label           = Form("r:%d c:%d m:%d", r, c, m);
           TString label2          = Form("Common V_{op} = %2.1f V", commonVoltage);
           if (p == 47){
@@ -998,17 +1001,20 @@
             pads[p]->Draw();
             dummyhist->Draw("axis");
             if (p == 40 ){
-              TString lab1 = Form("#it{#bf{LFHCal TB:}} %s", GetStringFromRunInfo(currRunInfo, 9).Data());
-              TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
-              TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
               DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p]-1*0.85*relSize8P[p], lab1, true, 0.85*textSizePixel, 43);
               DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p]-2*0.85*relSize8P[p], lab2, true, 0.85*textSizePixel, 43);
               DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p]-3*0.85*relSize8P[p], lab3, true, 0.85*textSizePixel, 43);
             }
+            DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p], label, true, 0.85*textSizePixel, 43);
+            if (isSameVoltage && p == 47){
+              DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p]-1*0.85*relSize8P[p], label2, true, 0.85*textSizePixel, 43);
+            }
+
             continue;
           } 
-          TGraphErrors* tempGraph= nullptr;
-          TGraphErrors* tempGraph2= nullptr;
+          TGraphErrors* tempGraph   = nullptr;
+          TGraphErrors* tempGraph2  = nullptr;
+          TF1* fit                  = nullptr;
           if (optionTrend != 19 && optionTrend != 20){
             tempGraph = ithTrend->second.GetTrendingBasedOnOption(optionTrend);
           } else if (optionTrend == 19){
@@ -1018,9 +1024,19 @@
             tempGraph = ithTrend->second.GetTrendingBasedOnOption(15);
             tempGraph2 = ithTrend->second.GetTrendingBasedOnOption(16);
           }
+          if (optionTrend == 2){
+            fit       = ithTrend->second.GetHGScaleFit();
+          } else if (optionTrend == 3){
+            fit       = ithTrend->second.GetLGScaleFit();
+          }
+          
           if (!tempGraph) continue;
           SetMarkerDefaultsTGraphErr(tempGraph, 20, 1, kBlue+1, kBlue+1);   
           dummyhist->Draw("axis");
+          if (fit){
+            SetLineDefaultsTF1(fit, kRed+2, 2, 3);
+            fit->Draw("same");
+          }
           tempGraph->Draw("pe, same");
           if (tempGraph2){
             SetMarkerDefaultsTGraphErr(tempGraph2, 25, 1, kRed+1, kRed+1);   
@@ -1028,13 +1044,10 @@
           }
           
           DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p], label, true, 0.85*textSizePixel, 43);
-          if (isSameVoltage && p == 15){
+          if (isSameVoltage && p == 47){
             DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p]-1*0.85*relSize8P[p], label2, true, 0.85*textSizePixel, 43);
           }
           if (p == 40 ){
-            TString lab1 = Form("#it{#bf{LFHCal TB:}} %s", GetStringFromRunInfo(currRunInfo, 9).Data());
-            TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
-            TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
             DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p]-1*0.85*relSize8P[p], lab1, true, 0.85*textSizePixel, 43);
             DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p]-2*0.85*relSize8P[p], lab2, true, 0.85*textSizePixel, 43);
             DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p]-3*0.85*relSize8P[p], lab3, true, 0.85*textSizePixel, 43);
@@ -1100,6 +1113,8 @@
         for (int m = 0; m < nMod; m++){
           int tempCellID = setupT->GetCellID(r,c, layer, m);
           ithTrend=trending.find(tempCellID);
+          if(ithTrend==trending.end())
+            continue;
           if (optionTrend == 0){      // HG
             if(maxY<ithTrend->second.GetMaxHGSpec()) maxY=ithTrend->second.GetMaxHGSpec();
             if(minY>ithTrend->second.GetMinHGSpec()) minY=ithTrend->second.GetMinHGSpec();

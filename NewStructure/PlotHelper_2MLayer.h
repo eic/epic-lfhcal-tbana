@@ -418,6 +418,7 @@
     for (int c = 0; c < nCol; c++){
       int tempCellID = setupT->GetCellID(0,c, layer, mod);
       ithTrend=trending.find(tempCellID);
+      if (ithTrend==trending.end()) continue;
       if (optionTrend == 0){      // HG
         if(maxY<ithTrend->second.GetMaxHGSpec()) maxY=ithTrend->second.GetMaxHGSpec();
         if(minY>ithTrend->second.GetMinHGSpec()) minY=ithTrend->second.GetMinHGSpec();

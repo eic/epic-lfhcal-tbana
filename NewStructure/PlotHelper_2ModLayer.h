@@ -1243,6 +1243,7 @@
         for (int m = 0; m < nMod; m++){
           int tempCellID = setupT->GetCellID(r,c, layer, m);
           ithTrend=trending.find(tempCellID);
+          if (ithTrend==trending.end()) continue;
           if (optionTrend == 0){      // HG
             if(maxY<ithTrend->second.GetMaxHGSpec()) maxY=ithTrend->second.GetMaxHGSpec();
             if(minY>ithTrend->second.GetMinHGSpec()) minY=ithTrend->second.GetMinHGSpec();

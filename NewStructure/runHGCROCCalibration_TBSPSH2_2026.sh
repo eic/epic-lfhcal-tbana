@@ -227,8 +227,10 @@ if [ $2 == "calibMuon" ]; then
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetG.csv'
   elif [ $4 = "HVScan" ]; then
     runPed='188'
+#     runs='200 201'
+#     runs='202'
+    runs='194'
 #     runs='194 195 196 197 198 199 200 201 202'
-    runs='200 201 202'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_HVScan.csv'
   else 
     echo "No run selected, exiting..."
@@ -237,8 +239,10 @@ if [ $2 == "calibMuon" ]; then
 
   if [ $4 = "HVScan" ]; then
     badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_OnlyCenter4x6.txt
+  elif [ $4 = "FullSetG_2" ] || [ $4 = "FullSetG_1" ]; then
+    badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_FullSetG.txt  
   else 
-    badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_dummy.txt  
+    badChannelMap=../configs/TB2026/badChannel_HGCROC_SPSTB2026_FullSetA-F.txt
   fi
   for runNr in $runs; do
     echo "$runNr   $runPed"
@@ -265,6 +269,22 @@ if [ $2 == "calibMuonParScan" ]; then
     runPed=${runPeds[$idx]}
     runMuon=${runMuons[$idx]}
     MuonCalibHGCROC $3 $runPed $runMuon $dataDirRaw $dataDirOut Run_$runMuon $badChannelMap $toaPhaseOffset 	
+  done
+
+fi
+
+if [ $2 == "fixSetup" ]; then
+  runs='Muon_FullSetB_1 Muon_FullSetB_2 Muon_FullSetC_1 Muon_FullSetC_2 Muon_FullSetC_3 Muon_FullSetD_1 Muon_FullSetD_2 Muon_FullSetE_1 Muon_FullSetE_2 Muon_FullSetE_3 Muon_FullSetF_1 Muon_FullSetF_2'
+  # different mapping files for layering
+  mapConDefV2=../configs/TB2026/mapping_HGCROC_SPSH2TB_sumV2_default.csv   # v2 summing board
+  for runNr in $runs; do
+    FixSetupTreeDerived $dataDirRaw $runNr $mapConDefV2
+  done
+
+  runs='Muon_FullSetG_1 Muon_FullSetG_2'
+  mapConDefV1=../configs/TB2026/mapping_HGCROC_SPSH2TB_sumV1_default.csv   # v1 summing board
+  for runNr in $runs; do
+    FixSetupTreeDerived $dataDirRaw $runNr $mapConDefV1
   done
 
 fi
