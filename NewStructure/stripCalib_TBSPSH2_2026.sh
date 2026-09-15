@@ -41,6 +41,15 @@ elif [ $2 == "FullSetD" ]; then
     cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr.root $dataDirOut/calib_Final_$runNr.root
     cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr\_calib.txt $dataDirOut/calib_Final_$runNr\_calib.txt
   done
+
+elif [ $2 == "FullSetE" ]; then
+  echo "Stripping FullSet E"
+  runs='Muon_FullSetE_1 Muon_FullSetE_2 Muon_FullSetE_3'
+  for runNr in $runs; do
+#     ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNr.root -A $dataDirOut/calib_Imp4R_$runNr.root
+    cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr.root $dataDirOut/calib_Final_$runNr.root
+    cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr\_calib.txt $dataDirOut/calib_Final_$runNr\_calib.txt
+  done
   
 elif [ $2 == "HVScan" ]; then
   echo "Stripping HVScan"
