@@ -9,19 +9,30 @@ fi
 if [ $2 == "FullSetB" ]; then
   echo "Stripping FullSet B"
   runs='Muon_FullSetB_1 Muon_FullSetB_2'
-#   for runNr in $runs; do
+  for runNr in $runs; do
 #     ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_ImpR_$runNr.root -A $dataDirOut/calib_ImpR_$runNr.root
 #     ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp2R_$runNr.root -A $dataDirOut/calib_Imp2R_$runNr.root
 #     ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp3R_$runNr.root -A $dataDirOut/calib_Imp3R_$runNr.root
 #     ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNr.root -A $dataDirOut/calib_Imp4R_$runNr.root
-#   done
+    cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr.root $dataDirOut/calib_Final_$runNr.root
+    cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr\_calib.txt $dataDirOut/calib_Final_$runNr\_calib.txt
+  done
 
   runNrSp='Muon_FullSetB_2'
-  ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_ImpR_3Int_$runNrSp.root -A $dataDirOut/calib_ImpR_3Int_$runNrSp.root
-  ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp2R_3Int_$runNrSp.root -A $dataDirOut/calib_Imp2R_3Int_$runNrSp.root
-  ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_ImpR_5Int_$runNrSp.root -A $dataDirOut/calib_ImpR_5Int_$runNrSp.root
-  ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp2R_5Int_$runNrSp.root -A $dataDirOut/calib_Imp2R_5Int_$runNrSp.root
+#   ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_ImpR_3Int_$runNrSp.root -A $dataDirOut/calib_ImpR_3Int_$runNrSp.root
+#   ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp2R_3Int_$runNrSp.root -A $dataDirOut/calib_Imp2R_3Int_$runNrSp.root
+#   ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_ImpR_5Int_$runNrSp.root -A $dataDirOut/calib_ImpR_5Int_$runNrSp.root
+#   ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp2R_5Int_$runNrSp.root -A $dataDirOut/calib_Imp2R_5Int_$runNrSp.root
   
+# Just the muons from each set
+elif [ $2 == "FullSetC" ]; then
+  echo "Stripping FullSet C"
+  runs='Muon_FullSetC_1 Muon_FullSetC_2 Muon_FullSetC_3'
+  for runNr in $runs; do
+#     ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNr.root -A $dataDirOut/calib_Imp4R_$runNr.root
+    cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr.root $dataDirOut/calib_Final_$runNr.root
+    cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr\_calib.txt $dataDirOut/calib_Final_$runNr\_calib.txt
+  done
   
 elif [ $2 == "HVScan" ]; then
   echo "Stripping HVScan"

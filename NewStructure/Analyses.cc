@@ -3514,14 +3514,21 @@ bool Analyses::GetScaling(void){
   //hChi2VsNMipTrigg->SetDirectory(0);
 
   // 2D beam profile -EP	
+  int absMaxCols = setup->GetAbsMaxColumnsSetup(detConf);
+  int absMaxRows = setup->GetAbsMaxRowsSetup(detConf);
+  std::cout << "Outer dimensions: " << std::endl;
+  std::cout << "\t x: " << setup->GetMinX() << " - " << setup->GetMaxX() << "\t" << setup->GetAbsMaxColumnsSetup(detConf)<< std::endl;
+  std::cout << "\t y: " << setup->GetMinY() << " - " << setup->GetMaxY() << "\t" << setup->GetAbsMaxRowsSetup(detConf)<< std::endl;
+  std::cout << "\t z: " << setup->GetMinZ() << " - " << setup->GetMaxZ() << "\t" << setup->GetNMaxLayer()+1<< std::endl;
+    
   int thisbinxmax = setup->GetNMaxColumn()+1;	
   int thisbinymax = (int)(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
-  TH2D* hMipTriggXY = new TH2D( "hMipTriggXY", "MIP Triggers summed over layers; X (col); Y (row); Num triggers", thisbinxmax, -0.5, thisbinxmax-0.5, thisbinymax, -0.5, thisbinymax-0.5); 
+  TH2D* hMipTriggXY = new TH2D( "hMipTriggXY", "MIP Triggers summed over layers; X (col); Y (row); Num triggers", absMaxCols, -0.5, absMaxCols-0.5, absMaxRows, -0.5, absMaxRows-0.5);
   hMipTriggXY->SetDirectory(0);
 
   // 3D beam profile -EP
-  int thisbinzmax = (int)setup->GetNMaxLayer()+1;
-  TH3D *hMipTriggXYZ = new TH3D( "hMipTriggXYZ", "MIP Triggers; X (col); Z (layer); Y (row); Num triggers", thisbinxmax, -0.5, thisbinxmax-0.5, thisbinzmax, -0.5, thisbinzmax-0.5, thisbinymax, -0.5, thisbinymax-0.5);
+  int absMaxLayers = (int)setup->GetNMaxLayer()+1;
+  TH3D *hMipTriggXYZ = new TH3D( "hMipTriggXYZ", "MIP Triggers; X (col); Z (layer); Y (row); Num triggers", absMaxCols, -0.5, absMaxCols-0.5, absMaxLayers, -0.5, absMaxLayers-0.5, absMaxRows, -0.5, absMaxRows-0.5);
   hMipTriggXYZ->SetDirectory(0);
 
   TH2D* hMPVvsNoisePeak = new TH2D( "hMPVvsNoisePeak", "Signal to noise peak ADC; noise peak (ADC); MiP MPV (ADC); ", 20, -5, 10, 20, 0, 50); // -EP
@@ -3595,10 +3602,11 @@ bool Analyses::GetScaling(void){
     hSuppresionSignal->SetBinContent(bin2D, SB_SigR);
     hSNRTriggVsLayer->SetBinContent(bin2D, SNR_trigg);
 
-    // get 2D and 3D beam profiles -EP
-    int thisbinx = col + 1; // the +1s are due to the 0th bin in root being underflow
-    int thisbiny = (mod*2) + row + 1;
+    // get 2D and 3D beam profiles 
+    int thisbinx = setup->GetAbsColumn(cellID, detConf)+1; // the +1s are due to the 0th bin in root being underflow
+    int thisbiny = setup->GetAbsRow(cellID, detConf) +1;
     int thisbinz = layer + 1;
+
     int numMipTrig = ithSpectraTrigg->second.GetHG()->GetEntries();
     hMipTriggXY->SetBinContent(thisbinx, thisbiny, hMipTriggXY->GetBinContent(thisbinx, thisbiny) + numMipTrig);
     hMipTriggXYZ->SetBinContent(thisbinx, thisbinz, thisbiny, numMipTrig);
@@ -4277,7 +4285,6 @@ bool Analyses::GetImprovedScaling(void){
     int thisbinx = setup->GetAbsColumn(cellID, detConf)+1; // the +1s are due to the 0th bin in root being underflow
     int thisbiny = setup->GetAbsRow(cellID, detConf) +1;
     int thisbinz = layer + 1;
-    std::cout << "position " << "\t" << thisbinx << "\t" << thisbiny << "\t" << thisbinz << std::endl;
     int numMipTrig = ithSpectraTrigg->second.GetHG()->GetEntries();
     hMipTriggXY->SetBinContent(thisbinx, thisbiny, hMipTriggXY->GetBinContent(thisbinx, thisbiny) + numMipTrig);
     hMipTriggXYZ->SetBinContent(thisbinx, thisbinz, thisbiny, numMipTrig);
