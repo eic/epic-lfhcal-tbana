@@ -18,11 +18,11 @@ BaseIte=MuonIterations
 # # Muon set B_2
 # ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetB_2.txt -o $folder/$BaseIte\_B2.root -O $folder/$BaseIte\_B2 -r $runList
 # Muon set C_1
-./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetC_1.txt -o $folder/$BaseIte\_C1.root -O $folder/$BaseIte\_C1 -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetC_1.txt -o $folder/$BaseIte\_C1.root -O $folder/$BaseIte\_C1 -r $runList
 # Muon set C_2
-./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetC_2.txt -o $folder/$BaseIte\_C2.root -O $folder/$BaseIte\_C2 -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetC_2.txt -o $folder/$BaseIte\_C2.root -O $folder/$BaseIte\_C2 -r $runList
 # Muon set C_3
-./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetC_3.txt -o $folder/$BaseIte\_C3.root -O $folder/$BaseIte\_C3 -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetC_3.txt -o $folder/$BaseIte\_C3.root -O $folder/$BaseIte\_C3 -r $runList
 # # Muon set D_1
 # ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetD_1.txt -o $folder/$BaseIte\_D1.root -O $folder/$BaseIte\_D1 -r $runList
 # # Muon set D_2
@@ -41,6 +41,25 @@ BaseIte=MuonIterations
 # ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetG_1.txt -o $folder/$BaseIte\_G1.root -O $folder/$BaseIte\_G1 -r $runList
 # # Muon set G_2
 # ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetG_2.txt -o $folder/$BaseIte\_G2.root -O $folder/$BaseIte\_G2 -r $runList
+# HV Scan 42 V
+./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_42V.txt -o $folder/$BaseIte\_HVScan_42V.root -O $folder/$BaseIte\_HVScan_42V -r $runList
+# HV Scan 42.5 V
+./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_42_5V.txt -o $folder/$BaseIte\_HVScan_42_5V.root -O $folder/$BaseIte\_HVScan_42_5V -r $runList
+# HV Scan 43 V
+./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_43V.txt -o $folder/$BaseIte\_HVScan_43V.root -O $folder/$BaseIte\_HVScan_43V -r $runList
+# HV Scan 43.5 V
+./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_43_5V.txt -o $folder/$BaseIte\_HVScan_43_5V.root -O $folder/$BaseIte\_HVScan_43_5V -r $runList
+# HV Scan 44 V
+./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_44V.txt -o $folder/$BaseIte\_HVScan_44V.root -O $folder/$BaseIte\_HVScan_44V -r $runList
+# HV Scan 44.5 V
+./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_44_5V.txt -o $folder/$BaseIte\_HVScan_44_5V.root -O $folder/$BaseIte\_HVScan_44_5V -r $runList
+# HV Scan 45 V
+./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_45V.txt -o $folder/$BaseIte\_HVScan_45V.root -O $folder/$BaseIte\_HVScan_45V -r $runList
+# HV Scan 45.5 V
+./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_45_5V.txt -o $folder/$BaseIte\_HVScan_45_5V.root -O $folder/$BaseIte\_HVScan_45_5V -r $runList
+# HV Scan 45 V
+./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_46V.txt -o $folder/$BaseIte\_HVScan_46V.root -O $folder/$BaseIte\_HVScan_46V -r $runList
+
 
 #########################################################################################################################
 # Comparison same Campaign
@@ -49,7 +68,7 @@ BaseSet=MuonsSet
 # #muon calibs final Ite Set B
 # ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_FullSetB.txt -o $folder/$BaseSet\_B_Final.root -O $folder/$BaseSet\_B_Final -r $runList
 #muon calibs final Ite Set C
-./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_FullSetC.txt -o $folder/$BaseSet\_C_Final.root -O $folder/$BaseSet\_C_Final -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_FullSetC.txt -o $folder/$BaseSet\_C_Final.root -O $folder/$BaseSet\_C_Final -r $runList
 #muon calibs final Ite Set D
 # ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_FullSetD.txt -o $folder/$BaseSet\_D_Final.root -O $folder/$BaseSet\_D_Final -r $runList
 # # #muon calibs final Ite Set E
@@ -65,7 +84,7 @@ BaseSet=MuonsSet
 # muon calibs 43V comparison
 # ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_43V.txt -o $folder/Muons43V.root -O $folder/Muons43V -r $runList
 # muon calibs 44V comparison
-./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_44V.txt -o $folder/Muons43V.root -O $folder/Muons44V -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_44V.txt -o $folder/Muons43V.root -O $folder/Muons44V -r $runList
 # muon calibs 45V comparison
 # ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_45V.txt -o $folder/Muons43V.root -O $folder/Muons45V -r $runList
 # 
@@ -73,8 +92,8 @@ BaseSet=MuonsSet
 # Comparison vs Voltage
 #########################################################################################################################
 # #muon calibs final Ite HV Scan
-# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_HVScan.txt -o $folder/MuonsHVScan_vs_Run.root -O $folder/MuonsHVScan_vs_Run -r $runList
-# ./CompareCalib -d 0 -e 2 -H -f -V -I $cfolder/comparisonFinal_HVScan.txt -o $folder/MuonsHVScan_vs_Voltage.root -O $folder/MuonsHVScan_vs_Voltage -r $runList
+./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_HVScan.txt -o $folder/MuonsHVScan_vs_Run.root -O $folder/MuonsHVScan_vs_Run -r $runList
+./CompareCalib -d 0 -e 2 -H -f -V -I $cfolder/comparisonFinal_HVScan.txt -o $folder/MuonsHVScan_vs_Voltage.root -O $folder/MuonsHVScan_vs_Voltage -r $runList
 # ./CompareCalib -d 0 -e 2 -H -f -V -I $cfolder/comparison1stIte_HVScan.txt -o $folder/MuonsHVScan_vs_Voltage.root -O $folder/MuonsHVScan_vs_Voltage -r $runList
 
 #########################################################################################################################

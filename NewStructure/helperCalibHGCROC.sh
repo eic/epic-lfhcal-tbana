@@ -78,6 +78,8 @@ function MuonCalibHGCROC()
     time ./DataPrep -x -a -f -d 1  -S -i $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$runNrMuon.root -k $4/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNrMuon\_calib.txt -o $4/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved5th_Red/$6 -r $runList
   elif [ $1 == "imp6th_red_woE" ]; then 
     time ./DataPrep -x -a -f -d 1  -S -i $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$runNrMuon.root -k $4/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNrMuon\_calib.txt -o $4/rawHGCROC_wPedwMuon_wBC_Imp6R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved6th_Red/$6 -r $runList
+  elif [ $1 == "imp7th_red_woE" ]; then 
+    time ./DataPrep -x -a -f -d 1  -S -i $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$runNrMuon.root -k $4/rawHGCROC_wPedwMuon_wBC_Imp6R_$runNrMuon\_calib.txt -o $4/rawHGCROC_wPedwMuon_wBC_Imp7R_$runNrMuon.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved7th_Red/$6 -r $runList
     
   # improved mip skimmed   
   elif [ $1 == "imp1st_red" ]; then 

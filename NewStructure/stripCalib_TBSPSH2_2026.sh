@@ -58,15 +58,24 @@ elif [ $2 == "FullSetF" ]; then
     cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr.root $dataDirOut/calib_Final_$runNr.root
     cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr\_calib.txt $dataDirOut/calib_Final_$runNr\_calib.txt
   done
-  
+elif [ $2 == "FullSetG" ]; then
+  echo "Stripping FullSet G"
+  runs='Muon_FullSetG_1 Muon_FullSetG_2'
+  for runNr in $runs; do
+#     ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNr.root -A $dataDirOut/calib_Imp4R_$runNr.root
+    cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr.root $dataDirOut/calib_Final_$runNr.root
+    cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr\_calib.txt $dataDirOut/calib_Final_$runNr\_calib.txt
+  done  
 elif [ $2 == "HVScan" ]; then
   echo "Stripping HVScan"
   runs='194 195 196 197 198 199 200 201 202'
   for runNr in $runs; do
 #     ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_ImpR_$runNr.root -A $dataDirOut/calib_ImpR_$runNr.root
 #     ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp2R_$runNr.root -A $dataDirOut/calib_Imp2R_$runNr.root
-    ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp3R_$runNr.root -A $dataDirOut/calib_Imp3R_$runNr.root
-    ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNr.root -A $dataDirOut/calib_Imp4R_$runNr.root
+#     ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp3R_$runNr.root -A $dataDirOut/calib_Imp3R_$runNr.root
+#     ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNr.root -A $dataDirOut/calib_Imp4R_$runNr.root
+    cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr.root $dataDirOut/calib_Final_$runNr.root
+    cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr\_calib.txt $dataDirOut/calib_Final_$runNr\_calib.txt
   done
 
 elif [ $2 == "ParamScan" ]; then
