@@ -42,23 +42,23 @@ BaseIte=MuonIterations
 # # Muon set G_2
 # ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_FullSetG_2.txt -o $folder/$BaseIte\_G2.root -O $folder/$BaseIte\_G2 -r $runList
 # HV Scan 42 V
-./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_42V.txt -o $folder/$BaseIte\_HVScan_42V.root -O $folder/$BaseIte\_HVScan_42V -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_42V.txt -o $folder/$BaseIte\_HVScan_42V.root -O $folder/$BaseIte\_HVScan_42V -r $runList
 # HV Scan 42.5 V
-./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_42_5V.txt -o $folder/$BaseIte\_HVScan_42_5V.root -O $folder/$BaseIte\_HVScan_42_5V -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_42_5V.txt -o $folder/$BaseIte\_HVScan_42_5V.root -O $folder/$BaseIte\_HVScan_42_5V -r $runList
 # HV Scan 43 V
-./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_43V.txt -o $folder/$BaseIte\_HVScan_43V.root -O $folder/$BaseIte\_HVScan_43V -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_43V.txt -o $folder/$BaseIte\_HVScan_43V.root -O $folder/$BaseIte\_HVScan_43V -r $runList
 # HV Scan 43.5 V
-./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_43_5V.txt -o $folder/$BaseIte\_HVScan_43_5V.root -O $folder/$BaseIte\_HVScan_43_5V -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_43_5V.txt -o $folder/$BaseIte\_HVScan_43_5V.root -O $folder/$BaseIte\_HVScan_43_5V -r $runList
 # HV Scan 44 V
-./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_44V.txt -o $folder/$BaseIte\_HVScan_44V.root -O $folder/$BaseIte\_HVScan_44V -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_44V.txt -o $folder/$BaseIte\_HVScan_44V.root -O $folder/$BaseIte\_HVScan_44V -r $runList
 # HV Scan 44.5 V
 ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_44_5V.txt -o $folder/$BaseIte\_HVScan_44_5V.root -O $folder/$BaseIte\_HVScan_44_5V -r $runList
 # HV Scan 45 V
-./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_45V.txt -o $folder/$BaseIte\_HVScan_45V.root -O $folder/$BaseIte\_HVScan_45V -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_45V.txt -o $folder/$BaseIte\_HVScan_45V.root -O $folder/$BaseIte\_HVScan_45V -r $runList
 # HV Scan 45.5 V
-./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_45_5V.txt -o $folder/$BaseIte\_HVScan_45_5V.root -O $folder/$BaseIte\_HVScan_45_5V -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_45_5V.txt -o $folder/$BaseIte\_HVScan_45_5V.root -O $folder/$BaseIte\_HVScan_45_5V -r $runList
 # HV Scan 45 V
-./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_46V.txt -o $folder/$BaseIte\_HVScan_46V.root -O $folder/$BaseIte\_HVScan_46V -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -T -I $cfolder/comparisonInterations_HVScan_46V.txt -o $folder/$BaseIte\_HVScan_46V.root -O $folder/$BaseIte\_HVScan_46V -r $runList
 
 
 #########################################################################################################################
@@ -92,8 +92,8 @@ BaseSet=MuonsSet
 # Comparison vs Voltage
 #########################################################################################################################
 # #muon calibs final Ite HV Scan
-./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_HVScan.txt -o $folder/MuonsHVScan_vs_Run.root -O $folder/MuonsHVScan_vs_Run -r $runList
-./CompareCalib -d 0 -e 2 -H -f -V -I $cfolder/comparisonFinal_HVScan.txt -o $folder/MuonsHVScan_vs_Voltage.root -O $folder/MuonsHVScan_vs_Voltage -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -R -I $cfolder/comparisonFinal_HVScan.txt -o $folder/MuonsHVScan_vs_Run.root -O $folder/MuonsHVScan_vs_Run -r $runList
+# ./CompareCalib -d 0 -e 2 -H -f -V -I $cfolder/comparisonFinal_HVScan.txt -o $folder/MuonsHVScan_vs_Voltage.root -O $folder/MuonsHVScan_vs_Voltage -r $runList
 # ./CompareCalib -d 0 -e 2 -H -f -V -I $cfolder/comparison1stIte_HVScan.txt -o $folder/MuonsHVScan_vs_Voltage.root -O $folder/MuonsHVScan_vs_Voltage -r $runList
 
 #########################################################################################################################

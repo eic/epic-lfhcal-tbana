@@ -74,10 +74,9 @@ elif [ $2 == "HVScan" ]; then
 #     ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp2R_$runNr.root -A $dataDirOut/calib_Imp2R_$runNr.root
 #     ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp3R_$runNr.root -A $dataDirOut/calib_Imp3R_$runNr.root
 #     ./DataPrep -a -i $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp4R_$runNr.root -A $dataDirOut/calib_Imp4R_$runNr.root
-    cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr.root $dataDirOut/calib_Final_$runNr.root
-    cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp5R_$runNr\_calib.txt $dataDirOut/calib_Final_$runNr\_calib.txt
+    cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp7R_$runNr.root $dataDirOut/calib_Final_$runNr.root
+    cp $dataDirIn/rawHGCROC_wPedwMuon_wBC_Imp7R_$runNr\_calib.txt $dataDirOut/calib_Final_$runNr\_calib.txt
   done
-
 elif [ $2 == "ParamScan" ]; then
   echo "Stripping ParamScan"
   runs='295 298 300 302 304 306 308 310 329 331 333 335 337 339 341 343 345 347 349 351 353 355 357 359 361 363 366 369'

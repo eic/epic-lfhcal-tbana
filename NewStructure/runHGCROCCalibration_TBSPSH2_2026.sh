@@ -229,8 +229,8 @@ if [ $2 == "calibMuon" ]; then
     runPed='188'
 #     runs='200 201'
 #     runs='202'
-    runs='194'
-#     runs='194 195 196 197 198 199 200 201 202'
+#     runs='194'
+    runs='194 195 196 197 198 199 200 201 202'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_HVScan.csv'
   else 
     echo "No run selected, exiting..."
