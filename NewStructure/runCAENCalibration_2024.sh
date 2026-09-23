@@ -172,32 +172,37 @@ if [ $2 == "calibMuon" ]; then
     echo "running muon calib for 44V runs"
     #50.3 events
     runPed='303'
-    runMuon='303'
+    runMuon='305'
     runMuonName='muonHVScan_44V'
+    badChannelMap='../configs/TB2024/badChannelMap_TBSetup_CAEN_202408_HVScan.txt'
   elif [ $4 == "MuonHV_43V" ] ; then 
     echo "running muon calib for 43V runs"
     #50.1K events
     runPed='306'
     runMuon='307'
     runMuonName='muonHVScan_43V'  
+    badChannelMap='../configs/TB2024/badChannelMap_TBSetup_CAEN_202408_HVScan.txt'
   elif [ $4 == "MuonHV_42V" ] ; then 
     echo "running muon calib for 42V runs"
     #50.6K events
     runPed='308'
     runMuon='309'
     runMuonName='muonHVScan_42V'  
+    badChannelMap='../configs/TB2024/badChannelMap_TBSetup_CAEN_202408_HVScan.txt'
   elif [ $4 == "MuonHV_41V" ] ; then 
     echo "running muon calib for 41V runs"
     #51K events
     runPed='311'
     runMuon='312'
     runMuonName='muonHVScan_40V'  
+    badChannelMap='../configs/TB2024/badChannelMap_TBSetup_CAEN_202408_HVScan.txt'
   elif [ $4 == "MuonHV_40V" ] ; then 
     echo "running muon calib for 40V runs"
     #50.8K events
     runPed='315'
     runMuon='316'
     runMuonName='muonHVScan_40V'  
+    badChannelMap='../configs/TB2024/badChannelMap_TBSetup_CAEN_202408_HVScan.txt'
   #####################################################################  
   # Set A  - 45 V
   # muon runs: '244 250 282 283'

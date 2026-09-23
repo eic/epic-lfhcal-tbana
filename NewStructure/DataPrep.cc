@@ -47,7 +47,7 @@ void PrintHelp(char* exe){
   std::cout<<"-K KKK   enable reextraction of LG-HG parameters from given file and write to output"<<std::endl;
   std::cout<<"-l [0-n] skip plotting of single layers except multiples of defined number"<<std::endl;
   std::cout<<"-L LLL   enable testing with only limited number of events"<<std::endl;
-  std::cout<<"-m mmm   Name of mapping file  2024 PS TB [../configs/mappingFile_202409_CAEN.txt] "<<std::endl;
+  std::cout<<"-m mmm   Name of mapping file i.e 2024 PS TB [../configs/mappingFile_202409_CAEN.txt] "<<std::endl;
   std::cout<<"-M       save mip triggered cells only"<<std::endl;
   std::cout<<"-n       extract noise after first mip fits and reevaluate pedestals"<<std::endl;
   std::cout<<"-N       save noise triggered cells only"<<std::endl;

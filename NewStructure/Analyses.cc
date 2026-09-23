@@ -5145,33 +5145,50 @@ bool Analyses::Calibrate(void){
   //=============================================================================================
   CreateOutputRootHistFile();
   
-  TH2D* hspectraHGvsCellID          = nullptr;
-  TH2D* hspectraHGCorrvsCellID      = nullptr;
-  TH2D* hspectraHGCorrvsCellIDNoise = nullptr;
+  TH2D* hspectraHGvsCellID          = nullptr;      // all cells raw ADC (HG - CAEN, ADC HGCROC) spectrum vs Cell ID
+  TH2D* hspectraHGCorrvsCellID      = nullptr;      // all cells pedestal corrected ADC (HG - CAEN, ADC HGCROC) spectrum vs Cell ID
+  TH2D* hspectraHGCorrvsCellIDNoise = nullptr;      // noise trigger flagged pedestal  ADC (HG - CAEN, ADC HGCROC) spectrum vs Cell ID
+  TH1D* hSaturatedADCvsCellID       = nullptr;      // saturated HG ADC (CAEN)/ ADC (HGCROC) frequency vs cellID
+  TH1D* hSaturatedADC               = nullptr;      // saturated HG ADC (CAEN)/ ADC (HGCROC) frequency per event
   
   // CAEN only
-  TH2D* hspectraLGvsCellID          = nullptr;
-  TH2D* hspectraLGCorrvsCellID      = nullptr;
-  TH2D* hspectraLGCorrvsCellIDNoise = nullptr;
-
+  TH2D* hspectraLGvsCellID          = nullptr;      // all cells raw LG ADC (CAEN) spectrum vs Cell ID
+  TH2D* hspectraLGCorrvsCellID      = nullptr;      // all cells pedestal correctected LG ADC (CAEN) spectrum vs Cell ID
+  TH2D* hspectraLGCorrvsCellIDNoise = nullptr;      // noise trigger flagged pedestal correctected LG ADC (CAEN) spectrum vs Cell ID
+  TH1D* hSaturatedLGvsCellID        = nullptr;      // saturated LG ADC (CAEN) frequency vs cellID
+  TH1D* hSaturatedLG                = nullptr;      // saturated LG ADC (CAEN) frequency per event
+  TH1D* hLGHGCorrOutsideBoundCellID = nullptr;      // LG/HG outside expectation frequency vs cellID
+  TH1D* hNCellsLGHGCorrOutsideBound = nullptr;      // Nr. of cells outside expectation for LG/HG per event  
+  
   // HGCROC only
-  TH2D* hspectraTotvsCellID         = nullptr;
-  TH2D* hspectraTotvsCellIDNoise    = nullptr;
-  TH1D* hSaturatedCellID            = nullptr;
-  TH2D* hspectraTOAvsCellID   =nullptr;   
-  TH2D* hSampleTOAVsCellID    =nullptr;
-  TH1D* hSampleTOA            =nullptr;   
-  TH2D* hTOANsVsCellID        =nullptr;   
-  TH2D* hTOACorrNsVsCellID    =nullptr;   
-  TH2D* h2DToAvsnSample[setup->GetNMaxROUnit()+1][2];
-  TH2D* h2DWaveFormHalfAsicAll[setup->GetNMaxROUnit()+1][2];
-  TProfile* hWaveFormHalfAsicAll[setup->GetNMaxROUnit()+1][2];  
+  TH2D* hspectraTotvsCellID         = nullptr;      // all cells raw TOT vs cell ID
+  TH2D* hspectraTotvsCellIDNoise    = nullptr;      // noise trigger flagged raw TOT vs cell ID
+  TH1D* hSaturatedTOTCellID         = nullptr;      // saturated TOT (HGCROC) frequency vs cell ID
+  TH1D* hSaturatedTOT               = nullptr;      // saturated TOT (HGCROC) frequency per event
+  TH2D* hspectraTOAvsCellID         = nullptr;      // raw TOA vs cell ID
+  TH2D* hSampleTOAVsCellID          = nullptr;      // nSample TOA vs cell ID
+  TH1D* hSampleTOA                  = nullptr;      // nSample TOA all cells
+  TH2D* hTOANsVsCellID              = nullptr;      // linearized TOA (ns) vs cellID
+  TH2D* hTOACorrNsVsCellID          = nullptr;      // corrected linearized TOA (ns) vs cellID
+  TH2D* h2DToAvsnSample[setup->GetNMaxROUnit()+1][2];           // ToA vs nSample TOA per readout unit half
+  TH2D* h2DWaveFormHalfAsicAll[setup->GetNMaxROUnit()+1][2];    // ToA corrected Waveform per readout unit half
+  TProfile* hWaveFormHalfAsicAll[setup->GetNMaxROUnit()+1][2];  // profile of ToA corrected Waveform per readout unit half
+  
+  //Create 1D Histos for Delta time
+  TH1D* hDeltaTime = new TH1D("hDeltaTime", "Time Difference between Events; Delta Time (#mus); Counts", 2000, 0, 100000);
+  hDeltaTime->SetDirectory(0);
   
   // create HG and LG histo's per channel
   if (typeRO == ReadOut::Type::Caen) {
     hspectraHGvsCellID               = new TH2D( "hspectraHG_vsCellID","ADC spectrum High Gain vs CellID; cell ID; ADC_{HG} (arb. units)   ; counts ",
                                                 setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4000,0,4000);
     hspectraHGvsCellID->SetDirectory(0);
+    hSaturatedADCvsCellID            = new TH1D( "hSaturatedHGvsCellID","ADC High Gain saturated CellID; cell ID; counts ",
+                                                setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5);
+    hSaturatedADCvsCellID->SetDirectory(0);
+    hSaturatedADC                    = new TH1D( "hSaturatedADC","ADC High Gain saturated per event; #cells; counts ",
+                                                setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5);
+    hSaturatedADC->SetDirectory(0);
     hspectraHGCorrvsCellID           = new TH2D( "hspectraHGCorr_vsCellID","ADC spectrum High Gain corrected vs CellID; cell ID; ADC_{HG} (arb. units)  ; counts ",
                                                 setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4000,-200,3800);
     hspectraHGCorrvsCellID->SetDirectory(0);
@@ -5187,10 +5204,28 @@ bool Analyses::Calibrate(void){
     hspectraLGCorrvsCellIDNoise      = new TH2D( "hspectraLGCorr_vsCellID_Noise","ADC spectrum Low Gain corrected vs CellID Noise; cell ID; ADC_{LG} (arb. units)  ; counts  ",
                                                 setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4000,-200,3800);
     hspectraLGCorrvsCellIDNoise->SetDirectory(0);
+    hSaturatedLGvsCellID            = new TH1D( "hSaturatedLGvsCellID","ADC spectrum Low Gain saturated CellID; cell ID; counts ",
+                                                setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5);
+    hSaturatedLGvsCellID->SetDirectory(0);
+    hSaturatedLG                    = new TH1D( "hSaturatedLG","ADC Low Gain saturated per event; #cells; counts ",
+                                                setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5);
+    hSaturatedLG->SetDirectory(0);
+    hLGHGCorrOutsideBoundCellID     = new TH1D( "hLGHGCorrOutsideBoundCellID","LG/HG outside limits CellID; cell ID; counts ",
+                                                setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5);
+    hLGHGCorrOutsideBoundCellID->SetDirectory(0);
+    hNCellsLGHGCorrOutsideBound     = new TH1D( "hNCellsLGHGCorrOutsideBound","LG/HG outside limits per event; #cells; counts ",
+                                                setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5);
+    hNCellsLGHGCorrOutsideBound->SetDirectory(0);
   } else if (typeRO == ReadOut::Type::Hgcroc) {
     hspectraHGvsCellID               = new TH2D( "hspectraHG_vsCellID","ADC spectrum vs CellID; cell ID; ADC (arb. units); counts ",
                                                 setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1100,-40.5,1100-40.5);
     hspectraHGvsCellID->SetDirectory(0);
+    hSaturatedADCvsCellID            = new TH1D( "hSaturatedADCvsCellID","ADC saturated CellID; cell ID; counts ",
+                                                setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5);
+    hSaturatedADCvsCellID->SetDirectory(0);
+    hSaturatedADC                    = new TH1D( "hSaturatedADC","ADC saturated per event; #cells; counts ",
+                                                setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5);
+    hSaturatedADC->SetDirectory(0);    
     hspectraHGCorrvsCellIDNoise      = new TH2D( "hspectraHGCorr_vsCellID_Noise","ADC spectrum vs CellID Noise; cell ID; ADC (arb. units); counts ",
                                                 setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 400,-40.5,400-40.5);
     hspectraHGCorrvsCellIDNoise->SetDirectory(0);
@@ -5200,9 +5235,12 @@ bool Analyses::Calibrate(void){
     hspectraTotvsCellIDNoise      = new TH2D( "hspectraTot_vsCellID_Noise","Tot vs CellID Noise; cell ID; Tot (arb. units); counts  ",
                                                 setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4096,0,4096);
     hspectraTotvsCellIDNoise->SetDirectory(0);
-    hSaturatedCellID              = new TH1D( "hSaturatedCellID","Saturared CellID; cell ID; Saturated cells  ",
+    hSaturatedTOTCellID              = new TH1D( "hSaturatedTOTCellID","TOT Saturated CellID; cell ID; Saturated cells  ",
                                                 setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5);
-    hSaturatedCellID->SetDirectory(0);
+    hSaturatedTOTCellID->SetDirectory(0);
+    hSaturatedTOT                    = new TH1D( "hSaturatedTOT","TOT saturated per event; #cells; counts ",
+                                                setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5);
+    hSaturatedTOT->SetDirectory(0);    
     
     hspectraTOAvsCellID      = new TH2D( "hspectraTOAvsCellID","TOA spectrums CellID; cell ID; TOA (arb. units) ",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
@@ -5234,15 +5272,19 @@ bool Analyses::Calibrate(void){
       }
     }
   }
+  // Calibrated energy for cell
   TH2D* hspectraEnergyvsCellID  = new TH2D( "hspectraEnergy_vsCellID","Energy vs CellID; cell ID; E (mip eq./tile); counts",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 6000,0,200);
   hspectraEnergyvsCellID->SetDirectory(0);
+  // Summed energy in event vs number of active cells
   TH2D* hspectraEnergyTotvsNCells  = new TH2D( "hspectraTotEnergy_vsNCells","Energy vs CellID; N_{Cells}; E_{tot} (mip eq./tile); counts",
                                             setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5, 6000,0,1000);
   hspectraEnergyTotvsNCells->SetDirectory(0);
+  // Summed energy in event vs number of active cells not noise flagged
   TH2D* hspectraEnergyTotvsNCellsNoNoise  = new TH2D( "hspectraTotEnergy_vsNCells_NoNoise","Energy vs CellID; N_{Cells}; E_{tot} (mip eq./tile); counts",
                                             setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5, 6000,0,1000);
   hspectraEnergyTotvsNCellsNoNoise->SetDirectory(0);
+  // Summed energy in event vs number of active cells with cell above mip threshold
   TH2D* hspectraEnergyTotvsNCellsST  = new TH2D( "hspectraTotEnergy_vsNCellsST","Energy vs CellID; N_{Tiles}; E_{tot} (mip eq./tile); counts",
                                             (setup->GetNActiveCells()*5)+1, -0.5, (setup->GetNActiveCells()*10)+1-0.5, 6000,0,1000);
   hspectraEnergyTotvsNCellsST->SetDirectory(0);
@@ -5327,7 +5369,9 @@ bool Analyses::Calibrate(void){
   }
   int rejectedEvents  = 0;
 
-  
+  double last_time = 0;
+  double DeltaTime = 1000000000;
+
   //==================================================================================
   // setup waveform builder for HGCROC data
   //==================================================================================
@@ -5357,13 +5401,43 @@ bool Analyses::Calibrate(void){
       }
     }
 
-    double Etot         = 0;
-    int nCells          = 0;
+    // check delta timing
+    // Find and fill delta time
+    double current_time = event.GetTimeStamp();
+    if(last_time != 0){
+      DeltaTime = current_time - last_time;
+      if (debug == 1000){
+        std::cerr<< "current timestamp: "<< current_time<<std::endl;
+      }
+    }
+    if (DeltaTime == 0){
+      if(debug == 1001){
+        std::cerr<< "Run Number: " << runNr <<"      Event Number: "<< i << std::endl;
+        std::cerr<< "Previous Timestamp (us): "<< last_time <<"      Current Timestamp: "<< current_time<<std::endl;
+      }
+    }
+    // Provisioning for cut based on DeltaTime range
+    // if(DeltaTime < timemin || DeltaTime > timemax){
+    //   //std::cout<<"event rejected:"<< i <<std::endl;
+    //   last_time = current_time;
+    //   continue;
+    // }
+    hDeltaTime->Fill(DeltaTime);
+    last_time = current_time;
+
+    
+    // event based counters and sums
+    double Etot         = 0;    // total energy in event
+    int nCells          = 0;    // NCells in event
     int nCellsST        = 0;    // Ncells single tile equivalent
-    double EtotNoNoise  = 0;
-    int nCellsNoNoise   = 0;
+    double EtotNoNoise  = 0;    // total enegy without noise flagged cells
+    int nCellsNoNoise   = 0;    // Ncells without noise flagged cells
+    int satCellsADC     = 0;    // number of cells saturating ADC (HG - CAEN, ADC - HGCROC)
+    int satCellsTOT     = 0;    // number of cells saturating TOT (HGCROC)
+    int satCellsADCLG   = 0;    // number of cells saturating LG ADC (CAEN)
+    int lghgFailCells   = 0;    // number of cells incongruent with expected LG-HG correlation (CAEN)
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    // Single tile processing
+    // Single tile processing 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     for(int j=0; j<event.GetNTiles(); j++){
       // tile energy
@@ -5387,6 +5461,35 @@ bool Analyses::Calibrate(void){
         double corrHG = aTile->GetADCHigh()-calib.GetPedestalMeanH(aTile->GetCellID());
         double corrLG = aTile->GetADCLow()-calib.GetPedestalMeanL(aTile->GetCellID());
         double corrLG_HGeq = corrLG*calib.GetLGHGCorr(aTile->GetCellID()) + calib.GetLGHGCorrOff(aTile->GetCellID());
+        
+        // check whehter HG or LG saturated
+        if(aTile->IsSaturatedADCHigh()){
+          satCellsADC++;
+          hSaturatedADCvsCellID->Fill(aTile->GetCellID());
+        }
+        if(aTile->IsSaturatedADCLow()){
+          satCellsADCLG++;
+          hSaturatedLGvsCellID->Fill(aTile->GetCellID());
+        }
+        // check if lg - hg correlation falls within acceptable bounds
+        bool lghgRatioAcceptable    = false;
+        double lghgRatio            = (corrHG/corrLG_HGeq) - 1;
+        if (TMath::Abs(lghgRatio) < 0.3)
+          lghgRatioAcceptable       = true;
+        bool isHGSatAndLGAcceptable = false;
+        if (aTile->IsSaturatedADCHigh()){
+          // has LG has to be at least in acceptable region
+          if (corrLG > 3500/calib.GetLGHGCorr(aTile->GetCellID())){
+            isHGSatAndLGAcceptable  = true;
+            lghgRatioAcceptable     = true;
+          }
+        }
+          
+        if (!lghgRatioAcceptable && corrLG > 10*calib.GetPedestalSigL(aTile->GetCellID())){
+          lghgFailCells++;
+          hLGHGCorrOutsideBoundCellID->Fill(aTile->GetCellID());
+        }
+        
         if(corrHG<corrHGADCSwap){
           if(corrHG/calib.GetScaleHigh(aTile->GetCellID()) > minMipFrac){
             energy=corrHG/calib.GetScaleHigh(aTile->GetCellID());
@@ -5413,7 +5516,6 @@ bool Analyses::Calibrate(void){
           localMuonTrigg  = event.InspectIfLocalMuonTrigg(aTile->GetCellID(), averageScalePerTile, factorMinTrigg, factorMaxTrigg);
           if (localMuonTrigg) aTile->SetLocalTriggerBit(1);
         }
-        
         
         hspectraHGvsCellID->Fill(aTile->GetCellID(), aTile->GetADCHigh());
         hspectraLGvsCellID->Fill(aTile->GetCellID(), aTile->GetADCLow());
@@ -5562,7 +5664,14 @@ bool Analyses::Calibrate(void){
         
         hspectraHGvsCellID->Fill(aTile->GetCellID(), adc);
         if(hasTOT)  hspectraTotvsCellID->Fill(aTile->GetCellID(), tot);
-        if(aTile->IsSaturatedADC()) hSaturatedCellID->Fill(aTile->GetCellID());
+        if(aTile->IsSaturatedADC()){
+          satCellsADC++;
+          hSaturatedTOTCellID->Fill(aTile->GetCellID());
+        }
+        if(aTile->IsSaturatedTOT()){
+          satCellsTOT++;
+          hSaturatedTOTCellID->Fill(aTile->GetCellID());
+        }
         if (localNoiseTrigg){
           hspectraHGCorrvsCellIDNoise->Fill(aTile->GetCellID(), adc);
           if(hasTOT) hspectraTotvsCellIDNoise->Fill(aTile->GetCellID(), tot);        
@@ -5634,8 +5743,8 @@ bool Analyses::Calibrate(void){
         }
         
         if (!localNoiseTrigg){
-        EtotNoNoise  = EtotNoNoise+energy; 
-        nCellsNoNoise++;
+          EtotNoNoise  = EtotNoNoise+energy; 
+          nCellsNoNoise++;
         }
         
         // only save if energy is larger minMip fraction
@@ -5649,11 +5758,22 @@ bool Analyses::Calibrate(void){
           event.RemoveTile(aTile);
           j--;
         }
-      }
-    }
+      } 
+    } // end single tile loop
+    
     hspectraEnergyTotvsNCells->Fill(nCells,Etot);
     hspectraEnergyTotvsNCellsNoNoise->Fill(nCellsNoNoise,EtotNoNoise);
     hspectraEnergyTotvsNCellsST->Fill(nCellsST,Etot);
+    
+    // checks for event integrity
+    hSaturatedADC->Fill(satCellsADC);
+    if (typeRO == ReadOut::Type::Caen){
+      hSaturatedLG->Fill(satCellsADCLG);
+      hNCellsLGHGCorrOutsideBound->Fill(lghgFailCells);
+    } else if (typeRO == ReadOut::Type::Hgcroc) {
+      hSaturatedTOT->Fill(satCellsTOT);
+    }
+    
     RootOutput->cd();
     if (!bREvent) TdataOut->Fill();
   }
@@ -5696,18 +5816,25 @@ bool Analyses::Calibrate(void){
   //*********************************************************************************************
   RootOutputHist->cd();
 
+    hDeltaTime->Write();
     hspectraHGvsCellID->Write();
     hspectraHGCorrvsCellIDNoise->Write();
+    hSaturatedADC->Write();
+    hSaturatedADCvsCellID->Write();
     if (typeRO == ReadOut::Type::Caen){
       hspectraHGCorrvsCellID->Write();
       hspectraLGvsCellID->Write();
       hspectraLGCorrvsCellID->Write();
       hspectraLGCorrvsCellIDNoise->Write();
+      hSaturatedLG->Write();
+      hSaturatedLGvsCellID->Write();
+      hLGHGCorrOutsideBoundCellID->Write();
+      hNCellsLGHGCorrOutsideBound->Write();
     } else {
       hspectraTotvsCellID->Write();
       hspectraTotvsCellIDNoise->Write();
-      hSaturatedCellID->Write();
-      
+      hSaturatedTOT->Write();
+      hSaturatedTOTCellID->Write();
       hSampleTOA->Write();
       hSampleTOAVsCellID->Write();
       hTOANsVsCellID->Write();
@@ -5772,17 +5899,54 @@ bool Analyses::Calibrate(void){
   TCanvas* canvas2DCorr = new TCanvas("canvasCorrPlots","",0,0,1450,1300);  // gives the page size
   DefaultCanvasSettings( canvas2DCorr, 0.08, 0.13, 0.045, 0.07);
   canvas2DCorr->SetLogz(1);
+
+  TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
+  DefaultCanvasSettings( canvas1DSimple, 0.08, 0.03, 0.03, 0.07);
+
+  hDeltaTime->Scale(1./evts);
+  hDeltaTime->GetYaxis()->SetTitle("counts/event");
+  canvas1DSimple->SetLogy();
+  PlotSimple1D(canvas1DSimple, hDeltaTime, -10000, -10000, textSizeRel, Form("%s/TimeDiffToPrevEvent.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, "");
+  canvas1DSimple->SetLogy(0);
+  
+  // overview simple plots
   PlotSimple2D( canvas2DCorr, hspectraHGvsCellID, -10000, -10000, textSizeRel, Form("%s/HG.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraHGCorrvsCellIDNoise, -50, 200, -10000, textSizeRel, Form("%s/HGCorr_Noise.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, "Local Noise triggered");
   PlotSimple2D( canvas2DCorr, hspectraEnergyvsCellID, -10000, -10000, textSizeRel, Form("%s/EnergyVsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DCorr, hspectraEnergyTotvsNCells, -10000, -10000, textSizeRel, Form("%s/EnergyTotalVsNCells.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
 
+  // saturated ADC per event
+  hSaturatedADC->Scale(1./evts);
+  hSaturatedADC->GetYaxis()->SetTitle("counts/event");
+  PlotSimple1D(canvas1DSimple, hSaturatedADC, -10000, -10000, textSizeRel, Form("%s/SaturatedADCPerEvent.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT #Cells_{ADC sat.} #GT= %.1f", hSaturatedADC->GetMean()  ));
+  hSaturatedADCvsCellID->Scale(1./evts);
+  hSaturatedADCvsCellID->GetYaxis()->SetTitle("counts/event");
+  PlotSimple1D(canvas1DSimple, hSaturatedADCvsCellID, -10000, -10000, textSizeRel, Form("%s/SaturatedADCPerEventvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, "");
+  
   if (typeRO == ReadOut::Type::Caen){
     PlotSimple2D( canvas2DCorr, hspectraHGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/HGCorr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
     PlotSimple2D( canvas2DCorr, hspectraHGCorrvsCellID, 300, -10000, textSizeRel, Form("%s/HGCorr_zoomed.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
     PlotSimple2D( canvas2DCorr, hspectraLGvsCellID, -10000, -10000, textSizeRel, Form("%s/LG.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
     PlotSimple2D( canvas2DCorr, hspectraLGCorrvsCellID, -10000, -10000, textSizeRel, Form("%s/LGCorr.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
     PlotSimple2D( canvas2DCorr, hspectraLGCorrvsCellID, 200, -10000, textSizeRel, Form("%s/LGCorr_zoomed.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+    
+    // saturated LG per event
+    hSaturatedLG->Scale(1./evts);
+    hSaturatedLG->GetYaxis()->SetTitle("counts/event");
+    PlotSimple1D(canvas1DSimple, hSaturatedLG, -10000, -10000, textSizeRel, Form("%s/SaturatedLGPerEvent.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT #Cells_{LG sat.} #GT= %.1f ",hSaturatedLG->GetMean()));
+    hSaturatedLGvsCellID->Scale(1./evts);
+    hSaturatedLGvsCellID->GetYaxis()->SetTitle("counts/event");
+    PlotSimple1D(canvas1DSimple, hSaturatedLGvsCellID, -10000, -10000, textSizeRel, Form("%s/SaturatedLGPerEventvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, "" );
+    
+    // LG/HG ratio sanity checks
+    hNCellsLGHGCorrOutsideBound->Scale(1./evts);
+    hNCellsLGHGCorrOutsideBound->GetYaxis()->SetTitle("counts/event");
+    PlotSimple1D(canvas1DSimple, hNCellsLGHGCorrOutsideBound, -10000, -10000, textSizeRel, Form("%s/LGHGOutSideBountPerEvent.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT #Cells_{LG/HG incorr} #GT= %.1f,%0.2f%s events > cell questionable",hNCellsLGHGCorrOutsideBound->GetMean(), hNCellsLGHGCorrOutsideBound->Integral(2,hNCellsLGHGCorrOutsideBound->GetNbinsX()+1)/hNCellsLGHGCorrOutsideBound->Integral(1,hNCellsLGHGCorrOutsideBound->GetNbinsX()+1)*100, "%" ));
+    hLGHGCorrOutsideBoundCellID->Scale(1./evts);
+    hLGHGCorrOutsideBoundCellID->GetYaxis()->SetTitle("counts/event");
+    PlotSimple1D(canvas1DSimple, hLGHGCorrOutsideBoundCellID, -10000, -10000, textSizeRel, Form("%s/LGHGOutSideBountPerEventvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, "" );
+    
+    
   } else if (typeRO == ReadOut::Type::Hgcroc){
     PlotSimple2D( canvas2DCorr, hspectraTotvsCellID, -10000, -10000, textSizeRel, Form("%s/Tot.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
     if(nLocalNoiseTriggs > 1) PlotSimple2D( canvas2DCorr, hspectraTotvsCellIDNoise, -50, 200, -10000, textSizeRel, Form("%s/Tot_Noise.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true, "Local Noise triggered");
@@ -5794,6 +5958,14 @@ bool Analyses::Calibrate(void){
     PlotSimple2D( canvas2DCorr, hspectraEnergyTotvsNCellsST, -10000, -10000, textSizeRel, Form("%s/EnergyTotalVsNCellsSingleTile.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
     if(nLocalNoiseTriggs > 1) PlotSimple2D( canvas2DCorr, hspectraEnergyTotvsNCellsNoNoise, -10000, -10000, textSizeRel, Form("%s/EnergyTotalVsNCellsNoNoise.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
 
+    // saturated TOT per event
+    hSaturatedTOT->Scale(1./evts);
+    hSaturatedTOT->GetYaxis()->SetTitle("counts/event");
+    PlotSimple1D(canvas1DSimple, hSaturatedTOT, -10000, -10000, textSizeRel, Form("%s/SaturatedLGPerEvent.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT #Cells_{TOT sat.} #GT= %.1f ",hSaturatedTOT->GetMean()));
+    hSaturatedTOTCellID->Scale(1./evts);
+    hSaturatedTOTCellID->GetYaxis()->SetTitle("counts/event");
+    PlotSimple1D(canvas1DSimple, hSaturatedTOTCellID, -10000, -10000, textSizeRel, Form("%s/SaturatedTOTCellsPerEventvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+    
     
     for (Int_t ro = 0; ro < setup->GetNMaxROUnit()+1; ro++){
       for (int h = 0; h< 2; h++){      
@@ -5808,8 +5980,6 @@ bool Analyses::Calibrate(void){
     }
   }
 
-  TCanvas* canvas1DSimple = new TCanvas("canvas1DSimple","",0,0,1450,1300);  // gives the page size
-  DefaultCanvasSettings( canvas1DSimple, 0.08, 0.03, 0.03, 0.07);
   hspectraEnergyTot->Scale(1./evts);
   hspectraEnergyTot->GetYaxis()->SetTitle("counts/event");
   PlotSimple1D(canvas1DSimple, hspectraEnergyTot, -10000, -10000, textSizeRel, Form("%s/EnergyTot.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT E_{Tot} #GT = %.1f (mip/tile eq.)",hspectraEnergyTot->GetMean() ));
@@ -5817,10 +5987,6 @@ bool Analyses::Calibrate(void){
   hspectraNCells->GetYaxis()->SetTitle("counts/event");
   PlotSimple1D(canvas1DSimple, hspectraNCells, -10000, -10000, textSizeRel, Form("%s/NCells.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, Form("#LT N_{Cells} #GT = %.1f",hspectraNCells->GetMean() ));
   if (typeRO == ReadOut::Type::Hgcroc){
-    hSaturatedCellID->Scale(1./evts);
-    hSaturatedCellID->GetYaxis()->SetTitle("counts/event");
-    PlotSimple1D(canvas1DSimple, hSaturatedCellID, -10000, -10000, textSizeRel, Form("%s/SaturatedCellsPerEvent.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
-    
     PlotSimple1D(canvas1DSimple, hSampleTOA, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleToA.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
     hspectraNCellsST->Scale(1./evts);
     
@@ -6080,6 +6246,7 @@ bool Analyses::SaveMuonTriggersOnly(void){
 
 //***********************************************************************************************
 //*********************** Skim HGCROC data ******************************************************
+//*********** write entire event if  1 cell determined fine *************************************
 //***********************************************************************************************
 bool Analyses::SkimHGCROCData(void){
   std::cout<<"Skim HGCROC data from pure noise"<<std::endl;
@@ -6116,7 +6283,7 @@ bool Analyses::SkimHGCROCData(void){
       if (aTile->GetRawTOA() > 0) triggered= true;
       if (aTile->GetLocalTriggerBit()== (char)1) triggered= true;
     }
-    
+  
     if (!triggered && debug == 3){
       for(int j=0; j<event.GetNTiles(); j++){
         Hgcroc* aTile=(Hgcroc*)event.GetTile(j);

@@ -12,7 +12,8 @@ class Caen: public Tile{
   int GetADCLow()const {return LG;};
   void SetADCHigh(int);
   void SetADCLow(int);
-  
+  bool IsSaturatedADCHigh();
+  bool IsSaturatedADCLow();
  private:
   double HG;
   double LG;

@@ -275,8 +275,6 @@ bool DataAnalysis::QAData(void){
   hNCellsVsLayerMuon->SetDirectory(0);
   hNCellsVsLayerMuon->Sumw2();
   
-
-
   //Create 1D Histos for Delta time
   TH1D* hDeltaTime = new TH1D("hDeltaTime", "Time Difference between Events; Delta Time (#mus); Counts", 2000, 0, 100000);
   

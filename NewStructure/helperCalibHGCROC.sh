@@ -59,11 +59,11 @@ function MuonCalibHGCROC()
   
   
   elif [ $1 == "saveNewMuon" ]; then 
-    time ./DataPrep -f -d 1 -X -i $4/rawHGCROC_wPedwMuon_wBC_$runNrMuon.root -o $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$runNrMuon.root 
+    time ./DataPrep -f -d 1 -M -i $4/rawHGCROC_wPedwMuon_wBC_$runNrMuon.root -o $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_$runNrMuon.root 
   elif [ $1 == "saveNewMuon_3Int" ]; then 
-    time ./DataPrep -f -d 1 -X -i $4/rawHGCROC_wPedwMuon_wBC_3Int_$runNrMuon.root -o $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_3Int_$runNrMuon.root 
+    time ./DataPrep -f -d 1 -M -i $4/rawHGCROC_wPedwMuon_wBC_3Int_$runNrMuon.root -o $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_3Int_$runNrMuon.root 
   elif [ $1 == "saveNewMuon_5Int" ]; then 
-    time ./DataPrep -f -d 1 -X -i $4/rawHGCROC_wPedwMuon_wBC_5Int_$runNrMuon.root -o $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_5Int_$runNrMuon.root 
+    time ./DataPrep -f -d 1 -M -i $4/rawHGCROC_wPedwMuon_wBC_5Int_$runNrMuon.root -o $4/rawHGCROC_mipTrigg_wPedwMuon_wBC_5Int_$runNrMuon.root 
 
   # improved mip skimmed & without eventtree write
   elif [ $1 == "imp1st_red_woE" ]; then 

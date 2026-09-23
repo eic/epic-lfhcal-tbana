@@ -37,6 +37,7 @@ class Hgcroc: public Tile {
   void ResetTOTWaveformPoint(int, int);
 
   bool IsSaturatedADC(void) const;
+  bool IsSaturatedTOT(void) const;
   int IsBelowPed(double) const;
   void SetNsample(int);
   void SetCorrectedTOT(double);

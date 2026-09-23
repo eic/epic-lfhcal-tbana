@@ -15,6 +15,15 @@ bool Hgcroc::IsSaturatedADC() const{
   return false;
 }
 
+bool Hgcroc::IsSaturatedTOT() const{
+  for (int k = 0; k < (int)tot_waveform.size(); k++ ){
+    if (tot_waveform.at(k) > 4090)
+      return true;
+  }
+  return false;
+}
+
+
 int Hgcroc::IsBelowPed(double pedSig) const{
   for (int k = 0; k < (int)adc_waveform.size(); k++ ){
     if ( adc_waveform.at(k) < (pedestal - pedSig))

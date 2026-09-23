@@ -70,7 +70,7 @@ class Event{
   double                BeamPosY;
   std::map<int, Tile* > Tiles;
   std::vector<int>      TileIDs;
-  double                   TimeStamp;
+  double                TimeStamp;
   
  protected:
 
