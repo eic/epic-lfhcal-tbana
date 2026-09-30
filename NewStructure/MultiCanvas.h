@@ -83,7 +83,7 @@ class MultiCanvas{
   void PlotCorr2DLayer(   std::map<int,TileSpectra> spectra, int option, 
                           Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, 
                           TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, 
-                          int noCalib = 0, int triggerCha = -1, int skiplayers = 0,  int debug = 1);
+                          int noCalib = 0, int triggerCha = -1, int skiplayers = 0,  int debug = 1, bool logZ = true);
   void PlotCorrWithFits(   std::map<int,TileSpectra> spectra, int option, 
                             Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, 
                             TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, 

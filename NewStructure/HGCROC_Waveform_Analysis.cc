@@ -1,5 +1,6 @@
 #include "HGCROC_Waveform_Analysis.h"
 #include <vector>
+#include <algorithm>
 #include "TROOT.h"
 #include <bitset>
 #ifdef __APPLE__
@@ -160,7 +161,11 @@ bool HGCROC_Waveform_Analysis::Process(void){
   if (IsInvCrossTalk){
     status=InvestigateCrossTalk();
   }
-  
+
+  if (IsExtractTOTvsMeanADC){
+    status=ExtractTOTvsMeanADC();
+  }
+
   // Shut down ROOT's worker pool before file and analysis-object teardown.
   ROOT::DisableImplicitMT();
 
@@ -693,7 +698,12 @@ bool HGCROC_Waveform_Analysis::ExtractTimeWalk(void){
   std::map<int,TileSpectra> hSpectra;
   std::map<int, TileSpectra>::iterator ithSpectra;
   std::map<int,TileSpectra> hSpectraAlt;
+  std::map<int,TileSpectra> hSpectraCoG;
+  std::map<int, TileSpectra>::iterator ithSpectraCoG;
+  std::map<int,TileSpectra> hSpectraCoGADC;
+  std::map<int, TileSpectra>::iterator ithSpectraCoGADC;
   std::map<int, TileSpectra>::iterator ithSpectraAlt;
+
   // set calib entry pointer
   TcalibIn->GetEntry(0);
 
@@ -724,6 +734,8 @@ bool HGCROC_Waveform_Analysis::ExtractTimeWalk(void){
   
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->mkdir("IndividualCellsAlt");
+  RootOutputHist->mkdir("IndividualCellsCoG");
+  RootOutputHist->mkdir("IndividualCellsCoGADC");
   RootOutputHist->cd("IndividualCells");
   
   ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2", "Migrad");  
@@ -816,9 +828,71 @@ bool HGCROC_Waveform_Analysis::ExtractTimeWalk(void){
           hSpectraAlt[cellID].FillExtHGCROC(tempADC,toa,-1,nSampTOA,-1);
           hSpectraAlt[cellID].FillMaxVsTime(tempADC, aTile->GetCorrectedTOA(), nOffEmpty, nMaxADC);
         }
+
+        // center of gravity in time of the waveform, not shifted by the TOA
+        // pedestal subtracted, only samples within +-2 of the max sample, skipping waveforms with saturated ADC
+        std::vector<int> wfCoG = aTile->GetADCWaveform();
+        bool satWfCoG = false;
+        for (int k = 0; k < (int)wfCoG.size(); k++ ){
+          if (wfCoG[k] == 1023) satWfCoG = true;
+        }
+        if (!satWfCoG && nMaxADC >= 0 && nMaxADC < (int)wfCoG.size()){
+          double sumW   = 0.;
+          double sumTW  = 0.;
+          int kMin      = (nMaxADC-2 > 0) ? nMaxADC-2 : 0;
+          int kMax      = (nMaxADC+2 < (int)wfCoG.size()-1) ? nMaxADC+2 : (int)wfCoG.size()-1;
+          for (int k = kMin; k <= kMax; k++ ){
+            double w = wfCoG[k]-ped;
+            if (w > 0){
+              sumW  += w;
+              sumTW += (k+nOffEmpty)*25.*w;
+            }
+          }
+          if (sumW > 0){
+            double tCoG = sumTW/sumW;
+            ithSpectraCoG=hSpectraCoG.find(cellID);
+            if (ithSpectraCoG==hSpectraCoG.end()){
+              RootOutputHist->cd("IndividualCellsCoG");
+              hSpectraCoG[cellID]=TileSpectra("cog",5,cellID,calib.GetTileCalib(cellID),event.GetROtype(),nSampleHGCROCInt,debug);
+              TileSpectra* tsCoG = &hSpectraCoG[cellID];
+              *(tsCoG->GetCorrADCTOA()) = TH2D(Form("h2DTOACoGCellID%d",cellID),
+                                               Form("2D CoG time vs TOA CellID %d; ToA (ns); CoG time (ns)",cellID),
+                                               250,-250,0, 240,0,600);
+              tsCoG->GetCorrADCTOA()->SetDirectory(0);
+              *(tsCoG->GetADCTOA())     = TProfile(Form("hTOACoGCellID%d",cellID),
+                                               Form("CoG time vs TOA CellID %d; ToA (ns); CoG time (ns)",cellID),
+                                               125,-250,0);
+              tsCoG->GetADCTOA()->SetDirectory(0);
+              ithSpectraCoG=hSpectraCoG.find(cellID);
+            }
+            ithSpectraCoG->second.GetCorrADCTOA()->Fill(toaNs, tCoG);
+            ithSpectraCoG->second.GetADCTOA()->Fill(toaNs, tCoG);
+
+            // same CoG vs max ADC (pedestal subtracted)
+            double maxADCCoG = wfCoG[nMaxADC]-ped;
+            ithSpectraCoGADC=hSpectraCoGADC.find(cellID);
+            if (ithSpectraCoGADC==hSpectraCoGADC.end()){
+              RootOutputHist->cd("IndividualCellsCoGADC");
+              hSpectraCoGADC[cellID]=TileSpectra("cogADC",5,cellID,calib.GetTileCalib(cellID),event.GetROtype(),nSampleHGCROCInt,debug);
+              TileSpectra* tsCoGADC = &hSpectraCoGADC[cellID];
+              *(tsCoGADC->GetCorrADCTOA()) = TH2D(Form("h2DADCCoGCellID%d",cellID),
+                                                  Form("2D CoG time vs max ADC CellID %d; max ADC (arb. units); CoG time (ns)",cellID),
+                                                  250,0,1000, 240,0,600);
+              tsCoGADC->GetCorrADCTOA()->SetDirectory(0);
+              *(tsCoGADC->GetADCTOA())     = TProfile(Form("hADCCoGCellID%d",cellID),
+                                                  Form("CoG time vs max ADC CellID %d; max ADC (arb. units); CoG time (ns)",cellID),
+                                                  100,0,1000);
+              tsCoGADC->GetADCTOA()->SetDirectory(0);
+              ithSpectraCoGADC=hSpectraCoGADC.find(cellID);
+            }
+            ithSpectraCoGADC->second.GetCorrADCTOA()->Fill(maxADCCoG, tCoG);
+            ithSpectraCoGADC->second.GetADCTOA()->Fill(maxADCCoG, tCoG);
+          }
+        }
       }
     }
   }
+  gROOT->cd();
 
   //==================================================================================
   // Setup general plotting infos
@@ -864,7 +938,59 @@ bool HGCROC_Waveform_Analysis::ExtractTimeWalk(void){
                               Form("%s/WaveformMaxAdcOnly",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
   panelPlot2D.PlotCorr2DLayer(hSpectraAlt, 2, -6*1024, -2*1024, 0, 1000,
                               Form("%s/TOA_ADC_MaxAdcOnly",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
-  
+  panelPlot2D.PlotCorr2DLayer(hSpectraAlt, 7, 0, 300, -50, (it->second.samples)*25,
+                              Form("%s/ADC_TOA_MaxAdcOnly",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
+
+  // TOA vs center of gravity in time of the waveform
+  int nCellsCoG = 0;
+  for(ithSpectraCoG=hSpectraCoG.begin(); ithSpectraCoG!=hSpectraCoG.end(); ++ithSpectraCoG){
+    if (ithSpectraCoG->second.GetCorrADCTOA()->GetEntries() >= 30) nCellsCoG++;
+  }
+  std::cout << "TOA vs CoG: " << hSpectraCoG.size() << " cells with entries, " << nCellsCoG << " with at least 30" << std::endl;
+  panelPlot2D.PlotCorr2DLayer(hSpectraCoG, 7, -250, 0, 0, 300,
+                              Form("%s/TOA_CoG",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, 0, 1, false );
+  // CoG time vs max ADC
+  panelPlot2D.PlotCorr2DLayer(hSpectraCoGADC, 7, 0, 1000, 0, 300,
+                              Form("%s/CoG_ADC",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, 0, 1, false );
+
+  // TOA vs CoG: individual per-cell plots
+  TString outputDirPlotsCells = outputDirPlots+"/SingleCells";
+  gSystem->Exec("mkdir -p "+outputDirPlotsCells);
+  TCanvas* canvasCellCoG = new TCanvas("canvasTOACoGCell","",0,0,1450,1300);
+  DefaultCanvasSettings( canvasCellCoG, 0.08, 0.13, 0.045, 0.07);
+  canvasCellCoG->SetLogz(0);
+  for(ithSpectraCoG=hSpectraCoG.begin(); ithSpectraCoG!=hSpectraCoG.end(); ++ithSpectraCoG){
+    TH2D* corrCoG = ithSpectraCoG->second.GetCorrADCTOA();
+    if (corrCoG->GetEntries() < 30) continue;
+    int cellIDCoG = ithSpectraCoG->first;
+    corrCoG->SetTitle("");
+    PlotSimple2D(canvasCellCoG, corrCoG, 0, 300, 0, textSizeRel,
+                 Form("%s/TOA_CoG_CellID%d.%s", outputDirPlotsCells.Data(), cellIDCoG, plotSuffix.Data()),
+                 it->second, 1, kTRUE, "colz", true, Form("cell ID %d",cellIDCoG));
+  }
+
+  // CoG time vs max ADC: individual per-cell plots (at least 30 entries)
+  for(ithSpectraCoGADC=hSpectraCoGADC.begin(); ithSpectraCoGADC!=hSpectraCoGADC.end(); ++ithSpectraCoGADC){
+    TH2D* corrCoGADC = ithSpectraCoGADC->second.GetCorrADCTOA();
+    if (corrCoGADC->GetEntries() < 30) continue;
+    int cellIDCoGADC = ithSpectraCoGADC->first;
+    corrCoGADC->SetTitle("");
+    PlotSimple2D(canvasCellCoG, corrCoGADC, 0, 300, 1000, textSizeRel,
+                 Form("%s/CoG_ADC_CellID%d.%s", outputDirPlotsCells.Data(), cellIDCoGADC, plotSuffix.Data()),
+                 it->second, 1, kTRUE, "colz", true, Form("cell ID %d",cellIDCoGADC));
+  }
+
+  // TOA vs max ADC: individual per-cell plots (at least 30 entries)
+  for(ithSpectraAlt=hSpectraAlt.begin(); ithSpectraAlt!=hSpectraAlt.end(); ++ithSpectraAlt){
+    TH2D* corrTOAADC = ithSpectraAlt->second.GetCorrTOAADC();
+    if (corrTOAADC->GetEntries() < 30) continue;
+    int cellIDAlt = ithSpectraAlt->first;
+    corrTOAADC->SetTitle("");
+    PlotSimple2D(canvasCellCoG, corrTOAADC, 0, 1000, -2*1024, textSizeRel,
+                 Form("%s/TOA_ADC_MaxAdcOnly_CellID%d.%s", outputDirPlotsCells.Data(), cellIDAlt, plotSuffix.Data()),
+                 it->second, 1, kTRUE, "colz", true, Form("cell ID %d",cellIDAlt));
+  }
+
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // saving all outputs
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -885,6 +1011,17 @@ bool HGCROC_Waveform_Analysis::ExtractTimeWalk(void){
   for(ithSpectraAlt=hSpectraAlt.begin(); ithSpectraAlt!=hSpectraAlt.end(); ++ithSpectraAlt){
     ithSpectraAlt->second.WriteExt(true);
   }
+  RootOutputHist->cd("IndividualCellsCoG");
+  for(ithSpectraCoG=hSpectraCoG.begin(); ithSpectraCoG!=hSpectraCoG.end(); ++ithSpectraCoG){
+    ithSpectraCoG->second.GetCorrADCTOA()->Write();
+    ithSpectraCoG->second.GetADCTOA()->Write();
+  }
+  RootOutputHist->cd("IndividualCellsCoGADC");
+  for(ithSpectraCoGADC=hSpectraCoGADC.begin(); ithSpectraCoGADC!=hSpectraCoGADC.end(); ++ithSpectraCoGADC){
+    ithSpectraCoGADC->second.GetCorrADCTOA()->Write();
+    ithSpectraCoGADC->second.GetADCTOA()->Write();
+  }
+  RootOutputHist->Close();
 
   RootInput->Close();
   return true;
@@ -1433,6 +1570,264 @@ bool HGCROC_Waveform_Analysis::InvestigateCrossTalk(void){
   return true;
 }
 
+
+//***********************************************************************************************
+//************** max TOT vs mean ADC correlation extraction
+//***********************************************************************************************
+bool HGCROC_Waveform_Analysis::ExtractTOTvsMeanADC(void){
+  std::cout<<"ExtractTOTvsMeanADC"<<std::endl;
+
+  std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
+  DetConf::Type detConf = setup->GetDetectorConfig();
+
+  TcalibIn->GetEntry(0);
+  if (OverWriteCalib){
+    calib.ReadCalibFromTextFile(ExternalCalibFile,debug);
+  }
+
+  TdataIn->GetEntry(0);
+  Int_t runNr           = event.GetRunNumber();
+  ReadOut::Type typeRO  = event.GetROtype();
+  calib.SetRunNumber(runNr);
+  calib.SetBeginRunTime(event.GetBeginRunTimeAlt());
+  std::map<int,RunInfo>::iterator it=ri.find(runNr);
+
+  if (typeRO != ReadOut::Type::Hgcroc){
+    std::cout << "ExtractTOTvsMeanADC: only implemented for HGCROC readout, aborting" << std::endl;
+    return false;
+  }
+
+  CreateOutputRootHistFile();
+
+  std::map<int,TileSpectra> hSpectra; // mean ADC vs TOT
+  std::map<int, TileSpectra>::iterator ithSpectra;
+  std::map<int,TileSpectra> hSpectraMaxADC;   // mean ADC vs max ADC
+  std::map<int, TileSpectra>::iterator ithSpectraMaxADC;
+
+  // saturation counts per channel: events in which at least one sample is saturated
+  TH1D* hSaturatedADCvsCellID = new TH1D("hSaturatedADCvsCellID","ADC saturated CellID; cell ID; counts ",
+                                   setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5);
+  hSaturatedADCvsCellID->SetDirectory(0);
+  TH1D* hSaturatedTOTCellID = new TH1D("hSaturatedTOTCellID","TOT Saturated CellID; cell ID; Saturated cells  ",
+                                   setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5);
+  hSaturatedTOTCellID->SetDirectory(0);
+
+  // number of cells with saturated ADC / TOT per event
+  TH1D* hSaturatedADC = new TH1D("hSaturatedADC","ADC saturated per event; #cells; counts ",
+                                 setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5);
+  hSaturatedADC->SetDirectory(0);
+  TH1D* hSaturatedTOT = new TH1D("hSaturatedTOT","TOT saturated per event; #cells; counts ",
+                                 setup->GetNActiveCells()+1, -0.5, setup->GetNActiveCells()+1-0.5);
+  hSaturatedTOT->SetDirectory(0);
+
+  RootOutputHist->mkdir("IndividualCells");
+  RootOutputHist->mkdir("IndividualCellsMaxADC");
+  RootOutputHist->cd("IndividualCells");
+  RootOutput->cd();
+
+  int evts=TdataIn->GetEntries();
+  if (maxEvents == -1){
+    maxEvents = evts;
+  }
+  int outCount = 5000;
+  if (evts < 10000) outCount = 500;
+
+  for(int i=0; i<evts && i < maxEvents; i++){
+    TdataIn->GetEntry(i);
+    if (i%outCount == 0 && debug > 0) std::cout << "Reading " <<  i << " / " << evts << " events" << std::endl;
+
+    int nCellsADCSat = 0;
+    int nCellsTOTSat = 0;
+    for(int j=0; j<event.GetNTiles(); j++){
+      Hgcroc* aTile=(Hgcroc*)event.GetTile(j);
+      long cellID = aTile->GetCellID();
+
+      double ped = calib.GetPedestalMeanL(cellID);
+      if (ped == -1000){
+        ped = calib.GetPedestalMeanH(cellID);
+        if (ped == -1000){
+          ped = aTile->GetPedestal();
+        }
+      }
+
+      double toa     = aTile->GetRawTOA();
+      double maxTOT  = aTile->GetMaxTOT();
+      double meanADC = aTile->GetMeanADC(ped);
+      double maxADC  = 0.;
+      std::vector<int> adcWaveform = aTile->GetADCWaveform();
+      if (adcWaveform.size() > 0) maxADC = *std::max_element(adcWaveform.begin(), adcWaveform.end()) - ped;
+
+      bool adcSaturated = aTile->IsSaturatedADC();
+      bool totSaturated = aTile->IsSaturatedTOT();
+      if (adcSaturated){
+        hSaturatedADCvsCellID->Fill(cellID);
+        nCellsADCSat++;
+      }
+      if (totSaturated){
+        hSaturatedTOTCellID->Fill(cellID);
+        nCellsTOTSat++;
+      }
+
+      ithSpectra=hSpectra.find(cellID);
+      if(ithSpectra!=hSpectra.end()){
+        ithSpectra->second.FillExtHGCROC(meanADC,toa,maxTOT,-1,-1);
+      } else {
+        RootOutputHist->cd("IndividualCells");
+        hSpectra[cellID]=TileSpectra("Calibrated",2,cellID,calib.GetTileCalib(cellID),event.GetROtype(), nSampleHGCROCInt, debug);
+        TileSpectra* tsTOT = &hSpectra[cellID];
+        tsTOT->GetADCTOT()->GetXaxis()->SetTitle("mean ADC (arb. units)");
+        tsTOT->GetADCTOT()->GetYaxis()->SetTitle("max TOT (arb. units)");
+        tsTOT->GetCorrADCTOT()->GetXaxis()->SetTitle("mean ADC (arb. units)");
+        tsTOT->GetCorrADCTOT()->GetYaxis()->SetTitle("max TOT (arb. units)");
+        hSpectra[cellID].FillExtHGCROC(meanADC,toa,maxTOT,-1,-1);
+        RootOutput->cd();
+      }
+
+      ithSpectraMaxADC=hSpectraMaxADC.find(cellID);
+      if(ithSpectraMaxADC!=hSpectraMaxADC.end()){
+        ithSpectraMaxADC->second.FillExtHGCROC(meanADC,toa,maxADC,-1,-1);
+      } else {
+        RootOutputHist->cd("IndividualCellsMaxADC");
+        hSpectraMaxADC[cellID]=TileSpectra("MaxADC",2,cellID,calib.GetTileCalib(cellID),event.GetROtype(), nSampleHGCROCInt, debug);
+        TileSpectra* tsMax = &hSpectraMaxADC[cellID];
+        tsMax->GetADCTOT()->GetXaxis()->SetTitle("mean ADC (arb. units)");
+        tsMax->GetADCTOT()->GetYaxis()->SetTitle("max ADC (arb. units)");
+        tsMax->GetCorrADCTOT()->GetXaxis()->SetTitle("mean ADC (arb. units)");
+        tsMax->GetCorrADCTOT()->GetYaxis()->SetTitle("max ADC (arb. units)");
+        tsMax->FillExtHGCROC(meanADC,toa,maxADC,-1,-1);
+        RootOutput->cd();
+      }
+    }
+    hSaturatedADC->Fill(nCellsADCSat);
+    hSaturatedTOT->Fill(nCellsTOTSat);
+  }
+
+  int evtsProcessed = (evts < maxEvents) ? evts : maxEvents;
+  std::cout << "=======================================================" << std::endl;
+  std::cout << "Total events processed " << evtsProcessed << std::endl;
+
+  RootOutputHist->cd("IndividualCells");
+  for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
+    ithSpectra->second.WriteExt(false);
+  }
+  RootOutputHist->cd("IndividualCellsMaxADC");
+  for(ithSpectraMaxADC=hSpectraMaxADC.begin(); ithSpectraMaxADC!=hSpectraMaxADC.end(); ++ithSpectraMaxADC){
+    ithSpectraMaxADC->second.WriteExt(false);
+  }
+
+  RootOutputHist->cd();
+  hSaturatedADCvsCellID->Write();
+  hSaturatedTOTCellID->Write();
+  hSaturatedADC->Write();
+  hSaturatedTOT->Write();
+
+  // content needed to replot from the file alone: 2D correlations, setup and calib
+  RootOutputHist->cd("IndividualCells");
+  for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
+    ithSpectra->second.GetCorrADCTOT()->Write();
+  }
+  RootOutputHist->cd("IndividualCellsMaxADC");
+  for(ithSpectraMaxADC=hSpectraMaxADC.begin(); ithSpectraMaxADC!=hSpectraMaxADC.end(); ++ithSpectraMaxADC){
+    ithSpectraMaxADC->second.GetCorrADCTOT()->Write();
+  }
+  RootOutputHist->cd();
+  TTree* tSetupHist = TsetupIn->CloneTree();
+  tSetupHist->Write();
+  TTree* tCalibHist = new TTree("Calib","Calib");
+  tCalibHist->Branch("calib",&calib);
+  tCalibHist->Fill();
+  tCalibHist->Write();
+  RootOutputHist->Close();
+
+  return PlotTOTvsMeanADC(hSpectra, hSpectraMaxADC, hSaturatedADCvsCellID, hSaturatedTOTCellID, hSaturatedADC, hSaturatedTOT, runNr);
+}
+
+//***********************************************************************************************
+//***************************** plotting for max TOT / max ADC vs mean ADC and saturation
+//***********************************************************************************************
+bool HGCROC_Waveform_Analysis::PlotTOTvsMeanADC(std::map<int,TileSpectra>& hSpectra, std::map<int,TileSpectra>& hSpectraMaxADC,
+                                                TH1D* hSaturatedADCvsCellID, TH1D* hSaturatedTOTCellID,
+                                                TH1D* hSaturatedADC, TH1D* hSaturatedTOT, Int_t runNr){
+  std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
+  std::map<int,RunInfo>::iterator it=ri.find(runNr);
+  if (it == ri.end()){
+    std::cout << "PlotTOTvsMeanADC: run " << runNr << " not found in run list " << RunListInputName.Data() << ", aborting" << std::endl;
+    return false;
+  }
+  DetConf::Type detConf = setup->GetDetectorConfig();
+  std::map<int, TileSpectra>::iterator ithSpectra;
+  std::map<int, TileSpectra>::iterator ithSpectraMaxADC;
+
+  TString outputDirPlots = GetPlotOutputDir();
+  TString outputDirPlotsRun = Form("%s/Run_%d", outputDirPlots.Data(), runNr);
+  TString outputDirPlotsCells = outputDirPlotsRun+"/SingleCells";
+  gSystem->Exec("mkdir -p "+outputDirPlotsRun);
+  gSystem->Exec("mkdir -p "+outputDirPlotsCells);
+  StyleSettingsBasics("pdf");
+  SetPlotStyle();
+  Double_t textSizeRel = 0.035;
+
+  MultiCanvas panelPlot2D(detConf, "TOTvsMeanADC");
+  bool init2D = panelPlot2D.Initialize(2);
+
+  panelPlot2D.PlotCorr2DLayer(hSpectra, 4, 0, 4096, 0, 4096.,
+                              Form("%s/TOTvsMeanADC",outputDirPlotsRun.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, 0, 1, false);
+
+  // individual per-cell plots
+  TCanvas* canvasCell = new TCanvas("canvasTOTvsMeanADCCell","",0,0,1450,1300);
+  DefaultCanvasSettings( canvasCell, 0.08, 0.13, 0.045, 0.07);
+  canvasCell->SetLogz(0);
+  for(ithSpectra=hSpectra.begin(); ithSpectra!=hSpectra.end(); ++ithSpectra){
+    TH2D* corrADCTOT = ithSpectra->second.GetCorrADCTOT();
+    if (corrADCTOT->GetEntries() < 30) continue;
+    int cellID = ithSpectra->first;
+    corrADCTOT->SetTitle("");
+    TString cellLabel = Form("cell ID %d",cellID);
+    PlotSimple2D(canvasCell, corrADCTOT, 0, 4096, 4096, textSizeRel,
+                 Form("%s/TOTvsMeanADC_CellID%d.%s", outputDirPlotsCells.Data(), cellID, plotSuffix.Data()),
+                 it->second, 1, kTRUE, "colz", true, cellLabel);
+  }
+
+  // max ADC vs mean ADC
+  panelPlot2D.PlotCorr2DLayer(hSpectraMaxADC, 4, 0, 1024, 0, 1024.,
+                              Form("%s/MaxADCvsMeanADC",outputDirPlotsRun.Data()), plotSuffix.Data(), it->second, &calib, 0, -1, 0, 1, false);
+
+  for(ithSpectraMaxADC=hSpectraMaxADC.begin(); ithSpectraMaxADC!=hSpectraMaxADC.end(); ++ithSpectraMaxADC){
+    TH2D* corrMaxADC = ithSpectraMaxADC->second.GetCorrADCTOT();
+    if (corrMaxADC->GetEntries() < 30) continue;
+    int cellID = ithSpectraMaxADC->first;
+    corrMaxADC->SetTitle("");
+    TString cellLabel = Form("cell ID %d",cellID);
+    PlotSimple2D(canvasCell, corrMaxADC, 0, 1024, 1024, textSizeRel,
+                 Form("%s/MaxADCvsMeanADC_CellID%d.%s", outputDirPlotsCells.Data(), cellID, plotSuffix.Data()),
+                 it->second, 1, kTRUE, "colz", true, cellLabel);
+  }
+  double evts = hSaturatedADC->GetEntries();
+  TCanvas* canvas1DSat = new TCanvas("canvas1DSat","",0,0,1450,1300);
+  DefaultCanvasSettings( canvas1DSat, 0.08, 0.03, 0.03, 0.07);
+  if (evts > 0){
+    hSaturatedADCvsCellID->Scale(1./evts);
+    hSaturatedTOTCellID->Scale(1./evts);
+    hSaturatedADC->Scale(1./evts);
+    hSaturatedTOT->Scale(1./evts);
+  }
+  hSaturatedADCvsCellID->GetYaxis()->SetTitle("counts/event");
+  hSaturatedTOTCellID->GetYaxis()->SetTitle("counts/event");
+  hSaturatedADC->GetYaxis()->SetTitle("counts/event");
+  hSaturatedTOT->GetYaxis()->SetTitle("counts/event");
+  PlotSimple1D(canvas1DSat, hSaturatedADCvsCellID, -10000, -10000, textSizeRel,
+               Form("%s/SaturatedADCPerEventvsCellID.%s", outputDirPlotsRun.Data(), plotSuffix.Data()), it->second, 1);
+  PlotSimple1D(canvas1DSat, hSaturatedTOTCellID, -10000, -10000, textSizeRel,
+               Form("%s/SaturatedTOTCellsPerEventvsCellID.%s", outputDirPlotsRun.Data(), plotSuffix.Data()), it->second, 1);
+  PlotSimple1D(canvas1DSat, hSaturatedADC, -10000, -10000, textSizeRel,
+               Form("%s/SaturatedADCPerEvent.%s", outputDirPlotsRun.Data(), plotSuffix.Data()), it->second, 1,
+               Form("#LT #Cells_{ADC sat.} #GT= %.1f", hSaturatedADC->GetMean()));
+  PlotSimple1D(canvas1DSat, hSaturatedTOT, -10000, -10000, textSizeRel,
+               Form("%s/SaturatedTOTPerEvent.%s", outputDirPlotsRun.Data(), plotSuffix.Data()), it->second, 1,
+               Form("#LT #Cells_{TOT sat.} #GT= %.1f", hSaturatedTOT->GetMean()));
+
+  return true;
+}
 
 //***********************************************************************************************
 //*********************** Create output files ***************************************************

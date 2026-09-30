@@ -18,6 +18,8 @@ class Hgcroc: public Tile {
   int GetMaxSampleADC (void);
   int GetNsample(void) const ;
   double GetRawTOT(void) const;
+  double GetMaxTOT(void) const;
+  double GetMeanADC(double pedestal) const;
   double GetCorrectedTOT(void) const;
   double GetRawTOA(void) const;
   double GetCorrectedTOA(void) const;

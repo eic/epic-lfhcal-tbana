@@ -473,6 +473,17 @@ float Setup::GetMaxZ() const{
   return max;/*to get to the end of tile*/
 }
 
+std::vector<double> Setup::GetZBinEdges() const{  // for summing
+  std::vector<double> edges;
+  double z = GetMinZ();
+  edges.push_back(z);
+  for (int lay = 0; lay <= nMaxLayer; lay++){
+    z += GetLayersInSegmentFromLayer(lay) * cellD;
+    edges.push_back(z);
+  }
+  return edges;
+}
+
 bool Setup::IsLayerOn(int layer, int mod) const{
   bool isOn = false;
   for (int r = 0; r< GetNMaxRow(); r++){

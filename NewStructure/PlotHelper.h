@@ -629,7 +629,8 @@
                                          TH3F* h3Remain, TH1D* h1XRemain, TH1D* h1YRemain, TH1D* h1ZRemain, 
                                          Int_t evtNr, Float_t etot, Float_t maxE, 
                                          Float_t maxEX, Float_t maxEY, Float_t maxEZ, bool ktrigg,
-                                         RunInfo currRunInfo, TString outputName, TString suffix = "pdf", TString unit = "mip eq/tile"
+                                         RunInfo currRunInfo, TString outputName, TString suffix = "pdf", TString unit = "mip eq/tile",
+                                         double theta3D = 50, double phi3D = 40
                                         ){
     Double_t textSizeRel = 0.035;
     Double_t textSizeSubpad = 0.06;
@@ -667,8 +668,8 @@
     
     padEvt[0]->Draw();
     padEvt[0]->cd();
-    padEvt[0]->SetTheta(50);
-    padEvt[0]->SetPhi(40);
+    padEvt[0]->SetTheta(theta3D);
+    padEvt[0]->SetPhi(phi3D);
     
     SetStyleHistoTH3ForGraphs(h3All, "#it{z} (cm)  ", " #it{x} (cm)","#it{y} (cm)", 0.65*textSizeRel,0.85*textSizeRel, 0.65*textSizeRel,0.85*textSizeRel, 0.65*textSizeRel,0.85*textSizeRel, 1.5, 1.3, 0.7, 510, 505, 502);
     h3All->GetXaxis()->SetLabelOffset(-0.004);
@@ -745,10 +746,21 @@
   inline void EventDisplayWithSlice( TH3F* h3All, TH1D* h1XAll, TH1D* h1YAll, TH1D* h1ZAll, 
                               Int_t evtNr, Float_t etot, Float_t maxE, 
                               Float_t maxEX, Float_t maxEY, Float_t maxEZ, bool ktrigg,
-                              RunInfo currRunInfo, TString outputName, TString suffix = "pdf", TString unit = "mip eq/tile"
+                              RunInfo currRunInfo, TString outputName, TString suffix = "pdf", TString unit = "mip eq/tile",
+                              double theta3D = 50, double phi3D = 40, TString chrome = "MonoChrome"
                             ){
     Double_t textSizeRel = 0.035;
     Double_t textSizeSubpad = 0.06;
+
+    TString boxOpt  = "";
+    if( chrome.CompareTo("MonoChrome") == 0 ){
+      boxOpt = "box1";
+    } else if( chrome.CompareTo("Colored") == 0 ){
+      boxOpt = "box2z";
+    } else {
+      std::cout << "Unknown plotting option... aborting" << std::endl;
+      return;
+    }
     
     TCanvas* canvas3D2 = new TCanvas("canvas3D2","",0,0,1400,750);  // gives the page size
     // DefaultCanvasSettings( canvas3D2, 0.05, 0.25, 0.05, 0.1);
@@ -783,8 +795,8 @@
     
     padEvt[0]->Draw();
     padEvt[0]->cd();
-    padEvt[0]->SetTheta(50);
-    padEvt[0]->SetPhi(40);
+    padEvt[0]->SetTheta(theta3D);
+    padEvt[0]->SetPhi(phi3D);
     
     SetStyleHistoTH3ForGraphs(h3All, "#it{z} (cm)  ", " #it{x} (cm)","#it{y} (cm)", 0.65*textSizeRel,0.85*textSizeRel, 0.65*textSizeRel,0.85*textSizeRel, 0.65*textSizeRel,0.85*textSizeRel, 1.5, 1.3, 0.7, 510, 505, 502);
     h3All->GetXaxis()->SetLabelOffset(-0.004);
@@ -792,7 +804,7 @@
     h3All->SetMaximum(maxE);
     h3All->SetFillColor(kBlue+1);
     h3All->SetLineColor(kBlue+1);
-    h3All->Draw("box1");
+    h3All->Draw(boxOpt.Data());
     
     canvas3D2->cd();
     padEvt[1]->Draw();

@@ -33,6 +33,10 @@ elif [ $1 = "Preet" ]; then
   dataDirRaw=/home/lfhcal/HGCROCData
   dataDirOut=/home/lfhcal/HGCROCData
   PlotBaseDir=/home/lfhcal/HGCROCData/plots
+elif [ $1 = "eglimos" ]; then 
+  dataDirRaw=/home/ewa/EIC/DATA/2026_05_SPS_TestBeam/converted
+  dataDirOut=/home/ewa/EIC/DATA/2026_05_SPS_TestBeam/converted
+  PlotBaseDir=/home/ewa/EIC/DATA/2026_05_SPS_TestBeam
 else
   echo "Please select a known user name, otherwise I don't know where the data is"
   exit

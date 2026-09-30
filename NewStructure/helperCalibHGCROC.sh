@@ -190,7 +190,7 @@ function HGCInv()
   runNr=$2
   fixedSample=$7
   cellList=""
-  if [ $6 != "none" ]; then 
+  if [ "$6" != "none" ]; then 
     cellList=$6
   fi
   echo 
@@ -198,7 +198,7 @@ function HGCInv()
   # Running simple wave analysis w/o additional toa offset correction
   if [ $1 == "wave" ]; then 
     # run plotting also for specific cells in detailed plotting mode
-    if [ $6 != "none" ]; then 
+    if [ "$6" != "none" ]; then 
       ./HGCROCStudy -d 1 -E 1 -f -w -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWave/$5 -r $runList -l $cellList
     # only summary plots
     else 
@@ -207,7 +207,7 @@ function HGCInv()
   # Running simple wave analysis w additional toa offset correction (in case it wasn't applied before)
   elif [ $1 == "waveWOff" ]; then 
     # run plotting also for specific cells in detailed plotting mode
-    if [ $6 != "none" ]; then 
+    if [ "$6" != "none" ]; then 
       ./HGCROCStudy -d 2 -E 1 -f -w -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWaveOffSetCorr/$5 -r $runList -t $toaPhaseOffset -l $cellList
     # only summary plots
     else 
@@ -218,7 +218,7 @@ function HGCInv()
   elif [ $1 == "waveNToAWOff" ]; then 
     ./HGCROCStudy -d 1 -E 1 -f -w -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWaveOffSetCorr/$5 -r $runList -s $fixedSample -t $toaPhaseOffset
   elif [ $1 == "timeWalk" ]; then 
-    ./HGCROCStudy -d 1 -E 1 -f -T -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_timewalk_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsTimeWalk/$5 -r $runList 
+    ./HGCROCStudy -d 1 -E 1 -f -T -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_timewalk_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsTimeWalk/$5 -r $runList
   elif [ $1 == "xTalk" ]; then 
     ./HGCROCStudy -d 1 -E 1 -f -x -i $3/calibratedHGCROC_Run_$runNr.root -o $3/calibratedHGCROC_xTalk_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsXTalk/$5 -r $runList 
     curDir=$PWD
@@ -270,6 +270,22 @@ function HGCInv()
   fi
 }
 
+function TOTStudies()
+{
+
+  echo "============================ TOT vs mean ADC studies =========================================="
+  echo "option $1"
+  echo "runNr" $2
+  echo "dataRawDir: $3"
+  echo "dataOutDir: $4"
+  echo "OutNameRun:" $5
+  echo "calib file: $6"
+  echo "run list:" $runList
+  runNr=$2
+  echo "=================================================================================="
+  mkdir -p $PlotBaseDir/$5
+  ./HGCROCStudy -f -d 1 -V -C $6 -i $3/rawHGCROC_$runNr.root -o $4/TOTvsMeanADC_Output_Run$runNr.root -O $PlotBaseDir/$5 -r "$runList"
+}
 
 function QARun()
 {

@@ -70,6 +70,10 @@ class TileSpectra: public TObject{
       hTOAADC  = TProfile(Form("hCoorspectra%sTOAADCCellID%d",name.Data(),id),Form("ADC-TOA correlation CellID %d; TOA (arb. units); ADC (arb. units)",id),
                           1024,0,1024);
       hTOAADC.SetDirectory(0);
+      hADCTOA  = TProfile(Form("hCoorspectra%sADCTOACellID%d",name.Data(),id),Form("TOA-ADC correlation CellID %d; TOA (arb. units); ADC (arb. units)",id),
+                          500,0,500);
+      hADCTOA.SetDirectory(0);
+
     }
   }
   TileSpectra(TString name, int ext, int id, TileCalib* cal, ReadOut::Type type, int integ = 1, int deb=0):TObject()
@@ -172,15 +176,22 @@ class TileSpectra: public TObject{
         hcorr         = TH2D(Form("waveform%sCellID%d",name.Data(),id),Form("2D waveform CellID %d; t (ns) ; ADC (arb. units)",id),
                              550,-50,500, 1034, -10, 1024);
         hcorr.SetDirectory(0);
-        hcorrTOAADC   = TH2D(Form("h2DADCTOA%sCellID%d",name.Data(),id),Form("2D ADC vs TOA CellID %d; TOA (arb. units); ADC (arb. units)",id),
+        hcorrTOAADC   = TH2D(Form("h2DTOAADC%sCellID%d",name.Data(),id),Form("2D ADC vs TOA CellID %d; TOA (arb. units); ADC (arb. units)",id),
                              1024/8,0,1024, (1024+100)/8,-100,1024*integ);
         hcorrTOAADC.SetDirectory(0);
+        hcorrADCTOA   = TH2D(Form("h2DADCTOA%sCellID%d",name.Data(),id),Form("2D ADC vs TOA CellID %d; ADC (arb. units); TOA (ns)",id),
+                             325,-25,300, 1124/4, -100, 1024);
+        hcorrADCTOA.SetDirectory(0);
+        
         hcorrTOASample = TH2D(Form("h2DTOASample%sCellID%d",name.Data(),id),Form("2D Sample vs TOA CellID %d; TOA (arb. units); #sample",id),
                               1024/8,0,1024,20,0,20);
         hcorrTOASample.SetDirectory(0);
-        hTOAADC       = TProfile(Form("h%sADCTOACellID%d",name.Data(),id),Form("ADC-TOA correlation CellID %d; TOA (arb. units); ADC (arb. units)",id),
+        hTOAADC       = TProfile(Form("h%sTOAADCCellID%d",name.Data(),id),Form("TOA-ADC correlation CellID %d; TOA (arb. units); ADC (arb. units)",id),
                                  1024/8,0,1024, "");
         hTOAADC.SetDirectory(0);
+        hADCTOA       = TProfile(Form("h%sADCTOACellID%d",name.Data(),id),Form("ADC-TOA correlation CellID %d; ADC (arb. units); TOA (ns)",id),
+                                  325,-25,300, "");
+        hADCTOA.SetDirectory(0);
       }
     // extended pedestal output
     } else if (extend == 4){
@@ -201,8 +212,12 @@ class TileSpectra: public TObject{
         hcorr.SetDirectory(0);
         hcorrTOAADC   = TH2D(Form("h2DADCLinTOA%sCellID%d",name.Data(),id),Form("2D ADC vs TOA CellID %d; TOA (arb. units); ADC (arb. units)",id), 1024/2,-6*1024,-2*1024,1124/4,-100,1024);
         hcorrTOAADC.SetDirectory(0);
+        hcorrADCTOA   = TH2D(Form("h2DTOALinADC%sCellID%d",name.Data(),id),Form("2D ADC vs TOA CellID %d; ADC (arb. units); TOA (ns)",id),1124/4,-100,1024, 1124/4, -100, 1024);
+        hcorrADCTOA.SetDirectory(0);
         hTOAADC       = TProfile(Form("h%sADCLinTOACellID%d",name.Data(),id),Form("ADC-TOA correlation CellID %d; TOA (arb. units); ADC (arb. units)",id),1024/2,-6*1024,-2*1024, "");
         hTOAADC.SetDirectory(0);
+        hADCTOA       = TProfile(Form("h%sTOALinADCCellID%d",name.Data(),id),Form("TOA-ADC correlation CellID %d; ADC (arb. units); TOA (ns)",id),325,-25,300, "");
+        hADCTOA.SetDirectory(0);
       }
     } else if (extend == 6){
       if (type == ReadOut::Type::Hgcroc){
@@ -286,7 +301,9 @@ class TileSpectra: public TObject{
   TProfile* GetWave1D();
   TProfile* GetTOAADC();
   TProfile* GetADCTOT();
+  TProfile* GetADCTOA();
   TH2D* GetCorrTOAADC();
+  TH2D* GetCorrADCTOA();
   TH2D* GetCorrTOASample();
   TH2D* GetCorrADCTOT();
   TProfile* GetTOTProfile();
@@ -337,8 +354,10 @@ class TileSpectra: public TObject{
   TProfile hWaveForm;   // only in HGCROC case
   TProfile hADCTOT;
   TProfile hTOAADC;
+  TProfile hADCTOA;     // for timewalk correction
   TH2D hcorr; 
   TH2D hcorrTOAADC;     // only in HGCROC case
+  TH2D hcorrADCTOA;     // only in HGCROC case
   TH2D hcorrTOASample;  // only in HGCROC case
   TH2D hcorrADCTOT;     // only in HGCROC case
   TProfile hProfileTOT; // only in HGCROC case

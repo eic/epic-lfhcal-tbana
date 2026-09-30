@@ -14,6 +14,10 @@ if [ $1 = "fbockTB" ]; then
   dataDirRaw=/media/fbock/ALICE2-4TB/202605_SPSH2/HGCROCData
   dataDirOut=/media/fbock/ALICE2-4TB/202605_SPSH2/HGCROCData
   PlotBaseDir=/media/fbock/ALICE2-4TB/202605_SPSH2/
+elif [ $1 = "eglimos" ]; then 
+  dataDirRaw=/home/ewa/EIC/DATA/2026_05_SPS_TestBeam/converted
+  dataDirOut=/home/ewa/EIC/DATA/2026_05_SPS_TestBeam/converted
+  PlotBaseDir=/home/ewa/EIC/DATA/2026_05_SPS_TestBeam/
 else
   echo "Please select a known user name, otherwise I don't know where the data is"
   exit
@@ -49,5 +53,15 @@ elif [ $2 = "Compare" ]; then
   ./CompareWaveform -d 1 -e 1 -E 1 -f -I configs/comparisonWaveform_CFCompVariation.txt -o $dataDirOut/compWaveCFCompVar.root -O $dataDirOut/compWaveCFCompVar/ -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv  -c ../configs/TB2026/activeCellsHGCROCParameterScan.txt
   #variations with everything the same except CC
   ./CompareWaveform -d 1 -e 1 -E 1 -f -I configs/comparisonWaveform_CCVariation.txt -o $dataDirOut/compWaveCCVar.root -O $dataDirOut/compWaveCCVar/ -r ../configs/TB2026/DataTakingDB_TBSPSH2_202605_HGCROC.csv  -c ../configs/TB2026/activeCellsHGCROCParameterScan.txt
-  
+elif [ $2 = "timewalk" ]; then
+  runs="072 073 074 075"
+  for runNr in $runs; do
+    HGCInv "timeWalk" $runNr $dataDirRaw $dataDirOut Run_$runNr
+  done
+elif [ $2 = "totStudy" ]; then
+  runs="418 419"
+  calibFile=/home/ewa/EIC/DATA/2026_05_SPS_TestBeam/calibrations/calib_Final_Muon_FullSetB_2.root
+  for runNr in $runs; do
+    TOTStudies "tot" $runNr $dataDirRaw $dataDirOut HGCROC_TOTStudies $calibFile
+  done
 fi

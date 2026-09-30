@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <map>
+#include <vector>
 #include "TString.h"
 
 class RootSetupWrapper;
@@ -86,6 +87,7 @@ class Setup{
   float     GetCellWidth  (void) const;
   float     GetCellHeight (void) const;
   float     GetCellDepth  (void) const;
+  std::vector<double> GetZBinEdges(void) const;
 
   DetConf::Type GetDetectorConfig(void) const;
   int GetAbsMaxRowsSetup( DetConf::Type);

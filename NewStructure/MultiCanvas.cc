@@ -767,7 +767,7 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
         for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
           if (skiplayers > 0){
             if  (l%skiplayers != 0){
-              std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+              std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skip layers " << skiplayers << std::endl;
               continue;
             }
           }
@@ -788,7 +788,7 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
         if (skiplayers > 0){
           if  (l%skiplayers != 0){
-            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skip layers " << skiplayers << std::endl;
             continue;
           }
         }
@@ -809,7 +809,7 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
         if (skiplayers > 0){
           if  (l%skiplayers != 0){
-            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skip layers " << skiplayers << std::endl;
             continue;
           }
         }
@@ -828,7 +828,7 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -853,7 +853,7 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -881,7 +881,7 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -919,8 +919,8 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
 void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int option, 
                                     Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY, 
                                     TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, 
-                                    int noCalib, int triggerCha, int skiplayers, int debug ){
-  
+                                    int noCalib, int triggerCha, int skiplayers, int debug, bool logZ ){
+
   std::cout << "plotting: " << nameOutputBase.Data() << std::endl;
   Setup* setup = Setup::GetInstance();
   // Single tile plotting
@@ -938,7 +938,7 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
         for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
           if (skiplayers > 0){
             if  (l%skiplayers != 0){
-              std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+              std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skip layers " << skiplayers << std::endl;
               continue;
             }
           }
@@ -965,7 +965,7 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
         if (skiplayers > 0){
           if  (l%skiplayers != 0){
-            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skip layers " << skiplayers << std::endl;
             continue;
           }
         }
@@ -989,7 +989,7 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
         if (skiplayers > 0){
           if  (l%skiplayers != 0){
-            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skip layers " << skiplayers << std::endl;
             continue;
           }
         }
@@ -1009,7 +1009,7 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -1024,16 +1024,16 @@ void MultiCanvas::PlotCorr2DLayer(  std::map<int,TileSpectra> spectra, int optio
         continue;
       }        
 
-      PlotCorr2D2ModLayer (canvasMulti, padMulti, legPlace_X, legPlace_Y, relTextSize, textSize, 
+      PlotCorr2D2ModLayer (canvasMulti, padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                            spectra, option, xPMin, xPMax, minY, maxY, l,
-                           Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo, noCalib, triggerCha);
+                           Form("%s_Layer%02d.%s" ,nameOutputBase.Data(), l, suffix.Data()), currRunInfo, noCalib, triggerCha, logZ);
     }
   // 2x3 8M module plotting - 2026 TB setup
   } else if ( detType == DetConf::Type::MediumTB){
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -1097,7 +1097,7 @@ void MultiCanvas::PlotNoiseAdvWithFits(  std::map<int,TileSpectra> spectra, std:
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
         if (skiplayers > 0){
           if  (l%skiplayers != 0){
-            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skip layers " << skiplayers << std::endl;
             continue;
           }
         }
@@ -1117,7 +1117,7 @@ void MultiCanvas::PlotNoiseAdvWithFits(  std::map<int,TileSpectra> spectra, std:
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -1140,7 +1140,7 @@ void MultiCanvas::PlotNoiseAdvWithFits(  std::map<int,TileSpectra> spectra, std:
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -1194,7 +1194,7 @@ void MultiCanvas::Plot3SpectraOverlay(  std::map<int,TileSpectra> spectra, std::
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -1217,7 +1217,7 @@ void MultiCanvas::Plot3SpectraOverlay(  std::map<int,TileSpectra> spectra, std::
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -1272,7 +1272,7 @@ void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option,
         for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
           if (skiplayers > 0){
             if  (l%skiplayers != 0){
-              std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+              std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skip layers " << skiplayers << std::endl;
               continue;
             }
           }        
@@ -1299,7 +1299,7 @@ void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option,
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
         if (skiplayers > 0){
           if  (l%skiplayers != 0){
-            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skip layers " << skiplayers << std::endl;
             continue;
           }
         }        
@@ -1323,7 +1323,7 @@ void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option,
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
         if (skiplayers > 0){
           if  (l%skiplayers != 0){
-            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skip layers " << skiplayers << std::endl;
             continue;
           }
         }        
@@ -1343,7 +1343,7 @@ void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option,
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){    
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -1366,7 +1366,7 @@ void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option,
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }      
@@ -1420,7 +1420,7 @@ void MultiCanvas::PlotCorrWithFits( std::map<int,TileSpectra> spectra, int optio
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
         if (skiplayers > 0){
           if  (l%skiplayers != 0){
-            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skip layers " << skiplayers << std::endl;
             continue;
           }
         }
@@ -1441,7 +1441,7 @@ void MultiCanvas::PlotCorrWithFits( std::map<int,TileSpectra> spectra, int optio
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -1464,7 +1464,7 @@ void MultiCanvas::PlotCorrWithFits( std::map<int,TileSpectra> spectra, int optio
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -1518,7 +1518,7 @@ void MultiCanvas::PlotMipWithFits(  std::map<int,TileSpectra> spectra, std::map<
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
         if (skiplayers > 0){
           if  (l%skiplayers != 0){
-            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skip layers " << skiplayers << std::endl;
             continue;
           }
         }
@@ -1538,7 +1538,7 @@ void MultiCanvas::PlotMipWithFits(  std::map<int,TileSpectra> spectra, std::map<
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -1562,7 +1562,7 @@ void MultiCanvas::PlotMipWithFits(  std::map<int,TileSpectra> spectra, std::map<
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -1619,7 +1619,7 @@ void MultiCanvas::PlotTriggerPrim(  std::map<int,TileSpectra> spectra,
       for (Int_t m = 0; m < setup->GetNMaxModule()+1; m++){
         if (skiplayers > 0){
           if  (l%skiplayers != 0){
-            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skiplayers " << skiplayers << std::endl;
+            std::cout << "====> layer " << l << " in module " << m << " plotting skipped, skip layers " << skiplayers << std::endl;
             continue;
           }
         }
@@ -1640,7 +1640,7 @@ void MultiCanvas::PlotTriggerPrim(  std::map<int,TileSpectra> spectra,
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }
@@ -1663,7 +1663,7 @@ void MultiCanvas::PlotTriggerPrim(  std::map<int,TileSpectra> spectra,
     for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){      
       if (skiplayers > 0){
         if  (l%skiplayers != 0){
-          std::cout << "====> layer " << l << " plotting skipped, skiplayers " << skiplayers << std::endl;
+          std::cout << "====> layer " << l << " plotting skipped, skip layers " << skiplayers << std::endl;
           continue;
         }
       }

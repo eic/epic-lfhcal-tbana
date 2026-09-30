@@ -823,12 +823,15 @@
             tempProfile     = ithSpectra->second.GetTOTProfile();
           } else if (option == 6){
             tempProfile     = ithSpectra->second.GetTOAProfile();
+          } else if (option == 7){    // timewalk corr
+            tempProfile     = ithSpectra->second.GetADCTOA();
+            temp2D          = ithSpectra->second.GetCorrADCTOA();
           }
-          
+
           if (!temp2D && option != 4) continue;
-          
+
           if (temp2D){
-            SetStyleHistoTH2ForGraphs( temp2D, temp2D->GetXaxis()->GetTitle(), temp2D->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
+            SetStyleHistoTH2ForGraphs( temp2D, temp2D->GetXaxis()->GetTitle(), temp2D->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);
             temp2D->GetYaxis()->SetRangeUser(minY,maxY);
             temp2D->GetXaxis()->SetRangeUser(xMin,xMax);
             temp2D->Draw("col");

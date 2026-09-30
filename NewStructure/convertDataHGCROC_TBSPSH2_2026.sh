@@ -64,6 +64,9 @@ elif [ $1 = "Preet" ]; then
 elif [ $1 = "kchandra" ]; then
   dataRaw=/run/media/lfhcal/Howard4TB/202605_SPSH2/raw # source directory for output files from DAQ system
   dataDir=/run/media/lfhcal/Howard4TB/202605_SPSH2/HGCROCData # base directory for root trees
+elif [ $1 = "eglimos" ]; then
+  dataRaw=/home/ewa/EIC/DATA/2026_05_SPS_TestBeam/raw      # source directory for output files from DAQ system
+  dataDir=/home/ewa/EIC/DATA/2026_05_SPS_TestBeam/converted           # base directory for root trees
 fi
 
 
@@ -131,14 +134,15 @@ elif [ $2 = "FullSetA" ]; then
 elif [ $2 = "FullSetB" ]; then 
   if [ $3 = "convert" ]; then 
     echo "started conversion"
-        runs='071 126 072 073 074 075 076 077 078 079 080 081 082 083 084 130 131 132 133 085 086 087 088 089 089 090 091 092 093 094 095 096 097 113 114 115 116 117 118 119 120 121 122 123 124 125 098 099 100 101 102 103 104 105 106 107 108 109 110 111 112 127 128 129 136 087' #full list
+        # runs='071 126 072 073 074 075 076 077 078 079 080 081 082 083 084 130 131 132 133 085 086 087 088 089 089 090 091 092 093 094 095 096 097 113 114 115 116 117 118 119 120 121 122 123 124 125 098 099 100 101 102 103 104 105 106 107 108 109 110 111 112 127 128 129 136 087' #full list
 #       runs='071 126' #pedestals
-#       runs='072 073 074 075 076 077 078 079 080 081 082 083 084' #muons set 1
+      runs='072 073 074 075 076 077 078 079 080 081 082 083 084' #muons set 1
 #       runs='130 131 132 133' #muons set 2
-#       runs='085 086 087 088 089 089 090' #e-
-#       runs='091 092 093 094 095 096 097 ' #e+
+      # runs='087 088 089 089 090' #e-
+      # runs='091 092 093 094 095 096 097 ' #e+
 #       runs='113 114 115 116 117 118 119 120 121 122 123 124 125' #pi-
-#       runs='098 099 100 101 102 103 104 105 106 107 108 109 110 111 112' #h+
+      # runs='098 099 100 101 102 103 104 105 106 107 108 109 110 111 112' #h+
+      # runs='098 099 100 101 102 103 104 105 106 107 108' #h+
 #     runs='127 128 129 136 087' #additional runs
     for runNr in $runs; do 
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
@@ -222,7 +226,8 @@ elif [ $2 = "FullSetD" ]; then
 # 44 V, summing board V2, Preamp settings 12 7 3 1
 elif [ $2 = "FullSetE" ]; then 
   if [ $3 = "convert" ]; then 
-#       runs='372 420 374 375 376 377 378 421 422 423 425 424 379 380 381 382 383 384 391 392 385 386 387 388 389 390 393 394 395 396 397 398 399 400 401 402 403 404 405 406 407 408 409 410 411 412 413 414 415 416 417 418 419 473 474 477 478 481 482 371 373' #full list
+      # runs='372 420 374 375 376 377 378 421 422 423 425 424 379 380 381 382 383 384 391 392 385 386 387 388 389 390 393 394 395 396 397 398 399 400 401 402 403 404 405 406 407 408 409 410 411 412 413 414 415 416 417 418 419 473 474 477 478 481 482 371 373' #full list
+      runs='413 414 415 416 417 418 419 473 474 477 478' #full list
 #       runs='372 420' #pedestals
 #       runs='374 375 376 377 378' #muons set 1
 #       runs='421 422 423 425 424' #muons set 2
@@ -232,7 +237,7 @@ elif [ $2 = "FullSetE" ]; then
 #       runs='385 386 387 388 389 390' #e+
 #       runs='393 394 395 396 397 398 399 400 401 402 403 404' #pi-
 #       runs='405 406 407 408 409 410 411 412 413 414 415 416 417 418 419' #h+
-    runs='473 474 477 478 481 482 371 373' #additional runs
+    # runs='473 474 477 478 481 482 371 373' #additional runs
     for runNr in $runs; do 
       ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapConDefV2 -r $runList
     done

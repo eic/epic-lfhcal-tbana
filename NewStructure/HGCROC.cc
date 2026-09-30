@@ -97,7 +97,28 @@ double Hgcroc::GetRawTOT(void) const{
   return tot;
 }
 
-// Gets first TOA fired for the waveform 
+// Gets maximum TOT fired for the waveform
+double Hgcroc::GetMaxTOT(void) const{
+  double tot = 0;
+  for (int k = 0; k < (int)tot_waveform.size(); k++ ){
+    if (tot_waveform.at(k) > tot){
+      tot = tot_waveform.at(k);
+    }
+  }
+  return tot;
+}
+
+// Gets pedestal-subtracted mean ADC over the full waveform
+double Hgcroc::GetMeanADC(double pedestal) const{
+  if (adc_waveform.size() == 0) return 0;
+  double sum = 0;
+  for (int k = 0; k < (int)adc_waveform.size(); k++ ){
+    sum += (adc_waveform.at(k) - pedestal);
+  }
+  return sum / (double)adc_waveform.size();
+}
+
+// Gets first TOA fired for the waveform
 double Hgcroc::GetRawTOA(void) const{
   double toa = 0;
   for (int k = 0; k < (int)toa_waveform.size(); k++ ){

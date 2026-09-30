@@ -914,17 +914,17 @@
   inline void PlotCorr2D2ModLayer (TCanvas* canvas, TPad** pads, 
                           Double_t* topRCornerX,  Double_t* topRCornerY, Double_t* relSize8P, Int_t textSizePixel, 
                           std::map<int,TileSpectra> spectra, int option,
-                          Double_t xMin, Double_t xMax, Double_t minY, Double_t maxY, int layer, TString nameOutput, RunInfo currRunInfo, bool noCalib = 0, int triggCh = -1 ){
-                                  
+                          Double_t xMin, Double_t xMax, Double_t minY, Double_t maxY, int layer, TString nameOutput, RunInfo currRunInfo, bool noCalib = 0, int triggCh = -1, bool logZ = true ){
+
     Setup* setupT = Setup::GetInstance();
-    
-    std::map<int, TileSpectra>::iterator ithSpectra;    
+
+    std::map<int, TileSpectra>::iterator ithSpectra;
     int nRow = setupT->GetNMaxRow()+1;
     int nCol = setupT->GetNMaxColumn()+1;
     int nMod = setupT->GetNMaxModule()+1;
     int skipped = 0;
     ReadOut::Type rotype = ReadOut::Type::Undef;
-    
+
     bool isTriggCh = false;
     if (triggCh != -1)
       isTriggCh = true;
@@ -941,7 +941,7 @@
           }
           pads[p]->Draw();
           pads[p]->SetLogy(0);
-          pads[p]->SetLogz(1);
+          pads[p]->SetLogz(logZ ? 1 : 0);
           pads[p]->cd();
           
           ithSpectra=spectra.find(tempCellID);
@@ -982,6 +982,9 @@
             tempProfile     = ithSpectra->second.GetTOTProfile();
           } else if (option == 6){
             tempProfile     = ithSpectra->second.GetTOAProfile();
+          } else if (option == 7){    // timewalk corr
+            tempProfile     = ithSpectra->second.GetADCTOA();
+            temp2D          = ithSpectra->second.GetCorrADCTOA();
           }
           
           if (!temp2D && option != 4) continue;

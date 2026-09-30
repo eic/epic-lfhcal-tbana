@@ -19,8 +19,8 @@ bool TileSpectra::FillCAEN(double l, double h){
 
 bool TileSpectra::FillHGCROC(double adc, double toa, double tot){
   hspectraHG.Fill(adc);
-  hspectraTOT.Fill(toa);
-  hspectraTOA.Fill(tot);
+  hspectraTOT.Fill(tot);
+  hspectraTOA.Fill(toa);
   if (tot > 0)
     hADCTOT.Fill(adc, tot);
   hTOAADC.Fill(toa, adc);
@@ -35,8 +35,8 @@ bool TileSpectra::FillSpectraCAEN(double l, double h){
 
 bool TileSpectra::FillSpectraHGCROC(double adc, double toa, double tot){
   hspectraHG.Fill(adc);
-  hspectraTOT.Fill(toa);
-  hspectraTOA.Fill(tot);
+  hspectraTOT.Fill(tot);
+  hspectraTOA.Fill(toa);
   return true;
 }
 
@@ -133,6 +133,8 @@ bool TileSpectra::FillMaxVsTime(double adc, double toalincorr = 0, int offset = 
   double timeRes = 25./1024;
   double tempt = ((nSampleADCMax+offset)*1024+toalincorr)*timeRes;
   hcorr.Fill(tempt,adc);
+  hADCTOA.Fill(adc, tempt);
+  hcorrADCTOA.Fill(adc, tempt);
   if (extend == 3 || extend == 5 || extend == 6 || extend == 8 || extend == 2)   hWaveForm.Fill(tempt,adc);
   return true;
 }
@@ -1017,6 +1019,9 @@ TProfile* TileSpectra::GetTOAADC(){
 TProfile* TileSpectra::GetADCTOT(){
   return &hADCTOT;
 }
+TProfile* TileSpectra::GetADCTOA(){
+  return &hADCTOA;
+}
 
 TH2D* TileSpectra::GetCorr(){
   return &hcorr;
@@ -1026,11 +1031,16 @@ TH2D* TileSpectra::GetCorrTOAADC(){
   return &hcorrTOAADC;
 }
 
+TH2D* TileSpectra::GetCorrADCTOA(){
+  return &hcorrADCTOA;
+}
+
 TH2D* TileSpectra::GetCorrTOASample(){
   return &hcorrTOASample;
 }
 
 TH2D* TileSpectra::GetCorrADCTOT(){
+  if (extend != 2) return nullptr;
   return &hcorrADCTOT;
 }
 
@@ -1105,6 +1115,7 @@ void TileSpectra::Write( bool wFits = true){
     if (bTriggPrim) hTriggPrim.Write(hTriggPrim.GetName(), kOverwrite);
     hADCTOT.Write(hspectraTOT.GetName(), kOverwrite);
     hTOAADC.Write(hspectraTOA.GetName(), kOverwrite);
+    hADCTOA.Write(hspectraTOA.GetName(), kOverwrite);
     if (extend == 8 || extend == 7 || extend == 6 || extend == 5 || extend == 2) hWaveForm.Write(hWaveForm.GetName(), kOverwrite);
     if ( wFits ){
       if(bpedHG)BackgroundHG.Write(BackgroundHG.GetName(), kOverwrite);

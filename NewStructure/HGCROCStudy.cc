@@ -30,6 +30,7 @@ void PrintHelp(char* exe){
   std::cout<<"-c ccc   list of cell to be plotted separately"<<std::endl;
   std::cout<<"-B lll   apply external bad channel map during transfer of calibs"<<std::endl;
   std::cout<<"-c ccc   set fixed Readout board channel"<<std::endl;
+  std::cout<<"-C ccc   external calibration root file (pedestals) instead of the one in the input file"<<std::endl;
   std::cout<<"-d [0-n] switch on debug info with debug level 0 to n"<<std::endl;
   std::cout<<"-E [1-3] extended plotting set to whatever value you specify"<<std::endl;
   std::cout<<"-f       Force to write output if already exist"<<std::endl;
@@ -44,6 +45,7 @@ void PrintHelp(char* exe){
   std::cout<<"-s sss   Plot correlation plots TOA only for TOA sample sss "<<std::endl;
   std::cout<<"-t ttt   Use external ToA offset calib-file "<<std::endl;
   std::cout<<"-T       extract time walk "<<std::endl;
+  std::cout<<"-V       extract max TOT vs mean ADC correlation (per cell plots, needs -C for pedestals) "<<std::endl;
   std::cout<<"-w       perform extended waveform study "<<std::endl;
   std::cout<<"-x       study cross talk "<<std::endl;
   std::cout<<"-h       this help"<<std::endl<<std::endl;
@@ -58,7 +60,7 @@ int main(int argc, char* argv[]){
   }
   HGCROC_Waveform_Analysis AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"B:c:d:E:fF:i:hk:l:L:o:O:q:Q:r:s:t:Twx"))!=-1){
+  while((c=getopt(argc,argv,"B:c:C:d:E:fF:i:hk:l:L:o:O:q:Q:r:s:t:TVwx"))!=-1){
     switch(c){
     
     case 'B':
@@ -68,6 +70,10 @@ int main(int argc, char* argv[]){
     case 'c':
       std::cout<<"HGCROCStudy: set fixed RO channel: "<<optarg<<std::endl;
       AnAnalysis.SetFixedROChannel(atoi(optarg));
+      break;
+    case 'C':
+      std::cout<<"HGCROCStudy: use calibration (pedestals) from: "<<optarg<<std::endl;
+      AnAnalysis.SetRootCalibInput(Form("%s",optarg));
       break;
     case 'd':
       std::cout<<"HGCROCStudy: enable debug " << optarg <<std::endl;
@@ -133,6 +139,10 @@ int main(int argc, char* argv[]){
     case 'T':
       std::cout<<"HGCROCStudy: extract time walk "<<std::endl;
       AnAnalysis.IsToExtractTimeWalk(true);
+      break;
+    case 'V':
+      std::cout<<"HGCROCStudy: extract max TOT vs average ADC correlation"<<std::endl;
+      AnAnalysis.IsToExtractTOTvsMeanADC(true);
       break;
     case 'w':
       std::cout<<"HGCROCStudy: analyse HGCROC waveform"<<std::endl;

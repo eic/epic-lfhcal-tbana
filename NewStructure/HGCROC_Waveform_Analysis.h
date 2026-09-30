@@ -7,6 +7,8 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TObjString.h"
+#include "TH1D.h"
+#include <map>
 
 #include "Setup.h"
 #include "RootSetupWrapper.h"
@@ -15,7 +17,8 @@
 #include "Tile.h"
 #include "HGCROC.h"
 #include "Caen.h"
-    
+#include "TileSpectra.h"
+
 class HGCROC_Waveform_Analysis{
 
  public:
@@ -44,6 +47,7 @@ class HGCROC_Waveform_Analysis{
   inline bool IsToAnalysisWaveForm(void)        const {return IsAnalyseWaveForm;};
   inline bool IsToExtractTimeWalk(void)         const {return IsExtractTimeWalk;};
   inline bool IsToInvCrossTalk(void)            const {return IsInvCrossTalk;};
+  inline bool IsToExtractTOTvsMeanADC(void)     const {return IsExtractTOTvsMeanADC;};
   inline bool IsHGCROC(void)                    const {return HGCROC;};
   
   inline short GetExtPlotting(void)             const {return ExtPlot;};
@@ -60,6 +64,7 @@ class HGCROC_Waveform_Analysis{
   inline void IsToAnalysisWaveForm(bool b)       {IsAnalyseWaveForm=b;};
   inline void IsToExtractTimeWalk(bool b)        {IsExtractTimeWalk=b;};
   inline void IsToInvCrossTalk(bool b)           {IsInvCrossTalk=b;};
+  inline void IsToExtractTOTvsMeanADC(bool b)    {IsExtractTOTvsMeanADC=b;};
   inline void SetOverWriteCalib(bool b)          {OverWriteCalib = b;};
   inline void SetExtPlotting(short b)            {ExtPlot = b;};
   inline void EnableDebug(int i)                 {debug=i;};  
@@ -115,6 +120,7 @@ class HGCROC_Waveform_Analysis{
   bool IsAnalyseWaveForm      =false;     // Flag for routine with waveform analysis
   bool IsExtractTimeWalk      =false;     // Flag for routine with time walk extraction
   bool IsInvCrossTalk         =false;     // Flag for routine with investigate cross talk
+  bool IsExtractTOTvsMeanADC  =false;     // Flag for routine with max TOT vs mean ADC correlation extraction
   bool OverWriteCalib         =false;     // Flag to overwrite calib from text file
   short ExtPlot               =0;         // Enable extended plotting
   bool Overwrite              =false;     // Flag to overwrite outputs
@@ -148,6 +154,9 @@ class HGCROC_Waveform_Analysis{
   bool AnalyseWaveForm(void);
   bool ExtractTimeWalk(void);
   bool InvestigateCrossTalk(void);
+  bool ExtractTOTvsMeanADC(void);
+  bool PlotTOTvsMeanADC(std::map<int,TileSpectra>&, std::map<int,TileSpectra>&,
+                        TH1D*, TH1D*, TH1D*, TH1D*, Int_t);
  };
 
 
