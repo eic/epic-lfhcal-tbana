@@ -896,6 +896,10 @@
       else if (option==17) tempH = itrun->second.GetLGscaleCalcDiffRef();
       else if (option==18) tempH = itrun->second.GetLGHGcorrDiffRef();
       else if (option==19) tempH = itrun->second.GetHGpedwidthDiffRef();
+      // LG to HG relation 
+      else if (option==20) tempH = itrun->second.GetLGScaleCalcDiffLGScale();
+      else if (option==21) tempH = itrun->second.GetLGScaleCalcAlterDiffLGScale();
+      else if (option==22) tempH = itrun->second.GetLGScaleDiffHGScale();
       
       if (maxY < tempH->GetMaximum()) maxY = tempH->GetMaximum();
       if ( maxX < FindLastBinXAboveMin(tempH)) maxX = FindLastBinXAboveMin(tempH);
@@ -978,7 +982,10 @@
         else if (option==17) histos[currRun] = itrun->second.GetLGscaleCalcDiffRef();
         else if (option==18) histos[currRun] = itrun->second.GetLGHGcorrDiffRef();
         else if (option==19) histos[currRun] = itrun->second.GetHGpedwidthDiffRef();
-        
+        else if (option==20) histos[currRun] = itrun->second.GetLGScaleCalcDiffLGScale();
+        else if (option==21) histos[currRun] = itrun->second.GetLGScaleCalcAlterDiffLGScale();
+        else if (option==22) histos[currRun] = itrun->second.GetLGScaleDiffHGScale();
+
         SetStyleHistoTH1ForGraphs( histos[currRun], histos[currRun]->GetXaxis()->GetTitle(), histos[currRun]->GetYaxis()->GetTitle(), 0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.95, 1.02);  
         SetLineDefaults(histos[currRun], GetColorLayer(currRun,altStyle), lineWidth, GetLineStyleLayer(currRun,altStyle));   
         
@@ -1167,7 +1174,6 @@
     Double_t minY         = 0.1;
     Double_t maxY         = 0;
     Double_t minX         = 9999;
-    // Double_t minX         = 0;
     Double_t maxX         = 0;
     bool isSameVoltage    = true;
     double commonVoltage  = 0;
@@ -1179,13 +1185,23 @@
       if (option==0) tempH = itrun->second.GetDeltaTimeHist();
       else if (option==1) tempH = itrun->second.GetEnergyHist();
       else if (option==2) tempH = itrun->second.GetNCellsHist();
+      else if (option==3) tempH = itrun->second.GetSatADCHist();
+      else if (option==4) tempH = itrun->second.GetSatLGHist();
+      else if (option==5) tempH = itrun->second.GetLGHGOutHist();
+      else if (option==6) tempH = itrun->second.GetSatADCCellIDHist();
+      else if (option==7) tempH = itrun->second.GetSatLGCellIDHist();
+      else if (option==8) tempH = itrun->second.GetLGHGOutCellIDHist();
       
       std::cout << 2./tempH->GetEntries() << std::endl;
+      
+      Int_t maxTemp = FindLastBinXAboveMin(tempH,2./tempH->GetEntries());
       if (maxY < tempH->GetMaximum()) maxY = tempH->GetMaximum();
-      if ( maxX < FindLastBinXAboveMin(tempH,2./tempH->GetEntries())) maxX = FindLastBinXAboveMin(tempH,2./tempH->GetEntries());
+      if ( maxX < maxTemp){
+        maxX = maxTemp;
+      }
       if ( minX > FindFirstBinXAboveMin(tempH,2./tempH->GetEntries())) minX = FindFirstBinXAboveMin(tempH,2./tempH->GetEntries());      
       if (minY > 2./tempH->GetEntries()) minY = 2./tempH->GetEntries();
-      // std::cout << "min X\t"  << minX << "\t max X \t" << maxX << std::endl;
+      std::cout << "min X\t"  << minX << "\t max X \t" << maxX << std::endl;
       if (nruns==0){
         commonVoltage = itrun->second.GetVoltage();
       } else {
@@ -1196,6 +1212,7 @@
     if (eoXmax != 0) {	
       maxX = eoXmax;
     }
+    std::cout << nameOutput.Data() << std::endl;
     std::cout << "min X\t"  << minX << "\t max X \t" << maxX << std::endl;
     std::cout << "min Y\t"  << minY << "\t max Y \t" << maxY << std::endl;
     
@@ -1249,13 +1266,27 @@
       int currRun = 0;
       for(itrun=sumRuns.begin(); (itrun!=sumRuns.end()) && (currRun < 30); ++itrun){
         histos[currRun] = nullptr;	
-        if (option==0) histos[currRun] = itrun->second.GetDeltaTimeHist();
-        else if (option==1){
+        if (option==0){
+          histos[currRun] = itrun->second.GetDeltaTimeHist();
+        } else if (option==1){
           histos[currRun] = itrun->second.GetEnergyHist();
           histos[currRun]->Rebin(4);
         } else if (option==2){
           histos[currRun] = itrun->second.GetNCellsHist();
+        } else if (option==3){
+          histos[currRun] = itrun->second.GetSatADCHist();
+        } else if (option==4){
+          histos[currRun] = itrun->second.GetSatLGHist();
+        } else if (option==5){
+          histos[currRun] = itrun->second.GetLGHGOutHist();
+        } else if (option==6){
+          histos[currRun] = itrun->second.GetSatADCCellIDHist();
+        } else if (option==7){
+          histos[currRun] = itrun->second.GetSatLGCellIDHist();
+        } else if (option==8){
+          histos[currRun] = itrun->second.GetLGHGOutCellIDHist();
         }
+          
         SetStyleHistoTH1ForGraphs( histos[currRun], histos[currRun]->GetXaxis()->GetTitle(), histos[currRun]->GetYaxis()->GetTitle(), 0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.95, 1.02);  
         SetLineDefaults(histos[currRun], GetColorLayer(currRun), 4, GetLineStyleLayer(currRun));   
         if (colorByEV == 1) { // set line color according to beam energy
@@ -1644,12 +1675,189 @@
       tempHist->DrawCopy("axis,same");
       legend->Draw();
       
-      DrawLatex(0.95, 0.92, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(currRunInfo,7).Data()), true, 0.85*textSizeRel, 42);
+      DrawLatex(0.95, 0.92, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(currRunInfo,6).Data()), true, 0.85*textSizeRel, 42);
       DrawLatex(0.95, 0.885, GetStringFromRunInfo(currRunInfo,labelOpt), true, 0.85*textSizeRel, 42);
         
     canvas2D->SaveAs(nameOutput.Data());
   }
 
+  //__________________________________________________________________________________________________________
+  // Plot Trending for different layers
+  //__________________________________________________________________________________________________________  
+  inline void PlotTrendingWithFit( TCanvas* canvas2D, 
+                                    TGraphErrors* graphLayer, 
+                                    TF1* fitLayer, 
+                                    TH1D* histoZeroP,
+                                    double minX, double maxX, double minY, double maxY,
+                                    Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
+                                    int labelOpt = 1
+                                  ){
+      canvas2D->cd();
+      
+      TString yAxisTitle = graphLayer->GetYaxis()->GetTitle();
+      if (histoZeroP)
+        yAxisTitle  = Form("%s, counts", yAxisTitle.Data());
+
+      TH1D* tempHist = new TH1D("dummyhist", "", 100, minX, maxX);
+      SetStyleHistoTH1ForGraphs(tempHist, graphLayer->GetXaxis()->GetTitle(), yAxisTitle.Data(),  0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.9, 1.05);
+      tempHist->GetYaxis()->SetRangeUser(minY,maxY);
+      tempHist->DrawCopy("axis");
+      
+      bool hasFits = false;
+      if (fitLayer)
+        hasFits = true;
+      Setup* setup = Setup::GetInstance();
+      
+      TLegend* legend   = nullptr;
+      Int_t lineBottom  = 3;
+      if (histoZeroP) lineBottom = lineBottom+2; 
+      legend = GetAndSetLegend2( 0.13, 0.93-lineBottom*0.85*textSizeRel, 0.53, 0.93-2*0.85*textSizeRel,0.75*textSizeRel, 1, "", 42,0.12);
+      
+      if (histoZeroP){
+        SetLineDefaults(histoZeroP, kRed+2, 3, 1);   
+        // SetMarkerDefaults(histoZeroP, GetMarkerLayer(1), 1,  GetColorLayer(1), GetColorLayer(1), 2, 1);   
+        std::cout << histoZeroP->GetMean() << "\t" << histoZeroP->GetMaximum() << "\t" << histoZeroP->GetEntries()<< std::endl;
+        legend->AddEntry(histoZeroP, "V_{br, fitted} single cells", "l");
+        legend->AddEntry((TObject*)0, Form("#LT V_{br}#GT = %.1f V",histoZeroP->GetMean()), "");
+      }
+      
+      SetMarkerDefaultsTGraph(graphLayer, GetMarkerLayer(1), 1,  GetColorLayer(1), GetColorLayer(1), 2, 1);   
+      graphLayer->Draw("same,pe");
+      if (fitLayer){
+        SetLineDefaultsTF1(fitLayer, GetColorLayer(1), 4, 4 );
+        fitLayer->Draw("same");
+        legend->AddEntry(graphLayer,Form("All cells, b = %.1f ADC/V", fitLayer->GetParameter(1)),"pl");
+      } else {
+        legend->AddEntry(graphLayer,"All cells","p");
+      }
+      if (hasFits){
+        DrawLines(minX, maxX, 0, 0, 2, 1, 7 );
+      }
+      tempHist->DrawCopy("axis,same");
+      legend->Draw();
+      
+      DrawLatex(0.13, 0.92, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(currRunInfo,6).Data()), false, 0.85*textSizeRel, 42);
+      DrawLatex(0.13, 0.885, GetStringFromRunInfo(currRunInfo,labelOpt), false, 0.85*textSizeRel, 42);
+      
+      
+      // 2. Create Transparent Overlay Pad for Graph 3 (Linear Y-scale)
+      canvas2D->cd();
+      TPad *pad2 = new TPad("pad2", "", 0, 0, 1, 1);
+      DefaultPadSettings( pad2, canvas2D->GetLeftMargin(), canvas2D->GetRightMargin(), canvas2D->GetTopMargin(), canvas2D->GetBottomMargin());
+      pad2->SetFillStyle(4000); // 4000 makes the pad transparent
+      pad2->SetFrameFillStyle(4000);
+      pad2->SetLogy(0); // Force linear scale on second Y-axis
+      pad2->SetTicky(0);
+      pad2->Draw();
+      pad2->cd();
+
+      TH1D* tempHist2 = new TH1D("dummyhist2", "", 1000, minX, maxX);
+      SetStyleHistoTH1ForGraphs(tempHist2, graphLayer->GetXaxis()->GetTitle(), yAxisTitle.Data(),  0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.9, 1.05);
+      tempHist2->GetYaxis()->SetRangeUser(minY,maxY);
+      tempHist2->Sumw2();
+      if (histoZeroP){
+        for (Int_t i = 1; i < histoZeroP->GetNbinsX(); i++){
+          if (histoZeroP->GetBinContent(i) > 0 ){
+            tempHist2->Fill(histoZeroP->GetBinCenter(i), histoZeroP->GetBinContent(i));
+          }
+        }
+        tempHist2->Rebin(8);
+        SetLineDefaults(tempHist2, kRed+2, 3, 1);   
+        tempHist2->GetXaxis()->SetRangeUser(minX, maxX);
+        tempHist2->GetYaxis()->SetRangeUser(minY,maxY);
+        tempHist2->Draw("same,hist");
+      }
+    canvas2D->SaveAs(nameOutput.Data());
+  }
   
+  //__________________________________________________________________________________________________________
+  // Plot Trending for different layers
+  //__________________________________________________________________________________________________________  
+  inline void PlotTrending2DWithFit(TCanvas* canvas2D, 
+                                    TH2D* histo2DLayer, 
+                                    TF1* fitLayer, 
+                                    TH1D* histoZeroP,
+                                    double minX, double maxX, double minY, double maxY,
+                                    Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
+                                    int labelOpt = 1
+                                  ){
+      canvas2D->cd();
+      TString yAxisTitle = histo2DLayer->GetYaxis()->GetTitle();
+      if (histoZeroP)
+        yAxisTitle  = Form("%s, counts", yAxisTitle.Data());
+
+      double minYReal = histo2DLayer->GetYaxis()->GetBinCenter(histo2DLayer->GetYaxis()->FindBin(minY))-0.5*histo2DLayer->GetYaxis()->GetBinWidth(histo2DLayer->GetYaxis()->FindBin(minY));
+      double maxYReal = histo2DLayer->GetYaxis()->GetBinCenter(histo2DLayer->GetYaxis()->FindBin(maxY))+0.5*histo2DLayer->GetYaxis()->GetBinWidth(histo2DLayer->GetYaxis()->FindBin(maxY));
+      double minXReal = histo2DLayer->GetXaxis()->GetBinCenter(histo2DLayer->GetXaxis()->FindBin(minX))-0.5*histo2DLayer->GetXaxis()->GetBinWidth(histo2DLayer->GetXaxis()->FindBin(minX));
+      double maxXReal = histo2DLayer->GetXaxis()->GetBinCenter(histo2DLayer->GetXaxis()->FindBin(maxX))+0.5*histo2DLayer->GetXaxis()->GetBinWidth(histo2DLayer->GetXaxis()->FindBin(maxX));
+      
+      SetStyleHistoTH2ForGraphs(histo2DLayer, histo2DLayer->GetXaxis()->GetTitle(), yAxisTitle.Data(),  0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.9, 1.05);
+      histo2DLayer->GetXaxis()->SetRangeUser(minXReal+0.01,maxXReal-0.01);
+      histo2DLayer->GetYaxis()->SetRangeUser(minYReal+0.01,maxYReal-0.01);
+      histo2DLayer->DrawCopy("colz");
+      
+      bool hasFits = false;
+      if (fitLayer)
+        hasFits = true;
+      Setup* setup = Setup::GetInstance();
+      
+      TLegend* legend   = nullptr;
+      Int_t lineBottom  = 3;
+      if (histoZeroP) lineBottom =lineBottom+2; 
+      legend = GetAndSetLegend2( 0.13, 0.93-lineBottom*0.85*textSizeRel, 0.53, 0.93-2*0.85*textSizeRel,0.75*textSizeRel, 1, "", 42,0.12);
+      
+      if (histoZeroP){
+        SetLineDefaults(histoZeroP, kRed+2, 3, 1);   
+        // SetMarkerDefaults(histoZeroP, GetMarkerLayer(1), 1,  GetColorLayer(1), GetColorLayer(1), 2, 1);   
+        std::cout << histoZeroP->GetMean() << "\t" << histoZeroP->GetMaximum() << "\t" << histoZeroP->GetEntries()<< std::endl;
+        legend->AddEntry(histoZeroP, "V_{br, fitted} single cells", "l");
+        legend->AddEntry((TObject*)0, Form("#LT V_{br}#GT = %.1f V",histoZeroP->GetMean()), "");
+      }
+      
+      histo2DLayer->Draw("same,colz");
+      if (fitLayer){
+        SetLineDefaultsTF1(fitLayer, GetColorLayer(1), 4, 4 );
+        fitLayer->Draw("same");
+        legend->AddEntry(fitLayer,Form("All cells, b = %.1f ADC/V", fitLayer->GetParameter(1)),"l");
+      } 
+      if (hasFits){
+        DrawLines(minX, maxX, 0, 0, 2, 1, 7 );
+      }
+      histo2DLayer->DrawCopy("axis,same");
+      legend->Draw();
+      
+      DrawLatex(0.13, 0.92, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(currRunInfo,6).Data()), false, 0.85*textSizeRel, 42);
+      DrawLatex(0.13, 0.885, GetStringFromRunInfo(currRunInfo,labelOpt), false, 0.85*textSizeRel, 42);
+      
+      
+      // 2. Create Transparent Overlay Pad for Graph 3 (Linear Y-scale)
+      canvas2D->cd();
+      TPad *pad2 = new TPad("pad2", "", 0, 0, 1, 1);
+      DefaultPadSettings( pad2, canvas2D->GetLeftMargin(), canvas2D->GetRightMargin(), canvas2D->GetTopMargin(), canvas2D->GetBottomMargin());
+      pad2->SetFillStyle(4000); // 4000 makes the pad transparent
+      pad2->SetFrameFillStyle(4000);
+      pad2->SetLogy(0); // Force linear scale on second Y-axis
+      pad2->SetTicky(0);
+      pad2->Draw();
+      pad2->cd();
+
+      TH1D* tempHist2 = new TH1D("dummyhist3", "", histo2DLayer->GetNbinsX()*2, histo2DLayer->GetXaxis()->GetBinCenter(1)-0.5*histo2DLayer->GetXaxis()->GetBinWidth(1), histo2DLayer->GetXaxis()->GetBinCenter(histo2DLayer->GetNbinsX()+1)+0.5*histo2DLayer->GetXaxis()->GetBinWidth(histo2DLayer->GetNbinsX()+1));
+      SetStyleHistoTH1ForGraphs(tempHist2, histo2DLayer->GetXaxis()->GetTitle(), yAxisTitle.Data(),  0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.9, 1.05);
+      tempHist2->GetXaxis()->SetRangeUser(minXReal,maxXReal);
+      tempHist2->GetYaxis()->SetRangeUser(minYReal,maxYReal);
+      // tempHist2->GetYaxis()->SetRangeUser(minYReal-1.5*histo2DLayer->GetYaxis()->GetBinWidth(histo2DLayer->GetYaxis()->FindBin(maxY)),maxYReal-1.5*histo2DLayer->GetYaxis()->GetBinWidth(histo2DLayer->GetYaxis()->FindBin(maxY)));
+      tempHist2->Sumw2();
+      if (histoZeroP){
+        for (Int_t i = 1; i < histoZeroP->GetNbinsX(); i++){
+          if (histoZeroP->GetBinContent(i) > 0 ){
+            tempHist2->Fill(histoZeroP->GetBinCenter(i), histoZeroP->GetBinContent(i));
+          }
+        }
+        // tempHist2->Rebin(8);
+        SetLineDefaults(tempHist2, kRed+2, 3, 1);           
+        tempHist2->Draw("same,hist");
+      }
+    canvas2D->SaveAs(nameOutput.Data());
+  }
   
 #endif

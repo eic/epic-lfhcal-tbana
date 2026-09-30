@@ -45,17 +45,17 @@ function MuonCalib()
   elif [ $1 == "saveNewMuon" ]; then 
     time ./DataPrep -f -d 1 -M -i $5/rawPedAndMuonWBC_$3.root -o $4/raw_muononly_$3.root 
   elif [ $1 == "imp1st_red" ]; then 
-    time ./DataPrep -f -d 1  -S -i $4/raw_muononly_$3.root -o $5/rawPedAndMuonImp1st_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red1st -r $runNrFile -l $8
+    time ./DataPrep -x -f -d 1 -a -S -i $4/raw_muononly_$3.root -o $5/rawPedAndMuonImp1st_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red1st -r $runNrFile -l $8
   elif [ $1 == "imp2nd_red" ]; then 
-    time ./DataPrep -f -d 1  -S -i $5/rawPedAndMuonImp1st_red_$3.root -o $5/rawPedAndMuonImp2nd_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red2nd -r $runNrFile -l $8
+    time ./DataPrep -x -f -d 1 -a -S -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp1st_red_$3\_calib.txt -o $5/rawPedAndMuonImp2nd_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red2nd -r $runNrFile -l $8
   elif [ $1 == "imp3rd_red" ]; then 
-    time ./DataPrep -f -d 1  -S -i $5/rawPedAndMuonImp2nd_red_$3.root -o $5/rawPedAndMuonImp3rd_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red3rd -r $runNrFile -l $8
+    time ./DataPrep -x -f -d 1 -a -S -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp2nd_red_$3\_calib.txt -o $5/rawPedAndMuonImp3rd_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red3rd -r $runNrFile -l $8
   elif [ $1 == "imp4th_red" ]; then 
-    time ./DataPrep -f -d 1  -S -i $5/rawPedAndMuonImp3rd_red_$3.root -o $5/rawPedAndMuonImp4th_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red4th -r $runNrFile -l $8
+    time ./DataPrep -x -f -d 1 -a -S -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp3rd_red_$3\_calib.txt -o $5/rawPedAndMuonImp4th_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red4th -r $runNrFile -l $8
   elif [ $1 == "imp5th_red" ]; then 
-    time ./DataPrep -f -d 1  -S -i $5/rawPedAndMuonImp4th_red_$3.root -o $5/rawPedAndMuonImp5th_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red5th -r $runNrFile -l $8
+    time ./DataPrep -x -f -d 1 -a -S -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp4th_red_$3\_calib.txt -o $5/rawPedAndMuonImp5th_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red5th -r $runNrFile -l $8
   elif [ $1 == "imp6th_red" ]; then 
-    time ./DataPrep -f -d 1  -S -i $5/rawPedAndMuonImp5th_red_$3.root -o $5/rawPedAndMuonImp6th_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red6th -r $runNrFile -l $8
+    time ./DataPrep -x -f -d 1 -a -S -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp5th_red_$3\_calib.txt -o $5/rawPedAndMuonImp6th_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red6th -r $runNrFile -l $8
   fi
 }
 
@@ -194,7 +194,7 @@ if [ $2 == "calibMuon" ]; then
     #51K events
     runPed='311'
     runMuon='312'
-    runMuonName='muonHVScan_40V'  
+    runMuonName='muonHVScan_41V'  
     badChannelMap='../configs/TB2024/badChannelMap_TBSetup_CAEN_202408_HVScan.txt'
   elif [ $4 == "MuonHV_40V" ] ; then 
     echo "running muon calib for 40V runs"
@@ -249,6 +249,12 @@ if [ $2 == "calibMuon" ]; then
     runPed='552'
     runMuon='muonScanH2_45V'
     runMuonName='muonScanH2_45V'  
+  elif [ $4 == "FullSetH" ] ; then 
+    echo "running muon calib for 45V runs, campaing H"
+    # 84.1K events
+    runPed='528'
+    runMuon='muonScanH_45V'
+    runMuonName='muonScanH_45V'  
   #####################################################################
   # Set B - 42 V
   # muon runs '331 322 370 371 374'
@@ -343,9 +349,19 @@ if [ $2 == "calibMuon" ]; then
   #####################################################################
   elif [ $4 == "FullSetG" ] ; then 
     echo "running muon calib for 46V runs, campaing G"
-    runPed='492'
+    runPed='521'
     runMuon='muonScanG_46V'
     runMuonName='muonScanG_46V'  
+  elif [ $4 == "FullSetG_1" ] ; then 
+    echo "running muon calib for 46V runs, campaing G"
+    runPed='521'
+    runMuon='muonScanG1_46V'
+    runMuonName='muonScanG1_46V'  
+  elif [ $4 == "FullSetG_2" ] ; then 
+    echo "running muon calib for 46V runs, campaing G"
+    runPed='521'
+    runMuon='muonScanG2_46V'
+    runMuonName='muonScanG2_46V'  
   fi
   MuonCalib $3 $runPed $runMuon $dataDirRaw $dataDirOut $runMuonName $badChannelMap $skipLayer  
 fi

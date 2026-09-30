@@ -69,26 +69,9 @@ int main(int argc, char* argv[]){
   for(int i=1; i<argc; i++){
     RootRegexp.push_back(argv[i]);
   }
-/*
-  // Find -E value to set CompAnalysis
-
-  int E_value = -1;  // default if -E not found
-  for (int i = 1; i < argc; ++i) {
-      if (std::string(argv[i]) == "-E") {
-          if (i + 1 < argc) {
-              // Convert the next argument to int
-              E_value = std::stoi(argv[i + 1]);
-          }
-          break;  // Found it, no need to continue
-      }
-  }
-  
   //declare CompAnalysis 1 and 2
-  ComparisonCalib CompAnalysis;*/
   ComparisonAna CompAnalysis2;
- 
- 
- //pick Ana or Calib
+
    //if(E_value == 4){
     int c;
     while((c=getopt(argc,argv,"d:e:E:fF:i:I:L:o:O:r:x:C:RVcsth"))!=-1){
@@ -142,6 +125,7 @@ int main(int argc, char* argv[]){
       case 'I':
         std::cout<<"Compare: Expanded Root input file is: "<<optarg<<std::endl;
         CompAnalysis2.SetInputList(Form("%s",optarg));
+        // resetting expanded list option if 0
         if (CompAnalysis2.GetExpandedList() == 0){
           CompAnalysis2.ExpandedList(1);
         }

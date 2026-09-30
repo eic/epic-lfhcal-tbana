@@ -511,6 +511,7 @@ bool ComparisonCalib::ProcessCalib(void){
           } else {
             histCellHG      = (TH1D*)tempFile->Get(Form("IndividualCellsTrigg/hspectramipTriggADCCellID%i",itcalib->first));
           }
+          
         }
         triggers      = hTrigger2D->GetBinContent(hTrigger2D->FindBin(layer,chInLayer));
         hgLMPV        = hHG_LMPV2D->GetBinContent(hHG_LMPV2D->FindBin(layer,chInLayer));
@@ -597,6 +598,7 @@ bool ComparisonCalib::ProcessCalib(void){
         itrend->second.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)cit->second.vop, (int)cit->second.pdg, hgmaxErr, lgmaxErr, cit->second.energy, cit->second.temp);
         // fill with additional information
         if (expandedList == 1){
+          if (debug > 2) std::cerr<<"Run Num: " << (int)calib.GetRunNumber()<<": "<< histCellHG << "\t"<< histCellLG<< " \t" << profCellLGHG << "\t" << triggers <<std::endl;
           itrend->second.FillExtended(Xvalue,triggers, nFillExtNr, histCellHG, histCellLG, profCellLGHG); 
           itrend->second.FillMPV(Xvalue, hgLMPV, hgLMPV_E, lgLMPV, lgLMPV_E);
           itrend->second.FillLSigma(Xvalue, hgLSigma, hgLSigma_E, lgLSigma, lgLSigma_E);
@@ -621,7 +623,7 @@ bool ComparisonCalib::ProcessCalib(void){
         }
       // create new TileTrend object if not yet available in map
       } else {
-        TileTrend atrend=TileTrend(itcalib->first,0, isHGCROC);
+        TileTrend atrend=TileTrend(itcalib->first, 0, 1);   // set TileTrend extended option to 1 to be able to parse also mips max, trigger....
         // fill minimal object
         atrend.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)cit->second.vop, (int)cit->second.pdg, hgmaxErr, lgmaxErr, cit->second.energy, cit->second.temp);
         // fill with additional information
@@ -714,19 +716,33 @@ bool ComparisonCalib::ProcessCalib(void){
   graphAllHGScale->GetXaxis()->SetTitle(xaxisTitle);
   graphAllHGScale->GetYaxis()->SetTitle("Max_{HG} (arb. units)");
   graphAllHGScale->SetName("Summary_HGScale_All");
+  TF1* fitAllHGScale = nullptr;
+  TGraphErrors* graphAllLGScale = new TGraphErrors();
+  graphAllLGScale->GetXaxis()->SetTitle(xaxisTitle);
+  graphAllLGScale->GetYaxis()->SetTitle("Max_{LG} (arb. units)");
+  graphAllLGScale->SetName("Summary_LGScale_All");
+  TF1* fitAllLGScale = nullptr;
+  
+  
+  // only need to evalute per layer if segment depth are different
+  bool needLayerEval      = !(setup->HasSameSegmentDepth());
   TGraphErrors* graphAllHGScalePerLayer[64];
   TF1* fitAllHGScalePerLayer[64];
-  std::cout <<"*********************** "<< setup->GetNMaxLayer()+1 << std::endl;
-  for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
-    graphAllHGScalePerLayer[l] = new TGraphErrors();
-    graphAllHGScalePerLayer[l]->GetXaxis()->SetTitle(xaxisTitle);
-    graphAllHGScalePerLayer[l]->GetYaxis()->SetTitle("Max_{HG} (arb. units)");
-    graphAllHGScalePerLayer[l]->SetName(Form("Summary_HGScale_Layer_%d", l));
+  
+  if (needLayerEval){
+    std::cout <<"*********************** "<< setup->GetNMaxLayer()+1 << std::endl;
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+      graphAllHGScalePerLayer[l] = new TGraphErrors();
+      graphAllHGScalePerLayer[l]->GetXaxis()->SetTitle(xaxisTitle);
+      graphAllHGScalePerLayer[l]->GetYaxis()->SetTitle("Max_{HG} (arb. units)");
+      graphAllHGScalePerLayer[l]->SetName(Form("Summary_HGScale_Layer_%d", l));
+    }
   }
   
-  
   double minYScale    = 9999;
+  double minYScaleLG  = 9999;
   double maxYScale    = -5;
+  double maxYScaleLG  = -5;
   bool haveHGFits     = false;
   double minOffSetHG  = 1e6;
   double maxOffSetHG  = -1e6;
@@ -793,15 +809,31 @@ bool ComparisonCalib::ProcessCalib(void){
         minYScale = (itrend->second.GetHGScale())->GetY()[k];
       if (maxYScale < (itrend->second.GetHGScale())->GetY()[k])
         maxYScale = (itrend->second.GetHGScale())->GetY()[k];
+      
       graphAllHGScale->AddPoint((itrend->second.GetHGScale())->GetX()[k], (itrend->second.GetHGScale())->GetY()[k]);
       graphAllHGScale->SetPointError(graphAllHGScale->GetN()-1,(itrend->second.GetHGScale())->GetEX()[k],(itrend->second.GetHGScale())->GetEY()[k]);
-      if (graphAllHGScalePerLayer[layer]){
-        // std::cout << "filling layer " << layer << std::endl;
-        graphAllHGScalePerLayer[layer]->AddPoint((itrend->second.GetHGScale())->GetX()[k], (itrend->second.GetHGScale())->GetY()[k]);
-        graphAllHGScalePerLayer[layer]->SetPointError(graphAllHGScalePerLayer[layer]->GetN()-1,(itrend->second.GetHGScale())->GetEX()[k],(itrend->second.GetHGScale())->GetEY()[k]);
-      } else {
-        std::cout << "this layer doesn't exist: " << layer << std::endl;
-      } 
+
+      // fill only for CAEN case
+      if (!isHGCROC){
+        if (minYScaleLG > (itrend->second.GetLGScale())->GetY()[k] && (itrend->second.GetLGScale())->GetY()[k] > 0) 
+          minYScaleLG = (itrend->second.GetLGScale())->GetY()[k];
+        if (maxYScaleLG < (itrend->second.GetLGScale())->GetY()[k])
+          maxYScaleLG = (itrend->second.GetLGScale())->GetY()[k];
+
+        graphAllLGScale->AddPoint((itrend->second.GetLGScale())->GetX()[k], (itrend->second.GetLGScale())->GetY()[k]);
+        graphAllLGScale->SetPointError(graphAllLGScale->GetN()-1,(itrend->second.GetLGScale())->GetEX()[k],(itrend->second.GetLGScale())->GetEY()[k]);
+      }
+      
+      // fill layer by layer graphs
+      if (needLayerEval){
+        if (graphAllHGScalePerLayer[layer]){
+          // std::cout << "filling layer " << layer << std::endl;
+          graphAllHGScalePerLayer[layer]->AddPoint((itrend->second.GetHGScale())->GetX()[k], (itrend->second.GetHGScale())->GetY()[k]);
+          graphAllHGScalePerLayer[layer]->SetPointError(graphAllHGScalePerLayer[layer]->GetN()-1,(itrend->second.GetHGScale())->GetEX()[k],(itrend->second.GetHGScale())->GetEY()[k]);
+        } else {
+          std::cout << "this layer doesn't exist: " << layer << std::endl;
+        } 
+      }
     }
   }
   
@@ -831,10 +863,13 @@ bool ComparisonCalib::ProcessCalib(void){
     std::cout << "offset range: " << minOffSetHG << "\t" << maxOffSetHG << std::endl;
     hHGscaleFitConst  = new TH1D("hFittedOffsetHG", "; const_{HG} (arb. units); counts", 
                                 1000, minOffSetHG, maxOffSetHG);
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
-      TH1D* tempOffset          = new TH1D(Form("hFittedOffsetHG_Layer_%d",l), "; const_{HG} (arb. units); counts", 
-                                  1000, minOffSetHG, maxOffSetHG);
-      hHGscaleFitConstLayer[l]  = tempOffset;
+    // only do this if the layers are different in summing
+    if (needLayerEval){
+      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+        TH1D* tempOffset          = new TH1D(Form("hFittedOffsetHG_Layer_%d",l), "; const_{HG} (arb. units); counts", 
+                                    1000, minOffSetHG, maxOffSetHG);
+        hHGscaleFitConstLayer[l]  = tempOffset;
+      }
     }
     if (Xaxis == 1){
       hHGscaleFitConst->GetXaxis()->SetTitle("offset_{HG} (arb. units)");
@@ -844,14 +879,17 @@ bool ComparisonCalib::ProcessCalib(void){
                                 1000, minSlopeHG-10, maxSlopeHG+10);
       hHGscaleFitZP   = new TH1D("hFittedZPHG", "; ZP_{HG} (arb. units); counts", 
                                 500, minZPHG-2, maxZPHG+2);
-      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
-        hHGscaleFitConstLayer[l]->GetXaxis()->SetTitle("offset_{HG} (arb. units)");
-        TH1D* tempSlope     = new TH1D(Form("hFittedSlopeHG_Layer_%d",l), "; slope_{HG} (arb. units); counts", 
-                                   1000, minSlopeHG-10, maxSlopeHG+10);
-        hHGscaleFitLinLayer[l]  = tempSlope;
-        TH1D* tempZP     = new TH1D(Form("hFittedZPHG_Layer_%d",l), "; ZP_{HG} (arb. units); counts", 
-                                   500, minZPHG-2, maxZPHG+2);
-        hHGscaleFitZPLayer[l]  = tempZP;
+      // only do this if the layers are different in summing
+      if (needLayerEval){
+        for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+          hHGscaleFitConstLayer[l]->GetXaxis()->SetTitle("offset_{HG} (arb. units)");
+          TH1D* tempSlope     = new TH1D(Form("hFittedSlopeHG_Layer_%d",l), "; slope_{HG} (arb. units); counts", 
+                                    1000, minSlopeHG-10, maxSlopeHG+10);
+          hHGscaleFitLinLayer[l]  = tempSlope;
+          TH1D* tempZP     = new TH1D(Form("hFittedZPHG_Layer_%d",l), "; ZP_{HG} (arb. units); counts", 
+                                    500, minZPHG-2, maxZPHG+2);
+          hHGscaleFitZPLayer[l]  = tempZP;
+        }
       }
     }
     std::cout << "********************************************************************" << std::endl;
@@ -862,10 +900,13 @@ bool ComparisonCalib::ProcessCalib(void){
     std::cout << "offset range: " << minOffSetLG << "\t" << maxOffSetLG << std::endl;
     hLGscaleFitConst  = new TH1D("hFittedOffsetLG", "; const_{LG} (arb. units); counts", 
                                 1000, minOffSetLG, maxOffSetLG);
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
-      TH1D* tempOffset          = new TH1D(Form("hFittedOffsetLG_Layer_%d",l), "; const_{LG} (arb. units); counts", 
-                                  1000, minOffSetLG, maxOffSetLG);
-      hLGscaleFitConstLayer[l]  = tempOffset;
+    // only do this if the layers are different in summing
+    if (needLayerEval){
+      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+        TH1D* tempOffset          = new TH1D(Form("hFittedOffsetLG_Layer_%d",l), "; const_{LG} (arb. units); counts", 
+                                    1000, minOffSetLG, maxOffSetLG);
+        hLGscaleFitConstLayer[l]  = tempOffset;
+      }
     }
     if (Xaxis == 1){
       hLGscaleFitConst->GetXaxis()->SetTitle("offset_{LG} (arb. units)");
@@ -875,14 +916,17 @@ bool ComparisonCalib::ProcessCalib(void){
                                 1000, minSlopeLG-10, maxSlopeLG+10);
       hLGscaleFitZP   = new TH1D("hFittedZPLG", "; ZP_{LG} (arb. units); counts", 
                                 500, minZPLG-2, maxZPLG+2);
-      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
-        hLGscaleFitConstLayer[l]->GetXaxis()->SetTitle("offset_{LG} (arb. units)");
-        TH1D* tempSlope     = new TH1D(Form("hFittedSlopeLG_Layer_%d",l), "; slope_{LG} (arb. units); counts", 
-                                   1000, minSlopeLG-10, maxSlopeLG+10);
-        hLGscaleFitLinLayer[l]  = tempSlope;
-        TH1D* tempZP     = new TH1D(Form("hFittedZPLG_Layer_%d",l), "; ZP_{LG} (arb. units); counts", 
-                                   500, minZPLG-2, maxZPLG+2);
-        hLGscaleFitZPLayer[l]  = tempZP;
+      // only do this if the layers are different in summing
+      if (needLayerEval){
+        for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+          hLGscaleFitConstLayer[l]->GetXaxis()->SetTitle("offset_{LG} (arb. units)");
+          TH1D* tempSlope     = new TH1D(Form("hFittedSlopeLG_Layer_%d",l), "; slope_{LG} (arb. units); counts", 
+                                    1000, minSlopeLG-10, maxSlopeLG+10);
+          hLGscaleFitLinLayer[l]  = tempSlope;
+          TH1D* tempZP     = new TH1D(Form("hFittedZPLG_Layer_%d",l), "; ZP_{LG} (arb. units); counts", 
+                                    500, minZPLG-2, maxZPLG+2);
+          hLGscaleFitZPLayer[l]  = tempZP;
+        }
       }
     }
     std::cout << "********************************************************************" << std::endl;
@@ -894,21 +938,21 @@ bool ComparisonCalib::ProcessCalib(void){
       if (itrend->second.GetHGScaleFitNPar() > 1){
         hHGscaleFitLin->Fill(itrend->second.GetLinCompHGFit());
         hHGscaleFitZP->Fill(itrend->second.GetFuncZeroHGFit());
-        hHGscaleFitLinLayer[layer]->Fill(itrend->second.GetLinCompHGFit());
-        hHGscaleFitZPLayer[layer]->Fill(itrend->second.GetFuncZeroHGFit());
+        if(needLayerEval) hHGscaleFitLinLayer[layer]->Fill(itrend->second.GetLinCompHGFit());
+        if(needLayerEval) hHGscaleFitZPLayer[layer]->Fill(itrend->second.GetFuncZeroHGFit());
       }      
       hHGscaleFitConst->Fill(itrend->second.GetConstCompHGFit());
-      hHGscaleFitConstLayer[layer]->Fill(itrend->second.GetConstCompHGFit());
+      if(needLayerEval) hHGscaleFitConstLayer[layer]->Fill(itrend->second.GetConstCompHGFit());
     }
     if (haveLGFits){
       if (itrend->second.GetLGScaleFitNPar() > 1){
         hLGscaleFitLin->Fill(itrend->second.GetLinCompLGFit());
         hLGscaleFitZP->Fill(itrend->second.GetFuncZeroLGFit());
-        hLGscaleFitLinLayer[layer]->Fill(itrend->second.GetLinCompLGFit());
-        hLGscaleFitZPLayer[layer]->Fill(itrend->second.GetFuncZeroLGFit());
+        if(needLayerEval) hLGscaleFitLinLayer[layer]->Fill(itrend->second.GetLinCompLGFit());
+        if(needLayerEval) hLGscaleFitZPLayer[layer]->Fill(itrend->second.GetFuncZeroLGFit());
       }      
       hLGscaleFitConst->Fill(itrend->second.GetConstCompLGFit());
-      hLGscaleFitConstLayer[layer]->Fill(itrend->second.GetConstCompLGFit());
+      if(needLayerEval) hLGscaleFitConstLayer[layer]->Fill(itrend->second.GetConstCompLGFit());
     }
   }
   
@@ -931,6 +975,76 @@ bool ComparisonCalib::ProcessCalib(void){
   graphAllHGScale->Sort();
   std::cout << "Total " << graphAllHGScale->GetN() << " data points available" << std::endl;
   graphAllHGScale->Write();
+  
+  
+  if (Xaxis == 1){
+    fitAllHGScale    = new TF1(Form("Fit_Summary_HGScale"), "[0]+[1]*x",Xmin, Xmax );
+    graphAllHGScale->Fit(fitAllHGScale,"N0");
+    fitAllHGScale->Print();
+    fitAllHGScale->Write();
+    double yZeroAll = (0. - fitAllHGScale->GetParameter(0))/fitAllHGScale->GetParameter(1);
+    if (yZeroAll < Xmin) Xmin = yZeroAll -1;
+    minYScale = -10;
+    fitAllHGScale->SetRange(Xmin,Xmax);
+    std::cout << "f(x) = 0, x = \t" << yZeroAll << std::endl;
+  } else {
+    fitAllHGScale = nullptr;
+  }
+
+  double binXScale       = 10.;
+  double offSetXScale = 0.05;
+  if (Xaxis == 0){
+    binXScale      = 1;
+    offSetXScale  = 0.5;
+  }
+  // Use std::round instead of int() to avoid truncation errors from float inaccuracies
+  float minX2D  = std::round(Xmin * 10.0f) / 10.0f;
+  float maxX2D  = std::round(Xmax * 10.0f) / 10.0f;
+  float diff    = (maxX2D - minX2D);
+  // Explicitly round the number of bins to prevent truncation drop-offs
+  int nBinsX2D = static_cast<int>(std::round(diff * binXScale));
+  
+  std::cout << "2D plots :" << minX2D << "\t-\t" << maxX2D << " diff: " << diff<< "\t nbins " << nBinsX2D << std::endl;
+  float minY2D  = std::round(minYScale*0.4 * 10.0f) / 10.0f;  
+  float maxY2D  = std::round(maxYScale*1.1 * 10.0f) / 10.0f;  
+  int nBinsY2D  = static_cast<int>(std::round((maxY2D-minY2D)*4));
+
+  TH2D* hist2DAllHGScale  = new TH2D("hist2DAllHGScale", Form(" ;%s;Max_{HG} (arb. units)", xaxisTitle.Data()), nBinsX2D, minX2D-offSetXScale, maxX2D-offSetXScale, nBinsY2D, minY2D, maxY2D );
+  for (int i = 0; i < graphAllHGScale->GetN(); i++){
+    hist2DAllHGScale->Fill(graphAllHGScale->GetX()[i], graphAllHGScale->GetY()[i]);
+  }
+  hist2DAllHGScale->Write();
+  
+  TH2D* hist2DAllLGScale = nullptr;
+  
+  if (!isHGCROC){
+    graphAllLGScale->Sort();
+    std::cout << "Total LG " << graphAllLGScale->GetN() << " data points available" << std::endl;
+    graphAllLGScale->Write();
+    if (Xaxis == 1){
+      fitAllLGScale    = new TF1(Form("Fit_Summary_LGScale"), "[0]+[1]*x",Xmin, Xmax );
+      graphAllLGScale->Fit(fitAllLGScale,"N0");
+      fitAllLGScale->Print();
+      fitAllLGScale->Write();
+      double yZeroAll = (0. - fitAllLGScale->GetParameter(0))/fitAllLGScale->GetParameter(1);
+      if (yZeroAll < Xmin) Xmin = yZeroAll -1;
+      minYScaleLG = -5;
+      fitAllLGScale->SetRange(Xmin,Xmax);
+      std::cout << "f(x) = 0, x = \t" << yZeroAll << std::endl;
+    } else {
+      fitAllLGScale = nullptr;
+    }
+    
+    float minY2DLG  = std::round(minYScaleLG*0.4 * 10.0f) / 10.0f;  
+    float maxY2DLG  = std::round(maxYScaleLG*1.3 * 10.0f) / 10.0f;  
+    int nBinsY2DLG  = static_cast<int>(std::round((maxY2DLG-minY2DLG)*4));
+
+    hist2DAllLGScale  = new TH2D("hist2DAllLGScale", Form(" ;%s;Max_{LG} (arb. units)", xaxisTitle.Data()), nBinsX2D, minX2D-offSetXScale, maxX2D-offSetXScale, nBinsY2DLG, minY2DLG, maxY2DLG );
+    for (int i = 0; i < graphAllLGScale->GetN(); i++){
+      hist2DAllLGScale->Fill(graphAllLGScale->GetX()[i], graphAllLGScale->GetY()[i]);
+    }
+    hist2DAllLGScale->Write();
+  }
   if (hHGscaleFitLin)   hHGscaleFitLin->Write();
   if (hHGscaleFitZP)    hHGscaleFitZP->Write();
   if (hHGscaleFitConst) hHGscaleFitConst->Write();
@@ -938,46 +1052,49 @@ bool ComparisonCalib::ProcessCalib(void){
   if (hLGscaleFitZP)    hLGscaleFitZP->Write();
   if (hLGscaleFitConst) hLGscaleFitConst->Write();
   Double_t yZero[64] = {0.};
-  for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
-    graphAllHGScalePerLayer[l]->Sort();
-    graphAllHGScalePerLayer[l]->GetYaxis()->SetRangeUser(minYScale,maxYScale);
-    graphAllHGScalePerLayer[l]->GetXaxis()->SetRangeUser(Xmin,Xmax);
-    graphAllHGScalePerLayer[l]->Write();
-    std::cout << "in layer  " << l  << "\t" << graphAllHGScalePerLayer[l]->GetN() << " data points available" << std::endl;
-    if (Xaxis == 1){
-      fitAllHGScalePerLayer[l]    = new TF1(Form("Fit_Summary_HGScale_Layer_%d", l), "[0]+[1]*x",Xmin, Xmax );
-      graphAllHGScalePerLayer[l]->Fit(fitAllHGScalePerLayer[l]);
-      fitAllHGScalePerLayer[l]->Print();
-      fitAllHGScalePerLayer[l]->Write();
-      yZero[l] = (0. - fitAllHGScalePerLayer[l]->GetParameter(0))/fitAllHGScalePerLayer[l]->GetParameter(1);
-      std::cout << "f(x) = 0, x = \t" << yZero[l] << std::endl;
-    } else {
-      fitAllHGScalePerLayer[l] = nullptr;
-    }
-    if (haveHGFits){
-      hHGscaleFitConstLayer[l]->Write();
-      if (hHGscaleFitLin){
-        hHGscaleFitLinLayer[l]->Write();
-        hHGscaleFitZPLayer[l]->Write();
+  if(needLayerEval) {
+    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+      graphAllHGScalePerLayer[l]->Sort();
+      graphAllHGScalePerLayer[l]->GetYaxis()->SetRangeUser(minYScale,maxYScale);
+      graphAllHGScalePerLayer[l]->GetXaxis()->SetRangeUser(Xmin,Xmax);
+      graphAllHGScalePerLayer[l]->Write();
+      std::cout << "in layer  " << l  << "\t" << graphAllHGScalePerLayer[l]->GetN() << " data points available" << std::endl;
+      if (Xaxis == 1){
+        fitAllHGScalePerLayer[l]    = new TF1(Form("Fit_Summary_HGScale_Layer_%d", l), "[0]+[1]*x",Xmin, Xmax );
+        graphAllHGScalePerLayer[l]->Fit(fitAllHGScalePerLayer[l]);
+        fitAllHGScalePerLayer[l]->Print();
+        fitAllHGScalePerLayer[l]->Write();
+        yZero[l] = (0. - fitAllHGScalePerLayer[l]->GetParameter(0))/fitAllHGScalePerLayer[l]->GetParameter(1);
+        std::cout << "f(x) = 0, x = \t" << yZero[l] << std::endl;
+      } else {
+        fitAllHGScalePerLayer[l] = nullptr;
+      }
+      if (haveHGFits){
+        hHGscaleFitConstLayer[l]->Write();
+        if (hHGscaleFitLin){
+          hHGscaleFitLinLayer[l]->Write();
+          hHGscaleFitZPLayer[l]->Write();
+        }
+      }
+      if (haveLGFits){
+        hLGscaleFitConstLayer[l]->Write();
+        if (hLGscaleFitLin){
+          hLGscaleFitLinLayer[l]->Write();
+          hLGscaleFitZPLayer[l]->Write();
+        }
       }
     }
-    if (haveLGFits){
-      hLGscaleFitConstLayer[l]->Write();
-      if (hLGscaleFitLin){
-        hLGscaleFitLinLayer[l]->Write();
-        hLGscaleFitZPLayer[l]->Write();
-      }
-    }
-    
   }
   double XminSum = Xmin;
-  if (fitAllHGScalePerLayer[0]){
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
-      if (XminSum > yZero[l]) XminSum = yZero[l]-0.5;
-    }
-    minYScale = -10;
-    for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
-      fitAllHGScalePerLayer[l]->SetRange(XminSum,Xmax);
+  if (needLayerEval){
+    if (fitAllHGScalePerLayer[0]){
+      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+        if (XminSum > yZero[l]) XminSum = yZero[l]-0.5;
+      }
+      minYScale = -10;
+      for (Int_t l = 0; l < setup->GetNMaxLayer()+1; l++){
+        fitAllHGScalePerLayer[l]->SetRange(XminSum,Xmax);
+      }
     }
   }
   
@@ -993,6 +1110,8 @@ bool ComparisonCalib::ProcessCalib(void){
   DefaultCanvasSettings( canvas1DTrend, 0.085, 0.025, 0.025, 0.09);
   TCanvas* canvas2DCorr        = new TCanvas("canvas2DCorr","",0,0,1450,1300);  // gives 
   DefaultCanvasSettings( canvas2DCorr, 0.085, 0.095, 0.045, 0.08);  
+  TCanvas* canvas2DTrend       = new TCanvas("canvas2DTrend","",0,0,1450,1300);  // gives 
+  DefaultCanvasSettings( canvas2DTrend, 0.085, 0.095, 0.015, 0.08);  
   
   if (haveHGFits){
     PlotSimpleWithFit1D( canvas1DRunsOverlay,  hHGscaleFitConst, nullptr, -10000, -10000, textSizeRel, 
@@ -1078,21 +1197,59 @@ bool ComparisonCalib::ProcessCalib(void){
                          Form("%s/CorrelationHGScale_RefRun_vs_%s.%s",OutputNameDirPlots.Data(), addoutname.Data() ,plotSuffix.Data()), 
                          cit->second, 1, kFALSE, "colz", 
                          true, addLabel, -1);
+      if (!isHGCROC){
+        Plot2DWithProfile( canvas2DCorr, 
+                          isumCalibs->second.Get2DLGscaleCorrRef(), 
+                          nullptr,
+                          // isumCalibs->second.GetProfLGscaleCorrRef(), 
+                          maxADC/5., maxADC/5., textSizeRel,
+                          Form("%s/CorrelationLGScale_RefRun_vs_%s.%s",OutputNameDirPlots.Data(), addoutname.Data() ,plotSuffix.Data()), 
+                          cit->second, 1, kFALSE, "colz", 
+                          true, addLabel, -1);
+      }
       cCalib++;
     } 
     
-    PlotCalibRunPerLayerOverlay(  canvas1DRunsOverlay, 0, sumCalibs, setup->GetNMaxLayer()+1, textSizeRel, 
+    // Layer by Layer summary plots
+    if (needLayerEval){
+      PlotCalibRunPerLayerOverlay(  canvas1DRunsOverlay, 0, sumCalibs, setup->GetNMaxLayer()+1, textSizeRel, 
                                   Form("%s/HGScaleSummary_RunOverlay",OutputNameDirPlots.Data()), plotSuffix.Data(), commonRunInfo );
-    PlotCalibRunPerLayerOverlay(  canvas1DRunsOverlay, 1, sumCalibs, setup->GetNMaxLayer()+1, textSizeRel, 
+      PlotCalibRunPerLayerOverlay(  canvas1DRunsOverlay, 1, sumCalibs, setup->GetNMaxLayer()+1, textSizeRel, 
                                   Form("%s/HGScaleWidthSummary_RunOverlay",OutputNameDirPlots.Data()), plotSuffix.Data(), commonRunInfo );
-    
-    PlotTrendingPerLayer( canvas1DTrend, graphAllHGScalePerLayer, fitAllHGScalePerLayer,
+      PlotTrendingPerLayer( canvas1DTrend, graphAllHGScalePerLayer, fitAllHGScalePerLayer,
                           XminSum, Xmax, minYScale*0.4, maxYScale*1.5,
                           textSizeRel, 
-                          Form("%s/TrendingHGScalPerLayer.%s",OutputNameDirPlots.Data(),plotSuffix.Data() ), commonRunInfo, 2);
+                          Form("%s/TrendingHGScalePerLayer.%s",OutputNameDirPlots.Data(),plotSuffix.Data() ), commonRunInfo, 2);
+    } else {
+      // setting 2D color pallette
+      // palettes
+      // kDeepSea=51,          kGreyScale=52,    kDarkBodyRadiator=53, kInvertedDarkBodyRadiator=56, kLake = 86
+      gStyle->SetPalette(kLake);
+      TColor::InvertPalette();
+      
+      PlotTrendingWithFit( canvas1DTrend, graphAllHGScale, fitAllHGScale,hHGscaleFitZP,
+                          XminSum, Xmax, minYScale*0.4, maxYScale*1.1,
+                          textSizeRel, 
+                          Form("%s/TrendingHGScaleAll.%s",OutputNameDirPlots.Data(),plotSuffix.Data() ), commonRunInfo, 2);
+      
+      PlotTrending2DWithFit(canvas2DTrend, hist2DAllHGScale, fitAllHGScale,hHGscaleFitZP,
+                          XminSum, Xmax, minYScale*0.4, maxYScale*1.1,
+                          textSizeRel, 
+                          Form("%s/Trending2DHGScaleAll.%s",OutputNameDirPlots.Data(),plotSuffix.Data() ), commonRunInfo, 2);
+      
+      if (!isHGCROC){
+        PlotTrendingWithFit( canvas1DTrend, graphAllLGScale, fitAllLGScale, hLGscaleFitZP,
+                            XminSum, Xmax, minYScaleLG*0.4, maxYScaleLG*1.3,
+                            textSizeRel, 
+                            Form("%s/TrendingLGScaleAll.%s",OutputNameDirPlots.Data(),plotSuffix.Data() ), commonRunInfo, 2);
+        PlotTrending2DWithFit( canvas2DTrend, hist2DAllLGScale, fitAllLGScale, hLGscaleFitZP,
+                            XminSum, Xmax, minYScaleLG*0.4, maxYScaleLG*1.3,
+                            textSizeRel, 
+                            Form("%s/Trending2DLGScaleAll.%s",OutputNameDirPlots.Data(),plotSuffix.Data() ), commonRunInfo, 2);
+      }
+    }
     
     if (!isHGCROC){
-      
       PlotCalibRunOverlay( canvas1DRunsOverlay, 6, sumCalibs, textSizeRel, 
                           Form("%s/LGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
       PlotCalibRunOverlay( canvas1DRunsOverlay, 7, sumCalibs, textSizeRel, 
@@ -1114,10 +1271,19 @@ bool ComparisonCalib::ProcessCalib(void){
                           Form("%s/LGHGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
       PlotCalibRunOverlay( canvas1DRunsOverlay, 12, sumCalibs, textSizeRel, 
                           Form("%s/HGLGOffsetCorr_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, "", debug);
+
+      PlotCalibRunOverlay( canvas1DRunsOverlay, 21, sumCalibs, textSizeRel, 
+                          Form("%s/LGScaleCalcAlterDiffLGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);  
+      PlotCalibRunOverlay( canvas1DRunsOverlay, 20, sumCalibs, textSizeRel, 
+                          Form("%s/LGScaleCalcDiffLGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);  
+      PlotCalibRunOverlay( canvas1DRunsOverlay, 22, sumCalibs, textSizeRel, 
+                          Form("%s/LGScaleDiffHGScaleSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);  
     }
   }
-  
-  
+    
+  if (ExtPlot < 0)
+    return true;
+    
   MultiCanvas panelPlot(detConf, "Compare");
   bool init1D = panelPlot.Initialize(3);
   
@@ -1125,34 +1291,34 @@ bool ComparisonCalib::ProcessCalib(void){
   bool init2D = panelPlot2D.Initialize(2);
     
   if (expandedList != 3 ){
-    panelPlot.PlotTrending(trend, 19, Xmin,Xmax, OutputNameDirPlots, "Ped", plotSuffix, commonRunInfo, ExtPlot );
-    panelPlot.PlotTrending(trend, 20, Xmin,Xmax, OutputNameDirPlots, "Pedwidth", plotSuffix, commonRunInfo, ExtPlot );
+    panelPlot.PlotTrending(trend, 19, Xmin,Xmax, OutputNameDirPlots, "Ped", plotSuffix, commonRunInfo, enableSingleLayer );
+    panelPlot.PlotTrending(trend, 20, Xmin,Xmax, OutputNameDirPlots, "Pedwidth", plotSuffix, commonRunInfo, enableSingleLayer );
     
     if (globalStatus >1 ){
-      panelPlot.PlotTrending(trend, 2, Xmin,Xmax, OutputNameDirPlots, "HGScale", plotSuffix, commonRunInfo, ExtPlot );
+      panelPlot.PlotTrending(trend, 2, Xmin,Xmax, OutputNameDirPlots, "HGScale", plotSuffix, commonRunInfo, enableSingleLayer );
       if (!isHGCROC){
-        panelPlot.PlotTrending(trend, 3, Xmin,Xmax, OutputNameDirPlots, "LGScale", plotSuffix, commonRunInfo, ExtPlot );
-        panelPlot.PlotTrending(trend, 4, Xmin,Xmax, OutputNameDirPlots, "LGHGCorr", plotSuffix, commonRunInfo, ExtPlot );
-        panelPlot.PlotTrending(trend, 5, Xmin,Xmax, OutputNameDirPlots, "HGLGCorr", plotSuffix, commonRunInfo, ExtPlot );
-        panelPlot.PlotTrending(trend, 17, Xmin,Xmax, OutputNameDirPlots, "LGHG_Offset", plotSuffix, commonRunInfo, ExtPlot );
-        panelPlot.PlotTrending(trend, 18, Xmin,Xmax, OutputNameDirPlots, "HGLG_Offset", plotSuffix, commonRunInfo, ExtPlot );
+        panelPlot.PlotTrending(trend, 3, Xmin,Xmax, OutputNameDirPlots, "LGScale", plotSuffix, commonRunInfo, enableSingleLayer );
+        panelPlot.PlotTrending(trend, 4, Xmin,Xmax, OutputNameDirPlots, "LGHGCorr", plotSuffix, commonRunInfo, enableSingleLayer );
+        panelPlot.PlotTrending(trend, 5, Xmin,Xmax, OutputNameDirPlots, "HGLGCorr", plotSuffix, commonRunInfo, enableSingleLayer );
+        panelPlot.PlotTrending(trend, 17, Xmin,Xmax, OutputNameDirPlots, "LGHG_Offset", plotSuffix, commonRunInfo, enableSingleLayer );
+        panelPlot.PlotTrending(trend, 18, Xmin,Xmax, OutputNameDirPlots, "HGLG_Offset", plotSuffix, commonRunInfo, enableSingleLayer );
       }
     }
   }  
   if (expandedList == 1 && globalStatus > 1 ){
-    panelPlot.PlotTrending(trend, 9, Xmin,Xmax, OutputNameDirPlots, "HG_LandMPV", plotSuffix, commonRunInfo, ExtPlot );
-    panelPlot.PlotTrending(trend, 11, Xmin,Xmax, OutputNameDirPlots, "HG_LandSigma", plotSuffix, commonRunInfo, ExtPlot );
-    panelPlot.PlotTrending(trend, 13, Xmin,Xmax, OutputNameDirPlots, "HG_GaussSigma", plotSuffix, commonRunInfo, ExtPlot );
+    panelPlot.PlotTrending(trend, 9, Xmin,Xmax, OutputNameDirPlots, "HG_LandMPV", plotSuffix, commonRunInfo, enableSingleLayer );
+    panelPlot.PlotTrending(trend, 11, Xmin,Xmax, OutputNameDirPlots, "HG_LandSigma", plotSuffix, commonRunInfo, enableSingleLayer );
+    panelPlot.PlotTrending(trend, 13, Xmin,Xmax, OutputNameDirPlots, "HG_GaussSigma", plotSuffix, commonRunInfo, enableSingleLayer );
     if (!isHGCROC){
-      panelPlot.PlotTrending(trend, 10, Xmin,Xmax, OutputNameDirPlots, "LG_LandMPV", plotSuffix, commonRunInfo, ExtPlot );
-      panelPlot.PlotTrending(trend, 12, Xmin,Xmax, OutputNameDirPlots, "LG_LandSigma", plotSuffix, commonRunInfo, ExtPlot );
-      panelPlot.PlotTrending(trend, 14, Xmin,Xmax, OutputNameDirPlots, "LG_GaussSigma", plotSuffix, commonRunInfo, ExtPlot );
+      panelPlot.PlotTrending(trend, 10, Xmin,Xmax, OutputNameDirPlots, "LG_LandMPV", plotSuffix, commonRunInfo, enableSingleLayer );
+      panelPlot.PlotTrending(trend, 12, Xmin,Xmax, OutputNameDirPlots, "LG_LandSigma", plotSuffix, commonRunInfo, enableSingleLayer );
+      panelPlot.PlotTrending(trend, 14, Xmin,Xmax, OutputNameDirPlots, "LG_GaussSigma", plotSuffix, commonRunInfo, enableSingleLayer );
     }
   }
   if (( expandedList == 1 || expandedList == 2)  && globalStatus > 1){
     panelPlot.PlotTrending(trend, 6, Xmin,Xmax, OutputNameDirPlots, "MuonTriggers", plotSuffix, commonRunInfo, ExtPlot );
-    panelPlot.PlotTrending(trend, 7, Xmin,Xmax, OutputNameDirPlots, "SBSignal_MuonTriggers", plotSuffix, commonRunInfo, ExtPlot );
-    panelPlot.PlotTrending(trend, 8, Xmin,Xmax, OutputNameDirPlots, "SBNoise_MuonTriggers", plotSuffix, commonRunInfo, ExtPlot );
+    panelPlot.PlotTrending(trend, 7, Xmin,Xmax, OutputNameDirPlots, "SBSignal_MuonTriggers", plotSuffix, commonRunInfo, enableSingleLayer );
+    panelPlot.PlotTrending(trend, 8, Xmin,Xmax, OutputNameDirPlots, "SBNoise_MuonTriggers", plotSuffix, commonRunInfo, enableSingleLayer );
   }
   
   if (expandedList == 4 && isHGCROC){
@@ -1170,23 +1336,23 @@ bool ComparisonCalib::ProcessCalib(void){
           maxADC = 650;
         nameADC = "MuonTriggers_ADCDist";
       }
-      panelPlot.PlotRunOverlaySpectra(trend, nRun, 0, -15, maxADC, OutputNameDirPlots, nameADC, plotSuffix, commonRunInfo, ExtPlot);
+      panelPlot.PlotRunOverlaySpectra(trend, nRun, 0, -15, maxADC, OutputNameDirPlots, nameADC, plotSuffix, commonRunInfo, enableSingleLayer);
       if (!isHGCROC) 
-        panelPlot.PlotRunOverlaySpectra(trend, nRun, 1, -10,210, OutputNameDirPlots, "MuonTriggers_LGDist", plotSuffix, commonRunInfo, ExtPlot);
+        panelPlot.PlotRunOverlaySpectra(trend, nRun, 1, -10,210, OutputNameDirPlots, "MuonTriggers_LGDist", plotSuffix, commonRunInfo, enableSingleLayer);
     }
     if (expandedList > 0 && !isHGCROC){
-      if (globalStatus > 1) panelPlot2D.PlotRunOverlayProfile(trend, nRun, 0, -20, 340, -20, 3900, OutputNameDirPlots, "LGHGCorr", plotSuffix, commonRunInfo, ExtPlot );
+      if (globalStatus > 1) panelPlot2D.PlotRunOverlayProfile(trend, nRun, 0, -20, 340, -20, 3900, OutputNameDirPlots, "LGHGCorr", plotSuffix, commonRunInfo, enableSingleLayer );
     }
     
     if (expandedList > 1 && isHGCROC && globalStatus > 1){
-      panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, -20, 450000, -20, 1024, OutputNameDirPlots, "WaveOverlay", plotSuffix, commonRunInfo, ExtPlot );
-      panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, -20, 450000, -0.01, 0.05, OutputNameDirPlots, "WaveOverlayScaled", plotSuffix, commonRunInfo, ExtPlot, 1, true);
+      panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, -20, 450000, -20, 1024, OutputNameDirPlots, "WaveOverlay", plotSuffix, commonRunInfo, enableSingleLayer );
+      panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, -20, 450000, -0.01, 0.05, OutputNameDirPlots, "WaveOverlayScaled", plotSuffix, commonRunInfo, enableSingleLayer, 1, true);
     }    
     
     std::cout << "exp list" << expandedList << "\t HGCROC\t " << isHGCROC << std::endl;
     if (expandedList == 4 && isHGCROC ){
       panelPlot.PlotRunOverlaySpectra(trend, nRun, 0, 0, 4148, OutputNameDirPlots, "TOTSpectra", plotSuffix, commonRunInfo, ExtPlot);
-      panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, 0 , commonRunInfo.samples, -20, 1324, OutputNameDirPlots, "WaveOverlay", plotSuffix, commonRunInfo, ExtPlot );
+      panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, 0 , commonRunInfo.samples, -20, 1324, OutputNameDirPlots, "WaveOverlay", plotSuffix, commonRunInfo, enableSingleLayer );
     }    
   }
   
@@ -1198,12 +1364,11 @@ bool ComparisonCalib::ProcessCalib(void){
       panelSingleTile.SetCellVector(cellVec);
     }
     bool initSngle = panelSingleTile.Initialize(1);
-    panelSingleTile.PlotRunOverlaySpectra(trend, nRun, 0, 0, 4148, OutputNameDirPlots, "TileTOTSpectra", plotSuffix, commonRunInfo, ExtPlot, debug, 0);
-    panelSingleTile.PlotRunOverlaySpectra(trend, nRun, 1, 0, 1024, OutputNameDirPlots, "TileTOASpectra", plotSuffix, commonRunInfo, ExtPlot, debug, 0);
-    panelSingleTile.PlotRunOverlayProfile(trend, nRun, 1, 0 , commonRunInfo.samples, -10, 1324, OutputNameDirPlots, "TileWaveOverlay", plotSuffix, commonRunInfo, ExtPlot );
+    panelSingleTile.PlotRunOverlaySpectra(trend, nRun, 0, 0, 4148, OutputNameDirPlots, "TileTOTSpectra", plotSuffix, commonRunInfo, 1, debug, 0);
+    panelSingleTile.PlotRunOverlaySpectra(trend, nRun, 1, 0, 1024, OutputNameDirPlots, "TileTOASpectra", plotSuffix, commonRunInfo, 1, debug, 0);
+    panelSingleTile.PlotRunOverlayProfile(trend, nRun, 1, 0 , commonRunInfo.samples, -10, 1324, OutputNameDirPlots, "TileWaveOverlay", plotSuffix, commonRunInfo, 1 );
 
-    panelSingleTile.PlotTrending(trend, 32, Xmin,Xmax, OutputNameDirPlots, "TileTOTProb", plotSuffix, commonRunInfo, ExtPlot );
-    
+    panelSingleTile.PlotTrending(trend, 32, Xmin,Xmax, OutputNameDirPlots, "TileTOTProb", plotSuffix, commonRunInfo, 1 );
   }
   
   return status;

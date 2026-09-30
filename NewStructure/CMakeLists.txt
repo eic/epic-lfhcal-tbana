@@ -145,7 +145,7 @@ if(H2G_DECODE_FOUND)
   target_link_libraries(Convert h2g_decode)
 endif()
 
-# DataPrep executable
+# HGCROCStudy executable
 add_executable(HGCROCStudy HGCROCStudy.cc HGCROC_Waveform_Analysis.cc)
 target_link_libraries(HGCROCStudy LFHCAL WaveformFitting ${ROOT_LIBRARIES})
 
@@ -155,6 +155,14 @@ target_link_libraries(DataPrep LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES}
 if(H2G_DECODE_FOUND)
   target_compile_definitions(DataPrep PRIVATE DECODE_HGCROC)
   target_link_libraries(DataPrep h2g_decode)
+endif()
+
+# CalibrateData executable
+add_executable(CalibrateData CalibrateData.cc)
+target_link_libraries(CalibrateData LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES})
+if(H2G_DECODE_FOUND)
+  target_compile_definitions(CalibrateData PRIVATE DECODE_HGCROC)
+  target_link_libraries(CalibrateData h2g_decode)
 endif()
 
 # DataAna executable

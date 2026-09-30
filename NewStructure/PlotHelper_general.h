@@ -61,7 +61,6 @@
     int i = hist->GetNbinsX()-1;
     // std::cout<< "Find last bin" << std::endl;
     while (i > 0 && hist->GetBinContent(i) < min){ 
-      // std::cout << i << "\t"<< hist->GetBinCenter(i) << "\t"<< hist->GetBinContent(i) <<std::endl;
       i--;
     }
     if (i != 1)

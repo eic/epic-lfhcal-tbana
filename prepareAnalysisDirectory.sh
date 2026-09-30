@@ -51,6 +51,7 @@ if [ $2 = "new" ]; then
     ln -sf $LFHCALTBDIR/NewStructure/CompareHGCROCCalib NewStructure/
     ln -sf $LFHCALTBDIR/NewStructure/CompareInjection NewStructure/
     ln -sf $LFHCALTBDIR/NewStructure/CompareAna NewStructure/
+    ln -sf $LFHCALTBDIR/NewStructure/CalibrateData NewStructure/
     ln -sf $LFHCALTBDIR/NewStructure/Convert NewStructure/
     ln -sf $LFHCALTBDIR/NewStructure/DataAna NewStructure/
     ln -sf $LFHCALTBDIR/NewStructure/DataPrep NewStructure/

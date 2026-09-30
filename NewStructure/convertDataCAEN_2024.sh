@@ -156,7 +156,7 @@ elif [ $2 == "MiniSetF" ]; then
   fi
 elif [ $2 == "MiniSetG" ]; then 
   if [ $3 == "convert" ]; then
-    runs='511 508 510 521 525 524 521 513 514 516 517 520'
+    runs='511 508 510 521 525 524 513 514 516 517 520'
   #   runs='511 508 510 521 525 524 521' #mu
   #   runs='513 514 516 517 520' #e-
     for runNr in $runs; do 
@@ -167,7 +167,8 @@ elif [ $2 == "MiniSetG" ]; then
     echo "mergeing muon runs for Mini Set G" 
     cp  $dataDir/raw_511.root $dataDir/raw_muonHVScan_46V.root
     hadd -f $dataDir/raw_muonScanG1_46V.root $dataDir/raw_511.root $dataDir/raw_508.root  $dataDir/raw_510.root  
-    hadd -f $dataDir/raw_muonScanG2_46V.root $dataDir/raw_507.root $dataDir/raw_506.root
+    hadd -f $dataDir/raw_muonScanG2_46V.root $dataDir/raw_525.root $dataDir/raw_524.root
+    hadd -f $dataDir/raw_muonScanG_46V.root $dataDir/raw_muonScanG1_46V.root $dataDir/raw_muonScanG2_46V.root
   fi  
 elif [ $2 == "HVScan" ]; then 
   if [ $3 == "convert" ]; then

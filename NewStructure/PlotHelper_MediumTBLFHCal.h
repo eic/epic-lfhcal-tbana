@@ -953,23 +953,37 @@
     }
     
     ithTrend=trending.begin();
+   
+    // Try to create general histo for plotting
     TGraphErrors* tempGraph3= nullptr;
+    TGraphErrors* tempGraph32= nullptr;
     if (optionTrend != 19 && optionTrend != 20){
       tempGraph3 = ithTrend->second.GetTrendingBasedOnOption(optionTrend);
     } else if (optionTrend == 19){
-      tempGraph3 = ithTrend->second.GetTrendingBasedOnOption(0);
+      tempGraph3  = ithTrend->second.GetTrendingBasedOnOption(0);
+      tempGraph32 = ithTrend->second.GetTrendingBasedOnOption(1);
     } else if (optionTrend == 20){
       tempGraph3 = ithTrend->second.GetTrendingBasedOnOption(15);
+      tempGraph32 = ithTrend->second.GetTrendingBasedOnOption(16);
     }
     if (!tempGraph3){
       std::cout << "No graphs for this option available: "<< optionTrend  << std::endl; 
       return;
     }
-    
+    TString yAxisT  = tempGraph3->GetYaxis()->GetTitle();
+    if (tempGraph32){ 
+      yAxisT.ReplaceAll("(arb. units)","");
+      yAxisT        = yAxisT+", "+tempGraph32->GetYaxis()->GetTitle();
+    }
+
     TH1D* dummyhist = new TH1D("dummyhist", "", 100, xMin, xMax);
     // need to figure out how to grab the titles
-    SetStyleHistoTH1ForGraphs( dummyhist, tempGraph3->GetXaxis()->GetTitle(), tempGraph3->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
+    SetStyleHistoTH1ForGraphs( dummyhist, tempGraph3->GetXaxis()->GetTitle(), yAxisT, 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
     dummyhist->GetYaxis()->SetRangeUser(minY,maxY);
+
+    TString lab1 = Form("#it{#bf{LFHCal TB:}} %s", GetStringFromRunInfo(currRunInfo, 9).Data());
+    TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
+    TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
     
     for (int r = 0; r < nRow; r++){
       for (int c = 0; c < nCol; c++){
@@ -978,9 +992,6 @@
           int tempCellID = setupT->GetCellID(r,c, layer, m);
           int p = setupT->GetChannelInLayerFull(tempCellID, DetConf::Type::MediumTB);
 
-          TString lab1 = Form("#it{#bf{LFHCal TB:}} %s", GetStringFromRunInfo(currRunInfo, 9).Data());
-          TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
-          TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
           TString label           = Form("r:%d c:%d m:%d", r, c, m);
           TString label2          = Form("Common V_{op} = %2.1f V", commonVoltage);
           if (p == 47){

@@ -68,3 +68,100 @@ bool AnaSummary::SetNCellsHist(TH1D* Hist) {
     }
     return false;
 }
+
+bool AnaSummary::SetSatADCHist(TH1D* Hist) {
+    if (Hist){
+      TH1D temp = *Hist;
+      temp.SetName(Form("%s_Run%i",Hist->GetName(),RunNr));
+      temp.SetDirectory(0);
+      temp.Scale(1/temp.GetEntries());
+      temp.GetYaxis()->SetTitle("Counts/event");
+      hSatADC = temp;
+      return true;
+    }
+    else{
+        return false;
+    }
+    return false;
+}
+  
+bool AnaSummary::SetSatLGHist(TH1D* Hist) {
+    if (Hist){
+      TH1D temp = *Hist;
+      temp.SetName(Form("%s_Run%i",Hist->GetName(),RunNr));
+      temp.SetDirectory(0);
+      temp.Scale(1/temp.GetEntries());
+      temp.GetYaxis()->SetTitle("Counts/event");
+      hSatLG = temp;
+      return true;
+    }
+    else{
+        return false;
+    }
+    return false;
+}
+  
+bool AnaSummary::SetLGHGOutHist(TH1D* Hist) {
+    if (Hist){
+      TH1D temp = *Hist;
+      temp.SetName(Form("%s_Run%i",Hist->GetName(),RunNr));
+      temp.SetDirectory(0);
+      temp.Scale(1/temp.GetEntries());
+      temp.GetYaxis()->SetTitle("Counts/event");
+      hLGHGOut = temp;
+      return true;
+    }
+    else{
+        return false;
+    }
+    return false;
+}
+  
+
+bool AnaSummary::SetSatADCCellIDHist(TH1D* Hist) {
+    if (Hist){
+      TH1D temp = *Hist;
+      temp.SetName(Form("%s_Run%i",Hist->GetName(),RunNr));
+      temp.SetDirectory(0);
+      temp.Scale(1/temp.GetEntries());
+      temp.GetYaxis()->SetTitle("Counts/event");
+      hSatADCCellID = temp;
+      return true;
+    }
+    else{
+        return false;
+    }
+    return false;
+}
+
+bool AnaSummary::SetSatLGCellIDHist(TH1D* Hist) {
+    if (Hist){
+      TH1D temp = *Hist;
+      temp.SetName(Form("%s_Run%i",Hist->GetName(),RunNr));
+      temp.SetDirectory(0);
+      temp.Scale(1/temp.GetEntries());
+      temp.GetYaxis()->SetTitle("Counts/event");
+      hSatLGCellID = temp;
+      return true;
+    }
+    else{
+        return false;
+    }
+    return false;
+}
+
+bool AnaSummary::SetLGHGOutCellIDHist(TH1D* Hist) {
+    if (Hist){
+      TH1D temp = *Hist;
+      temp.SetName(Form("%s_Run%i",Hist->GetName(),RunNr));
+      temp.SetDirectory(0);
+      temp.Scale(1/temp.GetEntries());
+      temp.GetYaxis()->SetTitle("Counts/event");
+      hLGHGOutCellID = temp;
+      return true;
+    }
+    else{
+        return false;
+    }
+    return false;
+}

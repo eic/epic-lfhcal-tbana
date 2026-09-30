@@ -444,14 +444,17 @@ void TileSpectra::GetFitRange(  double* fitrange, int year,
       fitrange[1] = 2000; 
       // modify if improved range is detected
       if (impE && avmip != -1000 ){
-        fitrange[0] = 0.6*avmip;
+        // fitrange[0] = 0.6*avmip;
+        fitrange[0] = -30;
         fitrange[1] = 3*avmip;
+      } else if (impE){
+        fitrange[0] = -30; 
       }
       // prohibit fitting below 100 for 2023, even if avmip would be below
       if (year == 2023 && fitrange[0] < 100)
         fitrange[0] = 100;
       // adjust according to vov
-      if (vov != -1000){
+      if (vov != -1000 && !impE){
         if (vov < 2.5)
           fitrange[0]     = 15;
         else if (vov > 5 )
@@ -459,11 +462,13 @@ void TileSpectra::GetFitRange(  double* fitrange, int year,
       }
     // low gain fitting ranges   
     } else {
-      fitrange[0] = 0;
+      fitrange[0] = -20;    // with pedestal
+      // fitrange[0] = 0;
       fitrange[1] = 500; 
       // modify if improved range is detected
       if (impE && avmip != -1000 ){
-        fitrange[0] = 0.5*avmip;
+        fitrange[0] = -20;    // with pedestal
+        // fitrange[0] = 0.5*avmip;
         fitrange[1] = 4*avmip;
       }      
     }
@@ -550,6 +555,17 @@ void TileSpectra::SetParametersFitHG (double* startvalues, double* parlimitslo, 
       parlimitshi[3] = parlimitshi[3]*2;
     if (vov < 4.0)
       parlimitslo[3] = parlimitslo[3]*0.1;
+
+    // starting points and par limits for integrated pedestal fit 
+    startvalues[4] = 0.; 
+    parlimitslo[4] = 0.;
+    parlimitshi[4] = 0.;
+    startvalues[5] = 0.; 
+    parlimitslo[5] = 0.;
+    parlimitshi[5] = 0.;
+    startvalues[6] = 0.; 
+    parlimitslo[6] = 0.;
+    parlimitshi[6] = 0.;
     
   //******************************************************
   // CAEN - Readout fit ranges
@@ -586,6 +602,19 @@ void TileSpectra::SetParametersFitHG (double* startvalues, double* parlimitslo, 
     startvalues[3] = calib->PedestalSigH; 
     parlimitslo[3] = calib->PedestalSigH*0.01;
     parlimitshi[3] = calib->PedestalSigH*40;
+    
+    //==========================================================
+    // starting points and par limits for integrated pedestal fit
+    //==========================================================
+    startvalues[4] = integ; 
+    parlimitslo[4] = 0.;
+    parlimitshi[4] = integ*10;
+    startvalues[5] = 0.; 
+    parlimitslo[5] = -20;
+    parlimitshi[5] = 20;
+    startvalues[6] = calib->PedestalSigH; 
+    parlimitslo[6] = 0.5;
+    parlimitshi[6] = calib->PedestalSigH*3; 
   }
   return;
 }
@@ -629,12 +658,12 @@ bool TileSpectra::FitMipHG( double* out, double* outErr,
   }
 
   // Setting parameter start values and limits
-  double* startvalues    = new double[4];
-  double* parlimitslo    = new double[4];
-  double* parlimitshi    = new double[4];
+  double* startvalues    = new double[7];
+  double* parlimitslo    = new double[7];
+  double* parlimitshi    = new double[7];
   SetParametersFitHG (startvalues, parlimitslo, parlimitshi, intArea, year, impE, vov, avmip);
   
-  if (verbosity > 1) {
+  if (verbosity > 3) {
     std::cout << "Layer: "<< setupT->GetLayer(cellID) << std::endl;
     std::cout << "Fit range: " << fitrange[0] << "\t" << fitrange[1] << std::endl;
     for (int i=0; i<4; i++) {
@@ -642,14 +671,26 @@ bool TileSpectra::FitMipHG( double* out, double* outErr,
     }
   }
   
-  SignalHG = TF1(funcName.Data(),langaufun,fitrange[0],fitrange[1],4);
-  SignalHG.SetNpx(1000);
-  SignalHG.SetParameters(startvalues);
-  SignalHG.SetParNames("Width","MP","Area","GSigma");
-
-  for (int i=0; i<4; i++) {
-    SignalHG.SetParLimits(i, parlimitslo[i], parlimitshi[i]);
+  // use function with pedestal fit for Caen and only in improved fitting case, where start parameters are reasonably well guessed
+  if (impE && ROType == ReadOut::Type::Caen){
+    SignalHG = TF1(funcName.Data(),langauWithPedestal,fitrange[0],fitrange[1],7);
+    SignalHG.SetNpx(1000);
+    SignalHG.SetParameters(startvalues);
+    SignalHG.SetParNames("Width","MP","Area","GSigma","PedArea","PedMean","PedSigma");
+    for (int i=0; i<7; i++) {
+      SignalHG.SetParLimits(i, parlimitslo[i], parlimitshi[i]);
+    }
+  // otherwise use only landau gauss
+  } else {
+    SignalHG = TF1(funcName.Data(),langaufun,fitrange[0],fitrange[1],4);
+    SignalHG.SetNpx(1000);
+    SignalHG.SetParameters(startvalues);
+    SignalHG.SetParNames("Width","MP","Area","GSigma");
+    for (int i=0; i<4; i++) {
+      SignalHG.SetParLimits(i, parlimitslo[i], parlimitshi[i]);
+    }
   }
+
   TString fitOption = "";
   if (impE){ 
     fitOption = "QRLMN0";
@@ -727,11 +768,11 @@ bool TileSpectra::FitMipLG(double* out, double* outErr, int verbosity, int year,
   //   par[2]=Total area (integral -inf to inf, normalization constant)
   //   par[3]=Width (sigma) of convoluted Gaussian function
   //
-
+  Setup* setupT=Setup::GetInstance();
   TString funcName = Form("fmip%sLGCellID%d",TileName.Data(),cellID);
   
   double* fitrange    = new double[2];
-  GetFitRange(fitrange, false,  impE, vov ,avmip);
+  GetFitRange(fitrange, year, false,  impE, vov ,avmip);
 
   if (calib->BadChannel != -64 && calib->BadChannel < 1 ){
     if (verbosity > 0) std::cout << "==========> Skipped LG cell " << cellID << " channel dead" << std::endl;
@@ -746,17 +787,43 @@ bool TileSpectra::FitMipLG(double* out, double* outErr, int verbosity, int year,
     if (verbosity > 0) std::cout << "==========> Skipped LG cell " << cellID << " S/B too small!" << std::endl;
     return false;
   }
-  double startvalues[4]   = {calib->PedestalSigL, 20, intArea, calib->PedestalSigL};
-  double parlimitslo[4]   = {0.5, 0, 1.0, calib->PedestalSigL*0.1};
-  double parlimitshi[4]   = {calib->PedestalSigL*10, 600, intArea*5, calib->PedestalSigL*10};
+  double startvalues[7]   = {calib->PedestalSigL, 20, intArea, calib->PedestalSigL, intNoise, 0, calib->PedestalSigL};
+  double parlimitslo[7]   = {0.5, 0, 1.0, calib->PedestalSigL*0.1, 0, -5, 0.5};
+  double parlimitshi[7]   = {calib->PedestalSigL*10, 600, intArea*5, calib->PedestalSigL*10, intNoise*5, 5, calib->PedestalSigL*3 };
   
-  SignalLG = TF1(funcName.Data(),langaufun,fitrange[0],fitrange[1],4);
-  SignalLG.SetNpx(1000);
-  SignalLG.SetParameters(startvalues);
-  SignalLG.SetParNames("Width","MP","Area","GSigma");
+  if (impE && avmip > 1.){
+    startvalues[1]  = avmip;
+    parlimitslo[1]  = 0.1*avmip;
+    parlimitshi[1]  = 3*avmip;
+    if (parlimitshi[5] > avmip)
+      parlimitshi[5] = avmip-0.5;
+  }
+  
+  if (verbosity > 1) {
+    std::cout << "Layer: "<< setupT->GetLayer(cellID) <<"\t av mip: " <<avmip << std::endl;
+    std::cout << "LG Fit range: " << fitrange[0] << "\t" << fitrange[1] << std::endl;
+    for (int i=0; i<4; i++) {
+      std::cout << "parameter " << i << ": " << startvalues[i] << "\t" << parlimitslo[i] << "\t" << parlimitshi[i] << std::endl;
+    }
+  }
+// 
+  if (impE){
+    SignalLG = TF1(funcName.Data(),langauWithPedestal,fitrange[0],fitrange[1],7);
+    SignalLG.SetNpx(1000);
+    SignalLG.SetParameters(startvalues);
+    SignalLG.SetParNames("Width","MP","Area","GSigma","PedArea","PedMean","PedSigma");
+    for (int i=0; i<7; i++) {
+      SignalLG.SetParLimits(i, parlimitslo[i], parlimitshi[i]);
+    }
 
-  for (int i=0; i<4; i++) {
-    SignalLG.SetParLimits(i, parlimitslo[i], parlimitshi[i]);
+  } else {
+    SignalLG = TF1(funcName.Data(),langaufun,fitrange[0],fitrange[1],4);
+    SignalLG.SetNpx(1000);
+    SignalLG.SetParameters(startvalues);
+    SignalLG.SetParNames("Width","MP","Area","GSigma");
+    for (int i=0; i<4; i++) {
+      SignalLG.SetParLimits(i, parlimitslo[i], parlimitshi[i]);
+    }
   }
 
   TString fitOption = "";
@@ -1226,6 +1293,34 @@ double TileSpectra::langaufun(double *x, double *par) {
   return (par[2] * step * sum * invsq2pi / par[3]);
 }
 
+
+double TileSpectra::langauWithPedestal(double *x, double *par) {
+  // Parameters:
+  // par[0] = Landau scale/width parameter (xi)
+  // par[1] = Most Probable Value (MPV) of signal peak
+  // par[2] = Signal Area
+  // par[3] = Signal Gaussian broadening (sigma_signal)
+  // par[4] = Pedestal Area
+  // par[5] = Pedestal Mean (~0)
+  // par[6] = Pedestal Width (sigma_ped)
+
+  if (par[5] >= par[1]) {
+    double delta = par[5] - par[1];
+    return 1e4 * (1.0 + delta * delta); // Smoothly increases, keeping continuous derivatives
+  }
+  
+  // 1. Signal component (Langau)
+  double signal = langaufun(x, par);
+
+  // 2. Pedestal component (Gaussian normalized to par[4])
+  double pedestal = 0.0;
+  if (par[6] > 0.0) {
+    // TMath::Gaus with kTRUE returns a normalized Gaussian (Area = 1)
+    pedestal = par[4] * TMath::Gaus(x[0], par[5], par[6], kTRUE);
+  }
+
+  return signal + pedestal;
+}
 
 int TileSpectra::langaupro(double *params, double &maxx, double &FWHM) {
 

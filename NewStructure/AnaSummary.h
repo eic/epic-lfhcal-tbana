@@ -33,10 +33,23 @@ class AnaSummary: public TObject{
   bool SetDeltaTimeHist(TH1D*);
   bool SetEnergyHist(TH1D*);
   bool SetNCellsHist(TH1D*);
+  bool SetSatADCCellIDHist(TH1D*);
+  bool SetSatLGCellIDHist(TH1D*);
+  bool SetLGHGOutCellIDHist(TH1D*);
+  bool SetSatADCHist(TH1D*);
+  bool SetSatLGHist(TH1D*);
+  bool SetLGHGOutHist(TH1D*);
 
+  
   inline TH1D* GetDeltaTimeHist()     {return &hDeltaTime;};
   inline TH1D* GetEnergyHist()        {return &hEnergy;};
   inline TH1D* GetNCellsHist()        {return &hNCells;};
+  inline TH1D* GetSatADCCellIDHist()  {return &hSatADCCellID;};
+  inline TH1D* GetSatLGCellIDHist()   {return &hSatLGCellID;};
+  inline TH1D* GetLGHGOutCellIDHist() {return &hLGHGOutCellID;};
+  inline TH1D* GetSatADCHist()        {return &hSatADC;};
+  inline TH1D* GetSatLGHist()         {return &hSatLG;};
+  inline TH1D* GetLGHGOutHist()       {return &hLGHGOut;};
   
   inline double GetVoltage()      {return Voltage;};
   inline double GetEnergy()       {return Energy;};
@@ -52,8 +65,14 @@ class AnaSummary: public TObject{
   TH1D hDeltaTime    ;
   TH1D hEnergy       ;
   TH1D hNCells       ;
+  TH1D hSatADCCellID ;
+  TH1D hSatADC       ;
+  TH1D hSatLGCellID  ;
+  TH1D hSatLG        ;
+  TH1D hLGHGOutCellID;
+  TH1D hLGHGOut      ;
 
-  ClassDef(AnaSummary,2);
+  ClassDef(AnaSummary,3);
 };
 
 #endif

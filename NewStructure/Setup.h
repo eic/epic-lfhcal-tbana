@@ -68,6 +68,7 @@ class Setup{
   int     GetLayersInSegmentFromLayer(int) const;
   int     GetLayersInSegment(int) const;
   double  GetSegmentDepth(int cellID) const;
+  bool    HasSameSegmentDepth() const;
   
   TString DecodeCellID(int /**/) const;
   double  GetX         (int /**/) const;

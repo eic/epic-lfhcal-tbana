@@ -44,7 +44,7 @@ class ComparisonAna{
   //Overload method for boolean...or is it too dangerous?
   inline void CanOverWrite(bool b)               {Overwrite=b;};
   inline void EnableDebug(int i)                 {debug=i;};
-  inline void ExpandedList(int i)               {expandedList=i;};  
+  inline void ExpandedList(int i)                {expandedList=i;};  
   
   inline void AddInputFile(TString name)         {RootInputNames.push_back(name);};
   inline void SetInputList(TString name)         {InputListName=name;};

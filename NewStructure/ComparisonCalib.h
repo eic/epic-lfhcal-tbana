@@ -61,6 +61,7 @@ class ComparisonCalib{
   inline void SetIsHGCROC(bool b)                {isHGCROC=b;};
 	inline void SetLegendLabelOpt(int i)					 {eoLabelOpt=i;};  
   inline void SetCellList(TString name)					 {cellList=name;};  
+  inline void SetEnableSingleLayer(short i)      {enableSingleLayer=i;};
   //General methods
   bool CreateOutputRootFile(void);
   bool CheckAndOpenIO(void);
@@ -80,6 +81,7 @@ class ComparisonCalib{
   int expandedList            =0;         // Expanded input list option: 1 - ImprovedScaling histo output, 2 - GetScaling histo output
   int debug                   =0;         // debug level 
   short ExtPlot               =0;         // Enable extended plotting
+  short enableSingleLayer     =0;         // enable single layer plotting
   int yearData                =-1;        // data taking year externally set
   int Xaxis                   =0;         // Trending dependence 0: run nr, 1: Voltage
   int maxLayerPlot            =100;       // option restrict individual layer plotting

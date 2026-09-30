@@ -270,6 +270,15 @@ double Setup::GetSegmentDepth(int cellID) const{
   return cellD;
 }
 
+bool Setup::HasSameSegmentDepth() const{
+  const int& firstVal = SegmentSum.begin()->second;
+  for (const auto& [key, val] : SegmentSum) {
+    if (val != firstVal) {
+      return false;
+    }
+  }
+  return true;
+}
 
 TString Setup::DecodeCellID(int cellID) const{
   TString out = Form("cell ID: %d ==> RO unit %d RO channel %d  module %d  layer %d  column %d row %d", cellID, GetROunit(cellID), GetROchannel(cellID), GetModule(cellID), GetLayer(cellID), GetColumn(cellID), GetRow(cellID));

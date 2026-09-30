@@ -204,12 +204,12 @@ if [ $2 == "compareCalib" ]; then
   #  - hist file from improved mip fit
   inputFileList=calibFileList_TB2025_HVscan1.txt # include relative path if not in NewStructure
   outFileName=compareCalib_28_33.root
-  trendingPlotsX=V # =V: plot as function of Vop. =R: plot as function of run number
+  trendingPlotsX=Vop # =V: plot as function of Vop. =run: plot as function of run number
   runNrFile=../configs/TB2025/DataTakingDB_202511_HGCROC.csv
   # -e 1 --> do extended plotting
   # -d 0 --> debug level 0
   # -f   --> force to write output if already exist
   # -H   --> use HGCROC (instead of CAEN)
   # -I   --> extended input file list
-  ./CompareCalib -e 1 -d 0 -f -H -$trendingPlotsX -I $inputFileList -o $outFileName -O $PlotDirCompCal -r $runNrFile
+  ./CompareCalib -e 1 -d 0 -f -H -x $trendingPlotsX -I $inputFileList -o $outFileName -O $PlotDirCompCal -r $runNrFile
 fi

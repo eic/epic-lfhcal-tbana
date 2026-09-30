@@ -96,6 +96,7 @@ bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt, int 
 bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH1D* histLG, TProfile* profLGHG, TProfile* wave ){
   
   if (extended == 1 || extended == 2 ){
+    
     gTrendTrigger.AddPoint     (x,triggers     );
     gTrendTrigger.SetPointError(gTrendTrigger.GetN()-1,0.,0.);
     if(triggers<MinTrigg) MinTrigg  = triggers;

@@ -9,16 +9,37 @@ bool CalibSummary::Fill(const TileCalib& tc){
   hLGpedwidth   .Fill(tc.PedestalSigL);
   hHGped        .Fill(tc.PedestalMeanH);
   hHGpedwidth   .Fill(tc.PedestalSigH);
-  hLGscale      .Fill(tc.ScaleL);
-  if (tc.LGHGCorr != 0. ) hLGscaleCalc  .Fill(tc.ScaleH/tc.LGHGCorr);
-  else hLGscaleCalc  .Fill(-1000);
-  hLGscalewidth .Fill(tc.ScaleWidthL);
   hHGscale      .Fill(tc.ScaleH);
   hHGscalewidth .Fill(tc.ScaleWidthH);
-  hHGLGcorr     .Fill(tc.HGLGCorr);
-  hHGLGOffcorr  .Fill(tc.HGLGCorrOff);
-  hLGHGcorr     .Fill(tc.LGHGCorr);
-  hLGHGOffcorr  .Fill(tc.LGHGCorrOff);
+  
+  if (rotype == 0){
+    hLGscale      .Fill(tc.ScaleL);
+    hLGscalewidth .Fill(tc.ScaleWidthL);
+    
+    double LGcalc       = -1000;
+    double LGcalcAlter  = -1000;
+    if (tc.LGHGCorr != 0. || tc.LGHGCorr != -64 ){
+      LGcalc        = tc.ScaleH/tc.LGHGCorr;
+      LGcalcAlter   = (tc.ScaleH - tc.LGHGCorrOff)/tc.LGHGCorr;
+    }
+    hLGscaleCalc  .Fill(LGcalc);
+    if (tc.ScaleL != -1000 || tc.ScaleL != 0){
+      hLGscaleCalcDiffLGscale     .Fill(LGcalc/tc.ScaleL);
+      hLGscaleCalcAlterDiffLGscale.Fill(LGcalcAlter/tc.ScaleL);
+      hLGscaleDiffHGscale         .Fill(tc.ScaleL/tc.ScaleH);
+    // Fill overflow
+    } else if (tc.ScaleL != 0){
+      hLGscaleCalcDiffLGscale     .Fill(1000);
+      hLGscaleCalcAlterDiffLGscale.Fill(1000);
+      hLGscaleDiffHGscale         .Fill(1000);
+    }
+    
+    hHGLGcorr     .Fill(tc.HGLGCorr);
+    hHGLGOffcorr  .Fill(tc.HGLGCorrOff);
+    hLGHGcorr     .Fill(tc.LGHGCorr);
+    hLGHGOffcorr  .Fill(tc.LGHGCorrOff);
+    
+  }
   return true;
 }
 
@@ -27,16 +48,36 @@ bool CalibSummary::Fill(TileCalib* tc){
   hLGpedwidth   .Fill(tc->PedestalSigL);
   hHGped        .Fill(tc->PedestalMeanH);
   hHGpedwidth   .Fill(tc->PedestalSigH);
-  hLGscale      .Fill(tc->ScaleL);
-  if (tc->LGHGCorr != 0. ) hLGscaleCalc  .Fill(tc->ScaleH/tc->LGHGCorr);
-  else hLGscaleCalc  .Fill(-1000);
-  hLGscalewidth .Fill(tc->ScaleWidthL);
   hHGscale      .Fill(tc->ScaleH);
   hHGscalewidth .Fill(tc->ScaleWidthH);
-  hHGLGcorr     .Fill(tc->HGLGCorr);
-  hHGLGOffcorr  .Fill(tc->HGLGCorrOff);
-  hLGHGcorr     .Fill(tc->LGHGCorr);
-  hLGHGOffcorr  .Fill(tc->LGHGCorrOff);
+  
+  if (rotype == 0){
+    hLGscale      .Fill(tc->ScaleL);
+    
+    double LGcalc       = -1000;
+    double LGcalcAlter  = -1000;
+    if (tc->LGHGCorr != 0. || tc->LGHGCorr != -64 ){
+      LGcalc        = tc->ScaleH/tc->LGHGCorr;
+      LGcalcAlter   = (tc->ScaleH - tc->LGHGCorrOff)/tc->LGHGCorr;
+    }
+    hLGscaleCalc  .Fill(LGcalc);
+    if (tc->ScaleL != -1000 || tc->ScaleL != 0){
+      hLGscaleCalcDiffLGscale     .Fill(LGcalc/tc->ScaleL);
+      hLGscaleCalcAlterDiffLGscale.Fill(LGcalcAlter/tc->ScaleL);
+      hLGscaleDiffHGscale         .Fill(tc->ScaleL/tc->ScaleH);
+    // Fill overflow
+    } else if (tc->ScaleL != 0){
+      hLGscaleCalcDiffLGscale     .Fill(1000);
+      hLGscaleCalcAlterDiffLGscale.Fill(1000);
+      hLGscaleDiffHGscale         .Fill(1000);
+    }
+
+    hLGscalewidth .Fill(tc->ScaleWidthL);
+    hHGLGcorr     .Fill(tc->HGLGCorr);
+    hHGLGOffcorr  .Fill(tc->HGLGCorrOff);
+    hLGHGcorr     .Fill(tc->LGHGCorr);
+    hLGHGOffcorr  .Fill(tc->LGHGCorrOff);
+  }
   return true;
 }
 
@@ -72,28 +113,31 @@ bool CalibSummary::FillRefRunProps(const TileCalib& tc, const TileCalib& tcRef )
   hHGscaleCorrRef.Fill(tc.ScaleH, tcRef.ScaleH);
   pHGscaleCorrRef.Fill(tc.ScaleH, tcRef.ScaleH);
 
-  
-  if (tc.ScaleL == -1000.)
-    hLGscaleDiffRef   .Fill(-1000);
-  else if (tcRef.ScaleL == -1000.)
-    hLGscaleDiffRef   .Fill(1000);
-  else 
-    hLGscaleDiffRef .Fill(tc.ScaleL-tcRef.ScaleL);
-  
-  if (tc.LGHGCorr == 0. || tc.LGHGCorr == -1000.|| tc.ScaleH == -1000. )
-    hLGscaleCalcDiffRef .Fill(-1000);
-  else if (tcRef.LGHGCorr == 0. || tcRef.LGHGCorr == -1000. || tcRef.ScaleH == -1000. )
-    hLGscaleCalcDiffRef .Fill(1000);
-  else 
-    hLGscaleCalcDiffRef .Fill((tc.ScaleH/tc.LGHGCorr)-(tcRef.ScaleH/tcRef.LGHGCorr));
-  
-  if (tc.LGHGCorr == 0. || tc.LGHGCorr == -1000. )
-    hLGHGcorrDiffRef .Fill(-1000);
-  else if (tcRef.LGHGCorr == 0. || tcRef.LGHGCorr == -1000. )
-    hLGHGcorrDiffRef .Fill(1000);
-  else   
-    hLGHGcorrDiffRef  .Fill(tc.LGHGCorr-tcRef.LGHGCorr);
-  
+  if (rotype == 0){
+    if (tc.ScaleL == -1000.)
+      hLGscaleDiffRef   .Fill(-1000);
+    else if (tcRef.ScaleL == -1000.)
+      hLGscaleDiffRef   .Fill(1000);
+    else 
+      hLGscaleDiffRef .Fill(tc.ScaleL-tcRef.ScaleL);
+    
+    if (tc.LGHGCorr == 0. || tc.LGHGCorr == -1000.|| tc.ScaleH == -1000. )
+      hLGscaleCalcDiffRef .Fill(-1000);
+    else if (tcRef.LGHGCorr == 0. || tcRef.LGHGCorr == -1000. || tcRef.ScaleH == -1000. )
+      hLGscaleCalcDiffRef .Fill(1000);
+    else 
+      hLGscaleCalcDiffRef .Fill((tc.ScaleH/tc.LGHGCorr)-(tcRef.ScaleH/tcRef.LGHGCorr));
+    
+    if (tc.LGHGCorr == 0. || tc.LGHGCorr == -1000. )
+      hLGHGcorrDiffRef .Fill(-1000);
+    else if (tcRef.LGHGCorr == 0. || tcRef.LGHGCorr == -1000. )
+      hLGHGcorrDiffRef .Fill(1000);
+    else   
+      hLGHGcorrDiffRef  .Fill(tc.LGHGCorr-tcRef.LGHGCorr);
+
+    hLGscaleCorrRef.Fill(tc.ScaleL, tcRef.ScaleL);
+    pLGscaleCorrRef.Fill(tc.ScaleL, tcRef.ScaleL);
+  }
   return true;
 }
 
@@ -130,27 +174,31 @@ bool CalibSummary::FillRefRunProps(TileCalib* tc, TileCalib* tcRef ){
   hHGscaleCorrRef.Fill(tc->ScaleH, tcRef->ScaleH);
   pHGscaleCorrRef.Fill(tc->ScaleH, tcRef->ScaleH);
   
-  if (tc->ScaleL == -1000.)
-    hLGscaleDiffRef   .Fill(-1000);
-  else if (tcRef->ScaleL == -1000.)
-    hLGscaleDiffRef   .Fill(1000);
-  else 
-    hLGscaleDiffRef .Fill(tc->ScaleL-tcRef->ScaleL);
-  
-  if (tc->LGHGCorr == 0. || tc->LGHGCorr == -1000.|| tc->ScaleH == -1000. )
-    hLGscaleCalcDiffRef .Fill(-1000);
-  else if (tcRef->LGHGCorr == 0. || tcRef->LGHGCorr == -1000. || tcRef->ScaleH == -1000. )
-    hLGscaleCalcDiffRef .Fill(1000);
-  else 
-    hLGscaleCalcDiffRef .Fill((tc->ScaleH/tc->LGHGCorr)-(tcRef->ScaleH/tcRef->LGHGCorr));
-  
-  if (tc->LGHGCorr == 0. || tc->LGHGCorr == -1000. )
-    hLGHGcorrDiffRef .Fill(-1000);
-  else if (tcRef->LGHGCorr == 0. || tcRef->LGHGCorr == -1000. )
-    hLGHGcorrDiffRef .Fill(1000);
-  else   
-    hLGHGcorrDiffRef  .Fill(tc->LGHGCorr-tcRef->LGHGCorr);
-  
+  if (rotype == 0){
+    if (tc->ScaleL == -1000.)
+      hLGscaleDiffRef   .Fill(-1000);
+    else if (tcRef->ScaleL == -1000.)
+      hLGscaleDiffRef   .Fill(1000);
+    else 
+      hLGscaleDiffRef .Fill(tc->ScaleL-tcRef->ScaleL);
+    
+    if (tc->LGHGCorr == 0. || tc->LGHGCorr == -1000.|| tc->ScaleH == -1000. )
+      hLGscaleCalcDiffRef .Fill(-1000);
+    else if (tcRef->LGHGCorr == 0. || tcRef->LGHGCorr == -1000. || tcRef->ScaleH == -1000. )
+      hLGscaleCalcDiffRef .Fill(1000);
+    else 
+      hLGscaleCalcDiffRef .Fill((tc->ScaleH/tc->LGHGCorr)-(tcRef->ScaleH/tcRef->LGHGCorr));
+    
+    if (tc->LGHGCorr == 0. || tc->LGHGCorr == -1000. )
+      hLGHGcorrDiffRef .Fill(-1000);
+    else if (tcRef->LGHGCorr == 0. || tcRef->LGHGCorr == -1000. )
+      hLGHGcorrDiffRef .Fill(1000);
+    else   
+      hLGHGcorrDiffRef  .Fill(tc->LGHGCorr-tcRef->LGHGCorr);
+    hLGscaleCorrRef.Fill(tc->ScaleL, tcRef->ScaleL);
+    pLGscaleCorrRef.Fill(tc->ScaleL, tcRef->ScaleL);
+  }
+    
   return true;
 }
 
@@ -176,26 +224,36 @@ bool CalibSummary::Write(TFile* f){
   hLGpedwidth     .Write();
   hHGped          .Write();
   hHGpedwidth     .Write();
-  hLGscale        .Write();
-  hLGscaleCalc    .Write();
-  hLGscalewidth   .Write();
   hHGscale        .Write();
   hHGscalewidth   .Write();
-  hHGLGcorr       .Write();
-  hHGLGOffcorr    .Write();
-  hLGHGcorr       .Write();
-  hLGHGOffcorr    .Write();
   
+  if (rotype == 0){
+    hLGscale        .Write();
+    hLGscaleCalc    .Write();
+    hLGscalewidth   .Write();
+    hHGLGcorr       .Write();
+    hHGLGOffcorr    .Write();
+    hLGHGcorr       .Write();
+    hLGHGOffcorr    .Write();
+    hLGscaleCalcDiffLGscale     .Write();
+    hLGscaleCalcAlterDiffLGscale.Write();
+    hLGscaleDiffHGscale         .Write();
+  }
   if (RunNr != RunNrRef){
     hHGpedDiffRef       .Write();
     hHGpedwidthDiffRef  .Write();
     hLGpedDiffRef       .Write();
     hHGscaleDiffRef     .Write();
-    hLGscaleDiffRef     .Write();
-    hLGscaleCalcDiffRef .Write();
-    hLGHGcorrDiffRef    .Write();
     hHGscaleCorrRef     .Write();
     pHGscaleCorrRef     .Write();
+    if (rotype == 0){
+      hLGscaleDiffRef     .Write();
+      hLGscaleCalcDiffRef .Write();
+      hLGHGcorrDiffRef    .Write();
+      hLGscaleCorrRef     .Write();
+      pLGscaleCorrRef     .Write();
+    }
+    
   }
   
   if (hHGscaleLayer.size() > 0){

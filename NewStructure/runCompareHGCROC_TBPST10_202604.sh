@@ -1,7 +1,7 @@
 #! /bin/bash
 
-# bash runCompareHGCROC_TBPST10_202604.sh $USERNAME [calib/ana] [R/V] $OPTION
-# R: trending plots vs run#. V: trending plots vs Vop.
+# bash runCompareHGCROC_TBPST10_202604.sh $USERNAME [calib/ana] [run/Vop] $OPTION
+# R: trending plots vs run#. V: trending plots vs Vop. needs to be 'run' or 'Vop' for calib compare
 # options: HVScan1, FullSetC, FullSetD
 
 runList=../configs/TB2026/DataTakingDB_TBPST10_202604_HGCROC.csv
@@ -29,9 +29,9 @@ fi
 
 if [ $2 == "calib" ]; then
 	if [ $4 == "HVScan1_OG" ]; then
-		./CompareCalib -F pdf -e 1 -d 1 -f -$3 -H -s -I $calibFileList -o $dirOut/TrendingAllCalibs_$plotNameSuff.root -O $PlotBaseDir -r $runList
+		./CompareCalib -F pdf -e 1 -d 1 -f -x $3 -H -s -I $calibFileList -o $dirOut/TrendingAllCalibs_$plotNameSuff.root -O $PlotBaseDir -r $runList
 	else
-	./CompareCalib -F pdf -e 1 -d 1 -f -$3 -H -I $calibFileList -o $dirOut/TrendingAllCalibs_$plotNameSuff.root -O $PlotBaseDir -r $runList
+	./CompareCalib -F pdf -e 1 -d 1 -f -x $3 -H -I $calibFileList -o $dirOut/TrendingAllCalibs_$plotNameSuff.root -O $PlotBaseDir -r $runList
 	fi
 
 elif [ $2 == "ana" ]; then

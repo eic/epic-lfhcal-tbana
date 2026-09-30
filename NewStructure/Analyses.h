@@ -126,7 +126,7 @@ class Analyses{
   inline void SetHGCROCNSampleIntegForced(int n) {optHGCROCInt      = 101; 
                                                   nSampleHGCROCInt  = n;
                                                   };
-  
+  inline void SetCalibOption(int n)              {calibOption = n;};
   inline void SetYear(int year)                  {yearData=year;};
   inline void SetASCIIinput(TString name)        {ASCIIinputName=name;};
   inline void SetMapInput(TString name)          {MapInputName=name;};
@@ -212,6 +212,10 @@ class Analyses{
   double minFracTriggThre     = 3.;
   int optHGCROCInt            = 0;
   int nSampleHGCROCInt        = 1;
+  int calibOption             = 2;        // -> 0 - based on LG only & LG mip
+                                          // -> 1 - based on LG only & LG calc mip
+                                          // -> 2 - based on HG & LG & HG mip, LG mip - default for local trigger eval
+                                          // -> 3 - based on HG & LG & HG mip, LG calc mip
   
   RootSetupWrapper rsw;                   // Wrapper singleton class for setup
   RootSetupWrapper* rswptr;               // Pointer to wrapper for singleton class for setup

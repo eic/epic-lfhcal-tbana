@@ -106,7 +106,7 @@ class TileSpectra: public TObject{
         hspectraLG.SetDirectory(0);
         hcombined     = TH1D(Form("hspectra%sCombCellID%d",name.Data(),id),
                              Form("Energy CellID %d; E (mip eq./tile); counts",id),
-                             8000,-5,1000);
+                             4020,-5,1000);
         hcombined.SetDirectory(0);
         hspectraLGHG  = TProfile(Form("hCoorspectra%sLGHGCellID%d",name.Data(),id),
                                  Form("ADC Low  Gain/High Gain correlation CellID %d; Corr LG  (arb. units); HG E (mip eq./tile)",id),
@@ -316,6 +316,8 @@ class TileSpectra: public TObject{
   
   void Write(bool);
   void WriteExt(bool);
+
+  static double langaufun(double */*x*/, double */*par*/);
   
  protected:
   TString TileName      = "";
@@ -362,10 +364,10 @@ class TileSpectra: public TObject{
   TH2D hcorrADCTOT;     // only in HGCROC case
   TProfile hProfileTOT; // only in HGCROC case
   TProfile hProfileTOA; // only in HGCROC case
-  static double langaufun(double */*x*/, double */*par*/);
+  static double langauWithPedestal(double */*x*/, double */*par*/);
   static int langaupro(double */*params*/, double &/*maxx*/, double &/*FWHM*/);
 
-  ClassDef(TileSpectra,3);
+  ClassDef(TileSpectra,4);
 };
 
 

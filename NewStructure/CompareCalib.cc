@@ -32,7 +32,6 @@ void PrintHelp(char* exe){
   std::cout<<"Usage:"<<std::endl;
   std::cout<<exe<<" [-option (arguments)]"<<std::endl;
   std::cout<<"Options:"<<std::endl;
-  std::cout<<"-a       Trending lots versus laser intensity" << std::endl;
   std::cout<<"-c ccc   list of cell to be plotted separately"<<std::endl;
   std::cout<<"-d [0-3] Debugging mode"<<std::endl;
   std::cout<<"-e [0-1] extended plotting"<<std::endl;
@@ -46,11 +45,8 @@ void PrintHelp(char* exe){
   std::cout<<"-o vvv   Output file name (mandatory)"<<std::endl;
   std::cout<<"-O kkk   Output directory name for plots (mandatory)"<<std::endl;
   std::cout<<"-r rrr   Name of run list file  2024 PS TB [../configs/DataTakingDB_202409_CAEN.csv] "<<std::endl;
-  std::cout<<"-R       Trending plots versus run #"<<std::endl;
   std::cout<<"-s       Flag HV scan (put Vop in legend)"<<std::endl;
-  std::cout<<"-V       Trending plots versus Vop"<<std::endl;
-  std::cout<<"-T       Trending plots versus iteration for mips"<<std::endl;
-  std::cout<<"-t       Trending plots versus diff integrations"<<std::endl;
+  std::cout<<"-x XXXX  Give axis option with XXXX, defined: run, ite, integ, Vop, intensity"<<std::endl;
   std::cout<<"-h       this help"<<std::endl<<std::endl;
   std::cout<<"Examples:"<<std::endl;
   std::cout<<exe<<" (-f) -o TrendingOutput.root -i input_list.txt (-f to overwrite existing output)"<<std::endl;
@@ -70,7 +66,7 @@ int main(int argc, char* argv[]){
   }
   ComparisonCalib CompAnalysis;
   int c;
-  while((c=getopt(argc,argv,"ac:d:e:E:fF:Hi:I:L:o:O:r:RstTtVh"))!=-1){
+  while((c=getopt(argc,argv,"ac:d:e:E:fF:Hi:I:L:o:O:r:sSx:h"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"Compare: plot as function of laser intensity " <<std::endl;
@@ -149,7 +145,6 @@ int main(int argc, char* argv[]){
       it=std::find(RootRegexp.begin(),RootRegexp.end(),"-H");
       RootRegexp.erase(it);
       break;
-      
     case 'L':
       std::cout<<"Compare: restrict max layer plotting: "<<optarg<<std::endl;
       CompAnalysis.SetMaxPlotLayer(atoi(optarg));
@@ -182,12 +177,6 @@ int main(int argc, char* argv[]){
       it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
       RootRegexp.erase(it);
       break;
-    case 'R':
-      std::cout<<"Compare: Trending plots versus run #"<<std::endl;
-      CompAnalysis.SetTrendingAxis(0);
-      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-R");
-      RootRegexp.erase(it);
-      break;
     case 's':
       std::cout<<"Compare: Plotting for HV scan"<<std::endl;
       CompAnalysis.SetLegendLabelOpt(3);
@@ -195,30 +184,40 @@ int main(int argc, char* argv[]){
       it=std::find(RootRegexp.begin(),RootRegexp.end(),"-s");
       RootRegexp.erase(it);
       break;
-    case 'V':
-      std::cout<<"Compare: Trending plots versus Vop"<<std::endl;
-      CompAnalysis.SetTrendingAxis(1);
-      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-V");
+    case 'S':
+      std::cout<<"Compare: Enable single layer plotting, careful very slow!"<<std::endl;
+      CompAnalysis.SetEnableSingleLayer(1);
+      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-S");
       RootRegexp.erase(it);
       break;
-    case 'T':
-      std::cout<<"Compare: Trending plots versus iteration, this option should only be used for the same calib set"<<std::endl;
-      CompAnalysis.SetTrendingAxis(3);
-      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-T");
+    case 'x': { 
+      std::cout<<"Compare: Setting x-axis option: "<<optarg<<std::endl;
+      std::string xAxisOpt = Form("%s",optarg);
+      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-x");
       RootRegexp.erase(it);
-      break;
-    case 't':
-      std::cout<<"Compare: Trending plots versus iteration, this option should only be used for the same calib set"<<std::endl;
-      CompAnalysis.SetTrendingAxis(4);
-      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-t");
+      it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
       RootRegexp.erase(it);
-      break;
-    //case 't':
-    //  std::cout<<"Trending plots versus BoR time"<<std::endl;
-    //  CompAnalysis.SetTrendingAxis(2);
-    //  it=std::find(RootRegexp.begin(),RootRegexp.end(),"-t");
-    //  RootRegexp.erase(it);
-    //  break;
+      if (xAxisOpt.compare("run") == 0 || xAxisOpt.compare("Run") == 0 ) {
+        std::cout<<"Compare: Trending plots versus run #, opt " << 0 <<std::endl;
+        CompAnalysis.SetTrendingAxis(0);
+      } else if (xAxisOpt.compare("Vop") == 0 || xAxisOpt.compare("VOP") == 0 || xAxisOpt.compare("vop") == 0 ) {
+        std::cout<<"Compare: Trending plots versus Vop, opt " << 1 <<std::endl;
+        CompAnalysis.SetTrendingAxis(1);
+      } else if (xAxisOpt.compare("ite") == 0 || xAxisOpt.compare("iteration") == 0 || xAxisOpt.compare("Ite") == 0 ) {
+        std::cout<<"Compare: Trending plots versus Iteration, opt " << 3 <<std::endl;
+        CompAnalysis.SetTrendingAxis(3);
+      } else if (xAxisOpt.compare("integ") == 0 || xAxisOpt.compare("Integ") == 0 || xAxisOpt.compare("Integration") == 0 ) {
+        std::cout<<"Compare: Trending plots versus Iteration, opt " << 4 <<std::endl;
+        CompAnalysis.SetTrendingAxis(4);
+      } else if (xAxisOpt.compare("intensity") == 0 || xAxisOpt.compare("laser") == 0 || xAxisOpt.compare("Intensity") == 0 ) {
+        std::cout<<"Compare: plot as function of laser intensity " <<std::endl;
+        CompAnalysis.SetTrendingAxis(5);
+      } else {
+        std::cout << "Compare: axis option unknown will plot against run # " << 0 <<std::endl;
+        CompAnalysis.SetTrendingAxis(0);
+      }
+      break; 
+    }
     case '?':
       std::cout<<"Option "<<optarg <<" not supported, will be ignored "<<std::endl;
       break;

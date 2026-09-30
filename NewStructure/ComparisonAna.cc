@@ -209,22 +209,49 @@ bool ComparisonAna::ProcessAna(void){
     // TODO: Change id from run number, look at constructor ()
     AnaSummary aSum = AnaSummary(nRun, calib.GetRunNumber(),calib.GetVop(),it->second.energy, it->second.pdg);
 
-    TH1D* hTimeDiff = nullptr;
     TFile* tempFile = nullptr;
     if (nRun < (int)RootInputNames.size()){
      // std::cerr << "names: " << RootInputNames[nRun].Data() << std::endl;
       tempFile      = new TFile(RootInputNames[nRun].Data(),"READ");   
-      TH1D* hTimeDiff   = (TH1D*)tempFile->Get("hDeltaTime");
-      aSum.SetDeltaTimeHist(hTimeDiff);
-      TH1D* hTotEnergy  =nullptr;
-      TH1D* hNCells  =nullptr;
-      if (it->second.pdg == 13 || it->second.pdg == -13){
-        hTotEnergy  = (TH1D*)tempFile->Get("hTotEnergyMuon");
-        hNCells     = (TH1D*)tempFile->Get("hNCellsMuon");
-      } else {
-        hTotEnergy  = (TH1D*)tempFile->Get("hTotEnergyNonMuon");
-        hNCells     = (TH1D*)tempFile->Get("hNCellsNonMuon");        
+      TH1D* hTimeDiff   = nullptr;
+      TH1D* hTotEnergy  = nullptr;
+      TH1D* hNCells     = nullptr;
+      // histo output from DataAna::QA()/SimpleQA()
+      if (expandedList == 1){
+        hTimeDiff   = (TH1D*)tempFile->Get("hDeltaTime");
+        if (it->second.pdg == 13 || it->second.pdg == -13){
+          hTotEnergy  = (TH1D*)tempFile->Get("hTotEnergyMuon");
+          hNCells     = (TH1D*)tempFile->Get("hNCellsMuon");
+        } else {
+          hTotEnergy  = (TH1D*)tempFile->Get("hTotEnergyNonMuon");
+          hNCells     = (TH1D*)tempFile->Get("hNCellsNonMuon");        
+        }
+      // histo output from DataPrep::Calibrate()
+      // these aren't correctly protected for running with HGCROC
+      } else if (expandedList == 2){  
+        hTimeDiff                 = (TH1D*)tempFile->Get("hDeltaTime");
+        hNCells                   = (TH1D*)tempFile->Get("hNCells");
+        hTotEnergy                = (TH1D*)tempFile->Get("hTotEnergy");
+        TH1D* hSatADCvsCellID     = (TH1D*)tempFile->Get("hSaturatedHGvsCellID");
+        TH1D* hSatADC             = (TH1D*)tempFile->Get("hSaturatedADC");
+        TH1D* hSatLGvsCellID      = (TH1D*)tempFile->Get("hSaturatedLGvsCellID");
+        TH1D* hSatLG              = (TH1D*)tempFile->Get("hSaturatedLG");
+        TH1D* hLGHGCorrOutCellID  = (TH1D*)tempFile->Get("hLGHGCorrOutsideBoundCellID");
+        TH1D* hLGHGCorrOut        = (TH1D*)tempFile->Get("hNCellsLGHGCorrOutsideBound");
+
+        aSum.SetSatADCCellIDHist(hSatADCvsCellID);
+        aSum.SetSatLGCellIDHist(hSatLGvsCellID);
+        aSum.SetLGHGOutCellIDHist(hLGHGCorrOutCellID);
+        aSum.SetSatADCHist(hSatADC);
+        aSum.SetSatLGHist(hSatLG);
+        aSum.SetLGHGOutHist(hLGHGCorrOut);
+        
+        double intSatADC  = hSatADC->Integral(hSatADC->FindBin(1), hSatADC->GetNbinsX() )/hSatADC->GetEntries();
+        double intSatLG   = hSatLG->Integral(hSatLG->FindBin(1), hSatLG->GetNbinsX() )/hSatLG->GetEntries();
+        double intLGHGOut = hLGHGCorrOut->Integral(hLGHGCorrOut->FindBin(2), hLGHGCorrOut->GetNbinsX() )/hLGHGCorrOut->GetEntries();
+        std::cout << "Run "<<Xvalue<<" \t frac >= 1 HG channel saturated " <<  intSatADC*100 << "\t frac >= 1 LG channel saturated " << intSatLG*100 << "\t frac events to be discarded:" << intLGHGOut*100 << std::endl;
       }
+      aSum.SetDeltaTimeHist(hTimeDiff);
       aSum.SetEnergyHist(hTotEnergy);
       aSum.SetNCellsHist(hNCells);
       std::cout<<"Run "<<Xvalue<<" mean time diff: "<< hTimeDiff->GetMean()<< "\t mean Energy:" << hTotEnergy->GetMean()<< "\t mean NCells:" << hNCells->GetMean() <<std::endl;
@@ -236,16 +263,32 @@ bool ComparisonAna::ProcessAna(void){
   }
   Int_t textSizePixel   = 30;
   Float_t textSizeRel   = 0.04;  
-  TCanvas* canvasDeltaTime = new TCanvas("canvasDeltaTime","",0,0,1450,1300);  // gives the page size
-  DefaultCanvasSettings( canvasDeltaTime,  0.08, 0.03, 0.025, 0.09);
-  canvasDeltaTime->SetLogy(1);
-  PlotAnalysisComparison( canvasDeltaTime, 0, sumCalibs, textSizeRel, 
+  TCanvas* canvasOverlay1D = new TCanvas("canvasOverlay1D","",0,0,1450,1300);  // gives the page size
+  DefaultCanvasSettings( canvasOverlay1D,  0.08, 0.03, 0.025, 0.09);
+  canvasOverlay1D->SetLogy(1);
+  PlotAnalysisComparison( canvasOverlay1D, 0, sumCalibs, textSizeRel, 
                       Form("%s/TimeDiff_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV);
   
-  PlotAnalysisComparison( canvasDeltaTime, 1, sumCalibs, textSizeRel, 
+  PlotAnalysisComparison( canvasOverlay1D, 1, sumCalibs, textSizeRel, 
                       Form("%s/Energy_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,eoLabelOpt,"", debug, eoXmax, colorByEV);
-  PlotAnalysisComparison( canvasDeltaTime, 2, sumCalibs, textSizeRel, 
+  PlotAnalysisComparison( canvasOverlay1D, 2, sumCalibs, textSizeRel, 
                       Form("%s/NCells_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,eoLabelOpt, "", debug, 0, colorByEV);
+  
+  // these aren't correctly protected for running with HGCROC
+  if (expandedList == 2){
+    PlotAnalysisComparison( canvasOverlay1D, 3, sumCalibs, textSizeRel, 
+                            Form("%s/SatADC_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV);
+    PlotAnalysisComparison( canvasOverlay1D, 4, sumCalibs, textSizeRel, 
+                            Form("%s/SatLG_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV);
+    PlotAnalysisComparison( canvasOverlay1D, 5, sumCalibs, textSizeRel, 
+                            Form("%s/LGHGOut_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV);
+    PlotAnalysisComparison( canvasOverlay1D, 6, sumCalibs, textSizeRel, 
+                            Form("%s/SatADCvsCellID_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV);
+    PlotAnalysisComparison( canvasOverlay1D, 7, sumCalibs, textSizeRel, 
+                            Form("%s/SatLGvsCellID_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV);
+    PlotAnalysisComparison( canvasOverlay1D, 8, sumCalibs, textSizeRel, 
+                            Form("%s/LGHGOutvsCellID_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV); 
+  }
   return true;
 }
 
