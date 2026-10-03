@@ -173,17 +173,19 @@ elif [ $optionMain == "ScanB" ]; then
   
 #   #electron runs
 #   runs='338 '   
-# #   runs='333 334 336 337 338 '   
-#   for runNr in $runs; do 
-#     Calib $optionSub $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated $skipLayer
-#   done;
+#   runs='333 334 336 337 338 '   
+  runs='333 334 336 337'   
+  for runNr in $runs; do 
+    Calib $optionSub $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated $skipLayer
+  done;
 #   
-#   #hadron runs
+  #hadron runs
+  runs='349 346 350 357 360 362 367' 
 # #   runs='340 349 346 350 357 360 362 367 368' 
 #   runs='340 368' 
-#   for runNr in $runs; do 
-#     Calib $optionSub $calibFile1 $dataDirInH $dataDirOutH $runNr $PlotBaseDir CAEN_PlotsHadronCalibrated $skipLayer
-#   done;
+  for runNr in $runs; do 
+    Calib $optionSub $calibFile1 $dataDirInH $dataDirOutH $runNr $PlotBaseDir CAEN_PlotsHadronCalibrated $skipLayer
+  done;
 elif [ $optionMain == "ScanC" ]; then
   echo "running calibrate for 43.5V runs, campaign C"
   if [ $optionSub == "calibAlter" ] ||  [ $optionSub == "calibAlterWER" ] ; then
