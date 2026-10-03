@@ -1,3 +1,12 @@
+/**
+ * @file Setup.cc
+ * @brief Implementation of the Setup singleton geometry and mapping logic.
+ *
+ * The Setup class is responsible for loading/initializing the detector map and
+ * providing accessors for geometry and readout mappings used throughout the
+ * LFHCal analysis software.
+ */
+
 #include "Setup.h"
 #include "RootSetupWrapper.h"
 #include <iostream>
@@ -10,6 +19,16 @@ Setup* Setup::instancePtr = nullptr;
 
 ClassImp(Setup);
 
+/**
+ * @brief Initialize the setup from a text-based detector mapping file.
+ *
+ * This routine reads a geometry definition file, fills the lookup maps for cell IDs,
+ * row/column/layer/module information, and stores the maximum geometry limits.
+ *
+ * @param file Path to the mapping file.
+ * @param debug Verbosity level for diagnostic output.
+ * @return true if initialization succeeds, false if the file cannot be opened.
+ */
 bool Setup::Initialize(TString file, int debug){
 
   std::cout << "entered setup initialize" << std::endl;

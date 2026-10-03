@@ -1,3 +1,11 @@
+/**
+ * @file TileSpectra.h
+ * @brief Declaration of the TileSpectra class used to build per-channel spectra and fits.
+ *
+ * TileSpectra holds the ROOT histograms and profile objects used during calibration,
+ * pedestal estimation and signal extraction for individual detector tiles.
+ */
+
 #ifndef TILESPECTRA_H
 #define TILESPECTRA_H
 
@@ -13,10 +21,31 @@
 #include "Calib.h"
 #include "Tile.h"
 
+/**
+ * @class TileSpectra
+ * @brief Accumulate and fit per-tile spectra for CAEN and HGCROC channels.
+ *
+ * The class manages the per-cell histograms used to monitor pedestal stability,
+ * trigger primitives, correlations, and waveform properties. It also performs
+ * fit routines for noise and MIP estimation based on the active readout type.
+ */
 class TileSpectra: public TObject{
 
  public:
+  /**
+   * @brief Default constructor.
+   */
   TileSpectra():TObject(){}
+
+  /**
+   * @brief Construct TileSpectra for a cell with standard monitoring histograms.
+   * @param name Base name used for histogram creation.
+   * @param id Cell identifier.
+   * @param cal Calibration object used during fits.
+   * @param type Readout type (CAEN or HGCROC).
+   * @param integ Integration sample count for waveform studies.
+   * @param deb Debug verbosity level.
+   */
   TileSpectra(TString name, int id, TileCalib* cal, ReadOut::Type type, int integ = 1, int deb=0):TObject()
   {
     TileName      = name;
@@ -76,6 +105,16 @@ class TileSpectra: public TObject{
 
     }
   }
+  /**
+   * @brief Construct TileSpectra with extended histogram definitions.
+   * @param name Base name used for histogram creation.
+   * @param ext Extension mode selecting the histogram layout.
+   * @param id Cell identifier.
+   * @param cal Calibration object used during fits.
+   * @param type Readout type (CAEN or HGCROC).
+   * @param integ Integration sample count for waveform studies.
+   * @param deb Debug verbosity level.
+   */
   TileSpectra(TString name, int ext, int id, TileCalib* cal, ReadOut::Type type, int integ = 1, int deb=0):TObject()
   {
     TileName      = name;
@@ -247,27 +286,160 @@ class TileSpectra: public TObject{
   }
   ~TileSpectra(){}
 
+  /**
+   * @brief Fill a CAEN low/high-gain spectrum pair for one event.
+   * @param l Low-gain ADC value.
+   * @param h High-gain ADC value.
+   * @return Always true for successful histogram insertion.
+   */
   bool FillCAEN(double, double);
+
+  /**
+   * @brief Fill the basic CAEN spectra without correlation plots.
+   * @param l Low-gain ADC value.
+   * @param h High-gain ADC value.
+   * @return Always true after updating the histograms.
+   */
   bool FillSpectraCAEN(double, double);
+
+  /**
+   * @brief Fill extended CAEN diagnostics with energy and equivalent-charge information.
+   * @param l Low-gain ADC value.
+   * @param h High-gain ADC value.
+   * @param e Reconstructed energy estimate.
+   * @param lheq Low-gain equivalent value.
+   * @return True if the histogram update succeeded.
+   */
   bool FillExtCAEN(double, double, double, double);
+
+  /**
+   * @brief Fill CAEN correlation profiles between the two gains.
+   * @param l Low-gain ADC value.
+   * @param h High-gain ADC value.
+   * @return True on successful update.
+   */
   bool FillCorrCAEN(double, double);
 
+  /**
+   * @brief Fill the HGCROC ADC/TOA/TOT spectra for one event.
+   * @param adc ADC value.
+   * @param toa Time-over-threshold value.
+   * @param tot Time-over-threshold or pulse width measure.
+   * @return True on successful update.
+   */
   bool FillHGCROC(double, double, double);
+
+  /**
+   * @brief Fill the basic HGCROC spectra without correlation histograms.
+   * @param adc ADC value.
+   * @param toa Time-over-threshold value.
+   * @param tot Time-over-threshold or pulse width measure.
+   * @return True on successful update.
+   */
   bool FillSpectraHGCROC(double, double, double);
+
+  /**
+   * @brief Fill extended HGCROC diagnostics for a waveform or timing-analysis mode.
+   * @param adc ADC value.
+   * @param toa TOA value.
+   * @param tot TOT value.
+   * @param sample Sample index associated with the waveform measurement.
+   * @param fixedTOA Fixed TOA value used for selection logic.
+   * @return True on successful update.
+   */
   bool FillExtHGCROC(double, double, double, int, int);
+
+  /**
+   * @brief Fill pedestal-only waveform information from a vector of samples.
+   * @param samples Raw ADC samples for the waveform.
+   * @param h Pedestal reference value.
+   * @return True on successful update.
+   */
   bool FillExtHGCROCPed(std::vector<int>, double);
+
+  /**
+   * @brief Fill HGCROC correlation plots between ADC, TOA and TOT observables.
+   * @param adc ADC value.
+   * @param toa TOA value.
+   * @param tot TOT value.
+   * @return True on successful update.
+   */
   bool FillCorrHGCROC(double, double, double);
 
+  /**
+   * @brief Fill the trigger primitive spectrum for the channel.
+   * @param t Trigger primitive value.
+   * @return True on successful update.
+   */
   bool FillTrigger(double);
+
+  /**
+   * @brief Fill a waveform profile from a sample vector.
+   * @param samples Raw ADC samples in waveform order.
+   * @param ped Pedestal offset to subtract from each sample.
+   * @return True on successful update.
+   */
   bool FillWaveform(std::vector<int>,double);
+
+  /**
+   * @brief Fill a waveform versus time using a linearized timing conversion.
+   * @param samples ADC sample values.
+   * @param toalincorr Linearized TOA correction.
+   * @param ped Pedestal offset.
+   * @param offset Sample offset in the waveform.
+   * @return True on successful update.
+   */
   bool FillWaveformVsTime(std::vector<int> , double, double, int );
+
+  /**
+   * @brief Fill the waveform maximum as a function of time.
+   * @param adc Peak ADC value.
+   * @param toalincorr Timing correction applied to the sample position.
+   * @param offset Sample offset in the waveform.
+   * @param nSampleADCMax Sample index at which the maximum occurs.
+   * @return True on successful update.
+   */
   bool FillMaxVsTime(double , double, int, int );
+
+  /**
+   * @brief Fill waveform information using the parser-specific convention.
+   * @param samples ADC samples to store.
+   * @param ped Pedestal offset to remove before filling.
+   * @return True on successful update.
+   */
   bool FillWaveformVsTimeParser(std::vector<int>,double);
+
+  /**
+   * @brief Fill the TOT profile histogram from sample values.
+   * @param samples Vector of TOT values.
+   * @return True on successful update.
+   */
   bool FillTOTProfile(std::vector<int>);
+
+  /**
+   * @brief Fill the TOA profile histogram from sample values.
+   * @param samples Vector of TOA values.
+   * @return True on successful update.
+   */
   bool FillTOAProfile(std::vector<int>);
-  
+   
+  /**
+   * @brief Fit noise and pedestal parameters for the configured readout channel.
+   * @param out Output array with fitted mean and sigma values.
+   * @param year Data-taking year used to tune fit ranges.
+   * @param isNoiseTrigg Flag indicating a trigger-noise fit mode.
+   * @return True if the pedestal fit converged.
+   */
   bool FitNoise(double*, int, bool);
+
+  /**
+   * @brief Fit a Gaussian model to the noise pedestal using fixed calibration ranges.
+   */
   void FitFixedNoise();
+
+  /**
+   * @brief Initialize pedestal fits from the calibration constants instead of an unconstrained fit.
+   */
   void InitializeNoiseFitsFromCalib();
   bool FitMipHG(double*, double*, int, int, bool, double, double );
   bool FitMipLG(double*, double*, int, int, bool, double, double );
@@ -277,16 +449,45 @@ class TileSpectra: public TObject{
   bool FitNoiseWithBG(double*);
   short DetermineBadChannel();
 
+  /**
+   * @brief Return the cell identifier associated with this spectrum object.
+   * @return Cell ID.
+   */
   int GetCellID();
   void SetBadChannelInCalib(short);
-  
+   
+  /**
+   * @brief Determine the fitting range for a signal fit depending on the readout and gain.
+   * @param fitrange Output array containing [min,max] bounds.
+   * @param year Data-taking year.
+   * @param bHG True for high-gain fits.
+   * @param impE If true, use improved estimates from the MIP spectrum.
+   * @param vov Over-voltage value used for dynamic tuning.
+   * @param avmip Average MIP estimate used for range selection.
+   */
   void GetFitRange(double* , int, bool, bool, double, double);
+
+  /**
+   * @brief Set the starting values and parameter limits for the high-gain fit model.
+   * @param startvalues Output array of starting values.
+   * @param parlimitslo Lower bounds for each fit parameter.
+   * @param parlimitshi Upper bounds for each fit parameter.
+   * @param integ Integration sample count.
+   * @param year Data-taking year.
+   * @param impE Improved-range mode.
+   * @param vov Over-voltage value.
+   * @param avmip Average MIP value.
+   */
   void SetParametersFitHG (double*, double*, double*, int,  int, bool, double,  double);
-  
+   
   double GetMaxXInRangeLG(double, double);
   double GetMaxXInRangeHG(double, double);
   double GetMinimumInRangeSpectra(bool, float, float);
-  
+   
+  /**
+   * @brief Return the active readout type associated with the object.
+   * @return CAEN or HGCROC readout enum value.
+   */
   ReadOut::Type GetROType() {return ROType;};  
   TH1D* GetHG();
   TH1D* GetLG();
@@ -308,13 +509,27 @@ class TileSpectra: public TObject{
   TH2D* GetCorrADCTOT();
   TProfile* GetTOTProfile();
   TProfile* GetTOAProfile();
-  
+   
   TF1* GetBackModel(int);
   TF1* GetSignalModel(int);
   TF1* GetCorrModel(int);
+
+  /**
+   * @brief Return the calibration object used by this spectra instance.
+   * @return Pointer to the associated TileCalib object.
+   */
   TileCalib* GetCalib();
-  
+   
+  /**
+   * @brief Write the standard histogram collection to disk.
+   * @param option ROOT write option string.
+   */
   void Write(bool);
+
+  /**
+   * @brief Write the extended histogram collection to disk.
+   * @param option ROOT write option string.
+   */
   void WriteExt(bool);
 
   static double langaufun(double */*x*/, double */*par*/);

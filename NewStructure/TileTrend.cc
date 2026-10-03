@@ -1,3 +1,12 @@
+/**
+ * @file TileTrend.cc
+ * @brief Implementation of the per-cell run-by-run trend bookkeeping for calibration plots.
+ *
+ * The TileTrend class stores ROOT TGraphErrors objects and metadata used to monitor
+ * pedestal stability, gain response, correlation offsets and waveform observables across
+ * repeated detector runs.
+ */
+
 #include "TileTrend.h"
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
@@ -8,9 +17,21 @@ ClassImp(TileTrend);
 // Fill functions for the trending objects
 //************************************************************************
 /**
- * Fill calibration data for one run.
- * Stores pedestal, scale, and correlation values in the time trends and keeps
- * the min/max ranges used for later plotting in sync.
+ * @brief Fill calibration data for one run.
+ *
+ * Stores pedestal, scale, and correlation values in the time trends and keeps the
+ * min/max ranges used for later plotting in sync.
+ *
+ * @param x Trend coordinate for the current run.
+ * @param tc Tile calibration values to store.
+ * @param runNr Unique run identifier.
+ * @param volt Operating voltage for the run.
+ * @param pdg Particle ID metadata for the measurement.
+ * @param hgmaxerr High-gain maximum error estimate.
+ * @param lgmaxerr Low-gain maximum error estimate.
+ * @param tempE Energy metadata associated with the run.
+ * @param temper Temperature metadata for the run.
+ * @return True if the calibration values are recorded successfully.
  */
 //===============================================================================
 bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt, int pdg,  double hgmaxerr, double lgmaxerr, double tempE, double temper){
@@ -80,17 +101,20 @@ bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt, int 
 
 //===============================================================================
 /**
- * FillExtended: add per-run histograms and profiles for extended trend options.
- * - Copies supplied histograms/profiles into internal maps keyed by run number.
- * - Adjusts scalers and updates min/max statistics for spectrum-related graphs.
- * @param x x position used for the trend graphs
- * @param triggers number of triggers for normalization
- * @param runNr run number used as map key
- * @param histHG pointer to HG per-run TH1D (may be nullptr)
- * @param histLG pointer to LG per-run TH1D (may be nullptr)
- * @param profLGHG pointer to per-run TProfile (may be nullptr)
- * @param wave pointer to waveform TProfile (may be nullptr)
- * @return true on success
+ * @brief Add extended per-run histograms and profiles to the trend object.
+ *
+ * Copies the supplied histograms and profiles into internal maps keyed by run number,
+ * normalizes them when needed, and updates the min/max statistics used by the plotting
+ * layers.
+ *
+ * @param x Trend coordinate for this run.
+ * @param triggers Number of triggers used to normalize the spectra.
+ * @param runNr Run identifier used as the map key.
+ * @param histHG High-gain spectrum for the run.
+ * @param histLG Low-gain spectrum for the run.
+ * @param profLGHG Correlation profile to be stored for the run.
+ * @param wave Optional waveform profile to be recorded.
+ * @return True if the extended data were stored successfully.
  */
 //===============================================================================
 bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH1D* histLG, TProfile* profLGHG, TProfile* wave ){
@@ -186,17 +210,24 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
 
 //===============================================================================
 /**
- * FillInjection: record injection-mode pedestal and associated per-run profiles.
- * - Only valid when extended==3 (injection mode); returns false otherwise.
- * - Stores waveform/TOA/TOT profiles and appends HGCROC setting metadata.
- * @param x x position used for the trend graphs
- * @param ped pedestal value to add to HG pedestal trend
- * @param runNr run number used as map key
- * @param wave waveform profile (may be nullptr)
- * @param toa time-of-arrival profile (may be nullptr)
- * @param tot time-over-threshold profile (may be nullptr)
- * @param val_rf, val_cf, val_cfcomp, val_cc, val_inj metadata values appended to metadata vectors
- * @return true on success, false if extended mode unsupported
+ * @brief Record injection-mode pedestal and waveform metadata for a run.
+ *
+ * This helper is valid only in the injection-mode trend configuration. It stores the
+ * pedestal value and any associated waveform/TOA/TOT profiles together with the HGCROC
+ * setting metadata used for later plotting.
+ *
+ * @param x Trend coordinate used for the run-by-run graph.
+ * @param ped Pedestal value to add to the HG pedestal trend.
+ * @param runNr Run identifier used as the map key.
+ * @param wave Waveform profile, if available.
+ * @param toa Time-of-arrival profile, if available.
+ * @param tot Time-over-threshold profile, if available.
+ * @param val_rf RF metadata value.
+ * @param val_cf CF metadata value.
+ * @param val_cfcomp CF compensation metadata value.
+ * @param val_cc CC metadata value.
+ * @param val_inj Injection setting metadata value.
+ * @return True if the injection profile was recorded successfully.
  */
 //===============================================================================
 bool TileTrend::FillInjection(
@@ -250,9 +281,16 @@ bool TileTrend::FillInjection(
 
 //===============================================================================
 /**
- * FillHGCROCSetting: append HGCROC/ injection-related setting values to metadata vectors.
- * This is a lightweight helper used when injection metadata is collected separately
- * from the main Fill/FillInjection call paths.
+ * @brief Append HGCROC configuration metadata to the current run collection.
+ *
+ * This helper is used when injection or configuration values are captured separately
+ * from the main Fill/FillInjection call chain.
+ *
+ * @param val_rf RF configuration value.
+ * @param val_cf CF configuration value.
+ * @param val_cfcomp Compensation-value metadata.
+ * @param val_cc CC configuration value.
+ * @param val_inj Injection setting value.
  */
 void TileTrend::FillHGCROCSetting (double val_rf, double val_cf, double val_cfcomp, double val_cc, double val_inj){
   rf.push_back(val_rf);

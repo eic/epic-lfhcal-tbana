@@ -1,3 +1,11 @@
+/**
+ * @file TileSpectra.cc
+ * @brief Implementation of the per-channel monitoring, fitting and calibration spectra.
+ *
+ * The TileSpectra object owns the ROOT histograms used to monitor pedestal behaviour,
+ * trigger primitives, waveform structure and gain correlations for individual cells.
+ */
+
 #include "TileSpectra.h"
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
@@ -5,10 +13,20 @@
 
 ClassImp(TileSpectra);
 
+/**
+ * @brief Return the cell identifier attached to this spectrum collection.
+ * @return Cell index used to identify the detector channel.
+ */
 int TileSpectra::GetCellID(){
   return cellID;
 }
 
+/**
+ * @brief Fill the CAEN low- and high-gain spectra for a single event.
+ * @param l Low-gain ADC value.
+ * @param h High-gain ADC value.
+ * @return Always true after recording the event in the relevant histograms.
+ */
 bool TileSpectra::FillCAEN(double l, double h){
   hspectraLG.Fill(l);
   hspectraHG.Fill(h);
@@ -17,6 +35,13 @@ bool TileSpectra::FillCAEN(double l, double h){
   return true;
 }
 
+/**
+ * @brief Fill the HGCROC ADC, TOA and TOT spectra for a single event.
+ * @param adc ADC value recorded by the channel.
+ * @param toa Time-over-threshold estimator.
+ * @param tot Time-over-threshold or pulse-width estimate.
+ * @return True when the histogram updates complete successfully.
+ */
 bool TileSpectra::FillHGCROC(double adc, double toa, double tot){
   hspectraHG.Fill(adc);
   hspectraTOT.Fill(tot);
@@ -184,6 +209,17 @@ bool TileSpectra::FillCorrHGCROC(double adc, double toa, double tot){
 }
 
 
+/**
+ * @brief Fit the pedestal for the channel in the configured readout mode.
+ *
+ * The function uses a Gaussian fit to estimate the low- and high-gain pedestal mean and
+ * width, with readout-specific tuning for CAEN and HGCROC data-taking conditions.
+ *
+ * @param out Output array containing pedestal mean and sigma for low/high gain.
+ * @param year Data-taking year used to adjust the initial conditions.
+ * @param isNoiseTrigg If true, the fit is constrained around the trigger-noise peak.
+ * @return True when the pedestal fit converges successfully.
+ */
 bool TileSpectra::FitNoise(double* out, int year = -1, bool isNoiseTrigg = false){        //[0] LG mean, [2] LG sigma, [4] HG mean, [6] HG sigma errors uneven numbers
   TFitResultPtr result;
   if (ROType == ReadOut::Type::Caen) {
@@ -385,6 +421,15 @@ void TileSpectra::InitializeNoiseFitsFromCalib(){
 //***********************************************************************************
 // Set Fit ranges depending on readout type and gain range
 //***********************************************************************************
+/**
+ * @brief Decide the fitting window for signal extraction from the channel spectra.
+ * @param fitrange Output array containing the lower and upper fit bounds.
+ * @param year Data-taking year.
+ * @param bHG If true, choose the high-gain fit range; otherwise use the low-gain range.
+ * @param impE If true, refine the range using the MeV-like average MIP estimate.
+ * @param vov Over-voltage setting used to tune the fit window.
+ * @param avmip Estimated average MIP value, used when improvement mode is enabled.
+ */
 void TileSpectra::GetFitRange(  double* fitrange, int year, 
                                 bool bHG = true,  bool impE = false, double vov = -1000, double avmip = -1000
                               ){

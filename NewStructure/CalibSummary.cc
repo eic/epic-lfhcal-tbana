@@ -1,9 +1,22 @@
+/**
+ * @file CalibSummary.cc
+ * @brief Implementation of the calibration summary histograms and reference comparisons.
+ *
+ * CalibSummary aggregates the run-by-run pedestal and scale distributions into compact
+ * ROOT summary histograms used for detector QA and calibration trending.
+ */
+
 #include "CalibSummary.h"
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
 
 ClassImp(CalibSummary);
 
+/**
+ * @brief Fill the summary histograms from a calibration object.
+ * @param tc Tile calibration constants to record.
+ * @return True if the histograms were updated successfully.
+ */
 bool CalibSummary::Fill(const TileCalib& tc){
   hLGped        .Fill(tc.PedestalMeanL);
   hLGpedwidth   .Fill(tc.PedestalSigL);
@@ -43,6 +56,11 @@ bool CalibSummary::Fill(const TileCalib& tc){
   return true;
 }
 
+/**
+ * @brief Fill the summary histograms from a calibration pointer.
+ * @param tc Calibration object to record.
+ * @return True if the histograms were updated successfully.
+ */
 bool CalibSummary::Fill(TileCalib* tc){
   hLGped        .Fill(tc->PedestalMeanL);
   hLGpedwidth   .Fill(tc->PedestalSigL);
@@ -81,6 +99,12 @@ bool CalibSummary::Fill(TileCalib* tc){
   return true;
 }
 
+/**
+ * @brief Fill reference-run comparison plots using the current and reference calibration constants.
+ * @param tc Current calibration constants.
+ * @param tcRef Reference calibration constants.
+ * @return True if all comparison histograms were updated successfully.
+ */
 bool CalibSummary::FillRefRunProps(const TileCalib& tc, const TileCalib& tcRef ){
   if (tc.PedestalMeanH == -1000.)
     hHGpedDiffRef   .Fill(-1000);
@@ -142,6 +166,12 @@ bool CalibSummary::FillRefRunProps(const TileCalib& tc, const TileCalib& tcRef )
 }
 
 
+/**
+ * @brief Fill reference-run comparison plots using pointer-based calibration objects.
+ * @param tc Current calibration constants.
+ * @param tcRef Reference calibration constants.
+ * @return True if all comparison histograms were updated successfully.
+ */
 bool CalibSummary::FillRefRunProps(TileCalib* tc, TileCalib* tcRef ){
   if (tc->PedestalMeanH == -1000.)
     hHGpedDiffRef   .Fill(-1000);
@@ -202,6 +232,12 @@ bool CalibSummary::FillRefRunProps(TileCalib* tc, TileCalib* tcRef ){
   return true;
 }
 
+/**
+ * @brief Fill the per-layer HG scale summary histograms for a given cell.
+ * @param tc Calibration constants to record.
+ * @param cellID Cell identifier used to determine the detector layer.
+ * @return True when the per-layer histogram is updated.
+ */
 bool CalibSummary::FillLayerProps(const TileCalib& tc, int cellID){
   Setup* setupT = Setup::GetInstance();
   int layer     =  setupT->GetLayer(cellID);
@@ -210,6 +246,12 @@ bool CalibSummary::FillLayerProps(const TileCalib& tc, int cellID){
   return true;
 }
 
+/**
+ * @brief Fill the per-layer HG scale summary histograms from a pointer-based calibration object.
+ * @param tc Calibration constants to record.
+ * @param cellID Cell identifier used to determine the detector layer.
+ * @return True when the per-layer histogram is updated.
+ */
 bool CalibSummary::FillLayerProps(TileCalib* tc, int cellID){
   Setup* setupT = Setup::GetInstance();
   int layer     =  setupT->GetLayer(cellID);

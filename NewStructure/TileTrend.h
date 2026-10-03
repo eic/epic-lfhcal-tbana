@@ -1,3 +1,13 @@
+/**
+ * @file TileTrend.h
+ * @brief Declaration of the TileTrend class used to collect run-by-run calibration trends.
+ *
+ * TileTrend is a lightweight ROOT-aware container that stores time-dependent
+ * pedestal, gain, correlation and waveform-trend graphs for a single detector cell.
+ * It is used to visualize run-to-run drifts and to compare calibration constants across
+ * multiple measurements.
+ */
+
 #ifndef TILETREND_H
 #define TILETREND_H
 
@@ -18,17 +28,28 @@
 #include "CommonHelperFunctions.h"
 
 /**
- * Container for per-cell trending data and plotting metadata.
+ * @class TileTrend
+ * @brief Store and plot per-cell calibration trends over many runs.
  *
- * TileTrend stores a set of ROOT TGraphErrors objects for pedestal, gain,
- * correlation, trigger and other calibration trends associated with one
- * logical cell. It acts as a small data holder and plotting helper for the
- * analysis code that assembles run-by-run trend plots.
+ * TileTrend keeps a collection of TGraphErrors objects that track pedestal means,
+ * widths, gain scales, correlation offsets, trigger rates and extended waveform
+ * observables for a single logical detector cell. The class is primarily used to
+ * build run-by-run monitoring plots during calibration and detector QA.
  */
 class TileTrend: public TObject{
 
  public:
+ /**
+  * @brief Default constructor.
+  */
  TileTrend():TObject(){}
+
+ /**
+  * @brief Construct a per-cell trend container and initialize the relevant graphs.
+  * @param id Cell identifier associated with the trend set.
+  * @param deb Debug verbosity level.
+  * @param ext Trend mode selecting the set of graphs to initialize.
+  */
  TileTrend(int id, int deb=0, int ext=0):TObject()
     {
     CellID         = id;
@@ -85,26 +106,105 @@ class TileTrend: public TObject{
     }
     
   }
+  /**
+   * @brief Destroy the trend object and release ROOT-managed resources.
+   */
   ~TileTrend(){}
 
-  // Fill objects 
+  // Fill objects
+  /**
+   * @brief Add one run of calibration data to the cell trend collection.
+   * @param x Trend coordinate, typically the run number or a scaled x-axis value.
+   * @param tc Calibration constants for the current run.
+   * @param runNr Run identifier associated with the measurement.
+   * @param volt Bias voltage or detector operating point.
+   * @param pdg Particle identification code from the run metadata.
+   * @param hgmaxerr High-gain maximum error estimate.
+   * @param lgmaxerr Low-gain maximum error estimate.
+   * @param tempE Event energy or beam-energy metadata.
+   * @param temper Temperature value associated with the run.
+   * @return True when the measured quantities are successfully recorded.
+   */
   bool Fill           (double, const TileCalib&, int, double, int, double, double, double, double);
+
+  /**
+   * @brief Add extended per-run histograms and profiles to the trend object.
+   * @param x Trend coordinate for the run.
+   * @param triggers Number of triggers used for normalization.
+   * @param runNr Run identifier.
+   * @param histHG High-gain spectrum for the run.
+   * @param histLG Low-gain spectrum for the run.
+   * @param profLGHG Correlation profile for the run.
+   * @param wave Optional waveform profile.
+   * @return True if the extended data are accepted.
+   */
   bool FillExtended   (double, int, int, TH1D*, TH1D*, TProfile*, TProfile* wave = nullptr);
+
+  /**
+   * @brief Update the most-probable-value trend for the channel.
+   */
   void FillMPV        (double, double, double, double, double);
+
+  /**
+   * @brief Update the low-side sigma trend for the channel.
+   */
   void FillLSigma     (double, double, double, double, double);
+
+  /**
+   * @brief Update the Gaussian-sigma trend for the channel.
+   */
   void FillGSigma     (double, double, double, double, double);
+
+  /**
+   * @brief Fill the signal-over-background trend values.
+   */
   void FillSB         (double, double, double);
-  void FillCorrOffset (double, double, double, double, double);  
-  void FillHGCROCSetting (double val_rf = -1., double val_cf= -1., double val_cfcomp= -1., double val_cc= -1., double val_inj = -1.);  
-  
-  bool FillInjection  ( double x, double ped, int runNr, 
-                        TProfile* wave, TProfile* toa, TProfile* tot, 
+
+  /**
+   * @brief Update offset-correlation trend values for the cell.
+   */
+  void FillCorrOffset (double, double, double, double, double);
+
+  /**
+   * @brief Store HGCROC configuration metadata for the current run.
+   * @param val_rf RF configuration value.
+   * @param val_cf CF configuration value.
+   * @param val_cfcomp CF compensation value.
+   * @param val_cc CC configuration value.
+   * @param val_inj Injection setting value.
+   */
+  void FillHGCROCSetting (double val_rf = -1., double val_cf= -1., double val_cfcomp= -1., double val_cc= -1., double val_inj = -1.);
+
+  /**
+   * @brief Record injection-mode pedestal and waveform metadata for a run.
+   * @param x Trend coordinate.
+   * @param ped Pedestal value measured in injection mode.
+   * @param runNr Run identifier.
+   * @param wave Waveform profile for the run.
+   * @param toa TOA profile for the run.
+   * @param tot TOT profile for the run.
+   * @param val_rf RF value.
+   * @param val_cf CF value.
+   * @param val_cfcomp Compensation value.
+   * @param val_cc CC value.
+   * @param val_inj Injection setting value.
+   * @return True when injection data are stored successfully.
+   */
+  bool FillInjection  ( double x, double ped, int runNr,
+                        TProfile* wave, TProfile* toa, TProfile* tot,
                         double val_rf = -1., double val_cf= -1., double val_cfcomp= -1., double val_cc= -1., double val_inj = -1.);
 
+  /**
+   * @brief Fill DAC-specific injection values for the HGCROC trend plots.
+   */
   bool FillInjectionDACVal  ( double x, double ped, double adc, double toa, double tot, int adcSatN = 0, int totSatN = 0, int nTOA = 0, int nSampToA = 0) ;
+
+  /**
+   * @brief Add HGCROC per-run timing values to the trend object.
+   */
   bool FillHGCROCVals (double x, double tot);
 
-  
+
   // Drawing functions for graphs
   bool DrawLGped      (TString);
   bool DrawHGped      (TString);
@@ -260,7 +360,11 @@ class TileTrend: public TObject{
   inline TGraphErrors* GetNSampTOA()  {return &gTrendNSampTOA;};
   inline TGraphErrors* GetNTOA()      {return &gTrendNTOA;};
   
-  // fitting trending and get back the parameters
+  /**
+   * @brief Fit the run-by-run scale trend with the configured model.
+   * @param mode Fit mode selection.
+   * @param option Additional selection flag for the chosen fit.
+   */
   void FitScale(int , int);
   inline TF1* GetHGScaleFit()         {if (fittedHG) return &fitHGScale; else return nullptr; } 
   inline TF1* GetLGScaleFit()         {if (fittedLG) return &fitLGScale; else return nullptr; } 
@@ -286,10 +390,21 @@ class TileTrend: public TObject{
   inline double GetConstCompHGFit()     {if (fittedHG) return fitHGScale.GetParameter(0); else return 0.;}
   inline double GetConstCompLGFit()     {if (fittedLG) return fitLGScale.GetParameter(0); else return 0.;}
   
-  // trending options dependencies
+  /**
+   * @brief Return the graph collection corresponding to a specific trend option.
+   * @param option Identifier for the requested trend mode.
+   * @return Pointer to the selected graph, or nullptr if not available.
+   */
   TGraphErrors* GetTrendingBasedOnOption(int option);
+
+  /**
+   * @brief Determine the min/max range for a trend option and compare it against a reference value.
+   * @param option Trend-selection switch.
+   * @param minValue Returned lower bound of the selected trend range.
+   * @param maxValue Returned upper bound of the selected trend range.
+   */
   void GetMinMaxBasedOnOptionAndCompare(int, Double_t &, Double_t &);
-   
+    
   /**
   * Initialize a TGraphErrors instance with a consistent style.
   *
