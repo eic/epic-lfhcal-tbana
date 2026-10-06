@@ -1,5 +1,6 @@
 #include "HGCROC_Convert.h"
 #include <chrono>
+#include <vector>
 #include "Analyses.h"
 #include "Event.h"
 #include "Tile.h"
@@ -200,7 +201,7 @@ int run_hgcroc_conversion(Analyses *analysis, waveform_fit_base *waveform_builde
     analysis->TsetupOut->Write();
     analysis->TdataOut->Write();
 
-    TH1D* hEventsKCU[it->second.nFPGA];
+    std::vector<TH1D*> hEventsKCU(it->second.nFPGA);
     long maxAttempted = 0;
     for (Int_t i = 0; i < (int)it->second.nFPGA; i++){
       hEventsKCU[i] = new TH1D( Form("hNEventsKCU%i", i),"event KCU category; events",4,-0.5,3.5);
