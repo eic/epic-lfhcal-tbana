@@ -690,6 +690,8 @@ bool TileSpectra::FitMipHG( double* out, double* outErr,
   }
   
   // Setting fit ranges
+  // Automatic storage releases the temporary fit buffers on every return path,
+  // including rejected or failed fits that bypass the end of this function.
   double fitrange[2];
   GetFitRange(fitrange, year, true,  impE, vov, avmip);
     
@@ -812,6 +814,8 @@ bool TileSpectra::FitMipLG(double* out, double* outErr, int verbosity, int year,
   Setup* setupT=Setup::GetInstance();
   TString funcName = Form("fmip%sLGCellID%d",TileName.Data(),cellID);
   
+  // Keep the fit range in automatic storage so early channel/fit rejections
+  // cannot bypass its cleanup.
   double fitrange[2];
   GetFitRange(fitrange, year, false,  impE, vov ,avmip);
 
