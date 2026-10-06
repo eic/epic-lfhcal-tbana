@@ -690,7 +690,9 @@ bool TileSpectra::FitMipHG( double* out, double* outErr,
   }
   
   // Setting fit ranges
-  double* fitrange    = new double[2];
+  // Automatic storage releases the temporary fit buffers on every return path,
+  // including rejected or failed fits that bypass the end of this function.
+  double fitrange[2];
   GetFitRange(fitrange, year, true,  impE, vov, avmip);
     
   double intArea    = hspectraHG.Integral(hspectraHG.FindBin(fitrange[0]),hspectraHG.FindBin(fitrange[1]));
@@ -703,9 +705,9 @@ bool TileSpectra::FitMipHG( double* out, double* outErr,
   }
 
   // Setting parameter start values and limits
-  double* startvalues    = new double[7];
-  double* parlimitslo    = new double[7];
-  double* parlimitshi    = new double[7];
+  double startvalues[7];
+  double parlimitslo[7];
+  double parlimitshi[7];
   SetParametersFitHG (startvalues, parlimitslo, parlimitshi, intArea, year, impE, vov, avmip);
   
   if (verbosity > 3) {
@@ -795,10 +797,6 @@ bool TileSpectra::FitMipHG( double* out, double* outErr,
     out[4]    = SNRPeak;
     out[5]    = SNRFWHM;
   }
-  delete[] fitrange;
-  delete[] startvalues;
-  delete[] parlimitslo;
-  delete[] parlimitshi;
   return bmipHG;
 }
 
@@ -816,7 +814,9 @@ bool TileSpectra::FitMipLG(double* out, double* outErr, int verbosity, int year,
   Setup* setupT=Setup::GetInstance();
   TString funcName = Form("fmip%sLGCellID%d",TileName.Data(),cellID);
   
-  double* fitrange    = new double[2];
+  // Keep the fit range in automatic storage so early channel/fit rejections
+  // cannot bypass its cleanup.
+  double fitrange[2];
   GetFitRange(fitrange, year, false,  impE, vov ,avmip);
 
   if (calib->BadChannel != -64 && calib->BadChannel < 1 ){
@@ -929,7 +929,6 @@ bool TileSpectra::FitMipLG(double* out, double* outErr, int verbosity, int year,
     out[4]    = SNRPeak;
     out[5]    = SNRFWHM;
   }
-  delete[] fitrange;
   return bmipLG;
 }
 
