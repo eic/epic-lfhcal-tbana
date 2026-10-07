@@ -23,6 +23,7 @@
 #include "HGCROC.h"
 #include "Caen.h"
 #include "Analyses.h"
+#include "CheckedIO.h"
 
 void PrintHelp(char* exe){
   std::cout<<"Usage:"<<std::endl;
@@ -265,18 +266,5 @@ int main(int argc, char* argv[]){
       return 0;
     }
   }
-  if(!AnAnalysis.CheckAndOpenIO()){
-    std::cout<<"Check input and configurations, inconsistency or error with I/O detected"<<std::endl;
-    PrintHelp(argv[0]);
-    return -1;
-  }
-
-  bool status = AnAnalysis.Process();
-  if(!AnAnalysis.CheckOutputWriteStatus()) status = false;
-  if(!status){
-    std::cerr<<"DataPrep: processing or output write failed"<<std::endl;
-    return -1;
-  }
-  std::cout<<"Exiting"<<std::endl;
-  return 0;
+  return lfhcal::RunCheckedAnalysis(AnAnalysis, "DataPrep");
 }

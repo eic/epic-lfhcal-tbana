@@ -1095,7 +1095,7 @@ bool Analyses::GetPedestal(void){
   std::map<int, TileSpectra>::iterator ithSpectra;	
 
   // create output file for histos
-  CreateOutputRootHistFile();
+  if (!CreateOutputRootHistFile()) return false;
   // entering histoOutput file
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->cd("IndividualCells");
@@ -1410,7 +1410,7 @@ bool Analyses::EvaluateHGCROCToAPhases(void){
   //==================================================================================
   // create additional output hist
   //==================================================================================
-  CreateOutputRootHistFile();
+  if (!CreateOutputRootHistFile()) return false;
   RootOutputHist->cd();
 
   TH2D* hSampleTOAVsCellID       = new TH2D( "hSampleTOAvsCellID","#sample ToA; cell ID; #sample TOA",
@@ -1772,7 +1772,7 @@ bool Analyses::TransferCalib(void){
   //==================================================================================
   // create additional output hist 
   //==================================================================================
-  CreateOutputRootHistFile();
+  if (!CreateOutputRootHistFile()) return false;
 
   int maxChanneTransferCaliblPerLayer       = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
   int maxChannelPerLayerSingleMod           = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
@@ -2365,7 +2365,7 @@ bool Analyses::ReevaluateLGHGCorr(void){
   //==================================================================================
   // create additional output hist 
   //==================================================================================
-  CreateOutputRootHistFile();
+  if (!CreateOutputRootHistFile()) return false;
 
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->cd("IndividualCells");
@@ -2695,7 +2695,7 @@ bool Analyses::VisualizeWaveform(void){
   //==================================================================================
   // create additional output hist
   //==================================================================================
-  CreateOutputRootHistFile();
+  if (!CreateOutputRootHistFile()) return false;
   
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->mkdir("IndividualCellsTrigg");
@@ -2872,7 +2872,7 @@ bool Analyses::GetScaling(void){
   std::map<int, TileSpectra>::iterator ithSpectraTrigg;
 
   ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2", "Migrad");  
-  CreateOutputRootHistFile();
+  if (!CreateOutputRootHistFile()) return false;
 
   // reading calib from file
   TcalibIn->GetEntry(0);
@@ -3897,7 +3897,7 @@ bool Analyses::GetImprovedScaling(void){
   std::map<int, TileSpectra>::iterator ithSpectraTrigg;
   
   // create output file for histos
-  CreateOutputRootHistFile();
+  if (!CreateOutputRootHistFile()) return false;
    
   // setup general fitting options 
   ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2", "Migrad");
@@ -4597,7 +4597,7 @@ bool Analyses::GetNoiseSampleAndRefitPedestal(void){
   std::map<int, TileSpectra>::iterator ithSpectraTrigg;
   
   // create output file for histos
-  CreateOutputRootHistFile();
+  if (!CreateOutputRootHistFile()) return false;
 
   // setup trigger sel
   double factorMinTrigg   = 0.5;
@@ -4947,7 +4947,7 @@ bool Analyses::RunEvalLocalTriggers(void){
   // Create & setup general monitoring histograms
   //==================================================================================  
   // create output file for histos
-  CreateOutputRootHistFile();
+  if (!CreateOutputRootHistFile()) return false;
   // 2D beam profile -EP
   int maxChannelPerLayer          = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
   int maxChannelPerLayerSingleMod = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
@@ -5249,7 +5249,7 @@ bool Analyses::Calibrate(void){
   //=============================================================================================
   // Create output histos
   //=============================================================================================
-  CreateOutputRootHistFile();
+  if (!CreateOutputRootHistFile()) return false;
   
   TH2D* hspectraHGvsCellID          = nullptr;      // all cells raw ADC (HG - CAEN, ADC HGCROC) spectrum vs Cell ID
   TH2D* hspectraHGCorrvsCellID      = nullptr;      // all cells pedestal corrected ADC (HG - CAEN, ADC HGCROC) spectrum vs Cell ID
