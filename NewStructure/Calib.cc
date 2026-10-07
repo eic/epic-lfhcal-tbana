@@ -1344,6 +1344,8 @@ void Calib::PrintDetailedGlobalInfo(){
  */
 void Calib::PrintCalibToFile(TString filename){
   std::fstream fFileCalibOut;
+  // Surface open, buffered write, and close failures to the command-line caller.
+  fFileCalibOut.exceptions(std::ios::failbit | std::ios::badbit);
   std::cout << "********************************************************************************************************" << std::endl;
   std::cout << "Printing calib info to: " << filename.Data() << std::endl;
   std::cout << "********************************************************************************************************" << std::endl;
