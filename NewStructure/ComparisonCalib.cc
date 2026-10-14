@@ -351,6 +351,7 @@ bool ComparisonCalib::ProcessCalib(void){
     //        3 - iterations
     //        4 - integration option
     //        5 - laser intensity
+    //        6 - temperature
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     Int_t runNumber = calib.GetRunNumber();
     if(Xaxis==0){//depending on run #
@@ -365,6 +366,8 @@ bool ComparisonCalib::ProcessCalib(void){
       Xvalue=nRun; 
     } else if(Xaxis==5){
       Xvalue=cit->second.energy;
+    } else if(Xaxis==6){
+      Xvalue=cit->second.temp;
     }
     
     if(Xvalue<Xmin) Xmin=Xvalue;
@@ -698,7 +701,7 @@ bool ComparisonCalib::ProcessCalib(void){
   } else if ( Xaxis == 5){
     Xmin= Xmin-25;
     Xmax= Xmax+25;
-  } else if (Xaxis == 1 || Xaxis == 3 || Xaxis == 4){
+  } else if (Xaxis == 1 || Xaxis == 3 || Xaxis == 4 || Xaxis == 6){
     Xmin= Xmin-0.5;
     Xmax= Xmax+0.5;
   } 
@@ -709,6 +712,7 @@ bool ComparisonCalib::ProcessCalib(void){
   else if (Xaxis==3)  xaxisTitle = "iteration";
   else if (Xaxis==4)  xaxisTitle = "integ. option";
   else if (Xaxis==5)  xaxisTitle = "laser intensity";
+  else if (Xaxis==6)  xaxisTitle = "T (#circ C)";
   else                xaxisTitle = "date";  
   
   // additional summary graphs
@@ -760,8 +764,8 @@ bool ComparisonCalib::ProcessCalib(void){
   for(itrend=trend.begin(); itrend!=trend.end(); ++itrend){    
     // sort graphs
     itrend->second.Sort();
-    // linear fit for HV dependence
-    if (Xaxis == 1)
+    // linear fit for HV & temp dependence
+    if (Xaxis == 1 || Xaxis == 6  )
       itrend->second.FitScale((int)isHGCROC, 1);  
     // constant fit for iterations
     if (Xaxis == 3)
@@ -871,7 +875,7 @@ bool ComparisonCalib::ProcessCalib(void){
         hHGscaleFitConstLayer[l]  = tempOffset;
       }
     }
-    if (Xaxis == 1){
+    if (Xaxis == 1 || Xaxis == 6){
       hHGscaleFitConst->GetXaxis()->SetTitle("offset_{HG} (arb. units)");
       std::cout << "slope range: " << minSlopeHG << "\t" << maxSlopeHG << std::endl;
       std::cout << "zero point range: " << minZPHG << "\t" << maxZPHG << std::endl;
@@ -908,7 +912,7 @@ bool ComparisonCalib::ProcessCalib(void){
         hLGscaleFitConstLayer[l]  = tempOffset;
       }
     }
-    if (Xaxis == 1){
+    if (Xaxis == 1 || Xaxis == 6){
       hLGscaleFitConst->GetXaxis()->SetTitle("offset_{LG} (arb. units)");
       std::cout << "slope range: " << minSlopeLG << "\t" << maxSlopeLG << std::endl;
       std::cout << "zero point range: " << minZPLG << "\t" << maxZPLG << std::endl;
@@ -977,13 +981,13 @@ bool ComparisonCalib::ProcessCalib(void){
   graphAllHGScale->Write();
   
   
-  if (Xaxis == 1){
+  if (Xaxis == 1 || Xaxis == 6){
     fitAllHGScale    = new TF1(Form("Fit_Summary_HGScale"), "[0]+[1]*x",Xmin, Xmax );
     graphAllHGScale->Fit(fitAllHGScale,"N0");
     fitAllHGScale->Print();
     fitAllHGScale->Write();
     double yZeroAll = (0. - fitAllHGScale->GetParameter(0))/fitAllHGScale->GetParameter(1);
-    if (yZeroAll < Xmin) Xmin = yZeroAll -1;
+    if (yZeroAll < Xmin && Xaxis == 1) Xmin = yZeroAll -1;
     minYScale = -10;
     fitAllHGScale->SetRange(Xmin,Xmax);
     std::cout << "f(x) = 0, x = \t" << yZeroAll << std::endl;
@@ -1021,13 +1025,13 @@ bool ComparisonCalib::ProcessCalib(void){
     graphAllLGScale->Sort();
     std::cout << "Total LG " << graphAllLGScale->GetN() << " data points available" << std::endl;
     graphAllLGScale->Write();
-    if (Xaxis == 1){
+    if (Xaxis == 1 || Xaxis == 6){
       fitAllLGScale    = new TF1(Form("Fit_Summary_LGScale"), "[0]+[1]*x",Xmin, Xmax );
       graphAllLGScale->Fit(fitAllLGScale,"N0");
       fitAllLGScale->Print();
       fitAllLGScale->Write();
       double yZeroAll = (0. - fitAllLGScale->GetParameter(0))/fitAllLGScale->GetParameter(1);
-      if (yZeroAll < Xmin) Xmin = yZeroAll -1;
+      if (yZeroAll < Xmin && Xaxis == 1) Xmin = yZeroAll -1;
       minYScaleLG = -5;
       fitAllLGScale->SetRange(Xmin,Xmax);
       std::cout << "f(x) = 0, x = \t" << yZeroAll << std::endl;
@@ -1059,7 +1063,7 @@ bool ComparisonCalib::ProcessCalib(void){
       graphAllHGScalePerLayer[l]->GetXaxis()->SetRangeUser(Xmin,Xmax);
       graphAllHGScalePerLayer[l]->Write();
       std::cout << "in layer  " << l  << "\t" << graphAllHGScalePerLayer[l]->GetN() << " data points available" << std::endl;
-      if (Xaxis == 1){
+      if (Xaxis == 1 || Xaxis == 6){
         fitAllHGScalePerLayer[l]    = new TF1(Form("Fit_Summary_HGScale_Layer_%d", l), "[0]+[1]*x",Xmin, Xmax );
         graphAllHGScalePerLayer[l]->Fit(fitAllHGScalePerLayer[l]);
         fitAllHGScalePerLayer[l]->Print();
@@ -1188,6 +1192,8 @@ bool ComparisonCalib::ProcessCalib(void){
         maxADC      = 350;
       } else if (Xaxis == 1){
         addLabel = Form("Ref V= %.1f V", sumCalibs[0].GetVoltage());
+      } else if (Xaxis == 6){
+        addLabel = Form("Ref T= %.1f #circ C", sumCalibs[0].GetTemperature());
       }
       Plot2DWithProfile( canvas2DCorr, 
                          isumCalibs->second.Get2DHGscaleCorrRef(), 
@@ -1226,6 +1232,11 @@ bool ComparisonCalib::ProcessCalib(void){
       // kDeepSea=51,          kGreyScale=52,    kDarkBodyRadiator=53, kInvertedDarkBodyRadiator=56, kLake = 86
       gStyle->SetPalette(kLake);
       TColor::InvertPalette();
+      
+      if (Xaxis == 6){
+        hHGscaleFitZP = nullptr;
+        hLGscaleFitZP = nullptr;
+      }
       
       PlotTrendingWithFit( canvas1DTrend, graphAllHGScale, fitAllHGScale,hHGscaleFitZP,
                           XminSum, Xmax, minYScale*0.4, maxYScale*1.1,

@@ -1,0 +1,5 @@
+# Asic nr	 half id 	 ToA offset
+0	0	268
+0	1	268
+2	0	268
+2	1	268

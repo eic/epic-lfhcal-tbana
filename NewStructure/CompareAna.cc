@@ -34,6 +34,8 @@ void PrintHelp(char* exe){
   std::cout<<"Usage:"<<std::endl;
   std::cout<<exe<<" [-option (arguments)]"<<std::endl;
   std::cout<<"Options:"<<std::endl;
+  std::cout<<"-c       Set line colors of overlay plots according to beam energy"<<std::endl;
+  std::cout<<"-C i     Set total number of files (for overlay plotting style) to i"<<std::endl;			 
   std::cout<<"-d [0-3] Debugging mode"<<std::endl;
   std::cout<<"-e [0-1] extended plotting"<<std::endl;
   std::cout<<"-E [1-X] histo reading options for expanded file list"<<std::endl;
@@ -45,12 +47,9 @@ void PrintHelp(char* exe){
   std::cout<<"-o vvv   Output file name (mandatory)"<<std::endl;
   std::cout<<"-O kkk   Output directory name for plots (mandatory)"<<std::endl;
   std::cout<<"-r rrr   Name of run list file  2024 PS TB [../configs/DataTakingDB_202409_CAEN.csv] "<<std::endl;
-  std::cout<<"-R       Trending plots versus run #"<<std::endl;
-  std::cout<<"-V       Trending plots versus Vop"<<std::endl;
   std::cout<<"-s       Flag HV scan (put Vop in EnergyOverlay legend)"<<std::endl;
-  std::cout<<"-x nnn   Set max x-axis value for EnergyOverlay"<<std::endl;
-  std::cout<<"-C i     Set total number of files (for overlay plotting style) to i"<<std::endl;			 
-  std::cout<<"-c       Set line colors of overlay plots according to beam energy"<<std::endl;
+  std::cout<<"-X nnn   Set max x-axis value for EnergyOverlay"<<std::endl;
+  std::cout<<"-x XXXX  Give axis option with XXXX, defined: run, ite, integ, Vop, intensity"<<std::endl;
   //std::cout<<"-t       Trending plots versus BoR time"<<std::endl;
   std::cout<<"-h       this help"<<std::endl<<std::endl;
   std::cout<<"Examples:"<<std::endl;
@@ -74,8 +73,23 @@ int main(int argc, char* argv[]){
 
    //if(E_value == 4){
     int c;
-    while((c=getopt(argc,argv,"d:e:E:fF:i:I:L:o:O:r:x:C:RVcsth"))!=-1){
+    while((c=getopt(argc,argv,"C:cd:e:E:fF:i:I:L:o:O:r:x:X:sth"))!=-1){
       switch(c){
+      case 'c':
+        std::cout<<"Compare: Setting overlay line color according to beam energy"<<std::endl;
+        CompAnalysis2.SetPlotColors(1);
+        it=std::find(RootRegexp.begin(),RootRegexp.end(),"-c");
+        RootRegexp.erase(it);
+        break;
+      case 'C':
+        std::cout<<"Compare: Plotting "<<optarg<<" files"<<std::endl;
+        CompAnalysis2.SetPlotColors(atoi(optarg));
+        CompAnalysis2.SetLegendLabelOpt(2);
+        it=std::find(RootRegexp.begin(),RootRegexp.end(),"-C");
+        RootRegexp.erase(it);
+        it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
+        RootRegexp.erase(it);
+        break;
       case 'd':
         std::cout<<"Compare: enable debug " << optarg <<std::endl;
         CompAnalysis2.EnableDebug(atoi(optarg));
@@ -166,33 +180,12 @@ int main(int argc, char* argv[]){
         it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
         RootRegexp.erase(it);
         break;
-      case 'x':
+      case 'X':
         std::cout<<"Compare: Set EnergyOverlay x-axis max to "<<optarg<<std::endl;
         CompAnalysis2.SetXmaxEO((double)atof(optarg));
         it=std::find(RootRegexp.begin(),RootRegexp.end(),"-x");
         RootRegexp.erase(it);
         it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
-        RootRegexp.erase(it);
-        break;
-      case 'C':
-        std::cout<<"Compare: Plotting "<<optarg<<" files"<<std::endl;
-        CompAnalysis2.SetPlotColors(atoi(optarg));
-        CompAnalysis2.SetLegendLabelOpt(2);
-        it=std::find(RootRegexp.begin(),RootRegexp.end(),"-C");
-        RootRegexp.erase(it);
-        it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
-        RootRegexp.erase(it);
-        break;
-      case 'R':
-        std::cout<<"Compare: Trending plots versus run #"<<std::endl;
-        CompAnalysis2.SetTrendingAxis(0);
-        it=std::find(RootRegexp.begin(),RootRegexp.end(),"-R");
-        RootRegexp.erase(it);
-        break;
-      case 'V':
-        std::cout<<"Compare: Trending plots versus Vop"<<std::endl;
-        CompAnalysis2.SetTrendingAxis(1);
-        it=std::find(RootRegexp.begin(),RootRegexp.end(),"-V");
         RootRegexp.erase(it);
         break;
       case 's':
@@ -202,18 +195,38 @@ int main(int argc, char* argv[]){
         it=std::find(RootRegexp.begin(),RootRegexp.end(),"-s");
         RootRegexp.erase(it);
         break;
-      case 'c':
-        std::cout<<"Compare: Setting overlay line color according to beam energy"<<std::endl;
-        CompAnalysis2.SetPlotColors(1);
-        it=std::find(RootRegexp.begin(),RootRegexp.end(),"-c");
+      case 'x': { 
+        std::cout<<"Compare: Setting x-axis option: "<<optarg<<std::endl;
+        std::string xAxisOpt = Form("%s",optarg);
+        it=std::find(RootRegexp.begin(),RootRegexp.end(),"-x");
         RootRegexp.erase(it);
-        break;
-      //case 't':
-      //  std::cout<<"Trending plots versus BoR time"<<std::endl;
-      //  CompAnalysis2.SetTrendingAxis(2);
-      //  it=std::find(RootRegexp.begin(),RootRegexp.end(),"-t");
-      //  RootRegexp.erase(it);
-      //  break;
+        it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
+        RootRegexp.erase(it);
+        if (xAxisOpt.compare("run") == 0 || xAxisOpt.compare("Run") == 0 ) {
+          std::cout<<"Compare: Trending plots versus run #, opt " << 0 <<std::endl;
+          CompAnalysis2.SetTrendingAxis(0);
+        } else if (xAxisOpt.compare("Vop") == 0 || xAxisOpt.compare("VOP") == 0 || xAxisOpt.compare("vop") == 0 ) {
+          std::cout<<"Compare: Trending plots versus Vop, opt " << 1 <<std::endl;
+          CompAnalysis2.SetTrendingAxis(1);
+        } else if (xAxisOpt.compare("ite") == 0 || xAxisOpt.compare("iteration") == 0 || xAxisOpt.compare("Ite") == 0 ) {
+          std::cout<<"Compare: Trending plots versus Iteration, opt " << 3 <<std::endl;
+          CompAnalysis2.SetTrendingAxis(3);
+        } else if (xAxisOpt.compare("integ") == 0 || xAxisOpt.compare("Integ") == 0 || xAxisOpt.compare("Integration") == 0 ) {
+          std::cout<<"Compare: Trending plots versus Iteration, opt " << 4 <<std::endl;
+          CompAnalysis2.SetTrendingAxis(4);
+        } else if (xAxisOpt.compare("intensity") == 0 || xAxisOpt.compare("laser") == 0 || xAxisOpt.compare("Intensity") == 0 ) {
+          std::cout<<"Compare: plot as function of laser intensity " <<std::endl;
+          CompAnalysis2.SetTrendingAxis(5);
+        } else if (xAxisOpt.compare("temp") == 0 || xAxisOpt.compare("Temperature") == 0 || xAxisOpt.compare("temperature") == 0 ) {
+          std::cout<<"Compare: plot as function of temperature " <<std::endl;
+          CompAnalysis2.SetTrendingAxis(6);
+        } else {
+          std::cout << "Compare: axis option unknown will plot against run # " << 0 <<std::endl;
+          CompAnalysis2.SetTrendingAxis(0);
+        }
+        break; 
+      }
+
       case '?':
         std::cout<<"Option "<<optarg <<" not supported, will be ignored "<<std::endl;
         break;

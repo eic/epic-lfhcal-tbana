@@ -1165,18 +1165,256 @@
   //__________________________________________________________________________________________________________  
   inline void PlotAnalysisComparison( TCanvas* canvas2D, Int_t option, 
                             std::map<int, AnaSummary> sumRuns, 
-                            Float_t textSizeRel, TString nameOutput, RunInfo currRunInfo, 
-                            int labelOpt = 1,
+                            Float_t textSizeRel, TString nameOutput, RunInfo commonRunInfo, 
+                            int labelOpt = -1,
                             TString additionalLabel = "", int debug = 0, Double_t eoXmax=0,
-                            int colorByEV=0
+                            int optColor = 0
                             ){
     //hardcode max X
     Double_t minY         = 0.1;
     Double_t maxY         = 0;
     Double_t minX         = 9999;
     Double_t maxX         = 0;
-    bool isSameVoltage    = true;
+    Double_t maxXAbs      = 0;
+    bool isSameVoltage    = false;
+    bool isSameRun        = false;
+    bool isSamePart       = false;
+    bool isSameE          = false;
+    if (commonRunInfo.runNr != -10000)    isSameRun     = true;    
+    if (commonRunInfo.pdg != -10000.)     isSamePart    = true; 
+    if (commonRunInfo.energy != -10000.)  isSameE       = true; 
+    if (commonRunInfo.vop != -10000.)     isSameVoltage = true; 
+  
+    // automatically determine label opt
+    if (labelOpt == -1){
+      // labelOpt:  0 -> Run Nr.
+      // labelOpt:  1 -> energy
+      // labelOpt:  2 -> particle type
+      // labelOpt:  3 -> Vop
+      // labelOpt:  4 -> part, energy
+      // labelOpt:  5 -> Vop, part
+      // labelOpt:  6 -> Vop, energy
+      if (isSameVoltage && isSamePart && isSameE )  labelOpt = 0;  // default back to Run number labels
+      else if (isSameVoltage && isSamePart)         labelOpt = 1;  // label with energy
+      else if (isSameE && isSameVoltage)            labelOpt = 2;  // label with part
+      else if (isSamePart && isSameE )              labelOpt = 3;  // label with Vop
+      else if (isSameVoltage )                      labelOpt = 4;  // label with part & energy
+      else if (isSameE )                            labelOpt = 5;  // label with Vop & part
+      else if (isSamePart )                         labelOpt = 6;  // label with Vop & energy
+    }
+    
+    std::map<int, AnaSummary>::iterator itrun;
+    Int_t nruns = 0;
+    // Find min and max ranges
+    for(itrun=sumRuns.begin(); itrun!=sumRuns.end(); ++itrun){
+      TH1D* tempH; 
+      if (option==0) tempH = itrun->second.GetDeltaTimeHist();
+      else if (option==1) tempH = itrun->second.GetEnergyHist();
+      else if (option==2) tempH = itrun->second.GetNCellsHist();
+      else if (option==3) tempH = itrun->second.GetSatADCHist();
+      else if (option==4) tempH = itrun->second.GetSatLGHist();
+      else if (option==5) tempH = itrun->second.GetLGHGOutHist();
+      else if (option==6) tempH = itrun->second.GetSatADCCellIDHist();
+      else if (option==7) tempH = itrun->second.GetSatLGCellIDHist();
+      else if (option==8) tempH = itrun->second.GetLGHGOutCellIDHist();
+      
+      double maxTemp = FindLastBinXAboveMin(tempH,2./tempH->GetEntries());
+      double minTemp = FindFirstBinXAboveMin(tempH,2./tempH->GetEntries());
+      maxXAbs = tempH->GetBinCenter(tempH->GetNbinsX()-1);
+      if (maxY < tempH->GetMaximum())   maxY = tempH->GetMaximum();
+      if (maxX < maxTemp && maxTemp != maxXAbs)               maxX = maxTemp;
+      if (minX > minTemp)               minX = minTemp;      
+      if (minY > 2./tempH->GetEntries()) minY = 2./tempH->GetEntries();
+      if (debug > 2) std::cout << "min X\t"  << minX << "\t max X \t" << maxX  <<"\t" << maxTemp << "\t" << tempH->GetBinCenter(tempH->GetNbinsX()-1) << std::endl;
+      
+      nruns++;
+    }
+    if (maxX == 0) maxX = maxXAbs;
+    // reset maxX with external forced max 
+    if (eoXmax != 0) {	
+      maxX = eoXmax;
+    }
+    if (debug > 0){
+      std::cout << nameOutput.Data() << std::endl;
+      std::cout << "min X\t"  << minX << "\t max X \t" << maxX << std::endl;
+      std::cout << "min Y\t"  << minY << "\t max Y \t" << maxY << std::endl;
+    }
+    
+    // create common label
+    TString labelCom          = "";
+    TString labelVar        = "";
+    if (isSameVoltage && isSamePart && isSameE ) { 
+      labelCom = Form("V_{op} = %.1f V, %s, E_{b} = %.0f GeV", 
+                    commonRunInfo.vop, 
+                    GetSpeciesStringFromPDG(commonRunInfo.pdg).Data(),
+                    commonRunInfo.energy);        
+      
+    }else if (isSameVoltage && isSamePart){         
+      labelCom = Form("V_{op} = %.1f V, %s", 
+                    commonRunInfo.vop, 
+                    GetSpeciesStringFromPDG(commonRunInfo.pdg).Data());        
+      labelVar = "E_{b}";
+    } else if (isSameE && isSameVoltage) {           
+      labelCom = Form("V_{op} = %.1f V, E_{b} = %.0f GeV", 
+                    commonRunInfo.vop, 
+                    commonRunInfo.energy);        
+      labelVar = "b_{id}";
+    } else if (isSamePart && isSameE ){              
+      labelCom = Form("%s, E_{b} = %.0f GeV", 
+                    GetSpeciesStringFromPDG(commonRunInfo.pdg).Data(),
+                    commonRunInfo.energy);  
+      labelVar = "V_{op}";
+    } else if (isSameVoltage ) {                    
+      labelCom = Form("V_{op} = %.1f V", commonRunInfo.vop);        
+      labelVar = "b_{id}, E_{b}";
+    } else if (isSameE ) {                          
+      labelCom = Form("E_{b} = %.0f GeV", commonRunInfo.energy);        
+      labelVar = "V_{op}, b_{id}";
+    } else if (isSamePart ){                        
+      labelCom = Form("%s - beam", GetSpeciesStringFromPDG(commonRunInfo.pdg).Data());        
+      labelVar = "V_{op}, E_{b}";
+    }
+    std::cout<< "labelOpt: " << labelOpt<< "\t" << labelCom.Data() << std::endl;
+    
+    canvas2D->cd();  
+      TH1D* histos[30];
+      std::string specDat[30];
+      float beEn[30];
+      if (debug > 0){
+        if (nruns > 30) std::cout << "more than 30 runs are included in this, only 30 will be plotted, currently " << nruns << "\t runs were requested" << std::endl;
+        else std::cout << nruns << " will be plotted" << std::endl;
+      }
+      double startLegend  = 0.55;
+      int columns         = 5;
+      double legy         = 0.88;
+      double xright       = 0.95;
+      double columnwidth  = 0.35;
+      if (labelOpt == 1 || labelOpt == 3 ) {
+        columns     = 4;
+        columnwidth = 0.2;
+      } else if (labelOpt >= 4 ) {
+        columns     = 3;
+      }
+
+      double lineBottom  = 6;
+      if (nruns < columns+1) lineBottom = 1;
+      else if (nruns < 2*columns+1) lineBottom = 2;
+      else if (nruns < 3*columns+1) lineBottom = 3;
+      else if (nruns < 4*columns+1) lineBottom = 4;
+      else if (nruns < 5*columns+1) lineBottom = 5;
+
+      TString header = "";
+      if (labelOpt != 0){
+        header = Form("%s, varying %s:", labelCom.Data(), labelVar.Data());
+        lineBottom++;
+      }
+      TLegend* legend = GetAndSetLegend2( startLegend, legy-lineBottom*textSizeRel, xright, legy,
+                                          0.75*textSizeRel, columns, header,42,columnwidth);;
+      int currRun = 0;
+      for(itrun=sumRuns.begin(); (itrun!=sumRuns.end()) && (currRun < 30); ++itrun){
+        histos[currRun] = nullptr;	
+        if (option==0){
+          histos[currRun] = itrun->second.GetDeltaTimeHist();
+        } else if (option==1){
+          histos[currRun] = itrun->second.GetEnergyHist();
+          histos[currRun]->Rebin(4);
+        } else if (option==2){
+          histos[currRun] = itrun->second.GetNCellsHist();
+        } else if (option==3){
+          histos[currRun] = itrun->second.GetSatADCHist();
+        } else if (option==4){
+          histos[currRun] = itrun->second.GetSatLGHist();
+        } else if (option==5){
+          histos[currRun] = itrun->second.GetLGHGOutHist();
+        } else if (option==6){
+          histos[currRun] = itrun->second.GetSatADCCellIDHist();
+        } else if (option==7){
+          histos[currRun] = itrun->second.GetSatLGCellIDHist();
+        } else if (option==8){
+          histos[currRun] = itrun->second.GetLGHGOutCellIDHist();
+        }
+          
+        Color_t currCol     = GetColorLayer(currRun);
+        Style_t currLineS   = GetLineStyleLayer(currRun);
+        if (optColor == 1){
+          currCol = GetColorLayer(int(itrun->second.GetEnergy()-1));
+        } else if (optColor == 2){
+          currCol     = GetColorByVop(itrun->second.GetVoltage());
+        } else if (optColor == 3){
+          currCol     = GetColorEmily3(currRun);
+          currLineS   = 1;
+        } else {
+          currCol     = GetColorEmily(currRun)->GetNumber();
+          currLineS   = 1;
+        }
+        SetStyleHistoTH1ForGraphs( histos[currRun], histos[currRun]->GetXaxis()->GetTitle(), histos[currRun]->GetYaxis()->GetTitle(), 0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.95, 1.02);  
+        SetLineDefaults(histos[currRun], currCol, 4, currLineS);
+        
+        if(currRun == 0){
+          histos[currRun]->GetXaxis()->SetRangeUser(minX-5*histos[currRun]->GetBinWidth(1),maxX+5*histos[currRun]->GetBinWidth(1));
+          if (option == 1)
+            histos[currRun]->GetYaxis()->SetRangeUser(minY*4,maxY*4.4);
+          else 
+            histos[currRun]->GetYaxis()->SetRangeUser(minY,maxY*1.1);
+          histos[currRun]->Draw("hist");
+        } else {
+          histos[currRun]->Draw("same,hist");
+        }
+        
+        
+        if (labelOpt == 2 && optColor < 3){
+          TString species = GetSpeciesStringFromPDG(itrun->second.GetPDG());
+          legend->AddEntry(histos[currRun],Form("%s %1.f GeV",species.Data(), itrun->second.GetEnergy()),"l");
+        } 
+        else if (labelOpt == 3) { // put Vop in legend
+          legend->AddEntry(histos[currRun],Form("%2.1f V", itrun->second.GetVoltage()), "l");
+        }
+        else {
+          if (optColor > 2) {
+            TString species = GetSpeciesStringFromPDG(itrun->second.GetPDG());
+            specDat[currRun] = species.Data();
+            beEn[currRun] = itrun->second.GetEnergy();
+          }
+          else legend->AddEntry(histos[currRun],Form("%d",itrun->second.GetRunNumber()),"l");
+        }
+        currRun++;  
+      } // end loop over runs 
+
+      histos[0]->DrawCopy("axis,same");
+
+      legend->Draw();
+      
+      DrawLatex(0.95, 0.92, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(commonRunInfo,7).Data()), true, 0.85*textSizeRel, 42);
+      DrawLatex(0.95, 0.885, GetStringFromRunInfo(commonRunInfo,8), true, 0.85*textSizeRel, 42);
+      
+    canvas2D->SaveAs(nameOutput.Data());
+  }  
+
+  //__________________________________________________________________________________________________________
+  // Plot 1D distribution
+  //__________________________________________________________________________________________________________  
+  inline void PlotAnalysisComparisonSpecial( TCanvas* canvas2D, Int_t option, 
+                            std::map<int, AnaSummary> sumRuns, 
+                            Float_t textSizeRel, TString nameOutput, RunInfo commonRunInfo, 
+                            int labelOpt = 1,
+                            TString additionalLabel = "", int debug = 0, Double_t eoXmax=0,
+                            int optColor = 0
+                            ){
+    //hardcode max X
+    Double_t minY         = 0.1;
+    Double_t maxY         = 0;
+    Double_t minX         = 9999;
+    Double_t maxX         = 0;
+    bool isSameVoltage    = false;
     double commonVoltage  = 0;
+    bool isSameRun        = false;
+    bool isSamePart       = false;
+      if (commonRunInfo.runNr != -10000) isSameRun  = true;    
+      if (commonRunInfo.pdg != -10000.)  isSamePart = true; 
+      if (commonRunInfo.vop != -10000.){
+      isSameVoltage = true; 
+      commonVoltage = commonRunInfo.vop;
+    }
     
     std::map<int, AnaSummary>::iterator itrun;
     Int_t nruns = 0;
@@ -1230,17 +1468,17 @@
       double legy = 0.88;
       double xright = 0.95;
       double columnwidth = 0.35;
-      if (labelOpt == 2 && colorByEV < 3){
+      if (labelOpt == 2 && optColor < 3){
         columns     = 4;
         startLegend = 0.45;
         columnwidth = 0.17;
       }
-      else if (labelOpt==2 && colorByEV == 3){
+      else if (labelOpt==2 && optColor == 3){
         columns = 3;
         startLegend = 0.55;
         columnwidth=0.2;
       }
-      else if (labelOpt==2 && colorByEV > 3) {	
+      else if (labelOpt==2 && optColor > 3) {	
         columns = 2;
         startLegend = 0.65;
         columnwidth = 0.3;
@@ -1289,20 +1527,20 @@
           
         SetStyleHistoTH1ForGraphs( histos[currRun], histos[currRun]->GetXaxis()->GetTitle(), histos[currRun]->GetYaxis()->GetTitle(), 0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.95, 1.02);  
         SetLineDefaults(histos[currRun], GetColorLayer(currRun), 4, GetLineStyleLayer(currRun));   
-        if (colorByEV == 1) { // set line color according to beam energy
+        if (optColor == 1) { // set line color according to beam energy
           int thisbei = (int)itrun->second.GetEnergy()-1;
           SetLineDefaults(histos[currRun], GetColorLayer(thisbei), 4, GetLineStyleLayer(currRun));
         }
-        else if (colorByEV == 2) { // set line color according to Vop
+        else if (optColor == 2) { // set line color according to Vop
           // only works for Vop=42, 42.5, 43, ..., 46 V.
           double thisvop = itrun->second.GetVoltage();
-          if (thisvop<42 || thisvop>46) colorByEV=0;
+          if (thisvop<42 || thisvop>46) optColor=0;
           else {
             thisvop = (thisvop - 42)*2;
             SetLineDefaults(histos[currRun], GetColorLayer((int)thisvop), 4, GetLineStyleLayer(currRun));
           }
         }
-        else if (colorByEV == 3) {
+        else if (optColor == 3) {
           SetLineDefaults(histos[currRun], GetColorEmily3(currRun), 3, 1);
           /*if (currRun < 5) // e-
             SetLineDefaults(histos[currRun], GetColorEmily2(currRun), 3, 1);	
@@ -1312,10 +1550,10 @@
             SetLineDefaults(histos[currRun], GetColorEmily2(currRun), 3, 1);
         */
         }
-        else if (colorByEV > 3) { // quick and dirty custom colors/styles
-          if (colorByEV < 10) SetLineDefaults(histos[currRun], GetColorEmily(currRun)->GetNumber(), 3, 1);
+        else if (optColor > 3) { // quick and dirty custom colors/styles
+          if (optColor < 10) SetLineDefaults(histos[currRun], GetColorEmily(currRun)->GetNumber(), 3, 1);
           else {
-            int specNum = (int)colorByEV/2;
+            int specNum = (int)optColor/2;
             if (currRun < specNum){
               SetLineDefaults(histos[currRun], GetColorEmily2(currRun*2), 3, 1);
             }
@@ -1334,7 +1572,7 @@
         } else {
           histos[currRun]->Draw("same,hist");
         }
-        if (labelOpt == 2 && colorByEV < 3){
+        if (labelOpt == 2 && optColor < 3){
           TString species = GetSpeciesStringFromPDG(itrun->second.GetPDG());
           legend->AddEntry(histos[currRun],Form("%s %1.f GeV",species.Data(), itrun->second.GetEnergy()),"l");
         } 
@@ -1342,7 +1580,7 @@
           legend->AddEntry(histos[currRun],Form("%2.1f V", itrun->second.GetVoltage()), "l");
         }
         else {
-          if (colorByEV > 2) {
+          if (optColor > 2) {
             TString species = GetSpeciesStringFromPDG(itrun->second.GetPDG());
             specDat[currRun] = species.Data();
             beEn[currRun] = itrun->second.GetEnergy();
@@ -1352,10 +1590,10 @@
         currRun++;  
       } // end loop over runs 
 
-      if (colorByEV < 3) histos[0]->DrawCopy("axis,same");
+      if (optColor < 3) histos[0]->DrawCopy("axis,same");
 
       // now I'm just being obnoxious. Custom for TB2025/2026PS energy overlay
-      if (colorByEV == 3) {
+      if (optColor == 3) {
         histos[0]->Draw("hist");
 
         int drawOrder[15] = {0,1,2,3,4,10,5,11,6,12,7,13,8,14,9}; // 2026PS
@@ -1376,8 +1614,8 @@
       }
 
       // my very silly fix to draw the legend column-wise instead of row-wise
-      if (colorByEV > 3) {
-        int halfway = (int)colorByEV/2;
+      if (optColor > 3) {
+        int halfway = (int)optColor/2;
         legy = legy-0.01; // for drawing label2
         histos[0]->Draw("hist");
         for (int i = 0; i < halfway; i++) {
@@ -1391,14 +1629,16 @@
 
       legend->Draw();
       
-      DrawLatex(0.95, 0.92, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(currRunInfo,7).Data()), true, 0.85*textSizeRel, 42);
-      DrawLatex(0.95, 0.885, GetStringFromRunInfo(currRunInfo,8), true, 0.85*textSizeRel, 42);
+      DrawLatex(0.95, 0.92, Form("#it{#bf{LFHCal TB:} %s}",GetStringFromRunInfo(commonRunInfo,7).Data()), true, 0.85*textSizeRel, 42);
+      DrawLatex(0.95, 0.885, GetStringFromRunInfo(commonRunInfo,8), true, 0.85*textSizeRel, 42);
       if (isSameVoltage)
         DrawLatex(0.95, legy-0.5*0.85*textSizeRel-lineBottom*textSizeRel , label2, true, 0.85*textSizeRel, 42);
       
     canvas2D->SaveAs(nameOutput.Data());
   }  
 
+  
+  
   // ****************************************************************************
   // Plotting routines to evaluate reco effi
   // ****************************************************************************
@@ -1695,11 +1935,12 @@
       canvas2D->cd();
       
       TString yAxisTitle = graphLayer->GetYaxis()->GetTitle();
+      TString xAxisTitle = graphLayer->GetXaxis()->GetTitle();
       if (histoZeroP)
         yAxisTitle  = Form("%s, counts", yAxisTitle.Data());
 
       TH1D* tempHist = new TH1D("dummyhist", "", 100, minX, maxX);
-      SetStyleHistoTH1ForGraphs(tempHist, graphLayer->GetXaxis()->GetTitle(), yAxisTitle.Data(),  0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.9, 1.05);
+      SetStyleHistoTH1ForGraphs(tempHist, xAxisTitle.Data(), yAxisTitle.Data(),  0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.9, 1.05);
       tempHist->GetYaxis()->SetRangeUser(minY,maxY);
       tempHist->DrawCopy("axis");
       
@@ -1726,7 +1967,10 @@
       if (fitLayer){
         SetLineDefaultsTF1(fitLayer, GetColorLayer(1), 4, 4 );
         fitLayer->Draw("same");
-        legend->AddEntry(graphLayer,Form("All cells, b = %.1f ADC/V", fitLayer->GetParameter(1)),"pl");
+        TString unit = "V";
+        if (xAxisTitle.Contains("#circ"))
+          unit = "#circ C";
+        legend->AddEntry(graphLayer,Form("All cells, b = %.1f ADC/%s", fitLayer->GetParameter(1), unit.Data()),"pl");
       } else {
         legend->AddEntry(graphLayer,"All cells","p");
       }
@@ -1752,7 +1996,7 @@
       pad2->cd();
 
       TH1D* tempHist2 = new TH1D("dummyhist2", "", 1000, minX, maxX);
-      SetStyleHistoTH1ForGraphs(tempHist2, graphLayer->GetXaxis()->GetTitle(), yAxisTitle.Data(),  0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.9, 1.05);
+      SetStyleHistoTH1ForGraphs(tempHist2, xAxisTitle.Data(), yAxisTitle.Data(),  0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.9, 1.05);
       tempHist2->GetYaxis()->SetRangeUser(minY,maxY);
       tempHist2->Sumw2();
       if (histoZeroP){
@@ -1783,6 +2027,7 @@
                                   ){
       canvas2D->cd();
       TString yAxisTitle = histo2DLayer->GetYaxis()->GetTitle();
+      TString xAxisTitle = histo2DLayer->GetXaxis()->GetTitle();
       if (histoZeroP)
         yAxisTitle  = Form("%s, counts", yAxisTitle.Data());
 
@@ -1791,7 +2036,7 @@
       double minXReal = histo2DLayer->GetXaxis()->GetBinCenter(histo2DLayer->GetXaxis()->FindBin(minX))-0.5*histo2DLayer->GetXaxis()->GetBinWidth(histo2DLayer->GetXaxis()->FindBin(minX));
       double maxXReal = histo2DLayer->GetXaxis()->GetBinCenter(histo2DLayer->GetXaxis()->FindBin(maxX))+0.5*histo2DLayer->GetXaxis()->GetBinWidth(histo2DLayer->GetXaxis()->FindBin(maxX));
       
-      SetStyleHistoTH2ForGraphs(histo2DLayer, histo2DLayer->GetXaxis()->GetTitle(), yAxisTitle.Data(),  0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.9, 1.05);
+      SetStyleHistoTH2ForGraphs(histo2DLayer, xAxisTitle.Data(), yAxisTitle.Data(),  0.85*textSizeRel, textSizeRel, 0.85*textSizeRel, textSizeRel,0.9, 1.05);
       histo2DLayer->GetXaxis()->SetRangeUser(minXReal+0.01,maxXReal-0.01);
       histo2DLayer->GetYaxis()->SetRangeUser(minYReal+0.01,maxYReal-0.01);
       histo2DLayer->DrawCopy("colz");
@@ -1818,7 +2063,10 @@
       if (fitLayer){
         SetLineDefaultsTF1(fitLayer, GetColorLayer(1), 4, 4 );
         fitLayer->Draw("same");
-        legend->AddEntry(fitLayer,Form("All cells, b = %.1f ADC/V", fitLayer->GetParameter(1)),"l");
+        TString unit = "V";
+        if (xAxisTitle.Contains("#circ"))
+          unit = "#circ C";
+        legend->AddEntry(fitLayer,Form("All cells, b = %.1f ADC/%s", fitLayer->GetParameter(1), unit.Data()),"l");
       } 
       if (hasFits){
         DrawLines(minX, maxX, 0, 0, 2, 1, 7 );

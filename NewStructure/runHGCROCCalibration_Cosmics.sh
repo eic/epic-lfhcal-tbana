@@ -34,13 +34,13 @@ function MuonCalibHGCROC()
   elif [ $1 == "default" ]; then 
     time ./DataPrep -f -d 1 -e  -s -i $4/rawHGCROC_wPed_wBC_$3.root -o $4/rawHGCROC_wPedwMuon_wBC_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuon/$6 -r $runNrFile
   elif [ $1 == "improved" ]; then 
-    time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_$3.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved/$6 -r $runNrFile
+    time ./DataPrep -f -d 1  -S 2 -i $4/rawHGCROC_wPedwMuon_wBC_$3.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved/$6 -r $runNrFile
   elif [ $1 == "imp2nd" ]; then 
-    time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp_$3.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp2_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved2nd/$6 -r $runNrFile
+    time ./DataPrep -f -d 1  -S 2 -i $4/rawHGCROC_wPedwMuon_wBC_Imp_$3.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp2_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved2nd/$6 -r $runNrFile
   elif [ $1 == "imp3rd" ]; then 
-    time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp2_$3.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp3_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved3rd/$6 -r $runNrFile
+    time ./DataPrep -f -d 1  -S 2 -i $4/rawHGCROC_wPedwMuon_wBC_Imp2_$3.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp3_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved3rd/$6 -r $runNrFile
   elif [ $1 == "imp4th" ]; then 
-    time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_Imp3_$3.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp4_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved4th/$6 -r $runNrFile
+    time ./DataPrep -f -d 1  -S 2 -i $4/rawHGCROC_wPedwMuon_wBC_Imp3_$3.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp4_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved4th/$6 -r $runNrFile
   elif [ $1 == "saveNewMuon" ]; then 
     time ./DataPrep -f -d 1 -M -i $5/rawPedAndMuon_$3.root -o $4/raw_muononly_$3.root 
   fi

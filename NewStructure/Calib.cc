@@ -159,8 +159,13 @@ double Calib::GetCalcScaleLowAlter(int cellID) const {
  */
 double Calib::GetScaleLow(int cellID) const {
   std::map<int, TileCalib>::const_iterator it= CaloCalib.find(cellID);
-  if(it!=CaloCalib.end()) return it->second.ScaleL;
-  else return -1.;
+   if(it!=CaloCalib.end()){
+    if (it->second.ScaleL != -1000  && (BCcalc && it->second.BadChannel > 1)){
+      return it->second.ScaleL;
+    } else {
+      return GetAverageScaleLow();
+    }
+  } else return -1.;
 }
 
 /**

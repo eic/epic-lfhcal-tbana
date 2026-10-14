@@ -57,7 +57,7 @@ class ComparisonAna{
   inline void SetMaxPlotLayer(int i)             {maxLayerPlot=i;};
   inline void SetLegendLabelOpt(int i)					 {eoLabelOpt=i;};
   inline void SetXmaxEO(Double_t d)							 {eoXmax=d;};
-  inline void SetPlotColors(int i)							 {colorByEV=i;};
+  inline void SetPlotColors(int i)							 {optColor=i;};
   //General methods
   bool CreateOutputRootFile(void);
   bool CheckAndOpenIO(void);
@@ -81,7 +81,7 @@ class ComparisonAna{
   int maxLayerPlot            =100;       // option restrict individual layer plotting
   int eoLabelOpt              =2;         // Legend label option for EnergyOverlay 2: beam E, 3: Vop
   Double_t eoXmax             =0;         // Max value for x-axis of EnergyOverlay
-  int colorByEV               =0;         // Set overlay plot colors according to beam energy (=1) or Vop (=2)
+  int optColor                =0;         // Set overlay plot colors according to beam energy (=1) or Vop (=2)
   RootSetupWrapper rsw;                   // Wrapper singleton class for setup
   RootSetupWrapper* rswptr;               // Pointer to wrapper for singleton class for setup
   Setup* setup;                           // geometry setup

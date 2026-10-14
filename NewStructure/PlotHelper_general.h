@@ -59,10 +59,11 @@
   // find bin last filled X bin
   //__________________________________________________________________________________________________________
   inline Double_t FindLastBinXAboveMin(TH1* hist, Double_t min = 1 ){
-    int i = hist->GetNbinsX()-1;
-    // std::cout<< "Find last bin" << std::endl;
+    int i = hist->GetNbinsX()-2;
+    std::cout<< "Find last bin: " << std::endl;
     while (i > 0 && hist->GetBinContent(i) < min){ 
       i--;
+      // std::cout << i<< "\t" << hist->GetBinContent(i) <<"\t" <<min <<std::endl;
     }
     if (i != 1)
       return hist->GetBinCenter(i+1);
@@ -165,42 +166,63 @@
   }
 
   //__________________________________________________________________________________________________________  
+  inline Color_t GetColorByVop(float vop){
+    // truncate Vop to one decimal point
+    float voptrunc = std::round(vop * 10.0f) / 10.0f;
+    if (voptrunc == 40.0)       return kBlue-3;
+    else if (voptrunc == 40.5)  return kPink -5;
+    else if (voptrunc == 41.0)  return kGreen+1;
+    else if (voptrunc == 41.5)  return kViolet+4;
+    else if (voptrunc == 42.0)  return kOrange;
+    else if (voptrunc == 42.5)  return kRed-4;
+    else if (voptrunc == 43.0)  return kCyan+1;
+    else if (voptrunc == 43.5)  return kRed+1;
+    else if (voptrunc == 44.0)  return kBlack;
+    else if (voptrunc == 44.5)  return kYellow-4;
+    else if (voptrunc == 45.0)  return kMagenta+2;
+    else if (voptrunc == 45.5)  return kYellow+2;
+    else if (voptrunc == 46.0)  return kAzure+1;
+    else if (voptrunc == 46.5)  return kCyan-3;
+    else                        return kGray+1;      
+  }
+  
+  //__________________________________________________________________________________________________________  
   inline TColor* GetColorEmily(int l){
-		// https://immunobiology.duke.edu/sites/default/files/2023-04/Colorblind-Palette.pdf
-		TColor *myIndigo = new TColor(9000, 51/255., 34/255., 136/255.);
-		TColor *myCyan = new TColor(9001, 51/255., 187/255., 238/255.);
-		TColor *myTeal = new TColor(9002, 0, 153/255., 136/255.);
-		TColor *myOrange = new TColor(9003, 238/255., 119/255., 51/255.);
-		TColor *myRose = new TColor(9004, 204/255., 102/255., 119/255.);
-		TColor *myPurple = new TColor(9005, 170/255., 68/255., 153/255.);
-		TColor *myOlive = new TColor(9006, 153/255., 153/255., 51/255.);
+    // https://immunobiology.duke.edu/sites/default/files/2023-04/Colorblind-Palette.pdf
+    TColor *myIndigo = new TColor(9000, 51/255., 34/255., 136/255.);
+    TColor *myCyan = new TColor(9001, 51/255., 187/255., 238/255.);
+    TColor *myTeal = new TColor(9002, 0, 153/255., 136/255.);
+    TColor *myOrange = new TColor(9003, 238/255., 119/255., 51/255.);
+    TColor *myRose = new TColor(9004, 204/255., 102/255., 119/255.);
+    TColor *myPurple = new TColor(9005, 170/255., 68/255., 153/255.);
+    TColor *myOlive = new TColor(9006, 153/255., 153/255., 51/255.);
     TColor* colors[7] = {myIndigo, myTeal, myRose, myCyan, myOlive, myOrange, myPurple};
     return colors[l%7];
   }
 
   //__________________________________________________________________________________________________________  
   inline Color_t GetColorEmily2(int l){
-		Color_t colors[12] = {kViolet-6, kViolet+1, kBlue-4, kAzure+1, kCyan+2, kCyan-3, kGreen+1, kGreen, kOrange+1, kOrange, kPink-2, kRed-9};  
+    Color_t colors[12] = {kViolet-6, kViolet+1, kBlue-4, kAzure+1, kCyan+2, kCyan-3, kGreen+1, kGreen, kOrange+1, kOrange, kPink-2, kRed-9};  
     return colors[l%12];
   }
 
   //__________________________________________________________________________________________________________  
   inline Color_t GetColorEmily3(int l){	
-		// 2026 PS, FullSetC, pi 1-10, had 6-10 GeV
-		Color_t colors[15] = {kBlack, kViolet+2, kBlue-5, kAzure+1, kCyan-7,
-													kGreen+1, kYellow-3, kOrange+1, kPink-2, kMagenta,
-													kTeal-6, kYellow+2, kOrange+2, kPink-8, kMagenta-3};
+    // 2026 PS, FullSetC, pi 1-10, had 6-10 GeV
+    Color_t colors[15] = {kBlack, kViolet+2, kBlue-5, kAzure+1, kCyan-7,
+                          kGreen+1, kYellow-3, kOrange+1, kPink-2, kMagenta,
+                          kTeal-6, kYellow+2, kOrange+2, kPink-8, kMagenta-3};
 
-		return colors[l%15];
+    return colors[l%15];
 
-		// 2025, FullSetA
-		// e- 1,2,3,4,5 GeV
-		// had- 3,5,8,10,12,15 GeV
-		// had+ 3,5,8,10,12,15 GeV
-		//Color_t colors[17] = {kBlack, kViolet+2, kBlue-4, kAzure+1, kCyan-7,
-		//											kViolet-6, kCyan+2, kTeal-6, kOrange+2, kPink-8, kMagenta-3,
-		//											kViolet+8, kCyan+1, kGreen+1, kOrange+1, kPink-2, kMagenta}; 
-		//return colors[l%17];
+    // 2025, FullSetA
+    // e- 1,2,3,4,5 GeV
+    // had- 3,5,8,10,12,15 GeV
+    // had+ 3,5,8,10,12,15 GeV
+    //Color_t colors[17] = {kBlack, kViolet+2, kBlue-4, kAzure+1, kCyan-7,
+    //											kViolet-6, kCyan+2, kTeal-6, kOrange+2, kPink-8, kMagenta-3,
+    //											kViolet+8, kCyan+1, kGreen+1, kOrange+1, kPink-2, kMagenta}; 
+    //return colors[l%17];
   }
 
   //__________________________________________________________________________________________________________  
