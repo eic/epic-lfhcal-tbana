@@ -192,6 +192,7 @@ bool ComparisonAna::ProcessAna(void){
   // ******************************************************************************************
   std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
   std::map<int,RunInfo>::iterator it; // basic infos
+  std::vector<RunInfo> runList;
   
   // ******************************************************************************************
   // Iterate over all entries (runs) in the calib tree
@@ -203,7 +204,12 @@ bool ComparisonAna::ProcessAna(void){
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // set global iterator for runs to first run number in list to obtain beam-line, dates...
 
+    // find current run infos
     it = ri.find(calib.GetRunNumber());
+    runList.push_back(it->second);
+    std::cout << "Energy \t" <<  it->second.energy << "\t run " << calib.GetRunNumber()<< "\t vop" << calib.GetVop() << std::endl;
+
+    
     Xvalue=calib.GetRunNumber();
 
     // TODO: Change id from run number, look at constructor ()
@@ -261,34 +267,52 @@ bool ComparisonAna::ProcessAna(void){
     sumCalibs[nRun]=aSum;
     nRun++;
   }
+  
+  // ******************************************************************************************
+  // Get common runInfo
+  // ******************************************************************************************
+  RunInfo commonRunInfo = GetCommonRunInfoFromList(runList);
+  PrintSettingsRunInfo(commonRunInfo);  
+  int labelOpt        = 0;
+  Int_t nSameSettings = GetNSameSettings(commonRunInfo, labelOpt);
+
+  
   Int_t textSizePixel   = 30;
   Float_t textSizeRel   = 0.04;  
   TCanvas* canvasOverlay1D = new TCanvas("canvasOverlay1D","",0,0,1450,1300);  // gives the page size
   DefaultCanvasSettings( canvasOverlay1D,  0.08, 0.03, 0.025, 0.09);
   canvasOverlay1D->SetLogy(1);
   PlotAnalysisComparison( canvasOverlay1D, 0, sumCalibs, textSizeRel, 
-                      Form("%s/TimeDiff_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV);
+                      Form("%s/TimeDiff_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,-1,"", debug, 0, optColor);
   
   PlotAnalysisComparison( canvasOverlay1D, 1, sumCalibs, textSizeRel, 
-                      Form("%s/Energy_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,eoLabelOpt,"", debug, eoXmax, colorByEV);
+                      Form("%s/Energy_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, -1, "", debug, 0, optColor);
   PlotAnalysisComparison( canvasOverlay1D, 2, sumCalibs, textSizeRel, 
-                      Form("%s/NCells_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,eoLabelOpt, "", debug, 0, colorByEV);
-  
+                      Form("%s/NCells_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo, -1, "", debug, 0, optColor);
+
   // these aren't correctly protected for running with HGCROC
   if (expandedList == 2){
     PlotAnalysisComparison( canvasOverlay1D, 3, sumCalibs, textSizeRel, 
-                            Form("%s/SatADC_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV);
+                            Form("%s/SatADC_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,-1,"", debug, 0, optColor);
     PlotAnalysisComparison( canvasOverlay1D, 4, sumCalibs, textSizeRel, 
-                            Form("%s/SatLG_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV);
+                            Form("%s/SatLG_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,-1,"", debug, 0, optColor);
     PlotAnalysisComparison( canvasOverlay1D, 5, sumCalibs, textSizeRel, 
-                            Form("%s/LGHGOut_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV);
+                            Form("%s/LGHGOut_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,-1,"", debug, 0, optColor);
     PlotAnalysisComparison( canvasOverlay1D, 6, sumCalibs, textSizeRel, 
-                            Form("%s/SatADCvsCellID_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV);
+                            Form("%s/SatADCvsCellID_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,-1,"", debug, 0, optColor);
     PlotAnalysisComparison( canvasOverlay1D, 7, sumCalibs, textSizeRel, 
-                            Form("%s/SatLGvsCellID_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV);
+                            Form("%s/SatLGvsCellID_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,-1,"", debug, 0, optColor);
     PlotAnalysisComparison( canvasOverlay1D, 8, sumCalibs, textSizeRel, 
-                            Form("%s/LGHGOutvsCellID_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), it->second,1,"", debug, 0, colorByEV); 
+                            Form("%s/LGHGOutvsCellID_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,-1,"", debug, 0, optColor); 
   }
+
+  // PlotAnalysisComparisonSpecial( canvasOverlay1D, 0, sumCalibs, textSizeRel, 
+  //                     Form("%s/TimeDiff_RunOverlay_Special.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,1,"", debug, 0, optColor);
+  // PlotAnalysisComparisonSpecial( canvasOverlay1D, 1, sumCalibs, textSizeRel, 
+  //                     Form("%s/Energy_RunOverlay_Special.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,eoLabelOpt,"", debug, eoXmax, optColor);
+  // PlotAnalysisComparisonSpecial( canvasOverlay1D, 2, sumCalibs, textSizeRel, 
+  //                     Form("%s/NCells_RunOverlay_Special.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,eoLabelOpt, "", debug, 0, optColor);
+  
   return true;
 }
 

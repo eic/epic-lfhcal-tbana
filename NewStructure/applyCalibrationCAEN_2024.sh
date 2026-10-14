@@ -37,6 +37,15 @@ function Calib()
   # create skimmed muon file only (-M)
   elif [ $1 == "skimMuon" ]; then
     time ./DataPrep -f -d 1 -M -i $3/rawWithLocTrigg_$5.root -o $4/rawWithLocTrigg_muonOnly_$5.root 
+  # create skimmed muon file only (-M) LG calibrated file
+  elif [ $1 == "skimMuonLG" ]; then
+    time ./DataPrep -f -d 1 -M -i $3/rawWithLocTriggLG_$5.root -o $4/rawWithLocTriggLG_muonOnly_$5.root 
+  # create skimmed muon file only (-M) LGcalc calibrated file
+  elif [ $1 == "skimMuonLGcalc" ]; then
+    time ./DataPrep -f -d 1 -M -i $3/rawWithLocTriggLGcalc_$5.root -o $4/rawWithLocTriggLGcalc_muonOnly_$5.root 
+  # create skimmed muon file only (-M) HG calibrated file
+  elif [ $1 == "skimMuonHG" ]; then
+    time ./DataPrep -f -d 1 -M -i $3/rawWithLocTriggHG_$5.root -o $4/rawWithLocTriggHG_muonOnly_$5.root 
   # run trigger only using given calib file (-T $tempCalibFile) with trigger eval based on LG only & LG mip (-c 0)
   # runs Analyses::RunEvalLocalTriggers()
   elif [ $1 == "trigg_LG" ]; then
@@ -102,7 +111,7 @@ elif [ $userName = "fbockExt" ]; then
   dataDirOut=$dataDirIn
   dataDirOutE=$dataDirInE
   dataDirOutH=$dataDirInH
-  PlotBaseDir=/media/fbock/T7/LFHCalTBData/202408_PST09/ReanlysisCAEN
+  PlotBaseDir=/media/fbock/T7/LFHCalTBData/202408_PST09/ReanalysisCAEN
 elif [ $userName = "eglimos" ]; then 
   dataDirCal=/home/ewa/EIC/test_beam2024/fullScanC/Output/MuonRuns
   dataDirIn=/home/ewa/EIC/test_beam2024/fullScanC
@@ -169,20 +178,20 @@ elif [ $optionMain == "ScanB" ]; then
   muonScanB_42V='331 322 370 371 374'
   pedScanB_42V='332 369'
   Calib $optionSub $calibFile1 $dataDirIn $dataDirOut muonScanB1_42V $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
-  Calib $optionSub $calibFile2 $dataDirIn $dataDirOut muonScanB2_42V $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
+#   Calib $optionSub $calibFile2 $dataDirIn $dataDirOut muonScanB2_42V $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
   
 #   #electron runs
-#   runs='338 '   
+  runs='338 '   
 #   runs='333 334 336 337 338 '   
-  runs='333 334 336 337'   
+#   runs='333 334 336 337'   
   for runNr in $runs; do 
     Calib $optionSub $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated $skipLayer
   done;
 #   
   #hadron runs
-  runs='349 346 350 357 360 362 367' 
+#   runs='349 346 350 357 360 362 367' 
 # #   runs='340 349 346 350 357 360 362 367 368' 
-#   runs='340 368' 
+  runs='340 368' 
   for runNr in $runs; do 
     Calib $optionSub $calibFile1 $dataDirInH $dataDirOutH $runNr $PlotBaseDir CAEN_PlotsHadronCalibrated $skipLayer
   done;
@@ -218,7 +227,7 @@ elif [ $optionMain == "ScanC" ]; then
     Calib $optionSub $calibFile2 $dataDirInH $dataDirOutH $runNr $PlotBaseDir CAEN_PlotsHadronCalibrated $skipLayer
   done;
 elif [ $optionMain == "ScanD" ]; then
-  calibFile2=$dataDirCal/calib_muonScanD2.root
+  calibFile2=$dataDirCal/calib_muonScanD2_45V_V3.root
   echo "running calibrate for 45V runs, campaing A1"
   
   #muon runs
@@ -239,9 +248,9 @@ elif [ $optionMain == "ScanD" ]; then
     Calib $optionSub $calibFile2 $dataDirInH $dataDirOutH $runNr $PlotBaseDir CAEN_PlotsHadronCalibrated $skipLayer
   done;
 elif [ $optionMain == "ScanE" ]; then
-  calibFile0=$dataDirCal/calib_muonScanE_40V.root
-  calibFile1=$dataDirCal/calib_muonScanE1_40V.root
-  calibFile2=$dataDirCal/calib_muonScanE2_40V.root
+  calibFile0=$dataDirCal/calib_muonScanE_40V_V3.root
+  calibFile1=$dataDirCal/calib_muonScanE1_40V_V3.root
+  calibFile2=$dataDirCal/calib_muonScanE2_40V_V3.root
   echo "running calibrate for 40V runs, campaing E"
 
   muonScanE_40V='463 464 481 478'
@@ -257,9 +266,9 @@ elif [ $optionMain == "ScanE" ]; then
     Calib $optionSub $calibFile0 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated $skipLayer
   done;
 elif [ $optionMain == "ScanF" ]; then
-  calibFile0=$dataDirCal/calib_muonScanF_41V_V2.root
-  calibFile1=$dataDirCal/calib_muonScanF1_41V_V2.root
-  calibFile2=$dataDirCal/calib_muonScanF2_41V_V2.root
+  calibFile0=$dataDirCal/calib_muonScanF_41V_V3.root
+  calibFile1=$dataDirCal/calib_muonScanF1_41V_V3.root
+  calibFile2=$dataDirCal/calib_muonScanF2_41V_V3.root
   echo "running calibrate for 41V runs, campaing F"
 
   muonScanE_41V='486 489 507 506'
@@ -275,46 +284,53 @@ elif [ $optionMain == "ScanF" ]; then
     Calib $optionSub $calibFile0 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated $skipLayer
   done;
 elif [ $optionMain == "ScanH" ]; then
-  calibFile1=$dataDirCal/calib_muonScanH1.root
-  calibFile2=$dataDirCal/calib_muonScanH2.root
+  calibFile0=$dataDirCal/calib_muonScanH_45V_V3.root
+  calibFile1=$dataDirCal/calib_muonScanH1_45V_V3.root
+  calibFile2=$dataDirCal/calib_muonScanH2_45V_V3.root
   echo "running calibrate for 45V runs, campaing H"
-  
   #muon runs
   muonScanH_45V='526 527 554 559'
   pedScanH_45V='528 552'
-  Calib $optionSub $calibFile1 $dataDirIn $dataDirOut muonScanH1_45V $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
-  Calib $optionSub $calibFile2 $dataDirIn $dataDirOut muonScanH2_45V $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
+#   Calib $optionSub $calibFile0 $dataDirIn $dataDirOut muonScanH_45V $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
+#   Calib $optionSub $calibFile1 $dataDirIn $dataDirOut muonScanH1_45V $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
+#   Calib $optionSub $calibFile2 $dataDirIn $dataDirOut muonScanH2_45V $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
   
   # electron runs
-  runs='529 530 533 535 538 541' 
-  for runNr in $runs; do 
-    Calib $optionSub $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated $skipLayer
-  done;
+#   runs='529 530 533 535 538 541' 
+#   for runNr in $runs; do 
+#     Calib $optionSub $calibFile0 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated $skipLayer
+#   done;
   
   #hadron runs
-  runs='542 543 544 545 548 549 550 551' 
+#   runs='542 543 544 545 548 549 550 551' 
+  runs='549 550 551' 
   for runNr in $runs; do 
-    Calib $optionSub $calibFile1 $dataDirInH $dataDirOutH $runNr $PlotBaseDir CAEN_PlotsHadronCalibrated $skipLayer
+    Calib $optionSub $calibFile0 $dataDirInH $dataDirOutH $runNr $PlotBaseDir CAEN_PlotsHadronCalibrated $skipLayer
   done;
 elif [ $optionMain == "ScanG" ]; then
-  calibFile1=$dataDirCal/calib_muonScanG_46V.root
+  calibFile0=$dataDirCal/calib_muonScanG_46V_V3.root
+  calibFile1=$dataDirCal/calib_muonScanG1_46V_V3.root
+  calibFile2=$dataDirCal/calib_muonScanG2_46V_V3.root
   echo "running calibrate for 46V runs, campaing G"
   
   #muon runs
   muonScanG_46V='508 510 511 525'
   pedScanG_46V='521'
-  Calib $optionSub $calibFile1 $dataDirIn $dataDirOut muonScanG_46V $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
-  
-  # electron runs
-  runs='513 514 516 517 520' 
-  for runNr in $runs; do 
-    Calib $optionSub $calibFile1 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated $skipLayer
-  done;
+#   Calib $optionSub $calibFile0 $dataDirIn $dataDirOut muonScanG_46V $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
+#   Calib $optionSub $calibFile1 $dataDirIn $dataDirOut muonScanG1_46V $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
+#   Calib $optionSub $calibFile2 $dataDirIn $dataDirOut muonScanG2_46V $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
+#   
+#   # electron runs
+#   runs='513 514 516 517 520' 
+#   for runNr in $runs; do 
+#     Calib $optionSub $calibFile0 $dataDirInE $dataDirOutE $runNr $PlotBaseDir CAEN_PlotsElectronCalibrated $skipLayer
+#   done;
 elif [ $optionMain == "MuonHVScan" ]; then
-  Calib $optionSub $dataDirCal/calib_305_44V.root $dataDirIn $dataDirOut 305 $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
-  Calib $optionSub $dataDirCal/calib_307_43V.root $dataDirIn $dataDirOut 307 $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
-  Calib $optionSub $dataDirCal/calib_309_42V.root $dataDirIn $dataDirOut 309 $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
-  Calib $optionSub $dataDirCal/calib_312_41V.root $dataDirIn $dataDirOut 312 $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
-  Calib $optionSub $dataDirCal/calib_316_40V.root $dataDirIn $dataDirOut 316 $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
+    echo "Muon HV Scan"
+#   Calib $optionSub $dataDirCal/calib_HVScan_44V_V3.root $dataDirIn $dataDirOut 305 $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
+#   Calib $optionSub $dataDirCal/calib_HVScan_43V_V3.root $dataDirIn $dataDirOut 307 $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
+#   Calib $optionSub $dataDirCal/calib_HVScan_42V_V3.root $dataDirIn $dataDirOut 309 $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
+#   Calib $optionSub $dataDirCal/calib_HVScan_41V_V3.root $dataDirIn $dataDirOut 312 $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
+#   Calib $optionSub $dataDirCal/calib_HVScan_40V_V3.root $dataDirIn $dataDirOut 316 $PlotBaseDir CAEN_PlotsMuonCalibrated $skipLayer
 fi
 

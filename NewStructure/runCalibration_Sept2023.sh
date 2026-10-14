@@ -40,9 +40,9 @@ function MuonCalibSept2023()
   elif [ $1 == "default" ]; then 
     ./DataPrep -f -d 1 -y 2023 -s -i $3/rawPed_$2.root -o $4/rawPedAndMuon_$2.root -O $outDirPlot/PlotsCalibMuon_2023/Run$2 -r ../configs/TB2023/DataTakingDB_TBSept2023_SPSH4.csv
   elif [ $1 == "improved" ]; then 
-    ./DataPrep -f -d 1 -y 2023 -S -i $4/rawPedAndMuon_$2.root -o $4/rawPedAndMuonImp_$2.root -O $outDirPlot/PlotsCalibMuonImproved_2023/Run$2 -r ../configs/TB2023/DataTakingDB_TBSept2023_SPSH4.csv
+    ./DataPrep -f -d 1 -y 2023 -S 2 -i $4/rawPedAndMuon_$2.root -o $4/rawPedAndMuonImp_$2.root -O $outDirPlot/PlotsCalibMuonImproved_2023/Run$2 -r ../configs/TB2023/DataTakingDB_TBSept2023_SPSH4.csv
   elif [ $1 == "improved2nd" ]; then 
-    ./DataPrep -f -d 1 -y 2023 -S -i $4/rawPedAndMuonImp_$2.root -o $4/rawPedAndMuonImp2nd_$2.root -O $outDirPlot/PlotsCalibMuonImproved_2023/Run$2_2ndIte -r ../configs/TB2023/DataTakingDB_TBSept2023_SPSH4.csv
+    ./DataPrep -f -d 1 -y 2023 -S 2 -i $4/rawPedAndMuonImp_$2.root -o $4/rawPedAndMuonImp2nd_$2.root -O $outDirPlot/PlotsCalibMuonImproved_2023/Run$2_2ndIte -r ../configs/TB2023/DataTakingDB_TBSept2023_SPSH4.csv
   elif [ $1 == "noise" ]; then 
     ./DataPrep -f -d 1 -y 2023 -n -i $4/rawPedAndMuon_$2.root -o $4/rawPedAndMuonNoise_$2.root -O $outDirPlot/PlotsCalibNoiseRe_2023/Run$2 -r ../configs/TB2023/DataTakingDB_TBSept2023_SPSH4.csv
   elif [ $1 == "transferAlt" ]; then 
@@ -54,11 +54,11 @@ function MuonCalibSept2023()
   elif [ $1 == "saveNewMuon" ]; then 
     ./DataPrep -f -d 1 -M -i $4/rawPedAndMuon_$2.root -o $3/raw_muononly_$2.root 
   elif [ $1 == "improvedMinimal" ]; then 
-    ./DataPrep -f -d 1 -y 2023 -S -i $3/raw_muononly_$2.root -o $4/rawPedAndMuonImpMinimal_$2.root -O $outDirPlot/PlotsCalibMuonImproved_2023/Run$2_MinimalSet -r ../configs/TB2023/DataTakingDB_TBSept2023_SPSH4.csv
+    ./DataPrep -f -d 1 -y 2023 -S 2 -i $3/raw_muononly_$2.root -o $4/rawPedAndMuonImpMinimal_$2.root -O $outDirPlot/PlotsCalibMuonImproved_2023/Run$2_MinimalSet -r ../configs/TB2023/DataTakingDB_TBSept2023_SPSH4.csv
   elif [ $1 == "improvedMinimal2nd" ]; then 
-    ./DataPrep -f -d 1 -y 2023 -S -i $4/rawPedAndMuonImpMinimal_$2.root -o $4/rawPedAndMuonImpMinimal2nd_$2.root -O $outDirPlot/PlotsCalibMuonImproved_2023/Run$2_MinimalSet2nd -r ../configs/TB2023/DataTakingDB_TBSept2023_SPSH4.csv
+    ./DataPrep -f -d 1 -y 2023 -S 2 -i $4/rawPedAndMuonImpMinimal_$2.root -o $4/rawPedAndMuonImpMinimal2nd_$2.root -O $outDirPlot/PlotsCalibMuonImproved_2023/Run$2_MinimalSet2nd -r ../configs/TB2023/DataTakingDB_TBSept2023_SPSH4.csv
   elif [ $1 == "improvedMinimal3rd" ]; then 
-    ./DataPrep -f -d 1 -y 2023 -S -i $4/rawPedAndMuonImpMinimal2nd_$2.root -o $4/rawPedAndMuonImpMinimal3rd_$2.root -O $outDirPlot/PlotsCalibMuonImproved_2023/Run$2_MinimalSet3rd -r ../configs/TB2023/DataTakingDB_TBSept2023_SPSH4.csv
+    ./DataPrep -f -d 1 -y 2023 -S 2 -i $4/rawPedAndMuonImpMinimal2nd_$2.root -o $4/rawPedAndMuonImpMinimal3rd_$2.root -O $outDirPlot/PlotsCalibMuonImproved_2023/Run$2_MinimalSet3rd -r ../configs/TB2023/DataTakingDB_TBSept2023_SPSH4.csv
   fi
 }
 

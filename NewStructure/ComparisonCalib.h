@@ -38,6 +38,7 @@ class ComparisonCalib{
   inline TString GetPlotOutputDir()         const {return OutputNameDirPlots;};
   inline short GetExtPlotting(void)         const {return ExtPlot;};
   inline bool GetIsHGCROC(void)             const {return isHGCROC;};
+  inline int GetTrendingAxis(void)          const {return Xaxis;};
   inline int GetExpandedList()              const {return expandedList;}
   inline bool CanOverWrite(void)            const {return Overwrite;};
   

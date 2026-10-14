@@ -212,6 +212,9 @@ int main(int argc, char* argv[]){
       } else if (xAxisOpt.compare("intensity") == 0 || xAxisOpt.compare("laser") == 0 || xAxisOpt.compare("Intensity") == 0 ) {
         std::cout<<"Compare: plot as function of laser intensity " <<std::endl;
         CompAnalysis.SetTrendingAxis(5);
+      } else if (xAxisOpt.compare("temp") == 0 || xAxisOpt.compare("Temperature") == 0 || xAxisOpt.compare("temperature") == 0 ) {
+        std::cout<<"Compare: plot as function of temperature " <<std::endl;
+        CompAnalysis.SetTrendingAxis(6);
       } else {
         std::cout << "Compare: axis option unknown will plot against run # " << 0 <<std::endl;
         CompAnalysis.SetTrendingAxis(0);
@@ -238,6 +241,7 @@ int main(int argc, char* argv[]){
     return -1;
   }
 
+  std::cout<< "Check calib axis: " << CompAnalysis.GetTrendingAxis() << std::endl;
   CompAnalysis.ProcessCalib();
   //CompAnalysis.Close();
   std::cout<<"Exiting"<<std::endl;

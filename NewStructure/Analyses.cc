@@ -3970,23 +3970,60 @@ bool Analyses::GetImprovedScaling(void){
     std::cout << "ATTENTION: YOU ARE RESETTING THE MAXIMUM NUMBER OF EVENTS TO BE PROCESSED TO: " << maxEvents << ". THIS SHOULD ONLY BE USED FOR TESTING!" << std::endl;
     std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
   }
+
+  //=============================================================================================
+  // Setup general variables for analysis
+  //=============================================================================================
+  int actCh1st                = 0;
+  double averageScale         = calib.GetAverageScaleHigh(actCh1st);
+  int actChalt                = 0;
+  double averageNTiles        = 0.;
+  double averageScalePerTile  = calib.GetAverageScaleHighPerSingleLayer(actChalt, averageNTiles);
+  // variable per single tile for possible summed output
+  double avLGHGCorr           = calib.GetAverageLGHGCorr();
+  double avLGHGCorrOff        = calib.GetAverageLGHGCorrOff();
   
-  int actChI  = 0;
-  double averageScale     = calib.GetAverageScaleHigh(actChI);
-  double averageScaleLow  = 0.;
+  int actCh1stL                = 0;
+  double averageScaleL        = 0;
+  int actChaltL               = 0;
+  double averageNTilesL       = 0.;
+  double averageLScalePerTile = 0.;
+  if (typeRO == ReadOut::Type::Caen){
+    averageScaleL        = calib.GetAverageScaleLow(actCh1stL);
+    averageLScalePerTile = calib.GetAverageScaleLowPerSingleLayer(actChaltL, averageNTilesL);
+  }
+  // print out key calib variables
+  if (typeRO == ReadOut::Type::Caen){
+    std::cout << "average HG mip: " << averageScale << "\t per tile: " << averageScalePerTile<< "\t active ch: "<< actCh1st<< std::endl;
+    std::cout << "average LG mip: " << averageScaleL <<"\t per tile: " << averageLScalePerTile<< "\t active ch: "<< actCh1stL<< std::endl;
+  } else if (typeRO == ReadOut::Type::Hgcroc){
+    std::cout << "average HG mip: " << averageScale << "\t per tile: " << averageScalePerTile << "\t active ch: "<< actCh1st<< "\t average Ntiles for calib: "<< averageNTiles << std::endl;
+  }
   
-  int actChIalt                  = 0;
-  double averageNTilesI          = 0.;
-  double averageScalePerTile     = calib.GetAverageScaleHighPerSingleLayer(actChIalt, averageNTilesI);
-  if (typeRO == ReadOut::Type::Caen) {
-    averageScaleLow  = calib.GetAverageScaleLow();
+  // Set correct calib scale for trigger eval
+  double calibScale           = 0;
+  if (typeRO == ReadOut::Type::Caen ){
+    // LG scale as evaluated from fits
+    if (calibOption == 0){
+      calibScale  = averageLScalePerTile;
+      std::cout << "Estimating triggers using calib option " << calibOption << ". This uses the average of all LG evaluated fits, averages is: " << calibScale << std::endl;
+    // LG scale calc from HG
+    } else if (calibOption == 1){
+      calibScale  = (averageScalePerTile-avLGHGCorrOff)/avLGHGCorr;
+      std::cout << "Estimating triggers using calib option " << calibOption << ". This uses the average of all HG evaluated fits and calculates LG equivalent, averages is: " << calibScale << std::endl;
+    // HG scale as evaluated from fits
+    } else if (calibOption >= 2){
+      calibScale  = averageScalePerTile;
+      std::cout << "Estimating triggers using calib option " << calibOption << ". This uses the average of all HG evaluated fits, averages is: " << calibScale << std::endl;
+    } else {
+      std::cout << "This calib option is unknown: " << calibOption << " *************** ABORTING!!!!" << std::endl;
+      return false;
+    }
+  } else {
+    calibScale  = averageScalePerTile;
+    std::cout << " Calibrating using average ADC max fits, averages is: " << calibScale << std::endl;
   }
 
-  if (typeRO == ReadOut::Type::Caen){
-    std::cout << "average HG mip: " << averageScale << " LG mip: "<< averageScaleLow << "\t act. ch: "<< actChI << std::endl;
-  } else {
-    std::cout << "average mip: " << averageScale << " per tile mip: "<< averageScalePerTile << "\t act. ch: "<< actChI << "\t av tiles/seg "<< averageNTilesI << std::endl;
-  }
   //==================================================================================
   // process events from tree for mip fitting
   //==================================================================================
@@ -4011,7 +4048,7 @@ bool Analyses::GetImprovedScaling(void){
         double lgCorr = aTile->GetADCLow()-calib.GetPedestalMeanL(currCellID);
 
         // estimate local muon trigger
-        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScalePerTile, factorMinTrigg, factorMaxTrigg);
+        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, calibScale, factorMinTrigg, factorMaxTrigg);
         
         if(ithSpectraTrigg!=hSpectraTrigg.end()){
           ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
@@ -4037,7 +4074,6 @@ bool Analyses::GetImprovedScaling(void){
           RootOutput->cd();
         }
         
-      
         // only fill tile spectra if 4 surrounding tiles on average are compatible with muon response
         if (localMuonTrigg){
           aTile->SetLocalTriggerBit(1);
@@ -4061,7 +4097,7 @@ bool Analyses::GetImprovedScaling(void){
         double toa = aTile->GetRawTOA();
         
         // estimate local muon trigger
-        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, averageScalePerTile, factorMinTrigg, factorMaxTrigg);
+        bool localMuonTrigg = event.InspectIfLocalMuonTrigg(currCellID, calibScale, factorMinTrigg, factorMaxTrigg);
         
         if(ithSpectraTrigg!=hSpectraTrigg.end()){
           ithSpectraTrigg->second.FillTrigger(aTile->GetLocalTriggerPrimitive());
@@ -4337,7 +4373,7 @@ bool Analyses::GetImprovedScaling(void){
         parameters[p]   = 0;
         parErrAndRes[p] = 0;
       }
-      isGood=ithSpectraTrigg->second.FitMipLG(parameters, parErrAndRes, debug, yearData, true, calib.GetVov(),  averageScaleLow);
+      isGood=ithSpectraTrigg->second.FitMipLG(parameters, parErrAndRes, debug, yearData, true, calib.GetVov(),  averageScaleL);
       if (isGood){	
         hspectraLGMaxVsLayer->SetBinContent(bin2D, parameters[4]);
         hspectraLGFWHMVsLayer->SetBinContent(bin2D, parameters[5]);
@@ -4390,10 +4426,10 @@ bool Analyses::GetImprovedScaling(void){
   }
   
   if (typeRO == ReadOut::Type::Caen) {
-    std::cout << "average input HG mip: " << averageScale << " LG mip: "<< averageScaleLow << "\t act. ch: "<< actChI<< std::endl;
+    std::cout << "average input HG mip: " << averageScale << " LG mip: "<< averageScaleL << "\t act. ch: "<< actCh1st<< std::endl;
     std::cout << "average updated HG mip: " << averageScaleUpdated << " LG mip: "<< averageScaleUpdatedLow << "\t act. ch: "<< actChA<< std::endl;
   } else {
-    std::cout << "average input mip: " << averageScale << " per tile mip: "<< averageScalePerTile << "\t act. ch: "<< actChI << "\t av tiles/seg "<< averageNTilesI << std::endl;
+    std::cout << "average input mip: " << averageScale << " per tile mip: "<< averageScalePerTile << "\t act. ch: "<< actCh1st << "\t av tiles/seg "<< averageNTiles << std::endl;
     std::cout << "average updated mip: " << averageScaleUpdated << " per tile mip: "<< averageScaleUpPerTile << "\t act. ch: "<< actChA<< "\t av tiles/seg "<< averageNTilesA << std::endl;
   }
   RootOutput->Close();

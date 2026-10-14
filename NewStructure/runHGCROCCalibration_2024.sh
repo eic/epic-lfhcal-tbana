@@ -24,7 +24,7 @@ function MuonCalibHGCROC()
   elif [ $1 == "default" ]; then 
     time ./DataPrep -f -d 1 -e  -s -i $4/rawHGCROC_wPed_wBC_$3.root -o $4/rawHGCROC_wPedwMuon_wBC_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuon_2024/$6 -r $runNrFile
   elif [ $1 == "improved" ]; then 
-    time ./DataPrep -f -d 1  -S -i $4/rawHGCROC_wPedwMuon_wBC_$3.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved_2024/$6 -r $runNrFile
+    time ./DataPrep -f -d 1  -S 2 -i $4/rawHGCROC_wPedwMuon_wBC_$3.root -o $4/rawHGCROC_wPedwMuon_wBC_Imp_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved_2024/$6 -r $runNrFile
   elif [ $1 == "noise" ]; then 
     ./DataPrep -f -d 1  -n -i $5/rawPedAndMuon_$3.root -o $5/rawPedAndMuonNoise_$2.root -O $PlotBaseDir/HGCROC_PlotsCalibNoiseRe_2024/$6 -r $runNrFile
   elif [ $1 == "transferAlt" ]; then 
@@ -36,11 +36,11 @@ function MuonCalibHGCROC()
   elif [ $1 == "saveNewMuon" ]; then 
     time ./DataPrep -f -d 1 -M -i $5/rawPedAndMuon_$3.root -o $4/raw_muononly_$3.root 
   elif [ $1 == "improvedMinimal" ]; then 
-    time ./DataPrep -f -d 1  -S -i $4/raw_muononly_$3.root -o $5/rawPedAndMuonImpMinimal_$2.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved_2024/$6_MinimalSet -r $runNrFile
+    time ./DataPrep -f -d 1  -S 2 -i $4/raw_muononly_$3.root -o $5/rawPedAndMuonImpMinimal_$2.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved_2024/$6_MinimalSet -r $runNrFile
   elif [ $1 == "improvedMinimal2nd" ]; then 
-    time ./DataPrep -f -d 1  -S -i $5/rawPedAndMuonImpMinimal_$3.root -o $5/rawPedAndMuonImpMinimal2nd_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved_2024/$6_MinimalSet2nd -r $runNrFile
+    time ./DataPrep -f -d 1  -S 2 -i $5/rawPedAndMuonImpMinimal_$3.root -o $5/rawPedAndMuonImpMinimal2nd_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved_2024/$6_MinimalSet2nd -r $runNrFile
   elif [ $1 == "improvedMinimal3rd" ]; then 
-    time ./DataPrep -f -d 1  -S -i $5/rawPedAndMuonImpMinimal2nd_$3.root -o $5/rawPedAndMuonImpMinimal3rd_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved_2024/$6_MinimalSet3rd -r $runNrFile
+    time ./DataPrep -f -d 1  -S 2 -i $5/rawPedAndMuonImpMinimal2nd_$3.root -o $5/rawPedAndMuonImpMinimal3rd_$3.root -O $PlotBaseDir/HGCROC_PlotsCalibMuonImproved_2024/$6_MinimalSet3rd -r $runNrFile
   fi
 }
 

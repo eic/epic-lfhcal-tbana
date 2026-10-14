@@ -23,17 +23,17 @@ function MuonCalib()
   elif [ $1 == "defaultWithBC" ]; then 
     time ./DataPrep -e -a -f -d 1  -s -i $4/rawPedWBC_$3.root -o $5/rawPedAndMuonWBC_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonBC_2024/$6 -r $runNrFile -l $8
   elif [ $1 == "impWBC1st" ]; then 
-    time ./DataPrep -f -d 1 -a -S -i $5/rawPedAndMuonWBC_$3.root -o $5/rawPedAndMuonWBCImp_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImprovedBC_2024/$6 -r $runNrFile -l $8
+    time ./DataPrep -f -d 1 -a -S 2 -i $5/rawPedAndMuonWBC_$3.root -o $5/rawPedAndMuonWBCImp_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImprovedBC_2024/$6 -r $runNrFile -l $8
   elif [ $1 == "impWBC2nd" ]; then 
-    time ./DataPrep -f -d 1 -a -S -i $5/rawPedAndMuonWBCImp_$3.root -o $5/rawPedAndMuonWBCImp2nd_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImprovedBC_2024/$6_2ndIte -r $runNrFile -l $8
+    time ./DataPrep -f -d 1 -a -S 2 -i $5/rawPedAndMuonWBCImp_$3.root -o $5/rawPedAndMuonWBCImp2nd_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImprovedBC_2024/$6_2ndIte -r $runNrFile -l $8
   elif [ $1 == "impWBC3rd" ]; then 
-    time ./DataPrep -f -d 1 -a -S -i $5/rawPedAndMuonWBCImp2nd_$3.root -o $5/rawPedAndMuonWBCImp3rd_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImprovedBC_2024/$6_3rdIte -r $runNrFile -l $8
+    time ./DataPrep -f -d 1 -a -S 2 -i $5/rawPedAndMuonWBCImp2nd_$3.root -o $5/rawPedAndMuonWBCImp3rd_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImprovedBC_2024/$6_3rdIte -r $runNrFile -l $8
   elif [ $1 == "impWBC4th" ]; then 
-    time ./DataPrep -f -e -d 1 -a -S -i $5/rawPedAndMuonWBCImp3rd_$3.root -o $5/rawPedAndMuonWBCImp4th_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImprovedBC_2024/$6_4thIte -r $runNrFile -l $8
+    time ./DataPrep -f -e -d 1 -a -S 2 -i $5/rawPedAndMuonWBCImp3rd_$3.root -o $5/rawPedAndMuonWBCImp4th_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImprovedBC_2024/$6_4thIte -r $runNrFile -l $8
   elif [ $1 == "impWBC5th" ]; then 
-    time ./DataPrep -f -e -d 1 -a -S -i $5/rawPedAndMuonWBCImp4th_$3.root -o $5/rawPedAndMuonWBCImp5th_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImprovedBC_2024/$6_5thIte -r $runNrFile -l $8
+    time ./DataPrep -f -e -d 1 -a -S 2 -i $5/rawPedAndMuonWBCImp4th_$3.root -o $5/rawPedAndMuonWBCImp5th_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImprovedBC_2024/$6_5thIte -r $runNrFile -l $8
   elif [ $1 == "impWBC6th" ]; then 
-    time ./DataPrep -f -d 1 -a -S -i $5/rawPedAndMuonWBCImp5th_$3.root -o $5/rawPedAndMuonWBCImp6th_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImprovedBC_2024/$6_6thIte -r $runNrFile -l $8
+    time ./DataPrep -f -d 1 -a -S 2 -i $5/rawPedAndMuonWBCImp5th_$3.root -o $5/rawPedAndMuonWBCImp6th_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImprovedBC_2024/$6_6thIte -r $runNrFile -l $8
   elif [ $1 == "noise" ]; then 
     ./DataPrep -f -d 1  -n -i $5/rawPedAndMuon_$3.root -o $5/rawPedAndMuonNoise_$2.root -O $PlotBaseDir/CAEN_PlotsCalibNoiseRe_2024/$6 -r $runNrFile
   elif [ $1 == "transferAlt" ]; then 
@@ -45,17 +45,17 @@ function MuonCalib()
   elif [ $1 == "saveNewMuon" ]; then 
     time ./DataPrep -f -d 1 -M -i $5/rawPedAndMuonWBC_$3.root -o $4/raw_muononly_$3.root 
   elif [ $1 == "imp1st_red" ]; then 
-    time ./DataPrep -x -f -d 1 -a -S -i $4/raw_muononly_$3.root -o $5/rawPedAndMuonImp1st_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red1st -r $runNrFile -l $8
+    time ./DataPrep -x -f -d 1 -a -S 2 -i $4/raw_muononly_$3.root -o $5/rawPedAndMuonImp1st_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red1st -r $runNrFile -l $8
   elif [ $1 == "imp2nd_red" ]; then 
-    time ./DataPrep -x -f -d 1 -a -S -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp1st_red_$3\_calib.txt -o $5/rawPedAndMuonImp2nd_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red2nd -r $runNrFile -l $8
+    time ./DataPrep -x -f -d 1 -a -S 2 -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp1st_red_$3\_calib.txt -o $5/rawPedAndMuonImp2nd_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red2nd -r $runNrFile -l $8
   elif [ $1 == "imp3rd_red" ]; then 
-    time ./DataPrep -x -f -d 1 -a -S -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp2nd_red_$3\_calib.txt -o $5/rawPedAndMuonImp3rd_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red3rd -r $runNrFile -l $8
+    time ./DataPrep -x -f -d 1 -a -S 2 -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp2nd_red_$3\_calib.txt -o $5/rawPedAndMuonImp3rd_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red3rd -r $runNrFile -l $8
   elif [ $1 == "imp4th_red" ]; then 
-    time ./DataPrep -x -f -d 1 -a -S -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp3rd_red_$3\_calib.txt -o $5/rawPedAndMuonImp4th_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red4th -r $runNrFile -l $8
+    time ./DataPrep -x -f -d 1 -a -S 2 -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp3rd_red_$3\_calib.txt -o $5/rawPedAndMuonImp4th_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red4th -r $runNrFile -l $8
   elif [ $1 == "imp5th_red" ]; then 
-    time ./DataPrep -x -f -d 1 -a -S -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp4th_red_$3\_calib.txt -o $5/rawPedAndMuonImp5th_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red5th -r $runNrFile -l $8
+    time ./DataPrep -x -f -d 1 -a -S 2 -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp4th_red_$3\_calib.txt -o $5/rawPedAndMuonImp5th_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red5th -r $runNrFile -l $8
   elif [ $1 == "imp6th_red" ]; then 
-    time ./DataPrep -x -f -d 1 -a -S -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp5th_red_$3\_calib.txt -o $5/rawPedAndMuonImp6th_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red6th -r $runNrFile -l $8
+    time ./DataPrep -x -f -d 1 -a -S 2 -i $4/raw_muononly_$3.root -k $5/rawPedAndMuonImp5th_red_$3\_calib.txt -o $5/rawPedAndMuonImp6th_red_$3.root -O $PlotBaseDir/CAEN_PlotsCalibMuonImproved_2024/$6_Red6th -r $runNrFile -l $8
   fi
 }
 
@@ -80,7 +80,7 @@ elif [ $1 = "fbockExt" ]; then
   dataDirOut=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENData
   dataDirOutE=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENData
   dataDirOutH=/media/fbock/T7/LFHCalTBData/202408_PST09/CAENData
-  PlotBaseDir=/media/fbock/T7/LFHCalTBData/202408_PST09/ReanlysisCAEN
+  PlotBaseDir=/media/fbock/T7/LFHCalTBData/202408_PST09/ReanalysisCAEN
 elif [ $1 = "eglimos" ]; then
   dataDirRaw=/home/ewa/EIC/test_beam2024/fullScanC
   dataDirRawE=/home/ewa/EIC/test_beam2024/fullScanC

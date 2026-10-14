@@ -86,7 +86,7 @@ int main(int argc, char* argv[]){
   }
   Analyses AnAnalysis;
   int c;
-  while((c=getopt(argc,argv,"aA:bB:c:C:d:DeE:fF:g:G:hi:k:K:l:L:m:MnNo:O:pP:q:Q:r:R:sStT:uwxXy:"))!=-1){
+  while((c=getopt(argc,argv,"aA:bB:c:C:d:DeE:fF:g:G:hi:k:K:l:L:m:MnNo:O:pP:q:Q:r:R:sS:tT:uwxXy:"))!=-1){
     switch(c){
     case 'a':
       std::cout<<"DataPrep: printing calib object to file"<<std::endl;
@@ -226,8 +226,9 @@ int main(int argc, char* argv[]){
       AnAnalysis.IsToExtractScaling(true);
       break;
     case 'S':
-      std::cout<<"DataPrep: Extract scaling improved from 2nd iteration"<<std::endl;
+      std::cout<<"DataPrep: Extract scaling improved from 2nd iteration"<<optarg<<std::endl;
       AnAnalysis.IsToExtractScalingImproved(true);
+      AnAnalysis.SetCalibOption(atoi(optarg));
       break;
     case 't':
       std::cout<<"DataPrep: run without trigger eval, use from file" <<std::endl;

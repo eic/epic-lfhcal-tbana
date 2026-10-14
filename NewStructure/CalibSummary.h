@@ -428,6 +428,12 @@ class CalibSummary: public TObject{
   inline double GetVoltage()      {return Voltage;};
 
   /**
+   * @brief Return the temperature associated with the summary.
+   * @return temperature.
+   */
+  inline double GetTemperature()      {return temp;};
+
+  /**
    * @brief Return the run number associated with the summary.
    * @return Run number.
    */
