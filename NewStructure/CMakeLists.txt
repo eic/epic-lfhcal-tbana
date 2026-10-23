@@ -109,6 +109,14 @@ set(LIB_SOURCES
 # Create the LFHCAL shared library
 add_library(LFHCAL SHARED ${LIB_SOURCES})
 
+# Reviewable opt-in: legacy remains the default; CAEN and LG are unaffected.
+option(LFHCAL_USE_ADAPTIVE_LANGAU
+  "Use adaptive Landau-Gaussian numerics for HGCROC HG MIP calibration" OFF)
+if(LFHCAL_USE_ADAPTIVE_LANGAU)
+  target_compile_definitions(LFHCAL PRIVATE LFHCAL_USE_ADAPTIVE_LANGAU=1)
+endif()
+message(STATUS "Adaptive HGCROC Langau: ${LFHCAL_USE_ADAPTIVE_LANGAU}")
+
 # Link against ROOT libraries
 target_link_libraries(LFHCAL PUBLIC ${ROOT_LIBRARIES})
 
