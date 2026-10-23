@@ -603,11 +603,11 @@
             nameFit   = "Comb."; 
           }
           if (isTrigFit)
-            SetStyleFit(fit , minPlotFit, 2000, 7, 3, kRed+3);
+            SetStyleFit(fit , -10000, -10000, 7, 3, kRed+3);
           else 
-            SetStyleFit(fit , minPlotFit, 2000, 7, 7, kGray+1);  
+            SetStyleFit(fit , -10000, -10000, 7, 7, kGray+1);
           // SetStyleFit(fit , minPlotFit, 2000, 7, 7, kBlue+3);  
-          fit->Draw("same");
+          TGraph* fitCurve = lfhcal::DrawMipFit(*fit, std::max(xPMin, minPlotFit), std::min(xPMax, 2000.));
           
           if (fit->GetNpar() > 4){
             fit2  = new TF1(Form("lg%d",tempCellID), TileSpectra::langaufun, minPlotFit, 2000, 4);
@@ -621,7 +621,7 @@
 
             fit2->Draw("same");
             fit3->Draw("same");
-            fit->Draw("same");
+            if (fitCurve) fitCurve->Draw("L SAME");
             
             if (!legCreated){
               legfitAdd = GetAndSetLegend2( topRCornerX[7]-8*relSize8P[7], topRCornerY[7]-9*0.85*relSize8P[7],

@@ -1606,10 +1606,10 @@
           }
           if (fit){
             if (isTrigFit)
-              SetStyleFit(fit , 0, 2000, 7, 3, kRed+3);
+              SetStyleFit(fit , -10000, -10000, 7, 3, kRed+3);
             else 
-              SetStyleFit(fit , 0, 2000, 7, 7, kBlue+3);  
-            fit->Draw("same");
+              SetStyleFit(fit , -10000, -10000, 7, 7, kBlue+3);
+            lfhcal::DrawMipFit(*fit, std::max(xMin, 0.), std::min(xMax, 2000.));
             TLegend* legend = GetAndSetLegend2( topRCornerX[p]-10*relSize8P[p], topRCornerY[p]-6*0.85*relSize8P[p]-0.4*relSize8P[p], topRCornerX[p]-0.04, topRCornerY[p]-0.6*relSize8P[p],0.85*textSizePixel, 1, label, 43,0.1);
             if (opt == 1)
               legend->AddEntry((TObject*)0, Form("Total events: %i", (int)ithSpectra->second.GetHG()->Integral()), "");

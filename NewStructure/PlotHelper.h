@@ -599,10 +599,10 @@
     }
     if (fit){
       if (isTrigFit)
-        SetStyleFit(fit , 0, 2000, 20, 3, kRed+3);
+        SetStyleFit(fit , -10000, -10000, 20, 3, kRed+3);
       else 
-        SetStyleFit(fit , 0, 2000, 20, 7, kBlue+3);  
-      fit->Draw("same");
+        SetStyleFit(fit , -10000, -10000, 20, 7, kBlue+3);
+      lfhcal::DrawMipFit(*fit, std::max(xPMin, 0.), std::min(xPMax, 2000.));
       TLegend* legend = GetAndSetLegend2( topRCornerX-9*relSize, topRCornerY-6*lineHeight, topRCornerX-0.04, topRCornerY-3.2*lineHeight,0.85*textSizePixel, 1, "", 43,0.1);
       if (isTrigFit)
         legend->AddEntry(fit, "Landau-Gauss fit, trigg.", "l");
