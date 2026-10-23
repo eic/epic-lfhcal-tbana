@@ -7,14 +7,6 @@ unchanged from
 `eic/epic-lfhcal-tbana` base `8c9de5ee5b85c30c3a266dd22dd12443284054ef`.
 The earlier helper was extracted from `LangauNumerics.h` at `3a643646`.
 
-## Upstream prerequisites
-
-[PR #86](https://github.com/eic/epic-lfhcal-tbana/pull/86) and
-[PR #87](https://github.com/eic/epic-lfhcal-tbana/pull/87) merged on October 23,
-2026 and are included in the upstream base above. This branch contains only the
-adaptive integration changes relative to that base. Buffer-lifetime cleanup and
-checked output handling belong to those merged prerequisites, not this diff.
-
 ## Switch and intended adoption
 
 The review patch defaults to **legacy**. Build two independent directories to
@@ -56,8 +48,7 @@ not an existing cache explicitly or implicitly set to OFF.
 - No FFT, extra Gaussian floor, rebinning, or fit-range correction is
   bundled here. Campaigns, plotting revisions, and unrelated bug fixes are excluded.
 - No data schema or ROOT class version change, TileSpectra.h change, or new library
-  dependency. Merged PR #86 supplies automatic fit-buffer lifetime, including the
-  seven-parameter HG buffers; this adaptive change relies on it for safe exits.
+  dependency.
 - An adaptive numerical failure rejects that fit, clears its saved-fit flag, and
   leaves previous calibration and caller outputs untouched. It does not silently
   fall back to legacy. Unrelated CAEN exceptions keep their previous behavior.
@@ -67,7 +58,6 @@ files changed are TileSpectra.cc and CMakeLists.txt. A compiled TF1 callback cop
 in the same process remains live; a streamed/reloaded TF1 is not promised to be a
 live refittable callback. Separate faithful-plotting work is not included here.
 
-Tests are maintained separately and are not included in this change. Before
-adopting the adaptive default, compare frozen beam spectra and real calibration
+Before adopting the adaptive default, compare frozen beam spectra and real calibration
 chains with identical fit windows and iteration counts. Keep per-build commits,
 CMake caches, toolchain versions, and separate output paths for reproducibility.
