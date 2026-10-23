@@ -1,7 +1,8 @@
 # Reviewable adaptive Landau–Gaussian integration
 
-This is an isolated numerical revision. It ports the existing `AdaptiveLangau.h`
-unchanged from
+This change adds opt-in adaptive Landau–Gaussian integration for HGCROC HG MIP
+fits only. It is an isolated numerical revision and ports the existing
+`AdaptiveLangau.h` unchanged from
 `paulnord/epic-lfhcal-tbana` commit
 `c986e5a5f2e010ad4e778f307216d4dad9e3e0a0` and wires it into current upstream
 `eic/epic-lfhcal-tbana` base `8c9de5ee5b85c30c3a266dd22dd12443284054ef`.
@@ -39,7 +40,7 @@ not an existing cache explicitly or implicitly set to OFF.
 - HGCROC HG MIP fits alone select adaptive quadrature when enabled.
 - Peak and FWHM use the same continuous adaptive curve as the fit, not the
   undersampled legacy callback. This extraction is part of the correction.
-- CAEN HG, the newer CAEN pedestal model, LG, and the legacy callbacks stay intact.
+- CAEN HG and LG fits are outside this change and continue to use legacy integration.
 - Four parameters, MPV shift, normalization, and ±5 Gaussian-sigma span stay the
   same. The kernel uses dimensionless Landau coordinates, explicit peak/tail
   subdivisions, a 16-point Gauss-Legendre rule, and relative tolerance `1e-10`.
