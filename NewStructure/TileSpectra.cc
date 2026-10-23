@@ -7,6 +7,9 @@
  */
 
 #include "TileSpectra.h"
+#if defined(LFHCAL_USE_ADAPTIVE_LANGAU) && LFHCAL_USE_ADAPTIVE_LANGAU
+#include "AdaptiveLangau.h"
+#endif
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
 #include "Math/MinimizerOptions.h"
@@ -670,6 +673,9 @@ void TileSpectra::SetParametersFitHG (double* startvalues, double* parlimitslo, 
 bool TileSpectra::FitMipHG( double* out, double* outErr, 
                             int verbosity, int year, 
                             bool impE = false, double vov = -1000, double avmip = -1000){
+#if defined(LFHCAL_USE_ADAPTIVE_LANGAU) && LFHCAL_USE_ADAPTIVE_LANGAU
+  try {
+#endif
   
   // Once again, here are the Landau * Gaussian parameters:
   //   par[0]=Width (scale) parameter of Landau density
@@ -729,7 +735,21 @@ bool TileSpectra::FitMipHG( double* out, double* outErr,
     }
   // otherwise use only landau gauss
   } else {
+#if defined(LFHCAL_USE_ADAPTIVE_LANGAU) && LFHCAL_USE_ADAPTIVE_LANGAU
+    // Change the numerical evaluator, not the fit procedure or CAEN model.
+    auto model = langaufun;
+    if (ROType == ReadOut::Type::Hgcroc)
+      model = +[](double* x, double* p) {
+        return lfhcal::adaptive_langau::Convolution(
+            {p[0],p[1],p[2],p[3]},
+            [](double u) { return TMath::Landau(u,0.,1.); })(x[0]);
+      };
+    SignalHG = TF1(funcName.Data(),model,fitrange[0],fitrange[1],4);
+    if (ROType == ReadOut::Type::Hgcroc)
+      SignalHG.SetTitle("Landau-Gaussian (adaptive, +/-5 sigma)");
+#else
     SignalHG = TF1(funcName.Data(),langaufun,fitrange[0],fitrange[1],4);
+#endif
     SignalHG.SetNpx(1000);
     SignalHG.SetParameters(startvalues);
     SignalHG.SetParNames("Width","MP","Area","GSigma");
@@ -782,6 +802,19 @@ bool TileSpectra::FitMipHG( double* out, double* outErr,
   bmipHG = true;
   
   if (bmipHG){
+#if defined(LFHCAL_USE_ADAPTIVE_LANGAU) && LFHCAL_USE_ADAPTIVE_LANGAU
+    // Complete peak extraction before changing caller outputs or calibration.
+    double adaptivePeak = 0., adaptiveFWHM = 0.;
+    if (ROType == ReadOut::Type::Hgcroc) {
+      double fitted[4];
+      SignalHG.GetParameters(fitted);
+      const auto width = lfhcal::adaptive_langau::peakWidth(
+          [&](double x) { return SignalHG.Eval(x); },
+          fitted[1], std::max(fitted[0],fitted[3]));
+      adaptivePeak = width.peak;
+      adaptiveFWHM = width.fwhm;
+    }
+#endif
     SignalHG.GetParameters(out);    // obtain fit parameters
     for (int i=0; i<4; i++) {
       outErr[i] = SignalHG.GetParError(i);     // obtain fit parameter errors
@@ -790,6 +823,12 @@ bool TileSpectra::FitMipHG( double* out, double* outErr,
     outErr[5] = SignalHG.GetNDF();           // obtain ndf
     
     double SNRPeak, SNRFWHM;
+#if defined(LFHCAL_USE_ADAPTIVE_LANGAU) && LFHCAL_USE_ADAPTIVE_LANGAU
+    if (ROType == ReadOut::Type::Hgcroc) {
+      SNRPeak = adaptivePeak;
+      SNRFWHM = adaptiveFWHM;
+    } else
+#endif
     langaupro(out,SNRPeak,SNRFWHM);
 
     calib->ScaleH       = SNRPeak;
@@ -798,6 +837,15 @@ bool TileSpectra::FitMipHG( double* out, double* outErr,
     out[5]    = SNRFWHM;
   }
   return bmipHG;
+#if defined(LFHCAL_USE_ADAPTIVE_LANGAU) && LFHCAL_USE_ADAPTIVE_LANGAU
+  } catch (const std::exception& error) {
+    if (ROType != ReadOut::Type::Hgcroc) throw;
+    bmipHG = false;
+    std::cerr << "Skipped HG cell " << cellID << " numerical failure: "
+              << error.what() << std::endl;
+    return false;
+  }
+#endif
 }
 
 //***********************************************************************************
