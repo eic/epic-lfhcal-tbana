@@ -36,6 +36,11 @@ elif [ $1 = "fbockLaser" ]; then
   dataDir=/media/fbock/ALICE2-4TB/202609_FocalLaser/HGCROCData      # base directory for root trees  fi
   # global run list for laser tests Sept 2026
   runList=../configs/FOCalTest2026/DataDB_LaserTestFocal_202609.csv
+elif [ $1 = "fbockLaser2" ]; then 
+  dataRaw=/media/fbock/ALICE2-4TB/202610_FocalLaser/raw/            # source directory for output files from DAQ system
+  dataDir=/media/fbock/ALICE2-4TB/202610_FocalLaser/HGCROCData      # base directory for root trees  fi
+  # global run list for laser tests Sept 2026
+  runList=../configs/FOCalTest2026/DataDB_LaserTestFocal_202610.csv
 fi
 
 if [ $2 = "July" ]; then
@@ -54,5 +59,13 @@ elif [ $2 = "Sept" ]; then
     ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapping -r $runList
   done
 
+elif [ $2 = "Oct" ]; then
+#   runs='001 002 003 004 005 006 007 008 009 010'
+#   for runNr in {115..167}; do 
+#   for runNr in {167..445}; do 
+  for runNr in {001..138}; do 
+    echo $runNr;
+    ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapping -r $runList
+  done
 
 fi

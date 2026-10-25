@@ -557,7 +557,12 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   // Plotting Single layers
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
   DetConf::Type detConf = setup->GetDetectorConfig();
-  
+  Float_t maxYADC = 300;
+  Float_t minYADC = 0;
+  if ((it->second.detector).CompareTo("FoCal-H") == 0){
+    maxYADC = 1034;
+    minYADC = -100;
+  }
   // set pixel text size
   Int_t textSizePixel = 30;
   MultiCanvas panelPlot(detConf, "AnaWave");
@@ -565,15 +570,15 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   MultiCanvas panelPlot2D(detConf, "AnaWave2D");
   bool init2D = panelPlot2D.Initialize(2);
     
-  panelPlot2D.PlotCorr2DLayer(hSpectra, 1, -25, (it->second.samples)*25, 0, 300,
+  panelPlot2D.PlotCorr2DLayer(hSpectra, 1, -25, (it->second.samples)*25, minYADC, maxYADC,
                               Form("%s/Waveform",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
-  panelPlot2D.PlotCorr2DLayer(hSpectra, 2, 0, 1024, 0, 300,
+  panelPlot2D.PlotCorr2DLayer(hSpectra, 2, 0, 1024, minYADC, maxYADC,
                               Form("%s/TOA_ADC",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
   panelPlot2D.PlotCorr2DLayer(hSpectra, 3, 0, 1024, 0, it->second.samples,
                               Form("%s/TOA_Sample",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
-  panelPlot2D.PlotCorr2DLayer(hSpectraTrigg, 1, -25, (it->second.samples)*25, 0, 300,
+  panelPlot2D.PlotCorr2DLayer(hSpectraTrigg, 1, -25, (it->second.samples)*25, minYADC, maxYADC,
                               Form("%s/WaveformSignal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
-  panelPlot2D.PlotCorr2DLayer(hSpectraTrigg, 2, 0, 1024, 0, 300,
+  panelPlot2D.PlotCorr2DLayer(hSpectraTrigg, 2, 0, 1024, minYADC, maxYADC,
                               Form("%s/TOA_ADC_Signal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
   panelPlot2D.PlotCorr2DLayer(hSpectraTrigg, 3, 0, 1024, 0, it->second.samples,
                               Form("%s/TOA_Sample_Signal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
@@ -621,15 +626,15 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
     bool initSingle   = panelSingleTile.Initialize(1);
     bool initSingle2D = panelSingleTile2D.Initialize(2);
     
-    panelSingleTile2D.PlotCorr2DLayer(hSpectra, 1, -25, (it->second.samples)*25, 0, 300,
+    panelSingleTile2D.PlotCorr2DLayer(hSpectra, 1, -25, (it->second.samples)*25, minYADC, maxYADC,
                                 Form("%s/Waveform",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
-    panelSingleTile2D.PlotCorr2DLayer(hSpectra, 2, 0, 1024, 0, 300,
+    panelSingleTile2D.PlotCorr2DLayer(hSpectra, 2, 0, 1024, minYADC, maxYADC,
                                 Form("%s/TOA_ADC",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
     panelSingleTile2D.PlotCorr2DLayer(hSpectra, 3, 0, 1024, 0, it->second.samples,
                                 Form("%s/TOA_Sample",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
-    panelSingleTile2D.PlotCorr2DLayer(hSpectraTrigg, 1, -25, (it->second.samples)*25, 0, 300,
+    panelSingleTile2D.PlotCorr2DLayer(hSpectraTrigg, 1, -25, (it->second.samples)*25, minYADC, maxYADC,
                                 Form("%s/WaveformSignal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
-    panelSingleTile2D.PlotCorr2DLayer(hSpectraTrigg, 2, 0, 1024, 0, 300,
+    panelSingleTile2D.PlotCorr2DLayer(hSpectraTrigg, 2, 0, 1024, minYADC, maxYADC,
                                 Form("%s/TOA_ADC_Signal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
     panelSingleTile2D.PlotCorr2DLayer(hSpectraTrigg, 3, 0, 1024, 0, it->second.samples,
                                 Form("%s/TOA_Sample_Signal",outputDirPlots.Data()), plotSuffix.Data(), it->second, &calib );
