@@ -1,18 +1,22 @@
 # Faithful MIP fit plots
 
-`FitCurveDrawing.h` samples the live fitted TF1 callback without replacing its
-convolution or smoothing its numerical wiggles. It preserves the parameters,
-original fit range and evaluation settings. Fitting and calibration are unchanged.
+`FitCurveDrawing.h` samples the live fitted TF1 callback into straight graph
+segments without changing its parameters, evaluation settings or original range.
+The existing drawing extent, including extrapolation, is preserved without
+changing the fit range. The graph keeps the
+existing line color, style and width and is owned by the current pad.
 
-The four MIP plot helpers draw within the original fit window. Open markers
-show predictions at histogram bin centers, matching the current fits without
-ROOT option `I`; bin-integrated fits need separate bin-average logic. Combined
-seven-parameter fits use the complete callback, including pedestal and penalty
-behavior, rather than reconstructed components. Unresolvable curves show a warning.
+Existing fit selection, legends and component overlays are unchanged. Those
+legacy component overlays are not asserted to be an exact decomposition of every
+combined or adaptive callback. No new markers or annotations are added.
 
-Rebuild DataPrep and regenerate plots with live fits. A streamed callback TF1
-may retain only an interpolation table; reconstruct its exact original evaluator
-before drawing saved parameters. Dense sampling cannot recover a lost callback.
+The existing uniform sampler is still limited to 200,000 intervals. This can
+omit valid narrow-width fits, especially over the restored drawing extent
+(for example, width 0.02 over [70,650] needs 464,000 intervals). A warning is
+logged if that budget is exceeded or an invalid value is encountered; no
+annotation or silently coarsened curve is drawn. Resolving this sampling limit
+remains separate work. Fitting and calibration are unchanged.
 
-Works with legacy and adaptive callbacks. This reveals integration distortions;
-it does not fix the integration or require the adaptive-integration PR.
+Regenerate plots with live fits. A streamed callback TF1 may retain only an
+interpolation table; dense sampling cannot recover its original evaluator.
+Works with legacy and adaptive callbacks; it does not repair the integration.

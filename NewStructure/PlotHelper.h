@@ -598,15 +598,16 @@
       }  
     }
     if (fit){
-      TileSpectra& fittedSpectrum = isTrigFit ? ithSpectraTrigg->second : ithSpectra->second;
-      TH1* fittedHistogram = (isHG ? 1 : 0) == 1 ? fittedSpectrum.GetHG() : fittedSpectrum.GetLG();
-      TGraph* fitCurve = lfhcal::DrawMipFit(*fit, *fittedHistogram, xPMin, xPMax,
-                                            isTrigFit ? kRed+3 : kBlue+3);
+      if (isTrigFit)
+        SetStyleFit(fit , -10000, -10000, 20, 3, kRed+3);
+      else 
+        SetStyleFit(fit , -10000, -10000, 20, 7, kBlue+3);
+      lfhcal::DrawMipFit(*fit, std::max(xPMin, 0.), std::min(xPMax, 2000.));
       TLegend* legend = GetAndSetLegend2( topRCornerX-9*relSize, topRCornerY-6*lineHeight, topRCornerX-0.04, topRCornerY-3.2*lineHeight,0.85*textSizePixel, 1, "", 43,0.1);
       if (isTrigFit)
-        legend->AddEntry(fitCurve, "Landau-Gauss fit, trigg.", "l");
+        legend->AddEntry(fit, "Landau-Gauss fit, trigg.", "l");
       else 
-        legend->AddEntry(fitCurve, "Landau-Gauss fit, inclusive", "l");
+        legend->AddEntry(fit, "Landau-Gauss fit", "l");  
       legend->AddEntry((TObject*)0, Form("#scale[0.8]{L MPV = %2.2f #pm %2.2f}",fit->GetParameter(1), fit->GetParError(1) ) , " ");
       legend->AddEntry((TObject*)0, Form("#scale[0.8]{Max = %2.2f}", maxFit ) , " ");
       legend->Draw();

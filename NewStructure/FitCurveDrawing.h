@@ -7,8 +7,6 @@
 #include <string>
 #include <TF1.h>
 #include <TGraph.h>
-#include <TH1.h>
-#include <TLatex.h>
 #include <TError.h>
 
 namespace lfhcal {
@@ -17,10 +15,13 @@ namespace lfhcal {
 // a reloaded callback may only evaluate ROOT's saved interpolation table.
 // The four Langau parameters are width, MP, area, Gaussian sigma.
 inline TGraph SampleMipFit(const TF1& fit, double visibleLow, double visibleHigh) {
-  const double lo = std::max(visibleLow, fit.GetXmin());
-  const double hi = std::min(visibleHigh, fit.GetXmax());
+  const double lo = visibleLow;
+  const double hi = visibleHigh;
   TGraph graph;
   graph.SetName((std::string(fit.GetName()) + "_evaluated_curve").c_str());
+  graph.SetLineColor(fit.GetLineColor());
+  graph.SetLineStyle(fit.GetLineStyle());
+  graph.SetLineWidth(fit.GetLineWidth());
   if (!(hi > lo)) return graph;
   if (fit.GetNpar() < 4 || !std::isfinite(fit.GetParameter(0)) ||
       !std::isfinite(fit.GetParameter(3)) || fit.GetParameter(0) <= 0. ||
@@ -37,9 +38,10 @@ inline TGraph SampleMipFit(const TF1& fit, double visibleLow, double visibleHigh
   if (fit.GetParameter(0) < .2*fit.GetParameter(3))
     step = std::min(step, fit.GetParameter(3)/320.);
   const double intervals = std::ceil((hi-lo)/step);
-  // Refuse to draw a falsely smooth line if a corrupt/extreme fit needs more.
+  // Bound rendering cost, never silently coarsen a narrow fitted function.
+  // This existing budget can reject valid narrow-width fits; see FIT_CURVE_DRAWING.md.
   if (!std::isfinite(intervals) || intervals > 200000.)
-    throw std::runtime_error("fit drawing needs more than 200000 intervals");
+    throw std::runtime_error("fit drawing exceeds 200000-interval rendering budget");
   const int n = static_cast<int>(intervals);
   graph.Set(n+1);
   for (int i=0; i<=n; ++i) {
@@ -51,39 +53,18 @@ inline TGraph SampleMipFit(const TF1& fit, double visibleLow, double visibleHigh
   return graph;
 }
 
-// DrawClone is safe for the already evaluated TGraph and gives the pad its own
-// points. The source TF1, fit range, parameters, Npx, and calibration stay intact.
-inline TGraph* DrawMipFit(const TF1& fit, const TH1& data, double lo, double hi,
-                         Color_t color, bool binPredictions=true) {
+// The evaluated copy belongs to the current pad and is deleted on Clear().
+// DrawClone would instead use the selected pad and does not give it ownership.
+// The fitted TF1, its evaluation settings and its original range stay intact.
+inline TGraph* DrawMipFit(const TF1& fit, double lo, double hi) {
   try {
-    TGraph curve = SampleMipFit(fit,lo,hi);
-    if (curve.GetN() == 0) return nullptr;
-    curve.SetLineColor(color);
-    curve.SetLineWidth(1);
-    curve.SetLineStyle(1);
-    auto* drawn = static_cast<TGraph*>(curve.DrawClone("L SAME"));
-    if (binPredictions) {
-      TGraph bins;
-      bins.SetName((std::string(fit.GetName()) + "_bin_predictions").c_str());
-      for (int i=1; i<=data.GetNbinsX(); ++i) {
-        const double x=data.GetBinCenter(i);
-        if (x < std::max(lo,fit.GetXmin()) || x > std::min(hi,fit.GetXmax())) continue;
-        const double y=fit.Eval(x);
-        if (!std::isfinite(y)) throw std::runtime_error("nonfinite bin prediction");
-        bins.SetPoint(bins.GetN(),x,y);
-      }
-      // The production QRL[NM]0 fits do not use ROOT's bin-integral option I.
-      bins.SetMarkerColor(color);
-      bins.SetMarkerStyle(24);
-      bins.SetMarkerSize(.35);
-      bins.DrawClone("P SAME");
-    }
+    auto* drawn = new TGraph(SampleMipFit(fit,lo,hi));
+    if (drawn->GetN() == 0) { delete drawn; return nullptr; }
+    drawn->SetBit(TObject::kCanDelete);
+    drawn->Draw("L SAME");
     return drawn;
   } catch (const std::exception& e) {
     Warning("DrawMipFit", "%s: %s", fit.GetName(), e.what());
-    TLatex text;
-    text.SetNDC(); text.SetTextSize(.035); text.SetTextColor(color);
-    text.DrawLatex(.13,.72,"Fit curve could not be resolved (see log)");
     return nullptr;
   }
 }
