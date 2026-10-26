@@ -488,6 +488,8 @@
       }  
     }
     
+    TLegend* legfitAdd = nullptr; 
+    bool legCreated    = false;
     
     for (int r = 0; r < nRow; r++){
       for (int c = 0; c < nCol; c++){
@@ -525,6 +527,7 @@
           if (p ==7 ){
             DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-4*0.85*relSize8P[p]-1.4*relSize8P[p], GetStringFromRunInfo(currRunInfo, 2), true, 0.85*relSize8P[p], 42);
             DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-4*0.85*relSize8P[p]-2.2*relSize8P[p], GetStringFromRunInfo(currRunInfo, 3), true, 0.85*relSize8P[p], 42);
+            if(legCreated) legfitAdd->Draw();
           }        
           pads[p]->Update();
           continue;
@@ -564,6 +567,8 @@
         }
         
         TF1* fit            = nullptr;
+        TF1* fit2           = nullptr;
+        TF1* fit3           = nullptr;
         bool isTrigFit      = false;
         double maxFit       = 0;
         if (opt == 1){
@@ -594,6 +599,34 @@
           TH1* fittedHistogram = (opt) == 1 ? fittedSpectrum.GetHG() : fittedSpectrum.GetLG();
           TGraph* fitCurve = lfhcal::DrawMipFit(*fit, *fittedHistogram, xPMin, xPMax,
                                                 isTrigFit ? kRed+3 : kBlue+3);
+
+          if (fit->GetNpar() > 4){
+            double minPlotFit = -50;
+            fit2  = new TF1(Form("lg%d",tempCellID), TileSpectra::langaufun, minPlotFit, 2000, 4);
+            fit2->SetNpx(1000);
+            fit2->SetParameters(fit->GetParameter(0),fit->GetParameter(1),fit->GetParameter(2),fit->GetParameter(3));
+            SetStyleFit(fit2 , minPlotFit, 2000, 3, 4, kRed-6);
+            fit3  = new TF1(Form("g%d",tempCellID),"[0] * TMath::Gaus(x, [1], [2], 1)",-50,50);
+            fit3->SetNpx(400);
+            fit3->SetParameters(fit->GetParameter(4),fit->GetParameter(5), fit->GetParameter(6));
+            SetStyleFit(fit3 , -50, 50, 3, 2, kRed-8);
+
+            fit2->Draw("same");
+            fit3->Draw("same");
+            if (fitCurve) fitCurve->Draw("L SAME");
+            
+            if (!legCreated){
+              legfitAdd = GetAndSetLegend2( topRCornerX[7]-8*relSize8P[7], topRCornerY[7]-9*0.85*relSize8P[7],
+                                            topRCornerX[7]-0.04, topRCornerY[7]-7*0.85*relSize8P[7],
+                                            0.85*textSizePixel, 1, "", 43,0.25);
+              legfitAdd->AddEntry(fit2, "Landau-Gauss", "l");
+              legfitAdd->AddEntry(fit3, "Pedestal", "l");
+              legCreated = true;
+            }
+            pads[p]->Modified();
+            pads[p]->Update();
+          }
+          
           TLegend* legend = GetAndSetLegend2( topRCornerX[p]-10*relSize8P[p], topRCornerY[p]-4*0.85*relSize8P[p]-0.4*relSize8P[p], topRCornerX[p]-0.04, topRCornerY[p]-0.6*relSize8P[p],0.85*textSizePixel, 1, label, 43,0.1);
           if (isTrigFit)
             legend->AddEntry(fitCurve, fit->GetNpar() > 4 ? "Combined fit, trigg." : "Landau-Gauss fit, trigg.", "l");
@@ -613,6 +646,8 @@
         if (p ==7 ){
           DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-4*0.85*relSize8P[p]-1.4*relSize8P[p], GetStringFromRunInfo(currRunInfo, 2), true, 0.85*relSize8P[p], 42);
           DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-4*0.85*relSize8P[p]-2.2*relSize8P[p], GetStringFromRunInfo(currRunInfo, 3), true, 0.85*relSize8P[p], 42);
+          if (legCreated)
+            legfitAdd->Draw();
         }
       }
     }
