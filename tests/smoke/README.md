@@ -1,8 +1,10 @@
 # LFHCal baseline smoke tests
 
-A quick, explicit check of the **already-built** LFHCal stack. The runner never
-installs packages, rebuilds the project, downloads raw data, starts a campaign,
-or submits a batch job. Keep full detector/fit regression tests separate.
+A quick, explicit check that the **already-built** LFHCal stack starts and
+performs a few known operations correctly. The same pattern can support small
+checks of other components as the software develops. Detailed numerical and
+scientific regressions complement these checks with broader validation of
+accuracy, detector behavior and analysis results.
 
 ## One command after compilation
 
@@ -37,6 +39,71 @@ The inputs are generated in code: one channel, one event, no random numbers and
 no beam-data dependency. `driver.C` propagates interpreter and payload failures
 as nonzero status; the Python runner also requires an explicit success marker.
 Checks do not use C++ `assert`, so release builds cannot disable them.
+
+## Philosophy for component smoke tests
+
+A useful smoke test answers a small, concrete question: can this component
+perform a representative operation through its real public interface?
+
+- **Use a tiny deterministic fixture.** Generate a few known values or commit a
+  small, documented input. Keep expected results understandable from the input;
+  prefer directly specified values to random generation and require no remote data.
+- **Exercise the real component.** Call the production executable or public
+  class interface. Mocks belong in tests of runner mechanics, not in evidence
+  that the component itself works.
+- **Check an explicit result.** Choose one or a few meaningful outputs: a count,
+  an ID, a calculated value or a round trip. Compare discrete values exactly;
+  justify numerical tolerances from the calculation and precision involved.
+  The current `120 / 4 = 30` calibration control is one example.
+- **Make failures actionable.** Name the stage and report the failed expectation
+  with useful observed values. Checks must remain active in Release builds and
+  propagate a nonzero exit status for wrong results, missing dependencies,
+  interpreter errors and timeouts. A printed error alone is insufficient.
+- **Keep execution bounded and isolated.** Declare required build artifacts,
+  use short per-command timeouts and temporary output directories, and clean up
+  on success or failure. Use a fresh process when testing disk state or startup
+  independently of retained in-memory objects. Running smoke tests should not
+  install software, rebuild, download data or submit jobs.
+- **Keep stages identifiable.** Startup, decoding, calibration and serialization
+  checks should report their own outcomes. A startup pass establishes readiness
+  for the next stage; a conversion check must inspect converted results.
+
+For example, a **future HGCROC conversion smoke case** could use a tiny complete
+capture with documented provenance, invoke the real conversion interface, then
+verify a known event count, event IDs and selected ADC values. This is a proposed
+extension, not a case shipped by this baseline. Broader stream coverage and
+scientific validation would remain in the detailed regression suite.
+
+## How to add a small check
+
+Today this is **one explicitly wired baseline**, with no automatic macro or
+case discovery. `run.py` names `Convert`, `DataPrep`, the library artifacts and
+`payload.C`, then runs the fixed `write` and `read` modes. `driver.C` loads the
+selected library and payload and calls the fixed `lfhcal_smoke_payload()` entry
+point. Adding a `.C` file to this directory does not make it run.
+
+1. State the component operation, minimal input, expected result and tolerance
+   before writing the check. Include the required artifacts and runtime budget.
+2. For a small check sharing the current calibration/serialization fixture, add
+   a readable helper in `payload.C` and call it from the appropriate mode.
+   Use release-active checks such as `smoke_require` and preserve failure
+   propagation through the driver.
+3. For an independent component, add a clearly named case and explicitly wire
+   its artifacts, invocation, timeout and success marker into `run.py`. A ROOT
+   payload must follow the driver's fixed entry-point contract, or the driver
+   dispatch must be deliberately extended. This requires code changes; there
+   is no existing generic case registry to populate.
+4. Update `test_runner.py` for any new command sequence or failure path, then
+   run both the runner tests and the real component check. Fake-command tests
+   establish orchestration behavior; the real run establishes component behavior.
+5. Document a copyable run command, prerequisites and expected result here.
+   Ensure the case is invoked by the existing runner or explicitly register its
+   command in `.github/workflows/root-smoke.yml`; check that the workflow's path
+   filters cover its files. Verify the real check in CI as well as locally.
+
+Keep the next addition small enough to understand and diagnose on its own.
+A shared fixture is useful when it keeps checks simple; a new test framework is
+not a prerequisite for adding another component check.
 
 ## Optional Yall readiness, not a Yall test campaign
 
@@ -85,17 +152,10 @@ The write/read pattern follows the existing `NewStructure/Tests/dummy.cc` and
 results, and does not reuse their committed binaries or old `Dummy.root` file.
 The numerical and checked production-object fixture are new coverage.
 
-Existing `tools/tests` tests exercise bootstrap/environment script behavior and
-remain separate. Existing `examples/yall/check_shared_conversions.py` checks
-campaign graphs; it is deliberately not in this baseline. This change does not
-modify the bootstrap or make tests run automatically during installation.
-
-Useful later additions, outside this small baseline:
-
-- A known calibration text fixture loaded through the public file reader.
-- A reference histogram fit with documented numerical tolerances.
-- Bad input and unwritable output checks with reliable nonzero process status.
-- The HGCROC decoder's readiness, when a decoder-enabled installation is required.
+The complementary `tools/tests` suite exercises bootstrap/environment scripts;
+`examples/yall/check_shared_conversions.py` checks campaign graphs. The baseline
+runs explicitly after compilation or through CI; bootstrap and installation
+behavior are unchanged.
 
 ## Maintainer checks of the runner
 
@@ -116,14 +176,7 @@ and real ROOT smoke checks on GitHub-hosted Ubuntu 24.04. It uses the official
 `rootproject/root:6.34.00-ubuntu24.04` image pinned by digest, with read-only
 repository permissions and the decoder revision recorded in the submodule.
 It runs for relevant pull-request changes, pushes to main, or manual dispatch.
-No plotting tests, acquired raw fixtures, or strict conversion diagnostics run in
-this workflow. No other branch is fetched, no beam campaign is started, and the
-separate `Yall examples` result is not a ROOT pass.
-
-## Review scope
-
-This smoke-only change is independently based on main `9302328`. It does not
-change production code, numerical fitting, plotting, or decoding. Historical
-plotting routines and strict known-failing raw-conversion diagnostics from the
-previous combined draft are maintained in a separate draft review, not hidden
-behind skips or expected-failure markers in the baseline gate.
+The workflow runs the explicit baseline command above. Contributors adding a
+case should keep its invocation and path coverage visible in that workflow.
+The separate `Yall examples` workflow checks workflow graphs and environment
+scripts; its result complements the ROOT build and smoke result.
