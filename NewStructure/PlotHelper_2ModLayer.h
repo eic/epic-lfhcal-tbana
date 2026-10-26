@@ -646,19 +646,20 @@
                 maxFit = ithSpectraTrigg->second.GetCalib()->ScaleL;
             }  
           }
+          lfhcal::DrawRejectedMipFits(ithSpectra->second, ithSpectraTrigg->second,
+                                      opt, xMin, xMax);
           if (fit){
-            if (isTrigFit)
-              SetStyleFit(fit , 0, 2000, 7, 3, kRed+3);
-            else 
-              SetStyleFit(fit , 0, 2000, 7, 7, kBlue+3);  
-            fit->Draw("same");
+            TileSpectra& fittedSpectrum = isTrigFit ? ithSpectraTrigg->second : ithSpectra->second;
+            TH1* fittedHistogram = (opt) == 1 ? fittedSpectrum.GetHG() : fittedSpectrum.GetLG();
+            TGraph* fitCurve = lfhcal::DrawMipFit(*fit, *fittedHistogram, xMin, xMax,
+                                                  isTrigFit ? kRed+3 : kBlue+3);
             TLegend* legend = GetAndSetLegend2( topRCornerX[p]-10*relSize8P[p], topRCornerY[p]-6*0.85*relSize8P[p]-0.4*relSize8P[p], topRCornerX[p]-0.04, topRCornerY[p]-0.6*relSize8P[p],0.85*textSizePixel, 1, label, 43,0.1);
             if (opt == 1)
               legend->AddEntry((TObject*)0, Form("Total events: %i", (int)ithSpectra->second.GetHG()->Integral()), "");
             if (isTrigFit)
-              legend->AddEntry(fit, "Landau-Gauss fit, trigg.", "l");
+              legend->AddEntry(fitCurve, "Landau-Gauss fit, trigg.", "l");
             else 
-              legend->AddEntry(fit, "Landau-Gauss fit", "l");  
+              legend->AddEntry(fitCurve, "Landau-Gauss fit, inclusive", "l");
             // estimate uncertainty on max position
             double rel_err_L_MPV = fit->GetParError(1)/fit->GetParameter(1); // relative uncertainty on MPV
             double sigma_Max = rel_err_L_MPV * maxFit;

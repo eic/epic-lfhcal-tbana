@@ -1,5 +1,6 @@
 #ifndef PLOTHELPER_GENERAL_H
 #define PLOTHELPER_GENERAL_H
+#include "FitCurveDrawing.h"
 
 
   /**

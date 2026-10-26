@@ -512,6 +512,12 @@ class TileSpectra: public TObject{
    
   TF1* GetBackModel(int);
   TF1* GetSignalModel(int);
+  // Last constructed fit, including rejected attempts; plotting diagnostics
+  // only. GetSignalModel remains the accepted-calibration accessor.
+  TF1* GetSignalFitAttempt(int gain) {
+    TF1* fit = gain == 1 ? &SignalHG : (gain == 0 ? &SignalLG : nullptr);
+    return fit && fit->GetNpar() >= 4 ? fit : nullptr;
+  }
   TF1* GetCorrModel(int);
 
   /**
