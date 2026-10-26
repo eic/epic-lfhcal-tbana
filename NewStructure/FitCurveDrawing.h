@@ -88,24 +88,5 @@ inline TGraph* DrawMipFit(const TF1& fit, const TH1& data, double lo, double hi,
   }
 }
 
-// Diagnostics only: rejection must not quietly erase the attempted objective.
-// Keep the existing accepted-fit selection and calibration fallback unchanged.
-template<class Spectrum>
-inline void DrawRejectedMipFits(Spectrum& inclusive, Spectrum& triggered,
-                                int gain, double lo, double hi) {
-  Spectrum* spectra[] = {&triggered,&inclusive};
-  const char* labels[] = {"Rejected triggered fit", "Rejected inclusive fit"};
-  for (int i=0; i<2; ++i) {
-    if (spectra[i]->GetSignalModel(gain)) continue;
-    TF1* fit = spectra[i]->GetSignalFitAttempt(gain);
-    if (!fit) continue;
-    TH1* data = gain == 1 ? spectra[i]->GetHG() : spectra[i]->GetLG();
-    const Color_t color = i == 0 ? kOrange+7 : kViolet+1;
-    DrawMipFit(*fit,*data,lo,hi,color,false);
-    TLatex text;
-    text.SetNDC(); text.SetTextSize(.04); text.SetTextColor(color);
-    text.DrawLatex(.13,.88-.06*i,labels[i]);
-  }
-}
 } // namespace lfhcal
 #endif

@@ -597,8 +597,6 @@
           maxFit = ithSpectraTrigg->second.GetCalib()->ScaleL;
       }  
     }
-    lfhcal::DrawRejectedMipFits(ithSpectra->second, ithSpectraTrigg->second,
-                                isHG ? 1 : 0, xPMin, xPMax);
     if (fit){
       TileSpectra& fittedSpectrum = isTrigFit ? ithSpectraTrigg->second : ithSpectra->second;
       TH1* fittedHistogram = (isHG ? 1 : 0) == 1 ? fittedSpectrum.GetHG() : fittedSpectrum.GetLG();

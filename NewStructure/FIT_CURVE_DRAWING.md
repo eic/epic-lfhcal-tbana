@@ -10,9 +10,6 @@ ROOT option `I`; bin-integrated fits need separate bin-average logic. Combined
 seven-parameter fits use the complete callback, including pedestal and penalty
 behavior, rather than reconstructed components. Unresolvable curves show a warning.
 
-Rejected last-constructed fits are separately labeled diagnostics, never
-calibration inputs.
-
 Rebuild DataPrep and regenerate plots with live fits. A streamed callback TF1
 may retain only an interpolation table; reconstruct its exact original evaluator
 before drawing saved parameters. Dense sampling cannot recover a lost callback.
