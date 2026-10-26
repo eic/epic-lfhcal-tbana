@@ -1,31 +1,21 @@
 # Faithful MIP fit plots
 
-`FitCurveDrawing.h` samples the live fitted TF1 callback into straight graph
-segments. It never substitutes a different convolution or smooths the graph.
-The legacy 100-step integration can itself produce narrow ripples; the old
-0–2000 ADC drawing range and 1000 display samples concealed or aliased them.
+`FitCurveDrawing.h` samples the live fitted TF1 callback without replacing its
+convolution or smoothing its numerical wiggles. It preserves the parameters,
+original fit range and evaluation settings. Fitting and calibration are unchanged.
 
-The four MIP plot helpers now draw only the visible original fit window, with
-no extrapolation. Open markers show predictions at histogram bin centers:
-current HG/LG MIP fits omit ROOT option `I`. Bin-integrated fits would require
-separate bin-average prediction logic before using this helper.
+The four MIP plot helpers draw within the original fit window. Open markers
+show predictions at histogram bin centers, matching the current fits without
+ROOT option `I`; bin-integrated fits need separate bin-average logic. Combined
+seven-parameter fits use the complete callback, including pedestal and penalty
+behavior, rather than reconstructed components. Unresolvable curves show a warning.
 
-Parameters, fit range, optimizer, fit acceptance and calibration are unchanged.
-Rejected last-constructed attempts are labeled separately; they are not used
-for calibration. Invalid or excessively fine curves report a visible warning.
-Combined seven-parameter fits use the complete fitted callback, including its
-pedestal and penalty behavior, rather than reconstructed component overlays.
+Rejected last-constructed fits are separately labeled diagnostics, never
+calibration inputs.
 
-Rebuild DataPrep and regenerate plots with live fits. Existing images do not
-change. A streamed callback TF1 may contain only an interpolation table;
-dense sampling cannot recover its original evaluator. Reconstruct the exact
-original callback before drawing saved parameters, never a replacement model.
+Rebuild DataPrep and regenerate plots with live fits. A streamed callback TF1
+may retain only an interpolation table; reconstruct its exact original evaluator
+before drawing saved parameters. Dense sampling cannot recover a lost callback.
 
-Rebased on upstream `8c9de5ee`, including the merged changes from PRs #86/#87.
-Works with live legacy or adaptive callbacks; it does not require PR #89 or
-change the fit or the integration method itself.
-Plotting regression/comparison routines are maintained in a separate dependent
-PR, not the baseline smoke suite. Release DataPrep and ROOT 6.40 plotting checks
-passed. [Preserved sample evidence](https://github.com/paulnord/epic-lfhcal-tbana/tree/3b73f2e4ece1e7ee9d7a5e12b97b2a566743d928/NewStructure/tests/fit-curve-evidence)
-includes synthetic same-histogram examples and a historical rounded-parameter
-plotting audit. Neither is an exact current full-chain beam replay.
+Works with legacy and adaptive callbacks. This reveals integration distortions;
+it does not fix the integration or require the adaptive-integration PR.
