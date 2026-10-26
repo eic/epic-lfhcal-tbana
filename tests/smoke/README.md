@@ -165,43 +165,27 @@ python3 -m unittest discover -s tools/tests -v
 ```
 
 The first command uses fake executables to test failure propagation, timeouts,
-path quoting, temporary-directory cleanup and optional-Yall behavior (11 tests).
+path quoting, temporary-directory cleanup, optional-Yall behavior and the validation
+helper's error-detection guards (17 tests).
 Passing it is **not** evidence that the production ROOT smoke checks passed. Run the real
 one-command check in a compiled LFHCal environment as well.
 
-### Optional expected-failure validation
+### Optional error-detection validation
 
-This Bash recipe first runs the normal smoke check, then deliberately replaces
-ROOT with `/bin/false` to verify failure detection. Run from the repository root
-in the build's ROOT environment. Set `build_dir` to your compiled output directory
-(`build` or `NewStructure/build`, for example).
-
-Only the deliberate failure's output is captured. It counts as a pass only when
-the runner exits 1 and reports the exact expected ROOT-write rejection. Any
-unexpected success or different failure prints the captured log and exits nonzero.
-The ordinary smoke command and its failure reporting are unchanged.
+Run the normal checks and then deliberately replace ROOT with `/bin/false` to
+verify that a ROOT write failure is detected:
 
 ```bash
-(
-set -e
-build_dir=NewStructure/build
-python3 tests/smoke/run.py --build-dir "$build_dir" --timeout 60
-echo "EXPECTED FAILURE TEST: deliberately replacing ROOT with /bin/false"
-log=$(mktemp)
-trap 'rm -f "$log"' EXIT
-rc=0
-python3 tests/smoke/run.py --build-dir "$build_dir" --timeout 60 \
-  --root /bin/false >"$log" 2>&1 || rc=$?
-if [ "$rc" -eq 1 ] &&
-   grep -Fqx "FAIL: ROOT write / calibration: exit 1; expected marker 'LFHCAL_SMOKE_OK: write'" "$log"; then
-  echo "PASS: expected failure detected"
-else
-  echo "FAIL: expected ROOT-write rejection with exit 1; got exit $rc" >&2
-  cat "$log" >&2
-  exit 1
-fi
-)
+tests/smoke/validate.sh --build-dir NewStructure/build --timeout 60
 ```
+
+The helper labels the normal and deliberately failing phases clearly. It captures
+only the injected run and reports `PASS: expected error detected` only when the
+runner exits 1 with the exact expected ROOT-write rejection. A genuine baseline
+failure stops before injection and remains visible; unexpected success, another
+failure stage, a different exit status, or a timeout prints the injected log and
+returns nonzero. This offline injection checks the runner's error detection, not
+the behavior of real ROOT.
 
 ## GitHub Actions
 

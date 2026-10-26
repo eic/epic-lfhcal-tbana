@@ -9,6 +9,8 @@ import time
 import unittest
 
 RUNNER = Path(__file__).resolve().with_name("run.py")
+VALIDATOR = Path(__file__).resolve().with_name("validate.sh")
+EXPECTED_REJECTION = "FAIL: ROOT write / calibration: exit 1; expected marker 'LFHCAL_SMOKE_OK: write'"
 
 
 class RunnerTests(unittest.TestCase):
@@ -144,6 +146,96 @@ else:
             with self.subTest(value=value):
                 result = self.run_suite("--timeout", value)
                 self.assertEqual(result.returncode, 2)
+
+
+class ValidationHelperTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="smoke validator tests ")
+        self.addCleanup(self.temp.cleanup)
+        self.directory = Path(self.temp.name)
+        self.state = self.directory / "calls"
+        python = self.directory / "python3"
+        python.write_text("""#!/bin/sh
+count=0
+if [ -f "$VALIDATE_TEST_STATE" ]; then
+  count=$(cat "$VALIDATE_TEST_STATE")
+fi
+count=$((count + 1))
+echo "$count" >"$VALIDATE_TEST_STATE"
+if [ "$count" -eq 1 ]; then
+  echo "ordinary smoke output"
+  if [ "$VALIDATE_TEST_CASE" = baseline_failure ]; then
+    echo "genuine baseline failure" >&2
+    exit 7
+  fi
+  exit 0
+fi
+case "$VALIDATE_TEST_CASE" in
+  expected)
+    echo "FAIL: ROOT write / calibration: exit 1; expected marker 'LFHCAL_SMOKE_OK: write'" >&2
+    exit 1 ;;
+  unexpected_success)
+    echo "injected command unexpectedly passed"
+    exit 0 ;;
+  wrong_stage)
+    echo "FAIL: Convert startup: exit 1; expected marker 'Usage:'" >&2
+    exit 1 ;;
+  wrong_exit)
+    echo "FAIL: ROOT write / calibration: exit 1; expected marker 'LFHCAL_SMOKE_OK: write'" >&2
+    exit 2 ;;
+  timeout)
+    echo "FAIL: ROOT write / calibration: timed out after 0.1 seconds" >&2
+    exit 1 ;;
+esac
+""")
+        python.chmod(0o755)
+
+    def run_helper(self, case):
+        env = dict(os.environ,
+                   PATH=f"{self.directory}{os.pathsep}{os.environ.get('PATH', '')}",
+                   VALIDATE_TEST_STATE=str(self.state),
+                   VALIDATE_TEST_CASE=case)
+        return subprocess.run([str(VALIDATOR), "--build-dir", "build", "--timeout", "60"],
+                              env=env, text=True, capture_output=True)
+
+    def test_expected_rejection_is_accepted(self):
+        result = self.run_helper("expected")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("NORMAL SMOKE TESTS", result.stdout)
+        self.assertIn("ERROR-DETECTION TEST: deliberately forcing ROOT to fail", result.stdout)
+        self.assertIn("PASS: expected error detected", result.stdout)
+        self.assertNotIn(EXPECTED_REJECTION, result.stdout + result.stderr)
+        self.assertEqual(self.state.read_text().strip(), "2")
+
+    def test_unexpected_success_is_rejected(self):
+        result = self.run_helper("unexpected_success")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("got exit 0", result.stderr)
+        self.assertIn("injected command unexpectedly passed", result.stderr)
+
+    def test_wrong_stage_is_rejected(self):
+        result = self.run_helper("wrong_stage")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Convert startup", result.stderr)
+
+    def test_wrong_exit_is_rejected(self):
+        result = self.run_helper("wrong_exit")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("got exit 2", result.stderr)
+        self.assertIn(EXPECTED_REJECTION, result.stderr)
+
+    def test_timeout_is_rejected(self):
+        result = self.run_helper("timeout")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("timed out after 0.1 seconds", result.stderr)
+
+    def test_baseline_failure_stops_before_injection_and_stays_visible(self):
+        result = self.run_helper("baseline_failure")
+        self.assertEqual(result.returncode, 7)
+        self.assertIn("ordinary smoke output", result.stdout)
+        self.assertIn("genuine baseline failure", result.stderr)
+        self.assertNotIn("ERROR-DETECTION TEST", result.stdout + result.stderr)
+        self.assertEqual(self.state.read_text().strip(), "1")
 
 
 if __name__ == "__main__":
