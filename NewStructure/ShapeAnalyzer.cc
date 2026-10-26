@@ -12,7 +12,7 @@
 #include "TPaletteAxis.h"
 #include "TProfile.h"
 #include "TChain.h"
-#include "CommonHelperFunctions2.h"
+#include "CommonHelperFunctions.h"
 #include "TileSpectra.h"
 #include "PlotHelper.h"
 #include "MultiCanvas.h"

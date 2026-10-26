@@ -189,6 +189,11 @@ if(H2G_DECODE_FOUND)
   target_link_libraries(Display h2g_decode)
 endif()
 
+#Clustering test
+
+add_executable(Analyzer Analyzer.cc ShapeAnalyzer.cc)
+target_link_libraries(Analyzer LFHCAL Analysis WaveformFitting ${ROOT_LIBRARIES})
+
 # CompareCalib executable
 add_executable(CompareCalib CompareCalib.cc ComparisonCalib.cc)
 target_link_libraries(CompareCalib LFHCAL ${ROOT_LIBRARIES})

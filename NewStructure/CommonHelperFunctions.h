@@ -6,6 +6,9 @@
   #include <fstream>
   #include "TString.h"
   #include "TObjString.h"
+  #include "TH2F.h"
+  #include "TH3F.h"
+  #include "TMath.h"
   #include <vector>
   #include <map>
   #include <utility>
@@ -107,6 +110,418 @@
     int injMode;  // 0: low, 1: high, 2:2.5V
     double injDAC;
   } ;
+
+struct Cluster{
+  Cluster(): x(0), y(0), highestcellx(0), highestcelly(0),highestcellz(0),highestx(0),highesty(0),highestz(0),highesttowerenergy(0),highestcellenergy(0),highestzE(0),firstz(0),lastz(0),hitTowers(0), energy(0), eventenergy(0) {}
+    int x;
+    int y;
+  int highestx;
+  int highesty;
+  int highestz;
+    int highestcellx;
+    int highestcelly;
+    float highesttowerenergy;
+  float highestcellenergy;
+    int highestcellz;
+    float highestzE;
+    int firstz;
+    int lastz;
+    int sizez;
+    int hitTowers;
+    float energy;
+    float eventenergy;
+  } ;
+
+
+inline std::vector<Cluster> DoClustering_Seeded_3D(TH3F* hXYZMapEvt, double minwindow, double seedvalue){
+
+  std::vector<Cluster> ClusterVec;
+  Cluster TestCluster;
+  //PERFORM CLUSTERING ON COMPLETED hXYZ
+
+  std::vector<int> zValues = {3,8,13,18,26,36,46,56};
+  
+  for(int cluster = 0; cluster < 10; cluster++){
+    TH2F* hXYMapEvt = (TH2F*) hXYZMapEvt->Project3D("zy");
+    float towersx = hXYMapEvt->GetXaxis()->GetNbins();
+    float towersy = hXYMapEvt->GetYaxis()->GetNbins();
+    float towersz = hXYZMapEvt->GetXaxis()->GetNbins();
+    //HAS TO BE DERIVED FROM CALIBRATION
+    int cellsinwindow_xy = 0;
+    int cellsinwindow_z = 0;
+    double maxwindowenergy = 0;
+    double maxcellinwindow = 0;
+    double maxtowerinwindow = 0;
+    double maxcellenergy = 0;
+    double maxcellenergy_temp = 0;
+    double maxtowerenergy = 0;
+    double maxwindow_i = 0;
+    double maxwindow_j = 0;
+    double maxwindowcenter_x = 0;
+    double maxwindowcenter_y = 0;
+    double maxcell_x = 0;
+    double maxcell_y = 0;
+    double maxcell_z = 0;
+    double truemaxcell_z = 0;
+    double truemaxcell_x = 0;
+    double truemaxcell_y = 0;
+    
+
+    double eventenergy = 0;
+    double cellenergy = 0;
+    double towerenergy = 0;
+    double cellenergy_stepx = 0;
+    double cellenergy_stepy = 0;
+    double cellenergy_stepz = 0;
+
+
+    //Depreciated??
+    
+    //std::cout << "clustered haha " << std::endl;
+
+    double zslice = 0;
+    double ztotal = 0;
+    double filled = 0;
+    double maxzE = 0;
+    double zE_temp = 0;
+    int maxz = 0;
+    int maxx = 0;
+    int maxy = 0;
+    int lastz = 0;
+    int sizez = 0;
+    int firstz = 60;
+    //
+    
+  
+    for(int x = 1; x <= towersx; x++){
+      for(int y = 1; y <= towersy; y++){
+	for(int z = 1; z <= towersz; z++){
+	  cellenergy = (hXYZMapEvt->GetBinContent(z,x,y));
+	  eventenergy+=cellenergy;
+	  if (cellenergy > maxcellenergy)
+	    {
+	      maxcellenergy = cellenergy;
+	      maxcell_x = x;
+	      maxcell_y = y;
+	      maxcell_z = z;	
+	    }
+	}
+	
+	towerenergy = (hXYMapEvt->GetBinContent(x,y));
+	if (towerenergy > maxtowerenergy)
+	  {
+	    maxtowerenergy = towerenergy;
+	    maxx = x;
+	    maxy = y;	
+	  }
+      }
+    }
+    truemaxcell_z = maxcell_z;
+    truemaxcell_x = maxcell_x;
+    truemaxcell_y = maxcell_y;
+    //save for later
+    if(maxcellenergy < seedvalue){delete hXYMapEvt;break;}
+    //std::cout << std::endl <<  maxcellenergy << " passed cut " << seedvalue << std::endl;
+    maxwindowcenter_x+=maxcellenergy*maxcell_x;
+    maxwindowcenter_y+=maxcellenergy*maxcell_y;
+    maxwindowenergy+=maxcellenergy;
+    cellsinwindow_xy+=1;
+  
+    if(maxcell_z > lastz){
+      lastz = maxcell_z;
+      sizez+=1;
+    }
+    if(maxcell_z < firstz){
+      firstz = maxcell_z;
+      sizez+=1;
+    }
+  
+    //std::cout << " z: " << maxcell_z << std::endl;
+    //std::cout << " Adding " << maxcellenergy << ", now total " << maxwindowenergy << std::endl;
+    hXYZMapEvt->SetBinContent(maxcell_z,maxcell_x,maxcell_y,0);
+    
+  
+    //loop around max seed value and cluster in
+    std::vector<int> thingstocluster_x;
+    std::vector<int> thingstocluster_y;
+    std::vector<int> thingstocluster_z;
+    thingstocluster_x.push_back(maxcell_x);
+    thingstocluster_y.push_back(maxcell_y);
+    thingstocluster_z.push_back(maxcell_z);
+  
+    while(thingstocluster_x.size() != 0){
+
+      maxcell_x = thingstocluster_x[0];
+      maxcell_y = thingstocluster_y[0];
+      maxcell_z = thingstocluster_z[0];
+
+      thingstocluster_x.erase(thingstocluster_x.begin());
+      thingstocluster_y.erase(thingstocluster_y.begin());
+      thingstocluster_z.erase(thingstocluster_z.begin());
+    
+      for(int z = -1; z<= 1; z++){
+	int zreal = z;
+	zE_temp = 0;
+	if(z == 0 && maxcell_z == truemaxcell_z){zE_temp+=maxcellenergy;}
+	    
+	if(zreal != 0){
+	  while(std::find(zValues.begin(),zValues.end(),maxcell_z+zreal) == zValues.end()){
+	    zreal+=z;
+	    if(zreal+maxcell_z < 0 || zreal+maxcell_z > towersz){break;}
+		
+	  }
+	}
+
+	if(zreal+maxcell_z < 0 || zreal+maxcell_z > towersz){continue;}
+      
+	if(maxcell_z+zreal > lastz){
+	  lastz = maxcell_z+zreal;
+	  sizez+=1;
+	}
+	if(maxcell_z+zreal < firstz){
+	  firstz = maxcell_z+zreal;
+	  sizez+=1;
+	}
+  
+	for(int x = -1; x <= 1; x++){
+	  for(int y = -1; y <= 1; y++){
+	  
+	    cellenergy = (hXYZMapEvt->GetBinContent(maxcell_z+zreal,maxcell_x+x,maxcell_y+y));
+	    if(cellenergy < 1){continue;}
+
+	    zE_temp+=cellenergy;
+	    cellsinwindow_xy+=1;
+	    maxwindowenergy+=cellenergy;	   
+	    maxwindowcenter_x+=cellenergy*maxcell_x+x;
+	    maxwindowcenter_y+=cellenergy*maxcell_y+y;
+
+	    if(cellenergy > seedvalue*0.25){
+	      thingstocluster_x.push_back(maxcell_x+x);
+	      thingstocluster_y.push_back(maxcell_y+y);
+	      thingstocluster_z.push_back(maxcell_z+zreal);
+
+	    }
+	    hXYZMapEvt->SetBinContent(maxcell_z+zreal,maxcell_x+x,maxcell_y+y,0);
+	        
+
+	  }
+
+	}
+	if(maxzE < zE_temp){maxzE = zE_temp;maxz = maxcell_z+zreal;}
+      }
+    }
+
+    maxwindowcenter_x=maxwindowcenter_x/maxwindowenergy;
+    maxwindowcenter_y=maxwindowcenter_y/maxwindowenergy;
+    //std::cout << "done stepping " << std::endl;
+  
+    //std::cout << cellsinwindow_xy << " and " << sizez << std::endl;
+    sizez-=1;
+    cellsinwindow_xy = cellsinwindow_xy/sizez;
+
+    maxcellinwindow=maxcellenergy;
+    maxtowerinwindow=maxtowerenergy;
+      
+    //if(maxcellinwindow != maxwindowenergy){std::cout << "clustered some " << maxcellinwindow/maxwindowenergy << std::endl;}
+
+    //Set ClusterValues
+    TestCluster.x = maxwindowcenter_x;
+    TestCluster.y = maxwindowcenter_y;
+    TestCluster.highestcellx = truemaxcell_x;
+    TestCluster.highestcelly = truemaxcell_y;
+    TestCluster.highestcellz = truemaxcell_z;
+    
+    TestCluster.highestx = maxx;
+    TestCluster.highesty = maxy;
+    TestCluster.highestz = maxz;
+    TestCluster.highestcellenergy = maxcellinwindow;
+    TestCluster.highesttowerenergy = maxtowerinwindow;
+    TestCluster.highestz = maxz;
+    TestCluster.highestzE = maxzE;
+    TestCluster.firstz = firstz;
+    TestCluster.lastz = lastz;
+    TestCluster.sizez = sizez;
+    TestCluster.hitTowers = cellsinwindow_xy;
+    TestCluster.energy = maxwindowenergy;
+    TestCluster.eventenergy = eventenergy;
+
+    
+    ClusterVec.push_back(TestCluster);
+
+    delete hXYMapEvt;
+  }
+  //std::cout << "really clustered" << std::endl;
+  
+  return ClusterVec;
+}
+
+
+inline std::vector<Cluster> DoClustering_Window(TH3F* hXYZMapEvt, int windowsize, double minwindow){
+
+  std::vector<Cluster> ClusterVec;
+  Cluster TestCluster;
+  //PERFORM CLUSTERING ON COMPLETED hXYZ
+  
+  for(int cluster = 0; cluster < 10; cluster++){
+    TH2F* hXYMapEvt = (TH2F*) hXYZMapEvt->Project3D("zy");
+  
+    float towersx = hXYMapEvt->GetXaxis()->GetNbins();
+    float towersy = hXYMapEvt->GetYaxis()->GetNbins();
+    float towersz = hXYZMapEvt->GetXaxis()->GetNbins();
+    //HAS TO BE DERIVED FROM CALIBRATION
+    int cellsinwindow_xy = 0;
+    double maxwindowenergy = 0;
+    double maxcellinwindow = 0;
+    double maxcellenergy = 0;
+    double maxcellenergy_temp = 0;
+    double maxwindow_i = 0;
+    double maxwindow_j = 0;
+    double maxwindowcenter_x = 0;
+    double maxwindowcenter_y = 0;
+    double maxcell_x = 0;
+    double maxcell_y = 0;
+    
+    double eventenergy = 0;
+    double cellenergy = 0;
+    for(int x = 1; x <= towersx; x++){
+      for(int y = 1; y <= towersy; y++){
+	cellenergy = (hXYMapEvt->GetBinContent(x,y));
+	eventenergy+=cellenergy;
+      }
+    }
+
+    for(int window_i = 1; window_i <= towersx-(windowsize-1); window_i++){
+      for(int window_j = 1; window_j <= towersy-(windowsize-1); window_j++){
+
+	double windowenergy = 0;
+	cellenergy = 0;
+	double windowcenter_x = 0;
+	double windowcenter_y = 0;
+	maxcellenergy_temp = 0;
+	for(int x = 1; x <= windowsize; x++){
+	  for(int y = 1; y <= windowsize; y++){
+	    cellenergy = (hXYMapEvt->GetBinContent(window_i+x-1,window_j+y-1));
+	    if(cellenergy > maxcellenergy){
+	      maxcellenergy = cellenergy;
+	      maxcell_x = x+window_i-1;
+	      maxcell_y = y+window_j-1;
+	    }
+	    if(cellenergy > maxcellenergy_temp){
+	      maxcellenergy_temp = cellenergy;
+	    }
+	    windowenergy+=cellenergy;
+	    windowcenter_x+= x*cellenergy;
+	    windowcenter_y+=y*cellenergy;
+	  }
+	}
+	windowcenter_x=windowcenter_x/(windowenergy);
+	windowcenter_y=windowcenter_y/(windowenergy);
+	if(windowenergy >= maxwindowenergy){
+	  maxcellinwindow=maxcellenergy_temp;
+	  maxwindowenergy = windowenergy;
+	  maxwindow_i = window_i;
+	  maxwindow_j = window_j;
+	  maxwindowcenter_x = windowcenter_x;
+	  maxwindowcenter_y = windowcenter_y;
+	}
+      }
+    }
+    if(cluster > 0 && maxwindowenergy < minwindow){delete hXYMapEvt;break;}
+  
+    
+    double zcenter_x = maxwindow_i-1+round(maxwindowcenter_x);
+    double zcenter_y = maxwindow_j-1+round(maxwindowcenter_y);
+
+    double zslice = 0;
+    double ztotal = 0;
+
+    //coordinates got flipped in projection, weird
+    double xleft = zcenter_x-(windowsize-1)/2;
+    double xright = zcenter_x+(windowsize-1)/2;
+    if(xleft < 1){xleft = 1;}
+    if(xright > towersx){xright = towersx;}
+    double yleft = zcenter_y-(windowsize-1)/2;
+    double yright = zcenter_y+(windowsize-1)/2;
+    if(yleft < 1){yleft = 1;}
+    if(yright > towersy){yright = towersy;}
+
+    double filled = 0;
+    double maxzE = 0;
+    double maxz = 0;
+    double lastz = 0;
+    double sizez = 0;
+    double firstz = 0;
+
+    for(int z = 1; z <= towersz; z++){
+      
+      zslice = hXYZMapEvt->Integral(z,z,xleft,xright,yleft,yright);
+      //std::cout << zslice << std::endl;
+      ztotal+=zslice;
+
+      
+      if(zslice > maxzE){
+	maxz = z;
+	maxzE = zslice;
+      }
+
+      for(int x = xleft; x <= xright; x++){
+	for(int y = yleft; y <= yright; y++){
+
+	  if(hXYZMapEvt->GetBinContent(z,x,y) > 1){
+	    cellsinwindow_xy+=1;
+	  }
+	  
+	  hXYZMapEvt->SetBinContent(z,x,y,0);
+	  hXYZMapEvt->SetBinError(z,x,y,0);
+	  
+	  
+	  
+	  if(z == 1){
+	    hXYMapEvt->SetBinContent(x,y,0);
+	    hXYMapEvt->SetBinError(x,y,0);
+	    //std::cout << "setting zero x: " << xtest << "/" << xright << " and " << " y: " << ytest << "/"<< yright << std::endl;
+	  } 
+	}
+      }
+      
+      if(zslice > 0 && filled == 0){
+	filled = 1;
+	firstz=z;
+      }
+      if(zslice > 0){
+	lastz=z;
+	sizez+=1;
+      }
+    
+    }
+    cellsinwindow_xy = cellsinwindow_xy/sizez;
+  
+    //if(maxcellinwindow != maxcellenergy){maxwindowenergy = 0;ztotal = 0;}
+  
+    //Set ClusterValues
+    TestCluster.x = maxwindowcenter_x;
+    TestCluster.y = maxwindowcenter_y;
+    TestCluster.highestx = maxcell_x;
+    TestCluster.highesty = maxcell_y;
+    TestCluster.highestcellenergy = maxcellinwindow;
+    TestCluster.highesttowerenergy = maxcellinwindow;
+    TestCluster.highestz = maxz;
+    TestCluster.highestzE = maxzE;
+    TestCluster.firstz = firstz;
+    TestCluster.lastz = lastz;
+    TestCluster.sizez = sizez;
+    TestCluster.hitTowers = cellsinwindow_xy;
+    TestCluster.energy = ztotal;
+    TestCluster.eventenergy = eventenergy;
+  
+    
+    ClusterVec.push_back(TestCluster);
+    delete hXYMapEvt;
+  }
+  return ClusterVec;
+}
+
+
 
   TString GetStringFromRunInfo(RunInfo, Int_t);
 
