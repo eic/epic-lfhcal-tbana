@@ -1,0 +1,53 @@
+name: ROOT smoke tests
+
+on:
+  pull_request:
+    paths:
+      - 'NewStructure/**'
+      - 'tests/smoke/**'
+      - 'README.md'
+      - '.gitmodules'
+      - '.github/workflows/root-smoke.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'NewStructure/**'
+      - 'tests/smoke/**'
+      - 'README.md'
+      - '.gitmodules'
+      - '.github/workflows/root-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  root-smoke:
+    name: Build and smoke (ROOT 6.34.00)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container:
+      # Official ROOT image, 6.34.00-ubuntu24.04, pinned for reproducibility.
+      image: rootproject/root@sha256:3b46b2e131ade9b2758f7e28cde783893c3ec376645763ebe415b7f97dad9aa6
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out current code and pinned decoder
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Show toolchain
+        run: |
+          root-config --version
+          cmake --version
+          python3 --version
+      - name: Configure and build smoke targets
+        run: |
+          cmake -S NewStructure -B NewStructure/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build NewStructure/build --target Convert DataPrep --parallel 2
+      - name: Test smoke runner failure handling
+        run: python3 -m unittest discover -s tests/smoke -p 'test_runner.py' -v
+      - name: Run real ROOT smoke checks
+        run: python3 tests/smoke/run.py --build-dir NewStructure/build --timeout 60

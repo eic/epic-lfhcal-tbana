@@ -1,0 +1,150 @@
+"""Offline tests of runner mechanics only; fake commands do not validate ROOT."""
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import time
+import unittest
+
+RUNNER = Path(__file__).resolve().with_name("run.py")
+
+
+class RunnerTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="smoke runner tests ")
+        self.addCleanup(self.temp.cleanup)
+        self.directory = Path(self.temp.name)
+        self.build = self.directory / "build artifacts"
+        self.build.mkdir()
+        self.calls = self.directory / "calls.jsonl"
+        self.env = dict(os.environ, SMOKE_TEST_CALLS=str(self.calls))
+        for name in ("libLFHCAL.so", "libLFHCAL_rdict.pcm", "libLFHCAL.rootmap"):
+            (self.build / name).write_text("fixture artifact, not a real library\n")
+        script = f"#!{sys.executable}\n" + '''import json, os, pathlib, subprocess, sys, time
+name = pathlib.Path(sys.argv[0]).name
+with open(os.environ["SMOKE_TEST_CALLS"], "a") as stream:
+    stream.write(json.dumps({"name": name, "args": sys.argv[1:], "cwd": os.getcwd(),
+                             "mode": os.environ.get("LFHCAL_SMOKE_MODE")}) + "\\n")
+if name == os.environ.get("SMOKE_TEST_CHILD_HANG"):
+    child_code = "import pathlib, time; time.sleep(0.8); pathlib.Path(" + repr(os.environ["SMOKE_TEST_CHILD_MARKER"]) + ").touch()"
+    subprocess.Popen([sys.executable, "-c", child_code])
+    time.sleep(5)
+if name == os.environ.get("SMOKE_TEST_HANG"):
+    time.sleep(5)
+if name == os.environ.get("SMOKE_TEST_FAIL"):
+    print("injected command failure")
+    sys.exit(17)
+if name == os.environ.get("SMOKE_TEST_EMPTY"):
+    sys.exit(0)
+if name in ("Convert", "DataPrep"):
+    print("Usage: " + name)
+elif name == "root":
+    print("LFHCAL_SMOKE_OK: " + os.environ["LFHCAL_SMOKE_MODE"])
+else:
+    print("fixture-version")
+'''
+        for name in ("Convert", "DataPrep", "root", "root-config", "yall-run"):
+            path = self.build / name
+            path.write_text(script)
+            path.chmod(0o755)
+
+    def run_suite(self, *extra, layout=None):
+        return subprocess.run([sys.executable, str(RUNNER),
+                               *(layout or ["--build-dir", str(self.build)]),
+                               "--root", str(self.build / "root"),
+                               "--root-config", str(self.build / "root-config"), *extra],
+                              env=self.env, text=True, capture_output=True)
+
+    def recorded(self):
+        return [json.loads(line) for line in self.calls.read_text().splitlines()]
+
+    def test_default_checks_are_bounded_and_do_not_run_yall(self):
+        result = self.run_suite()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        calls = self.recorded()
+        self.assertEqual([row["name"] for row in calls],
+                         ["root-config", "Convert", "DataPrep", "root", "root"])
+        self.assertEqual(calls[0]["args"], ["--version"])
+        self.assertEqual(calls[1]["args"], ["-h"])
+        self.assertEqual(calls[2]["args"], ["-h"])
+        self.assertEqual([row["mode"] for row in calls[-2:]], ["write", "read"])
+        self.assertEqual(calls[-1]["args"][:4], ["-n", "-l", "-b", "-q"])
+        self.assertEqual(len({row["cwd"] for row in calls}), 1)
+        self.assertFalse(Path(calls[0]["cwd"]).exists(), "temporary fixture directory leaked")
+        self.assertIn("NOT REQUESTED: Yall", result.stdout)
+
+    def test_yall_is_version_only(self):
+        result = self.run_suite("--yall", str(self.build / "yall-run"))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.recorded()[-1]["args"], ["--version"])
+        self.assertEqual(self.recorded()[-1]["name"], "yall-run")
+
+    def test_nonzero_command_fails_and_stops(self):
+        self.env["SMOKE_TEST_FAIL"] = "Convert"
+        result = self.run_suite()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("exit 17", result.stderr)
+        self.assertEqual([row["name"] for row in self.recorded()], ["root-config", "Convert"])
+
+    def test_zero_exit_without_root_success_marker_is_failure(self):
+        self.env["SMOKE_TEST_EMPTY"] = "root"
+        result = self.run_suite()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("expected marker", result.stderr)
+
+    def test_empty_version_fails(self):
+        for name, extra in (("root-config", []), ("yall-run", ["--yall", str(self.build / "yall-run")])):
+            with self.subTest(name=name):
+                self.env["SMOKE_TEST_EMPTY"] = name
+                result = self.run_suite(*extra)
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("empty output", result.stderr)
+
+    def test_timeout_is_failure(self):
+        self.env["SMOKE_TEST_HANG"] = "Convert"
+        result = self.run_suite("--timeout", "0.3")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("timed out", result.stderr)
+
+    @unittest.skipUnless(os.name == "posix", "process-group cleanup is POSIX-specific")
+    def test_timeout_terminates_command_descendants(self):
+        marker = self.directory / "child-survived"
+        self.env["SMOKE_TEST_CHILD_HANG"] = "root"
+        self.env["SMOKE_TEST_CHILD_MARKER"] = str(marker)
+        result = self.run_suite("--timeout", "0.3")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("timed out", result.stderr)
+        time.sleep(0.9)
+        self.assertFalse(marker.exists(), "timed-out command left its child running")
+
+    def test_missing_dictionary_fails_before_execution(self):
+        (self.build / "libLFHCAL_rdict.pcm").unlink()
+        result = self.run_suite()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("dictionary artifact", result.stderr)
+        self.assertFalse(self.calls.exists())
+
+    def test_missing_executable_fails(self):
+        (self.build / "DataPrep").unlink()
+        result = self.run_suite()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Executable not found", result.stderr)
+
+    def test_explicit_layout_does_not_guess_library(self):
+        result = self.run_suite(layout=["--bin-dir", str(self.build)])
+        self.assertEqual(result.returncode, 2)
+        result = self.run_suite(layout=["--bin-dir", str(self.build),
+                                       "--library", str(self.build / "libLFHCAL.so")])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_invalid_timeout_rejected(self):
+        for value in ("0", "-1", "nan", "inf"):
+            with self.subTest(value=value):
+                result = self.run_suite("--timeout", value)
+                self.assertEqual(result.returncode, 2)
+
+
+if __name__ == "__main__":
+    unittest.main()
