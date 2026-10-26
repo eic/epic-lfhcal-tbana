@@ -2,6 +2,10 @@ Added Clustering functions
 
 Do_Clustering_Window and DoClustering_Seeded_3D to Commonhelperfunctions.h
 
+Window clustering scans across a 2D projection to find the window of size (windowsize) with the highest energy
+
+Seeded clusters in cells around the highest energy cell above a provided seed energy value
+
 These take in 3D histograms (to be updated to just the cells) and performing clutering, taking the seeded approach as nominal for now.  It returns a vector of Cluster objects.  The Cluster Object has the following properties saved out:
 
     int x;    	 	    energy weighted x center of the cluster
