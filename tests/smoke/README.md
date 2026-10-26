@@ -169,6 +169,40 @@ path quoting, temporary-directory cleanup and optional-Yall behavior (11 tests).
 Passing it is **not** evidence that the production ROOT smoke checks passed. Run the real
 one-command check in a compiled LFHCal environment as well.
 
+### Optional expected-failure validation
+
+This Bash recipe first runs the normal smoke check, then deliberately replaces
+ROOT with `/bin/false` to verify failure detection. Run from the repository root
+in the build's ROOT environment. Set `build_dir` to your compiled output directory
+(`build` or `NewStructure/build`, for example).
+
+Only the deliberate failure's output is captured. It counts as a pass only when
+the runner exits 1 and reports the exact expected ROOT-write rejection. Any
+unexpected success or different failure prints the captured log and exits nonzero.
+The ordinary smoke command and its failure reporting are unchanged.
+
+```bash
+(
+set -e
+build_dir=NewStructure/build
+python3 tests/smoke/run.py --build-dir "$build_dir" --timeout 60
+echo "EXPECTED FAILURE TEST: deliberately replacing ROOT with /bin/false"
+log=$(mktemp)
+trap 'rm -f "$log"' EXIT
+rc=0
+python3 tests/smoke/run.py --build-dir "$build_dir" --timeout 60 \
+  --root /bin/false >"$log" 2>&1 || rc=$?
+if [ "$rc" -eq 1 ] &&
+   grep -Fqx "FAIL: ROOT write / calibration: exit 1; expected marker 'LFHCAL_SMOKE_OK: write'" "$log"; then
+  echo "PASS: expected failure detected"
+else
+  echo "FAIL: expected ROOT-write rejection with exit 1; got exit $rc" >&2
+  cat "$log" >&2
+  exit 1
+fi
+)
+```
+
 ## GitHub Actions
 
 `ROOT smoke tests` builds `Convert` and `DataPrep` and runs the runner unit tests
