@@ -36,9 +36,10 @@ class RootSetupWrapper{
   int nMaxROUnit;
   int maxCellID;
   int sumOpt;
+  int detector;
   
   friend class Setup;
-  ClassDef(RootSetupWrapper,2)
+  ClassDef(RootSetupWrapper,3)
 };
 
 

@@ -17,6 +17,12 @@ if [ $1 = "fbock" ]; then
   dataDirRaw=/media/fbock/ALICE2-4TB/202609_FocalLaser/HGCROCData
   dataDirOut=/media/fbock/ALICE2-4TB/202609_FocalLaser/HGCROCData
   PlotBaseDir=/media/fbock/ALICE2-4TB/202609_FocalLaser/
+  runList=../configs/FOCalTest2026/DataDB_LaserTestFocal_202609.csv
+elif [ $1 = "fbockOct" ]; then 
+  dataDirRaw=/media/fbock/ALICE2-4TB/202610_FocalLaser/HGCROCData
+  dataDirOut=/media/fbock/ALICE2-4TB/202610_FocalLaser/HGCROCData
+  PlotBaseDir=/media/fbock/ALICE2-4TB/202610_FocalLaser/
+  runList=../configs/FOCalTest2026/DataDB_LaserTestFocal_202610.csv
 else
   echo "Please select a known user name, otherwise I don't know where the data is"
   exit
@@ -24,7 +30,11 @@ fi
 
 # run pedest extraction for different run numbers
 if [ $2 = "pedestal" ]; then
-  runs='166 167 168 178 188 198 208 210 212 213 216 218 221 258 268 279 309 334 359 372 386 401 416 431'
+  if [ $3 = "Sept" ]; then 
+    runs='166 167 168 178 188 198 208 210 212 213 216 218 221 258 268 279 309 334 359 372 386 401 416 431'
+  else 
+    runs='1 2'
+  fi
   for runNr in $runs; do 
     printf -v runNrPed "%03d" "$runNr"
     Pedestal $2 $runNrPed $dataDirRaw $dataDirOut Run$runNrPed pdf
@@ -56,10 +66,21 @@ if [ $2 = "wave" ]; then
   elif [ $3 = "SetB" ]; then
     runNrPed='178'
     runs='179 180 181 182 183 184 185 186 187'
+  elif [ $3 = "Oct_SetA" ]; then
+    runNrPed='002'
+#     runs='003 004 005 006 007 008 009 010 011 012 013 014 015 016 017 018 019 020'
+    runs=''
+#     for runNr in {021..135}; do 
+    rm runlist.txt
+    for runNr in {141..422}; do 
+      echo "$runNr " >> runlist.txt
+    done
+    runs=`cat runlist.txt`
+#     echo $runs
   fi
   
   for runNr in $runs; do
-    ./HGCROCStudy -d 2 -E 1 -f -w -i $dataDirRaw/rawHGCROC_wPed_wBC_$runNr.root -o $dataDirOut/rawHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWaveOffSetCorr/Run_$runNr -r $runList -t $toaPhaseOffset -l $cellList
+    time ./HGCROCStudy -d 2 -E 2 -f -w -i $dataDirRaw/rawHGCROC_wPed_wBC_$runNr.root -o $dataDirOut/rawHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWaveOffSetCorr/Run_$runNr -r $runList -t $toaPhaseOffset #-l $cellList
   done
 fi
 
@@ -142,6 +163,17 @@ if [ $2 == "calibMuon" ]; then
   elif [ $4 == "HVScan" ]; then 
     runNrPeds='208 210 212 214 216 218 220'
     runs='209 211 213 215 217 219'
+  elif [ $4 = "Oct_SetA" ]; then
+    toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
+    badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
+
+    runNrPed='002'
+    runs=''
+    rm runlist.txt
+    for runNr in {141..422}; do 
+      echo "$runNr " >> runlist.txt
+    done
+    runs=`cat runlist.txt`
   fi
   
   for runNr in $runs; do

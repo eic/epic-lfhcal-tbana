@@ -26,6 +26,7 @@
 #include "Tile.h"
 #include "CommonHelperFunctions.h"
 
+struct RunInfo;
 /**
  * @class CalibSummary
  * @brief Collect calibration summary histograms for a single run, channel set, or reference comparison.
@@ -234,7 +235,7 @@ class CalibSummary: public TObject{
    
   /**
   * @brief Set the reference run number for comparison plots.
-  * @param runNr Reference run number.
+  * @param runNr Reference run number
   */
   inline void SetRefRunNr(int runNr)  { RunNrRef = runNr; };
 
@@ -248,7 +249,7 @@ class CalibSummary: public TObject{
   * @brief Apply the run metadata to the summary object.
   * @param info RunInfo record containing the run-level settings.
   */
-  void SetRunProperties (RunInfo);
+  void SetRunProperties (const RunInfo &currRunInfo);
    
    
   /**
