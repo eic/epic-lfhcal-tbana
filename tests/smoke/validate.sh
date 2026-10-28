@@ -10,8 +10,12 @@ python3 "$runner_dir/run.py" "$@"
 echo "ERROR-DETECTION TEST: deliberately forcing ROOT to fail"
 log=$(mktemp)
 trap 'rm -f "$log"' EXIT
+if ! false_command=$(type -P false) || [ ! -x "$false_command" ]; then
+  echo "FAIL: external false executable not found on PATH" >&2
+  exit 1
+fi
 rc=0
-python3 "$runner_dir/run.py" "$@" --root /bin/false >"$log" 2>&1 || rc=$?
+python3 "$runner_dir/run.py" "$@" --root "$false_command" >"$log" 2>&1 || rc=$?
 
 expected="FAIL: ROOT write / calibration: exit 1; expected marker 'LFHCAL_SMOKE_OK: write'"
 if [ "$rc" -eq 1 ] && grep -Fqx "$expected" "$log"; then

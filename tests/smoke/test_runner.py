@@ -212,6 +212,26 @@ if [ -f "$VALIDATE_TEST_STATE" ]; then
 fi
 count=$((count + 1))
 echo "$count" >"$VALIDATE_TEST_STATE"
+if [ "$count" -eq 2 ] && [ "$VALIDATE_EXPECT_EXTERNAL_FALSE" = 1 ]; then
+  root_command=
+  next_is_root=0
+  for arg in "$@"; do
+    if [ "$next_is_root" -eq 1 ]; then
+      root_command=$arg
+      next_is_root=0
+    elif [ "$arg" = --root ]; then
+      next_is_root=1
+    fi
+  done
+  case "$root_command" in
+    /*) ;;
+    *) echo "injected ROOT command is not an external path: $root_command" >&2; exit 8 ;;
+  esac
+  if [ ! -x "$root_command" ]; then
+    echo "injected ROOT command is not executable: $root_command" >&2
+    exit 8
+  fi
+fi
 if [ "$count" -eq 1 ]; then
   echo "ordinary smoke output"
   if [ "$VALIDATE_TEST_CASE" = baseline_failure ]; then
@@ -240,12 +260,13 @@ esac
 """)
         python.chmod(0o755)
 
-    def run_helper(self, case, *extra):
+    def run_helper(self, case, *extra, expect_external_false=False):
         env = dict(os.environ,
                    PATH=f"{self.directory}{os.pathsep}{os.environ.get('PATH', '')}",
                    VALIDATE_TEST_STATE=str(self.state),
                    VALIDATE_TEST_CASE=case,
-                   VALIDATE_EXPECT_DECODER="1" if "--decoder" in extra else "0")
+                   VALIDATE_EXPECT_DECODER="1" if "--decoder" in extra else "0",
+                   VALIDATE_EXPECT_EXTERNAL_FALSE="1" if expect_external_false else "0")
         return subprocess.run([str(VALIDATOR), "--build-dir", "build", "--timeout", "60", *extra],
                               env=env, text=True, capture_output=True)
 
@@ -260,6 +281,11 @@ esac
 
     def test_decoder_selection_is_forwarded_to_both_runs(self):
         result = self.run_helper("expected", "--decoder")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.state.read_text().strip(), "2")
+
+    def test_external_false_executable_is_forwarded(self):
+        result = self.run_helper("expected", expect_external_false=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(self.state.read_text().strip(), "2")
 

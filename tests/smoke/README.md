@@ -185,25 +185,27 @@ python3 -m unittest discover -s tools/tests -v
 
 The first command uses fake executables to test failure propagation, timeouts,
 path quoting, temporary-directory cleanup, optional-Yall behavior and the
-validation helper's error-detection guards (21 tests). Passing it is **not**
+validation helper's error-detection guards (22 tests). Passing it is **not**
 evidence that the production ROOT smoke checks passed. Run the real one-command
 check in a compiled LFHCal environment as well.
 
 ### Optional error-detection validation
 
-Run the normal checks and then deliberately replace ROOT with `/bin/false` to
-verify that a ROOT write failure is detected:
+Run the normal checks and then deliberately replace ROOT with the external
+`false` executable found on `PATH` to verify that a ROOT write failure is detected:
 
 ```bash
 tests/smoke/validate.sh --build-dir NewStructure/build --timeout 60
 ```
 
-The helper labels the normal and deliberately failing phases clearly. It captures
-only the injected run and reports `PASS: expected error detected` only when the
-runner exits 1 with the exact expected ROOT-write rejection. A genuine baseline
-failure stops before injection and remains visible; unexpected success, another
-failure stage, a different exit status, or a timeout prints the injected log and
-returns nonzero. This offline injection checks the runner's error detection, not
+The helper uses an executable path rather than a shell builtin, so the injection
+works on Linux and macOS. It labels the normal and deliberately failing phases
+clearly, captures only the injected run, and reports
+`PASS: expected error detected` only when the runner exits 1 with the exact
+expected ROOT-write rejection. A genuine baseline failure stops before injection
+and remains visible; unexpected success, another failure stage, a different exit
+status, or a timeout prints the injected log and returns nonzero. This offline
+injection checks the runner's error detection, not
 the behavior of real ROOT.
 
 ## GitHub Actions
