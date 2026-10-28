@@ -428,7 +428,7 @@ void CreateMapping(   TString filenameUnitMapping,
           tempChannel.ruID        = Int_t(tempChannel.rUnit<<8)+tempChannel.chRU;   // 8 bit read-out unit number, 8 bit channel readout unit
           tempChannel.modNr       = layers.at(l).moduleNr;
           tempChannel.layer       = layers.at(l).layerNrAbs;
-					tempChannel.nrAssembly  = (int)(((TString)layers.at(l).layerLabel).Atoi());	 
+          tempChannel.nrAssembly  = (int)(((TString)layers.at(l).layerLabel).Atoi());	 
           tempChannel.chAssembly  = chA;
           tempChannel.rowAssembly = ReturnRowBoard(chA,moddirections[layers.at(l).moduleNr]);
           tempChannel.colAssembly = ReturnColumnBoard(chA,moddirections[layers.at(l).moduleNr]);
@@ -442,7 +442,18 @@ void CreateMapping(   TString filenameUnitMapping,
           tempChannel.segSize     = ReturnLayerInSegment(layers.at(l).layerNrAbs, summingOpt);
           channels.push_back(tempChannel);
 
-          fileMappingClassic << layers.at(l).rUnit << "\t" << channel << "\t" << layers.at(l).layerNrAbs << "\t" << layers.at(l).layerLabel << "\t" <<  chA << "\t" << ReturnRowBoard(chA,moddirections[layers.at(l).moduleNr]) << "\t" << ReturnColumnBoard(chA,moddirections[layers.at(l).moduleNr]) << "\t" << tempChannel.modNr << "\t" << tempChannel.modposX << "\t" << tempChannel.modposY << "\t" << tempChannel.segSize << "\n";
+          fileMappingClassic  
+            << layers.at(l).rUnit << "\t" 
+            << channel << "\t" 
+            << layers.at(l).layerNrAbs << "\t" 
+            << layers.at(l).layerLabel << "\t" 
+            <<  chA << "\t" 
+            << ReturnRowBoard(chA,moddirections[layers.at(l).moduleNr]) << "\t" 
+            << ReturnColumnBoard(chA,moddirections[layers.at(l).moduleNr]) << "\t" 
+            << tempChannel.modNr << "\t" 
+            << tempChannel.modposX << "\t" 
+            << tempChannel.modposY << "\t" 
+            << tempChannel.segSize << "\n";
           PrintChannelInfo(tempChannel);
           
           // printf("%b\t%b\t%b\t%b\t%b\n", tempChannel.modNr, tempChannel.rowAssembly, tempChannel.colAssembly, tempChannel.layer, tempChannel.chID);

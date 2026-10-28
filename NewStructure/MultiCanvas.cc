@@ -75,11 +75,17 @@ bool MultiCanvas::Initialize(int opt){
     } else if ( detType ==  DetConf::Type::LargeTB){
       init = false;
       std::cout << "Setup-1d: this option hasn't been implemented yet!" << std::endl;
-    // full asic plot or FoCalH
-    } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
+    // full asic plot
+    } else if ( detType ==  DetConf::Type::Asic){
       double margin = 0.035;
       CreateCanvasAndPadsForAsicLFHCalTBPlot( textSize, margin, addName);
       maxPads       = 64;      
+      init = true;
+    // FoCal FEB formatting: 4 rows x 8 columns = 32 channels
+    } else if ( detType ==  DetConf::Type::FocalH){
+      double margin = 0.025;
+      CreateCanvasAndPadsForFoCalFEBPlot( textSize, margin, addName);
+      maxPads       = 32;
       init = true;
     }
 
@@ -149,10 +155,15 @@ bool MultiCanvas::Initialize(int opt){
     } else if ( detType == DetConf::Type::LargeTB){
       init = false;
       std::cout << "Setup-2d: this option hasn't been implemented yet!" << std::endl;
-    // full asic plot or FoCalH
-    } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
+    // full asic plot
+    } else if ( detType ==  DetConf::Type::Asic){
       CreateCanvasAndPadsForAsicLFHCalTBPlot( textSize, 0.035, addName+"Prof", true);
       maxPads       = 64;
+      init = true;
+    // FoCal FEB formatting: 4 rows x 8 columns = 32 channels
+    } else if ( detType ==  DetConf::Type::FocalH){
+      CreateCanvasAndPadsForFoCalFEBPlot( textSize, 0.028, addName+"Prof", true);
+      maxPads       = 32;
       init = true;
     }
 
@@ -424,7 +435,7 @@ void MultiCanvas::CreateCanvasAndPadsFor2PannelTBPlot( Int_t textSizePixel,
 }  
 
 //********************************************************************************************************************************
-//******** CreateCanvasAndPadsFor8PannelTBPlot ***********************************************************************************
+//******** CreateCanvasAndPadsForDualModTBPlot ***********************************************************************************
 //********************************************************************************************************************************
 void MultiCanvas::CreateCanvasAndPadsForDualModTBPlot(Int_t textSizePixel, 
                                                       Double_t marginLeft, 
@@ -524,7 +535,7 @@ void MultiCanvas::CreateCanvasAndPadsForDualModTBPlot(Int_t textSizePixel,
 }    
 
 //********************************************************************************************************************************
-//******** CreateCanvasAndPadsFor8PannelTBPlot ***********************************************************************************
+//******** CreateCanvasAndPadsForAsicLFHCalTBPlot ********************************************************************************
 //********************************************************************************************************************************
 void MultiCanvas::CreateCanvasAndPadsForAsicLFHCalTBPlot(Int_t textSizePixel,
                                                          Double_t marginLeft, 
@@ -617,7 +628,78 @@ void MultiCanvas::CreateCanvasAndPadsForAsicLFHCalTBPlot(Int_t textSizePixel,
 }   
 
 //********************************************************************************************************************************
-//******** CreateCanvasAndPadsFor8PannelTBPlot ***********************************************************************************
+//******** CreateCanvasAndPadsForFoCalFEBPlot *********************************************************************************
+//********************************************************************************************************************************
+void MultiCanvas::CreateCanvasAndPadsForFoCalFEBPlot(Int_t textSizePixel,
+                                                   Double_t marginLeft,
+                                                   TString add,
+                                                   bool rightCorner,
+                                                   int debug
+                                                   ){
+  Double_t arrayBoundX[9];
+  Double_t arrayBoundY[5];
+  Double_t relativeMarginsX[3];
+  Double_t relativeMarginsY[3];
+  ReturnCorrectValuesForCanvasScaling(3300, 1650, 8, 4, marginLeft, 0.005, 0.005, 0.035, arrayBoundX, arrayBoundY, relativeMarginsX, relativeMarginsY, debug);
+
+  canvasMulti = new TCanvas(Form("canvas4x8Panel%s", add.Data()),"",0,0,3300,1650);
+  canvasMulti->cd();
+
+  for (int r = 0; r < 4; ++r){
+    for (int c = 0; c < 8; ++c){
+      int k = r*8 + c;
+      padMulti[k] = new TPad(Form("pad4x8Panel%s_%d", add.Data(), k), "",
+                             arrayBoundX[c], arrayBoundY[4-r], arrayBoundX[c+1], arrayBoundY[3-r],
+                             -1, -1, -2);
+      if (debug > 1)std::cout << k << "\t" << arrayBoundX[c] << "\t" << arrayBoundX[c+1] <<"\t" << arrayBoundY[4-r] << "\t" << arrayBoundY[3-r] << std::endl;
+    }
+  }
+
+  for (int k = 0; k < 32; ++k){
+    Double_t leftMargin  = relativeMarginsX[1];
+    Double_t rightMargin = relativeMarginsX[1];
+    Double_t topMargin   = relativeMarginsY[1];
+    Double_t bottomMargin= relativeMarginsY[1];
+
+    if (k%8 == 0) leftMargin = relativeMarginsX[0];
+    if (k%8 == 7) rightMargin = relativeMarginsX[2];
+    if (k >= 24) topMargin = relativeMarginsY[0];
+    if (k < 8)  bottomMargin = relativeMarginsY[2];
+
+    DefaultPadSettings(padMulti[k], leftMargin, rightMargin, topMargin, bottomMargin);
+  }
+
+  for (int i = 0; i < 32; ++i){
+    if (i >= 24)
+      legPlace_Y[i] = 1 - relativeMarginsY[0];
+    else
+      legPlace_Y[i] = 1 - relativeMarginsY[1];
+    if (rightCorner){
+      if (i%8 == 7)
+        legPlace_X[i] = 1 - relativeMarginsX[2];
+      else
+        legPlace_X[i] = 1 - relativeMarginsX[1];
+    } else {
+      if (i%8 == 0)
+        legPlace_X[i] = relativeMarginsX[0];
+      else
+        legPlace_X[i] = relativeMarginsX[1];
+    }
+  }
+
+  for (Int_t p = 0; p < 32; p++){
+    if (padMulti[p]->XtoPixel(padMulti[p]->GetX2()) < padMulti[p]->YtoPixel(padMulti[p]->GetY1())){
+      relTextSize[p] = (Double_t)textSizePixel/padMulti[p]->XtoPixel(padMulti[p]->GetX2());
+    } else {
+      relTextSize[p] = (Double_t)textSizePixel/padMulti[p]->YtoPixel(padMulti[p]->GetY1());
+    }
+    if (debug > 1)std::cout << p << "\t" << legPlace_X[p] << "\t" << legPlace_Y[p] << "\t" << relTextSize[p] << std::endl;
+  }
+  return;
+}
+
+//********************************************************************************************************************************
+//******** CreateCanvasAndPadsForMediumLFHCalTBPlot**********************************************************************************
 //********************************************************************************************************************************
 void MultiCanvas::CreateCanvasAndPadsForMediumLFHCalTBPlot(Int_t textSizePixel,
                                                           Double_t marginLeft, 
@@ -745,7 +827,7 @@ void MultiCanvas::DefaultPadSettings( TPad* pad1,
   }
 
 
-void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int option, 
+void MultiCanvas::PlotNoiseWithFits( const std::map<int,TileSpectra>& spectra, int option, 
                                     Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
                                     TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int skiplayers, int debug ){
   
@@ -896,8 +978,8 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
         continue;
       }        
     }
-  // full asic plot or Focal H
-  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
+  // full asic plot 
+  } else if ( detType ==  DetConf::Type::Asic){
     for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
       std::cout << "====> asic " << a << std::endl;
       if (!setup->IsAsicOn(a)){
@@ -908,7 +990,18 @@ void MultiCanvas::PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int opti
                                     spectra, option, xPMin, xPMax, scaleYMax, a,
                                     Form("%s_Asic%02d.%s" ,nameOutputBase.Data(), a, suffix.Data()), currRunInfo);
     }
-
+  // Focal H FEB plotting
+  } else if ( detType ==  DetConf::Type::FocalH){
+    for (Int_t f = 0; f < setup->GetNMaxModule()+1; f++){      
+      if (!setup->IsModuleOn(f)){
+        std::cout << "====> FEB " << f << " not enabled" << std::endl;
+        continue;
+      }    
+      std::cout << "FEB: " << f << std::endl;
+      PlotNoiseWithFitsFoCalFEB (canvasMulti, padMulti, legPlace_X, legPlace_Y, relTextSize, textSize, 
+                                 spectra, option, xPMin, xPMax, scaleYMax, f,
+                                 Form("%s_FEB%02d.%s" ,nameOutputBase.Data(), f, suffix.Data()), currRunInfo);
+    }
   }
 }  
   
@@ -1058,7 +1151,7 @@ void MultiCanvas::PlotCorr2DLayer(  const std::map<int,TileSpectra>& spectra, in
     std::cout << "PlotCorr2DLayer: this option hasn't been implemented yet!" << std::endl;
         
   // full asic plot or Focal H
-  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
+  } else if ( detType ==  DetConf::Type::Asic ){
     for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
       std::cout << "====> asic " << a << std::endl;
       if (!setup->IsAsicOn(a)){
@@ -1069,6 +1162,18 @@ void MultiCanvas::PlotCorr2DLayer(  const std::map<int,TileSpectra>& spectra, in
       PlotCorr2DAsicLFHCal(canvasMulti, padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                         spectra, option, xPMin, xPMax, minY, maxY, a, 
                         Form("%s_Asic%02d.%s" ,nameOutputBase.Data(), a, suffix.Data()), currRunInfo, noCalib, triggerCha);      
+    }
+  } else if ( detType == DetConf::Type::FocalH){
+    for (Int_t f = 0; f < setup->GetNMaxModule()+1; f++){  
+      std::cout << "====> FEB " << f << std::endl;
+      if (!setup->IsModuleOn(f)){
+        std::cout << "====> FEB " << f << " not enabled" << std::endl;
+        continue;
+      }          
+
+      PlotCorr2DFoCalFEB(canvasMulti, padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                        spectra, option, xPMin, xPMax, minY, maxY, f, 
+                        Form("%s_FEB%02d.%s" ,nameOutputBase.Data(), f, suffix.Data()), currRunInfo, noCalib, triggerCha);      
     }
   }
 }  
@@ -1390,8 +1495,21 @@ void MultiCanvas::PlotSpectra(  std::map<int,TileSpectra> spectra, int option,
     std::cout << "PlotSpectra: this option hasn't been implemented yet!" << std::endl;
         
   // full asic plot or Focal H
-  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
+  } else if ( detType ==  DetConf::Type::Asic ){
     std::cout << "PlotSpectra: this option hasn't been implemented yet!" << std::endl;
+  // full FEB Focal H
+  } else if ( detType == DetConf::Type::FocalH){
+    for (int f = 0; f < setup->GetNMaxModule()+1; f++){  
+      std::cout << "====> FEB " << f << std::endl;
+      if (!setup->IsModuleOn(f)){
+        std::cout << "====> FEB " << f << " not enabled" << std::endl;
+        continue;
+      }          
+
+      PlotSpectraFoCalFEB(canvasMulti, padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                        spectra, option, xPMin, xPMax, scaleYMax, f, 
+                        Form("%s_FEB%02d.%s" ,nameOutputBase.Data(), f, suffix.Data()), currRunInfo);      
+    }
   }
 }    
 
@@ -1488,8 +1606,20 @@ void MultiCanvas::PlotCorrWithFits( std::map<int,TileSpectra> spectra, int optio
     std::cout << "PlotCorrWithFits: this option hasn't been implemented yet!" << std::endl;
         
   // full asic plot or Focal H
-  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
+  } else if ( detType ==  DetConf::Type::Asic ){
     std::cout << "PlotCorrWithFits: this option hasn't been implemented yet!" << std::endl;
+  // full asic plot or Focal H
+  } else if ( detType == DetConf::Type::FocalH){
+    std::cout << "PlotCorrWithFits: this option hasn't been implemented yet!" << std::endl;
+    for (Int_t f = 0; f < setup->GetNMaxModule()+1; f++){      
+      if (!setup->IsModuleOn(f)){
+        std::cout << "====> FEB " << f << " not enabled" << std::endl;
+        continue;
+      }    
+      PlotNoiseWithFitsFoCalFEB (canvasMulti, padMulti, legPlace_X, legPlace_Y, relTextSize, textSize, 
+                                 spectra, option, xPMin, xPMax, maxY, f,
+                                 Form("%s_FEB%02d.%s" ,nameOutputBase.Data(), f, suffix.Data()), currRunInfo);
+    }
   }
 }    
 

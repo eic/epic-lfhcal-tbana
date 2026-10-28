@@ -21,18 +21,18 @@ class RootSetupWrapper;
  * @brief Detector configuration identifiers used to describe the active geometry.
  */
 namespace DetConf{
-  enum Type { Undef,
-              Unset,
-              Single8M,
-              Single4M,
-              Single2MH,
-              Single2MV,
-              SingleTile,
-              Dual8M,
-              MediumTB,
-              LargeTB,
-              Asic,
-              FocalH,
+  enum Type { Undef = 0,
+              Unset = 1,
+              Single8M = 2,
+              Single4M = 3,
+              Single2MH = 4,
+              Single2MV = 5,
+              SingleTile = 6,
+              Dual8M = 7,
+              MediumTB = 8,
+              LargeTB = 9,
+              Asic = 10,
+              FocalH = 11,
             };
 }
 
@@ -46,7 +46,7 @@ namespace DetConf{
  */
 class Setup{
   
- public:
+ public:   
   // deleting copy constructor.
   Setup(const Setup &)=delete;
   Setup& operator=(const Setup&)=delete;
@@ -59,7 +59,9 @@ class Setup{
     if(instancePtr == NULL) instancePtr = new Setup();
     return instancePtr;
   }
-   
+  
+  int GetDetector() const { return detector;};
+  
   /**
    * @brief Return the assembly identifier for a cell ID.
    * @param cellID Integer cell identifier.
@@ -215,6 +217,9 @@ class Setup{
   /** @brief Check whether an ASIC is active. */
   bool    IsAsicOn      (int /**/) const;
 
+  /** @brief Check whether a feb for FOCal is active. */
+  bool    IsModuleOn     (int /**/) const;
+
   /** @brief Return the minimum X coordinate in the setup. */
   float     GetMinX       (void) const;
 
@@ -269,14 +274,17 @@ class Setup{
    * @return Absolute row index.
    */
   int GetAbsRow(int cellID /**/, DetConf::Type type = DetConf::Type::Unset ) const;
-   
+  
   /** @brief Check whether a cell ID is contained in the current setup. */
   bool ContainedInSetup(int /**/) const;
   friend class RootSetupWrapper;
   
+  void SetDetector(int det) { detector = det;} ;
+  
  private:
   static Setup* instancePtr;
-  Setup(){}
+  Setup() : nMaxLayer(0), nMaxRow(0), nMaxColumn(0), nMaxROUnit(0), maxCellID(0), 
+                   cellW(5.), cellH(5.), cellD(2.), sumOpt(0), detector(0) { }
   ~Setup() {}
   
   
@@ -298,12 +306,13 @@ class Setup{
   int nMaxModule;
   int nMaxROUnit;
   int maxCellID;
-  float cellW = 5.;/*cm, width*/
-  float cellH = 5.;/*cm, height*/
-  float cellD = 2.;/*cm, depth*/
-  int sumOpt  = 0;  
+  float cellW   = 5.;/*cm, width*/
+  float cellH   = 5.;/*cm, height*/
+  float cellD   = 2.;/*cm, depth*/
+  int sumOpt    = 0;  
+  int detector  = 0; // 0 - LFHCAL, 1 - FOCAL 
   
-  ClassDef(Setup,4)
+  ClassDef(Setup,5)
 };
 
 

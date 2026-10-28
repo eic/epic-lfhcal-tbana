@@ -1046,7 +1046,7 @@ bool Analyses::GetPedestal(void){
   DetConf::Type detConf = setup->GetDetectorConfig();
   if (it->second.detector == "FoCal-H")
     detConf = DetConf::Type::FocalH; 
-
+  std::cout << "DETECTOR config: " << detConf << std::endl; 
   
   int maxChannelPerLayer          = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1)*(setup->GetNMaxModule()+1);
   int maxChannelPerLayerSingleMod = (setup->GetNMaxColumn()+1)*(setup->GetNMaxRow()+1);
@@ -1767,7 +1767,7 @@ bool Analyses::TransferCalib(void){
   
   // Find detector config
   DetConf::Type detConf = setup->GetDetectorConfig();
-  if (it->second.detector == "FoCal-H")
+  if (it->second.detector == "FoCal-H" || (it->second.detector).Contains("FoCal"))
     detConf = DetConf::Type::FocalH; 
 
   //==================================================================================
@@ -2281,6 +2281,7 @@ bool Analyses::TransferCalib(void){
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
     // Multi panel plotting
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++      
+    std::cout <<"DETECTOR CONF: "<< detConf << std::endl;
     MultiCanvas panelPlot(detConf, "Transfer");
     bool init1D = panelPlot.Initialize(1);
     MultiCanvas panelPlot2D(detConf, "Transfer2D");

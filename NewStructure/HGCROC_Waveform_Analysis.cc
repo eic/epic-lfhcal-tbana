@@ -180,7 +180,6 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   std::cout<<"Analyse Waveform"<<std::endl;
   int evts=TdataIn->GetEntries();
 
-  std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
   
   std::map<int,TileSpectra> hSpectra;
   std::map<int, TileSpectra>::iterator ithSpectra;
@@ -210,6 +209,16 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
     std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
     return false; 
   }
+
+  std::map<int,RunInfo> ri=readRunInfosFromFile(RunListInputName.Data(),debug,0);
+  std::map<int,RunInfo>::iterator it=ri.find(runNr);
+  DetConf::Type detConf = setup->GetDetectorConfig();
+  std::cout <<"DETECTOR CONF: "<< detConf << std::endl;
+  if ((it->second.detector).Contains("FoCal-H")){
+    detConf = DetConf::Type::FocalH;
+    std::cout<< "Focal analysis" << std::endl;
+  }
+  std::cout <<"DETECTOR CONF: "<< detConf << std::endl;
 
   //==================================================================================
   // create additional output hist
@@ -435,7 +444,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
         }
         
         int layer     = setup->GetLayer(cellID);
-        int chInLayer = setup->GetChannelInLayerFull(cellID);
+        int chInLayer = setup->GetChannelInLayerFull(cellID,detConf);
         // Detailed debug info with print of waveform
         if (debug > 3){
           aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(cellID), calib.GetPedestalMeanL(cellID), calib.GetPedestalSigL(cellID));
@@ -471,7 +480,6 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   //==================================================================================
   // Setup general plotting infos
   //==================================================================================    
-  std::map<int,RunInfo>::iterator it=ri.find(runNr);
   TString outputDirPlots = GetPlotOutputDir();
   Double_t textSizeRel = 0.035;
 
@@ -556,10 +564,9 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
   // Plotting Single layers
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-  DetConf::Type detConf = setup->GetDetectorConfig();
   Float_t maxYADC = 300;
   Float_t minYADC = 0;
-  if ((it->second.detector).CompareTo("FoCal-H") == 0){
+  if (detConf == DetConf::Type::FocalH){
     maxYADC = 1034;
     minYADC = -100;
   }

@@ -29,6 +29,7 @@
 #include "PlotHelper_2ModLayer.h"
 #include "PlotHelper_MediumTBLFHCal.h"
 #include "PlotHelper_AsicLFHCal.h"
+#include "PlotHelper_FoCalFEB.h"
 
   //__________________________________________________________________________________________________________
   // Plot 2D fit variables overview

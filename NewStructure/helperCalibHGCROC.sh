@@ -117,7 +117,7 @@ function Pedestal()
   echo "plot-ending: $6" 
   echo "run list:" $runList
   
-  ./DataPrep -a -d 1 -p -i $3/rawHGCROC_$2.root -f -o $4/rawHGCROC_wPed_$2.root -O $PlotBaseDir/PlotsPedestal/$5 -r $runList -F $6
+  time ./DataPrep -a -d 1 -p -i $3/rawHGCROC_$2.root -f -o $4/rawHGCROC_wPed_$2.root -O $PlotBaseDir/PlotsPedestal/$5 -r $runList -F $6
 }
 
 function WaveformHGCROC()

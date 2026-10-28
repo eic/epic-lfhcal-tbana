@@ -391,7 +391,7 @@ int CalibSummary::Analyse(int debug){
 //*************************************************************************
 // Set Run Property information
 //*************************************************************************
-void CalibSummary::SetRunProperties( RunInfo currRunInfo){
+void CalibSummary::SetRunProperties( const RunInfo &currRunInfo){
   rf      = ReturnRFValue(currRunInfo.rf);
   cf      = ReturnCFValue(currRunInfo.cf);
   cfcomp  = ReturnCFCompValue(currRunInfo.cfcomp);

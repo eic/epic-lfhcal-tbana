@@ -21,5 +21,6 @@ RootSetupWrapper::RootSetupWrapper(Setup* s){
   nMaxROUnit  = s->nMaxROUnit;
   maxCellID   = s->maxCellID;
   sumOpt      = s->sumOpt;
+  detector    = s->detector;
 }
 

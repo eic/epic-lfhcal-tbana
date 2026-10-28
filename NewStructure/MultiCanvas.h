@@ -61,13 +61,15 @@ class MultiCanvas{
 
   void CreateCanvasAndPadsForAsicLFHCalTBPlot( Int_t textSizePixel = 30, Double_t marginLeft = 0.03, TString add = "", bool rightCorner = true, int debug = 0);
 
+  void CreateCanvasAndPadsForFoCalFEBPlot( Int_t textSizePixel = 30, Double_t marginLeft = 0.03, TString add = "", bool rightCorner = true, int debug = 0);
+ 
   void CreateCanvasAndPadsForMediumLFHCalTBPlot( Int_t textSizePixel = 30, Double_t marginLeft = 0.03, TString add = "", bool rightCorner = true, int debug = 0);
 
   void DefaultCanvasSettings( TCanvas* c1, Double_t leftMargin, Double_t rightMargin, Double_t topMargin, Double_t bottomMargin);
 
   void DefaultPadSettings( TPad* pad1, Double_t leftMargin, Double_t rightMargin, Double_t topMargin, Double_t bottomMargin);
 
-  void PlotNoiseWithFits( std::map<int,TileSpectra> spectra, int option, 
+  void PlotNoiseWithFits( const std::map<int,TileSpectra>& spectra, int option, 
                           Double_t xPMin, Double_t xPMax, Double_t scaleYMax, 
                           TString nameOutputBase, TString suffix,  RunInfo currRunInfo, Calib* calib, int skiplayers = 0, int debug = 1 );
   void PlotNoiseAdvWithFits(  std::map<int,TileSpectra> spectra, std::map<int,TileSpectra> spectraNoise, int option, 

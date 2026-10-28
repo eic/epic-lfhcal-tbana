@@ -80,6 +80,17 @@ bool Setup::Initialize(TString file, int debug){
 
     if (tempLine.BeginsWith("sumOpt")){
       sumOpt  = ((TString)((TObjString*)tempArr->At(1))->GetString()).Atoi();
+      std::cout << "read " << sumOpt << std::endl;
+      delete tempArr;
+      continue;
+    }
+    if (tempLine.BeginsWith("detector")){
+      TString tempS = ((TString)((TObjString*)tempArr->At(1))->GetString());
+      std::cout << tempS.Data() << std::endl;
+      if ( tempS.Contains("Focal") || tempS.Contains("FoCal") || tempS.Contains("FOCAL")){
+        detector  = 1;
+        std::cout << "setting detector to FoCal" << std::endl;
+      }
       delete tempArr;
       continue;
     }
@@ -109,8 +120,10 @@ bool Setup::Initialize(TString file, int debug){
 
     //set segment size per representative layer
     SegmentSum[Alayer] = segSize;
-    
-    Akey=(Amod<<9)+(Arow<<8)+(Acolumn<<6)+(Alayer);
+    if (detector == 0)        // single unit: maxColumns = 4, maxRows = 2
+      Akey=(Amod<<9)+(Arow<<8)+(Acolumn<<6)+(Alayer);
+    else if (detector == 1)   // single unit: maxColumns = 8, maxRows = 4, reuse Alayer as X module nr. & Amod as Y module nr.
+      Akey=(Amod<<5)+(Arow<<3)+(Acolumn); //   column (3bit), row (2bit), mod rest
     assemblyID[Akey] = Anassembly;
     ROunit    [Akey] = AROunit;
     ROchannel [Akey] = AROchannel;
@@ -148,6 +161,7 @@ bool Setup::Initialize(RootSetupWrapper& rsw){
   ModPos          =rsw.ModPos;
   SegmentSum      =rsw.SegmentSum;
   sumOpt          =rsw.sumOpt;
+  detector        =rsw.detector;
   return isInit;
 }
 
@@ -162,7 +176,11 @@ TString Setup::GetAssemblyID(int cellID) const{
 }
 
 TString Setup::GetAssemblyID(int row, int col, int lay, int mod=0) const{
-  return GetAssemblyID((mod<<9)+(row<<8)+(col<<6)+lay);
+  if (detector == 1)
+    return GetAssemblyID((mod<<5)+(row<<3)+col);
+  else 
+    return GetAssemblyID((mod<<9)+(row<<8)+(col<<6)+lay);
+  return -1;
 }
 
 int Setup::GetCellID(int roboard, int roch) const{
@@ -172,19 +190,34 @@ int Setup::GetCellID(int roboard, int roch) const{
 }
 
 int Setup::GetCellID(int row, int col, int lay, int mod=0)const {
-  return (mod<<9)+(row<<8)+(col<<6)+lay;
+  if (detector == 1)
+    return (mod<<5)+(row<<3)+col;
+  else 
+    return (mod<<9)+(row<<8)+(col<<6)+lay;
+  return -1;
 }
 
 int Setup::GetColumn(int cellID) const{
-  return (cellID&(3<<6))>>6;
+  if (detector == 1)
+    return cellID & 0x7;          // FoCal FEB uses a 3-bit column field in the low bits.
+  else 
+    return (cellID&(3<<6))>>6;    // return bits 6-7 (2 bits, max value 3)
+    
+  return -1;
 }
 
 int Setup::GetLayer(int cellID) const{
-  return (cellID&((1<<6)-1));
+  if (detector == 1)
+    return 0;                     // FoCal FEB uses a single-board layout with no layer index.
+  else 
+    return (cellID&((1<<6)-1));   // Bits 0-5 (6 bits, mask: 63)
+  return -1;
 }
 
 int Setup::GetModule(int cellID) const{
-  return cellID>>9;
+  if (detector == 1)
+    return (cellID >> 5);         // FoCal bit packing stores the module index in bits 5..8.
+  return cellID>>9;               // bit 9 and above module nr. for LFHCal, index module Y for FoCal
 }
 
 int Setup::GetROchannel(int cellID) const{
@@ -194,6 +227,8 @@ int Setup::GetROchannel(int cellID) const{
 }
 
 int Setup::GetROchannel(int row, int col, int lay, int mod=0) const{
+  if (detector == 1)
+    return GetROchannel((mod<<5)+(row<<3)+col);
   return GetROchannel((mod<<9)+(row<<8)+(col<<6)+lay);
 }
 
@@ -204,11 +239,17 @@ int Setup::GetROunit(int cellID) const{
 }
 
 int Setup::GetROunit(int row, int col, int lay, int mod=0) const{
+  if (detector == 1)
+    return GetROunit((mod<<5)+(row<<3)+col);
   return GetROunit((mod<<9)+(row<<8)+(col<<6)+lay);
 }
 
 int Setup::GetRow(int cellID) const{
-  return (cellID&(1<<8))>>8;
+  if (detector == 0)
+    return (cellID&(1<<8))>>8;            //  Bit 8 (1 bit, max value 1)
+  else if (detector == 1)
+    return (cellID >> 3) & 0x3;           // FoCal FEB encodes the row in bits 3-4, not bit 8.
+  return -1;
 }
 
 double Setup::GetModuleX(int mod)const {
@@ -538,6 +579,22 @@ bool Setup::IsLayerOn(int layer, int mod) const{
   return isOn;
 }
 
+// to check FoCal FEB
+bool Setup::IsModuleOn(int mod) const{
+  bool isOn = false;
+  for (int r = 0; r< GetNMaxRow(); r++){
+    for (int c = 0; c < GetNMaxColumn(); c++){
+      int cellID = GetCellID(r, c, 0, mod);     // for FoCal FEB, layer is always 0
+      std::map<int, TString>::const_iterator it=assemblyID.find(cellID);
+      if (it != assemblyID.end()){
+        isOn = true;
+        break;        
+      }
+    }
+  }
+  return isOn;
+}
+
 bool Setup::IsAsicOn(int asic) const{
   bool isOn = false;
   for (int ch = 0; ch< 76; ch++){
@@ -579,36 +636,41 @@ float Setup::GetCellDepth() const{
 
 DetConf::Type Setup::GetDetectorConfig() const{
   DetConf::Type type;
-  if (GetNMaxModule()+1 == 2){
-    if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
-      type = DetConf::Type::Dual8M;
-    else 
-      type = DetConf::Type::Undef;
-  } else if (GetNMaxModule()+1 == 8){
-    if(GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
-      type = DetConf::Type::LargeTB;
-    else 
-      type = DetConf::Type::Undef;
-  } else if (GetNMaxModule()+1 == 6){
-    if(GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
-      type = DetConf::Type::MediumTB;
-    else 
-      type = DetConf::Type::Undef;
-  } else if (GetNMaxModule()+1 == 1){
-    if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
-      type = DetConf::Type::Single8M;
-    else if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 2)
-      type = DetConf::Type::Single4M;
-    else if (GetNMaxRow()+1 == 1 && GetNMaxColumn()+1 == 2)
-      type = DetConf::Type::Single2MH;
-    else if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 1)
-      type = DetConf::Type::Single2MV;
-    else if (GetNMaxRow()+1 == 1 && GetNMaxColumn()+1 == 1)
-      type = DetConf::Type::SingleTile;
-    else 
-      type = DetConf::Type::Undef;
+  std::cout << "Detector: " << GetDetector() << std::endl;
+  if (GetDetector() == 1){
+    type = DetConf::Type::FocalH;
   } else {
-    type = DetConf::Type::Undef;
+    if (GetNMaxModule()+1 == 2){
+      if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
+        type = DetConf::Type::Dual8M;
+      else 
+        type = DetConf::Type::Undef;
+    } else if (GetNMaxModule()+1 == 8){
+      if(GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
+        type = DetConf::Type::LargeTB;
+      else 
+        type = DetConf::Type::Undef;
+    } else if (GetNMaxModule()+1 == 6){
+      if(GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
+        type = DetConf::Type::MediumTB;
+      else 
+        type = DetConf::Type::Undef;
+    } else if (GetNMaxModule()+1 == 1){
+      if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 4)
+        type = DetConf::Type::Single8M;
+      else if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 2)
+        type = DetConf::Type::Single4M;
+      else if (GetNMaxRow()+1 == 1 && GetNMaxColumn()+1 == 2)
+        type = DetConf::Type::Single2MH;
+      else if (GetNMaxRow()+1 == 2 && GetNMaxColumn()+1 == 1)
+        type = DetConf::Type::Single2MV;
+      else if (GetNMaxRow()+1 == 1 && GetNMaxColumn()+1 == 1)
+        type = DetConf::Type::SingleTile;
+      else 
+        type = DetConf::Type::Undef;
+    } else {
+      type = DetConf::Type::Undef;
+    }
   }
   return type;
 }
