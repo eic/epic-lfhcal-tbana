@@ -12,6 +12,27 @@ import tempfile
 
 HERE = Path(__file__).resolve().parent
 
+STANDARD_EXECUTABLES = (
+    "Convert",
+    "DataPrep",
+    "CalibrateData",
+    "DataAna",
+    "Display",
+    "CompareCalib",
+    "CompareAna",
+    "CompareInjection",
+    "HGCROCStudy",
+    "CompareWaveform",
+)
+
+DECODER_EXECUTABLES = (
+    ("HGCROC_Conversion", Path("HGCROC_Conversion")),
+    ("ParseCalibSamples", Path("ParseCalibSamples")),
+    ("CompareHGCROCCalib", Path("CompareHGCROCCalib")),
+    ("EvaluateRecoEffi", Path("EvaluateRecoEffi")),
+    ("h2g_run", Path("h2g_decode") / "h2g_run"),
+)
+
 
 class SmokeFailure(RuntimeError):
     pass
@@ -65,13 +86,15 @@ def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     layout = parser.add_mutually_exclusive_group(required=True)
     layout.add_argument("--build-dir", type=Path,
-                        help="CMake output directory containing Convert, DataPrep and libLFHCAL")
+                        help="CMake output directory containing the required programs and libLFHCAL")
     layout.add_argument("--bin-dir", type=Path,
                         help="explicit binary directory for a copied/deployed layout; requires --library")
     parser.add_argument("--library", type=Path,
                         help="exact libLFHCAL shared library (required with --bin-dir)")
     parser.add_argument("--root", default="root", help="ROOT executable, default: PATH root")
     parser.add_argument("--root-config", default="root-config", help="matching ROOT configuration executable")
+    parser.add_argument("--decoder", action="store_true",
+                        help="also require and start decoder-enabled programs and h2g_decode/h2g_run")
     parser.add_argument("--yall", metavar="EXECUTABLE",
                         help="optional readiness check only: run this yall-run executable with --version")
     parser.add_argument("--timeout", type=positive_timeout, default=30,
@@ -98,7 +121,10 @@ def main(argv=None):
                      library.parent / "libLFHCAL.rootmap"):
             if not path.is_file() or path.stat().st_size == 0:
                 raise SmokeFailure(f"Missing or empty library/dictionary artifact: {path}")
-        commands = {name: executable(binaries / name) for name in ("Convert", "DataPrep")}
+        commands = [(name, executable(binaries / name)) for name in STANDARD_EXECUTABLES]
+        if args.decoder:
+            commands.extend((name, executable(binaries / relative))
+                            for name, relative in DECODER_EXECUTABLES)
         root = executable(args.root)
         root_config = executable(args.root_config)
         yall = executable(args.yall) if args.yall else None
@@ -112,9 +138,11 @@ def main(argv=None):
             if not version:
                 raise SmokeFailure("root-config --version returned empty output")
             print(f"ROOT version: {version}", flush=True)
-            for name, command in commands.items():
+            for name, command in commands:
                 run_check(f"{name} startup", [command, "-h"], cwd=work,
                           timeout=args.timeout, marker="Usage:")
+            if not args.decoder:
+                print("NOT REQUESTED: decoder-enabled startup checks (use --decoder)", flush=True)
             env = dict(os.environ, LFHCAL_SMOKE_LIBRARY=str(library),
                        LFHCAL_SMOKE_PAYLOAD=str(HERE / "payload.C"),
                        LFHCAL_SMOKE_FILE=str(work / "fixture.root"))

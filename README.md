@@ -35,9 +35,10 @@ Option 2:
 
 After compiling, run `python3 tests/smoke/run.py --build-dir NewStructure/build`
 from the repository root in the same ROOT environment. The small
-[baseline smoke suite](tests/smoke/README.md) checks executable startup, ROOT
-dictionaries, and a one-event/calibration write-read control. It does not install
-software or start Yall/batch jobs.
+[baseline smoke suite](tests/smoke/README.md) checks startup for the always-built
+programs, ROOT dictionaries, and a one-event/calibration write-read control. Add
+`--decoder` to require the decoder-enabled programs and `h2g_decode/h2g_run`.
+It does not process beam data, install software or start Yall/batch jobs.
 
 For convenience a linker script is provided, which can be used to recreate the software structure with soft links. Execute it in the directory where you would like to work after having added your user name and path to the software repo
 

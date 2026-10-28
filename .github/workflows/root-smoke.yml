@@ -43,11 +43,20 @@ jobs:
           root-config --version
           cmake --version
           python3 --version
-      - name: Configure and build smoke targets
+      - name: Configure and build standard smoke targets
         run: |
           cmake -S NewStructure -B NewStructure/build -DCMAKE_BUILD_TYPE=Release
-          cmake --build NewStructure/build --target Convert DataPrep --parallel 2
+          cmake --build NewStructure/build --target \
+            Convert DataPrep CalibrateData DataAna Display CompareCalib \
+            CompareAna CompareInjection HGCROCStudy CompareWaveform --parallel 2
+      - name: Build decoder-enabled smoke targets
+        run: |
+          cmake --build NewStructure/build --target \
+            HGCROC_Conversion ParseCalibSamples CompareHGCROCCalib \
+            EvaluateRecoEffi h2g_run --parallel 2
       - name: Test smoke runner failure handling
         run: python3 -m unittest discover -s tests/smoke -p 'test_runner.py' -v
-      - name: Run real ROOT smoke checks
+      - name: Run standard ROOT smoke checks
         run: python3 tests/smoke/run.py --build-dir NewStructure/build --timeout 60
+      - name: Run decoder-enabled startup checks
+        run: python3 tests/smoke/run.py --build-dir NewStructure/build --decoder --timeout 60

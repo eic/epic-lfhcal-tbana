@@ -11,6 +11,15 @@ import unittest
 RUNNER = Path(__file__).resolve().with_name("run.py")
 VALIDATOR = Path(__file__).resolve().with_name("validate.sh")
 EXPECTED_REJECTION = "FAIL: ROOT write / calibration: exit 1; expected marker 'LFHCAL_SMOKE_OK: write'"
+STANDARD_EXECUTABLES = [
+    "Convert", "DataPrep", "CalibrateData", "DataAna", "Display",
+    "CompareCalib", "CompareAna", "CompareInjection", "HGCROCStudy",
+    "CompareWaveform",
+]
+DECODER_EXECUTABLES = [
+    "HGCROC_Conversion", "ParseCalibSamples", "CompareHGCROCCalib",
+    "EvaluateRecoEffi", "h2g_run",
+]
 
 
 class RunnerTests(unittest.TestCase):
@@ -40,15 +49,17 @@ if name == os.environ.get("SMOKE_TEST_FAIL"):
     sys.exit(17)
 if name == os.environ.get("SMOKE_TEST_EMPTY"):
     sys.exit(0)
-if name in ("Convert", "DataPrep"):
+if name in ''' + repr(STANDARD_EXECUTABLES + DECODER_EXECUTABLES) + ''':
     print("Usage: " + name)
 elif name == "root":
     print("LFHCAL_SMOKE_OK: " + os.environ["LFHCAL_SMOKE_MODE"])
 else:
     print("fixture-version")
 '''
-        for name in ("Convert", "DataPrep", "root", "root-config", "yall-run"):
-            path = self.build / name
+        for name in (*STANDARD_EXECUTABLES, *DECODER_EXECUTABLES,
+                     "root", "root-config", "yall-run"):
+            path = self.build / ("h2g_decode/h2g_run" if name == "h2g_run" else name)
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(script)
             path.chmod(0o755)
 
@@ -67,15 +78,34 @@ else:
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         calls = self.recorded()
         self.assertEqual([row["name"] for row in calls],
-                         ["root-config", "Convert", "DataPrep", "root", "root"])
+                         ["root-config", *STANDARD_EXECUTABLES, "root", "root"])
         self.assertEqual(calls[0]["args"], ["--version"])
-        self.assertEqual(calls[1]["args"], ["-h"])
-        self.assertEqual(calls[2]["args"], ["-h"])
+        standard_calls = calls[1:1 + len(STANDARD_EXECUTABLES)]
+        self.assertTrue(all(row["args"] == ["-h"] for row in standard_calls))
         self.assertEqual([row["mode"] for row in calls[-2:]], ["write", "read"])
         self.assertEqual(calls[-1]["args"][:4], ["-n", "-l", "-b", "-q"])
         self.assertEqual(len({row["cwd"] for row in calls}), 1)
         self.assertFalse(Path(calls[0]["cwd"]).exists(), "temporary fixture directory leaked")
+        self.assertIn("NOT REQUESTED: decoder-enabled", result.stdout)
         self.assertIn("NOT REQUESTED: Yall", result.stdout)
+
+    def test_decoder_checks_are_explicit_and_bounded(self):
+        result = self.run_suite("--decoder")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        calls = self.recorded()
+        self.assertEqual([row["name"] for row in calls],
+                         ["root-config", *STANDARD_EXECUTABLES,
+                          *DECODER_EXECUTABLES, "root", "root"])
+        startup_calls = calls[1:1 + len(STANDARD_EXECUTABLES) + len(DECODER_EXECUTABLES)]
+        self.assertTrue(all(row["args"] == ["-h"] for row in startup_calls))
+        self.assertNotIn("NOT REQUESTED: decoder-enabled", result.stdout)
+
+    def test_requested_decoder_component_must_exist(self):
+        (self.build / "ParseCalibSamples").unlink()
+        result = self.run_suite("--decoder")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("ParseCalibSamples", result.stderr)
+        self.assertFalse(self.calls.exists())
 
     def test_yall_is_version_only(self):
         result = self.run_suite("--yall", str(self.build / "yall-run"))
@@ -89,6 +119,14 @@ else:
         self.assertEqual(result.returncode, 1)
         self.assertIn("exit 17", result.stderr)
         self.assertEqual([row["name"] for row in self.recorded()], ["root-config", "Convert"])
+
+    def test_zero_exit_without_help_text_fails_and_stops(self):
+        self.env["SMOKE_TEST_EMPTY"] = "Display"
+        result = self.run_suite()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Display startup: exit 0; expected marker 'Usage:'", result.stderr)
+        self.assertEqual([row["name"] for row in self.recorded()],
+                         ["root-config", *STANDARD_EXECUTABLES[:5]])
 
     def test_zero_exit_without_root_success_marker_is_failure(self):
         self.env["SMOKE_TEST_EMPTY"] = "root"
@@ -156,6 +194,18 @@ class ValidationHelperTests(unittest.TestCase):
         self.state = self.directory / "calls"
         python = self.directory / "python3"
         python.write_text("""#!/bin/sh
+if [ "$VALIDATE_EXPECT_DECODER" = 1 ]; then
+  found=0
+  for arg in "$@"; do
+    if [ "$arg" = --decoder ]; then
+      found=1
+    fi
+  done
+  if [ "$found" -ne 1 ]; then
+    echo "missing forwarded --decoder" >&2
+    exit 9
+  fi
+fi
 count=0
 if [ -f "$VALIDATE_TEST_STATE" ]; then
   count=$(cat "$VALIDATE_TEST_STATE")
@@ -190,12 +240,13 @@ esac
 """)
         python.chmod(0o755)
 
-    def run_helper(self, case):
+    def run_helper(self, case, *extra):
         env = dict(os.environ,
                    PATH=f"{self.directory}{os.pathsep}{os.environ.get('PATH', '')}",
                    VALIDATE_TEST_STATE=str(self.state),
-                   VALIDATE_TEST_CASE=case)
-        return subprocess.run([str(VALIDATOR), "--build-dir", "build", "--timeout", "60"],
+                   VALIDATE_TEST_CASE=case,
+                   VALIDATE_EXPECT_DECODER="1" if "--decoder" in extra else "0")
+        return subprocess.run([str(VALIDATOR), "--build-dir", "build", "--timeout", "60", *extra],
                               env=env, text=True, capture_output=True)
 
     def test_expected_rejection_is_accepted(self):
@@ -205,6 +256,11 @@ esac
         self.assertIn("ERROR-DETECTION TEST: deliberately forcing ROOT to fail", result.stdout)
         self.assertIn("PASS: expected error detected", result.stdout)
         self.assertNotIn(EXPECTED_REJECTION, result.stdout + result.stderr)
+        self.assertEqual(self.state.read_text().strip(), "2")
+
+    def test_decoder_selection_is_forwarded_to_both_runs(self):
+        result = self.run_helper("expected", "--decoder")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(self.state.read_text().strip(), "2")
 
     def test_unexpected_success_is_rejected(self):

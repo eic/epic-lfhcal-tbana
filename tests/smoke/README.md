@@ -22,9 +22,11 @@ on success or failure. The suite does not silently skip a required check.
 
 ### Checks in the baseline
 
-1. The explicitly selected `Convert` and `DataPrep` executables exist and actually
-   start with `-h`, return zero, and print their usage text. This exercises startup
-   and shared-library discovery, not a detector conversion.
+1. Ten always-built executables exist and start with explicit `-h`, return zero,
+   and print usage text: `Convert`, `DataPrep`, `CalibrateData`, `DataAna`,
+   `Display`, `CompareCalib`, `CompareAna`, `CompareInjection`, `HGCROCStudy`
+   and `CompareWaveform`. This exercises startup and shared-library discovery,
+   not data processing.
 2. `root-config --version` runs. ROOT then explicitly loads the selected
    `libLFHCAL` with its generated dictionary artifacts. No ROOT startup macros
    or working-directory autoload are relied upon.
@@ -39,6 +41,22 @@ The inputs are generated in code: one channel, one event, no random numbers and
 no beam-data dependency. `driver.C` propagates interpreter and payload failures
 as nonzero status; the Python runner also requires an explicit success marker.
 Checks do not use C++ `assert`, so release builds cannot disable them.
+
+### Optional decoder-enabled startup checks
+
+When the pinned `NewStructure/h2g_decode` submodule was present during the build,
+explicitly request the decoder-enabled set:
+
+```sh
+python3 tests/smoke/run.py --build-dir NewStructure/build --decoder
+```
+
+This additionally requires and starts `HGCROC_Conversion`, `ParseCalibSamples`,
+`CompareHGCROCCalib`, `EvaluateRecoEffi` and the standalone decoder executable
+`h2g_decode/h2g_run`. Every program is invoked with `-h`; in particular, this
+avoids relying on the ineffective no-argument guards in three decoder tools.
+Missing requested decoder components fail the run. Without `--decoder`, the
+report explicitly says those optional checks were not requested.
 
 ## Philosophy for component smoke tests
 
@@ -77,10 +95,11 @@ scientific validation would remain in the detailed regression suite.
 ## How to add a small check
 
 Today this is **one explicitly wired baseline**, with no automatic macro or
-case discovery. `run.py` names `Convert`, `DataPrep`, the library artifacts and
-`payload.C`, then runs the fixed `write` and `read` modes. `driver.C` loads the
-selected library and payload and calls the fixed `lfhcal_smoke_payload()` entry
-point. Adding a `.C` file to this directory does not make it run.
+case discovery. `run.py` names the required executables, optional decoder set,
+library artifacts and `payload.C`, then runs the fixed `write` and `read` modes.
+`driver.C` loads the selected library and payload and calls the fixed
+`lfhcal_smoke_payload()` entry point. Adding a `.C` file to this directory does
+not make it run.
 
 1. State the component operation, minimal input, expected result and tolerance
    before writing the check. Include the required artifacts and runtime budget.
@@ -165,10 +184,10 @@ python3 -m unittest discover -s tools/tests -v
 ```
 
 The first command uses fake executables to test failure propagation, timeouts,
-path quoting, temporary-directory cleanup, optional-Yall behavior and the validation
-helper's error-detection guards (17 tests).
-Passing it is **not** evidence that the production ROOT smoke checks passed. Run the real
-one-command check in a compiled LFHCal environment as well.
+path quoting, temporary-directory cleanup, optional-Yall behavior and the
+validation helper's error-detection guards (21 tests). Passing it is **not**
+evidence that the production ROOT smoke checks passed. Run the real one-command
+check in a compiled LFHCal environment as well.
 
 ### Optional error-detection validation
 
@@ -189,8 +208,9 @@ the behavior of real ROOT.
 
 ## GitHub Actions
 
-`ROOT smoke tests` builds `Convert` and `DataPrep` and runs the runner unit tests
-and real ROOT smoke checks on GitHub-hosted Ubuntu 24.04. It uses the official
+`ROOT smoke tests` builds all ten standard and five decoder-enabled targets,
+runs both runner modes, the unit tests and real ROOT checks on GitHub-hosted
+Ubuntu 24.04. It uses the official
 `rootproject/root:6.34.00-ubuntu24.04` image pinned by digest, with read-only
 repository permissions and the decoder revision recorded in the submodule.
 It runs for relevant pull-request changes, pushes to main, or manual dispatch.
