@@ -55,7 +55,7 @@ jobs:
             HGCROC_Conversion ParseCalibSamples CompareHGCROCCalib \
             EvaluateRecoEffi h2g_run --parallel 2
       - name: Test smoke runner failure handling
-        run: python3 -m unittest discover -s tests/smoke -p 'test_runner.py' -v
+        run: python3 -m unittest discover -s tests/smoke -p 'test_*.py' -v
       - name: Run standard ROOT smoke checks
         run: python3 tests/smoke/run.py --build-dir NewStructure/build --timeout 60
       - name: Run decoder-enabled startup checks

@@ -220,3 +220,20 @@ The workflow runs the explicit baseline command above. Contributors adding a
 case should keep its invocation and path coverage visible in that workflow.
 The separate `Yall examples` workflow checks workflow graphs and environment
 scripts; its result complements the ROOT build and smoke result.
+
+## Legend-lifetime regression
+
+`python3 -m unittest discover -s tests/smoke -p 'test_legend.py' -v`
+compiles and runs the ROOT batch-mode regression for upstream PR #94. It checks
+that a legend does not retain a destroyed temporary TF1, preserves line style
+and label, and survives repaint over ten layers. Live sampled values and Npx
+are checked too; the legacy negative control must reject the dangling pointer.
+
+This test depends on the production `AddMipFitLegendEntry` helper from #94.
+Until that fix is present, it reports **SKIP: not validated**, not a successful
+regression result. With the helper present, missing ROOT/compiler, build errors,
+wrong legacy results or repaint failures fail the test. The smoke CI discovers
+both runner and legend tests. No production implementation is copied here.
+For an integration checkout containing #94, set `LFHCAL_SOURCE_DIR` to that
+repository root while running this test; it compiles against that checkout's
+header with the current ROOT environment.
