@@ -656,9 +656,9 @@
             if (opt == 1)
               legend->AddEntry((TObject*)0, Form("Total events: %i", (int)ithSpectra->second.GetHG()->Integral()), "");
             if (isTrigFit)
-              legend->AddEntry(fit, "Landau-Gauss fit, trigg.", "l");
+              lfhcal::AddMipFitLegendEntry(*legend, *fit, "Landau-Gauss fit, trigg.");
             else 
-              legend->AddEntry(fit, "Landau-Gauss fit", "l");  
+              lfhcal::AddMipFitLegendEntry(*legend, *fit, "Landau-Gauss fit");
             // estimate uncertainty on max position
             double rel_err_L_MPV = fit->GetParError(1)/fit->GetParameter(1); // relative uncertainty on MPV
             double sigma_Max = rel_err_L_MPV * maxFit;

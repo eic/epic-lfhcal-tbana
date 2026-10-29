@@ -637,9 +637,9 @@
           
           TLegend* legend = GetAndSetLegend2( topRCornerX[p]-10*relSize8P[p], topRCornerY[p]-4*0.85*relSize8P[p]-0.4*relSize8P[p], topRCornerX[p]-0.04, topRCornerY[p]-0.6*relSize8P[p],0.85*textSizePixel, 1, label, 43,0.1);
           if (isTrigFit)
-            legend->AddEntry(fit, Form("%s fit, trigg.",nameFit.Data()), "l");
+            lfhcal::AddMipFitLegendEntry(*legend, *fit, Form("%s fit, trigg.",nameFit.Data()));
           else 
-            legend->AddEntry(fit, Form("%s fit",nameFit.Data()), "l");  
+            lfhcal::AddMipFitLegendEntry(*legend, *fit, Form("%s fit",nameFit.Data()));
           legend->AddEntry((TObject*)0, Form("#scale[0.8]{L MPV = %2.2f #pm %2.2f}",fit->GetParameter(1), fit->GetParError(1) ) , " ");
           legend->AddEntry((TObject*)0, Form("#scale[0.8]{Max = %2.2f}", maxFit ) , " ");
           legend->Draw();

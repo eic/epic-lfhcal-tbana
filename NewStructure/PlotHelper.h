@@ -605,9 +605,9 @@
       lfhcal::DrawMipFit(*fit, std::max(xPMin, 0.), std::min(xPMax, 2000.));
       TLegend* legend = GetAndSetLegend2( topRCornerX-9*relSize, topRCornerY-6*lineHeight, topRCornerX-0.04, topRCornerY-3.2*lineHeight,0.85*textSizePixel, 1, "", 43,0.1);
       if (isTrigFit)
-        legend->AddEntry(fit, "Landau-Gauss fit, trigg.", "l");
+        lfhcal::AddMipFitLegendEntry(*legend, *fit, "Landau-Gauss fit, trigg.");
       else 
-        legend->AddEntry(fit, "Landau-Gauss fit", "l");  
+        lfhcal::AddMipFitLegendEntry(*legend, *fit, "Landau-Gauss fit");
       legend->AddEntry((TObject*)0, Form("#scale[0.8]{L MPV = %2.2f #pm %2.2f}",fit->GetParameter(1), fit->GetParError(1) ) , " ");
       legend->AddEntry((TObject*)0, Form("#scale[0.8]{Max = %2.2f}", maxFit ) , " ");
       legend->Draw();
