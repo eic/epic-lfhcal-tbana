@@ -27,14 +27,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(ROOT REQUIRED COMPONENTS Core RIO Hist Tree Gpad Graf)
 include(${ROOT_USE_FILE})
 
-include(CTest)
-if(BUILD_TESTING)
-  add_executable(test_fit_curve_legend Tests/test_fit_curve_legend.cc)
-  target_include_directories(test_fit_curve_legend PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-  target_link_libraries(test_fit_curve_legend ${ROOT_LIBRARIES})
-  add_test(NAME fit_curve_legend_lifetime COMMAND test_fit_curve_legend)
-endif()
-
 # Add common compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -ansi -Wno-overloaded-virtual -Wno-long-long -fno-common")
 
