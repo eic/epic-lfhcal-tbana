@@ -8,6 +8,8 @@
 #include <TF1.h>
 #include <TGraph.h>
 #include <TError.h>
+#include <TLegend.h>
+#include <TLegendEntry.h>
 
 namespace lfhcal {
 
@@ -51,6 +53,19 @@ inline TGraph SampleMipFit(const TF1& fit, double visibleLow, double visibleHigh
     graph.SetPoint(i,x,y);
   }
   return graph;
+}
+
+// Layer helpers receive TileSpectra maps by value: their fitted TF1 members
+// disappear when the layer helper returns, while its pad/legend can be repainted.
+// The sampled graph does not draw/register the source TF1 for ROOT cleanup.
+// Keep only the line appearance in the legend, never a borrowed model pointer.
+inline TLegendEntry* AddMipFitLegendEntry(TLegend& legend, const TF1& fit,
+                                         const char* label) {
+  auto* entry = legend.AddEntry(static_cast<TObject*>(nullptr), label, "l");
+  entry->SetLineColor(fit.GetLineColor());
+  entry->SetLineStyle(fit.GetLineStyle());
+  entry->SetLineWidth(fit.GetLineWidth());
+  return entry;
 }
 
 // The evaluated copy belongs to the current pad and is deleted on Clear().

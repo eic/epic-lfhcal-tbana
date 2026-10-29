@@ -20,3 +20,7 @@ remains separate work. Fitting and calibration are unchanged.
 Regenerate plots with live fits. A streamed callback TF1 may retain only an
 interpolation table; dense sampling cannot recover its original evaluator.
 Works with legacy and adaptive callbacks; it does not repair the integration.
+
+Legends retain a copy of the fitted line appearance, not a pointer to a temporary
+TF1 inside a by-value layer spectrum. This keeps later pad repaints safe without
+changing the evaluator, fit selection, legend labels, or component overlays.
