@@ -27,18 +27,18 @@ mapping=../configs/FOCalTest2026/mapping_LaserTestFocal_202607.csv
 
 
 if [ $1 = "fbockTB" ]; then 
-  dataRaw=/media/fbock/ALICE2-4TB/202607_FoCalTB/rawTesting/fixed/    # source directory for output files from DAQ system
-  dataDir=/media/fbock/ALICE2-4TB/202607_FoCalTB/HGCROCData           # base directory for root trees  fi
+  dataRaw=/media/fbock/FrediExt4TB/FOCAL_TB/202607_FoCalTB/rawTesting/fixed/    # source directory for output files from DAQ system
+  dataDir=/media/fbock/FrediExt4TB/FOCAL_TB/202607_FoCalTB/HGCROCData           # base directory for root trees  fi
   # global run list for laser test July 2026
   runList=../configs/FOCalTest2026/DataDB_LaserTestFocal_202606.csv
 elif [ $1 = "fbockLaser" ]; then 
-  dataRaw=/media/fbock/ALICE2-4TB/202609_FocalLaser/raw/            # source directory for output files from DAQ system
-  dataDir=/media/fbock/ALICE2-4TB/202609_FocalLaser/HGCROCData      # base directory for root trees  fi
+  dataRaw=/media/fbock/FrediExt4TB/FOCAL_TB/202609_FocalLaser/raw/            # source directory for output files from DAQ system
+  dataDir=/media/fbock/FrediExt4TB/FOCAL_TB/202609_FocalLaser/HGCROCData      # base directory for root trees  fi
   # global run list for laser tests Sept 2026
   runList=../configs/FOCalTest2026/DataDB_LaserTestFocal_202609.csv
 elif [ $1 = "fbockLaserOct" ]; then 
-  dataRaw=/media/fbock/ALICE2-4TB/202610_FocalLaser/raw/            # source directory for output files from DAQ system
-  dataDir=/media/fbock/ALICE2-4TB/202610_FocalLaser/HGCROCData      # base directory for root trees  fi
+  dataRaw=/media/fbock/FrediExt4TB/FOCAL_TB/202610_FocalLaser/raw/            # source directory for output files from DAQ system
+  dataDir=/media/fbock/FrediExt4TB/FOCAL_TB/202610_FocalLaser/HGCROCData      # base directory for root trees  fi
   # global run list & mapping for laser tests Oct 2026
   mapping=../configs/FOCalTest2026/mapping_LaserTestFocal_202610_BottomLeft.csv
   runList=../configs/FOCalTest2026/DataDB_LaserTestFocal_202610.csv
@@ -62,7 +62,7 @@ elif [ $2 = "Sept" ]; then
 
 elif [ $2 = "Oct" ]; then
 #   for runNr in {001..002}; do 
-  for runNr in {421..422}; do 
+  for runNr in {650..1153}; do 
     echo $runNr;
     ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapping -r $runList
   done

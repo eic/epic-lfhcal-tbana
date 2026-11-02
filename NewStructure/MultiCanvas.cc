@@ -1610,7 +1610,6 @@ void MultiCanvas::PlotCorrWithFits( std::map<int,TileSpectra> spectra, int optio
     std::cout << "PlotCorrWithFits: this option hasn't been implemented yet!" << std::endl;
   // full asic plot or Focal H
   } else if ( detType == DetConf::Type::FocalH){
-    std::cout << "PlotCorrWithFits: this option hasn't been implemented yet!" << std::endl;
     for (Int_t f = 0; f < setup->GetNMaxModule()+1; f++){      
       if (!setup->IsModuleOn(f)){
         std::cout << "====> FEB " << f << " not enabled" << std::endl;
@@ -1715,7 +1714,10 @@ void MultiCanvas::PlotMipWithFits(  std::map<int,TileSpectra> spectra, std::map<
     std::cout << "PlotMipWithFits: this option hasn't been implemented yet!" << std::endl;
         
   // full asic plot or Focal H
-  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
+  } else if ( detType ==  DetConf::Type::Asic ){
+    std::cout << "PlotMipWithFits: this option hasn't been implemented yet!" << std::endl;
+  // full asic plot or Focal H
+  } else if ( detType == DetConf::Type::FocalH){
     std::cout << "PlotMipWithFits: this option hasn't been implemented yet!" << std::endl;
   }
 }  
@@ -1817,7 +1819,10 @@ void MultiCanvas::PlotTriggerPrim(  std::map<int,TileSpectra> spectra,
     std::cout << "PlotTriggerPrim: this option hasn't been implemented yet!" << std::endl;
         
   // full asic plot or Focal H
-  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
+  } else if ( detType ==  DetConf::Type::Asic ){
+    std::cout << "PlotTriggerPrim: this option hasn't been implemented yet!" << std::endl;
+  // full Focal H
+  } else if ( detType == DetConf::Type::FocalH){
     std::cout << "PlotTriggerPrim: this option hasn't been implemented yet!" << std::endl;
   }  
 }
@@ -1953,7 +1958,7 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
     std::cout << "PlotTrending: this option hasn't been implemented yet!" << std::endl;
         
   // full asic plot or Focal H
-  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
+  } else if ( detType ==  DetConf::Type::Asic ){
     for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
       if (!setup->IsAsicOn(a)){
         std::cout << "====> asic " << a << " not enabled" << std::endl;
@@ -1963,6 +1968,20 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
       PlotTrendingAsicLFHCal (canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
                              trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commonVoltage, a,
                              Form("%s/SingleLayer/%s_Asic%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), a, suffix.Data()), 
+                             Form("%s/Trend%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                             commonRunInfo, ExtPlot);
+    }
+  } else if ( detType ==  DetConf::Type::FocalH){
+    // std::cout << "PlotTrending: FEB plotting"<< std::endl;
+    for (Int_t f = 0; f < setup->GetNMaxModule()+1; f++){      
+      if (!setup->IsModuleOn(f)){
+        std::cout << "====> FEB " << f << " not enabled" << std::endl;
+        continue;
+      }   
+      std::cout << "====> FEB " << f << "\t detailed plot option: " << ExtPlot<< std::endl;
+      PlotTrendingFoCalFEB (canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                             trend, option, xPMin,xPMax, minY, maxY, isSameVoltage, commonVoltage, f,
+                             Form("%s/SingleLayer/%s_FEB%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), f, suffix.Data()), 
                              Form("%s/Trend%s" ,nameOutputBase.Data(),namePlot.Data()), 
                              commonRunInfo, ExtPlot);
     }
@@ -2097,7 +2116,7 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
     std::cout << "PlotRunOverlayProfile: this option hasn't been implemented yet!" << std::endl;
         
   // full asic plot or Focal H
-  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
+  } else if ( detType ==  DetConf::Type::Asic ){
     for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
       std::cout << "====> asic " << a << std::endl;
       if (!setup->IsAsicOn(a)){
@@ -2111,7 +2130,21 @@ void MultiCanvas::PlotRunOverlayProfile(  std::map<int,TileTrend>  trend, int nr
                              Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
                              currRunInfo, ExtPlot, scaleInt);
     }
-  }  
+  } else if ( detType ==  DetConf::Type::FocalH){
+    for (Int_t f = 0; f < setup->GetNMaxModule()+1; f++){      
+      if (!setup->IsModuleOn(f)){
+        std::cout << "====> FEB " << f << " not enabled" << std::endl;
+        continue;
+      }   
+      std::cout << "====> FEB " << f << std::endl;
+      PlotRunOverlayProfileFoCalFEB (canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                             trend, nrun, option, xPMin,xPMax, yMin, yMax, f,
+                             Form("%s/SingleLayer/%s_FEB%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), f, suffix.Data()), 
+                             Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                             currRunInfo, ExtPlot, scaleInt);
+
+    }
+  }
 }
 
 //_____________________________________________________________________________________________________________
@@ -2226,7 +2259,7 @@ void MultiCanvas::PlotRunOverlaySpectra(  std::map<int,TileTrend>  trend, int nr
     std::cout << "PlotRunOverlaySpectra: this option hasn't been implemented yet!" << std::endl;
         
   // full asic plot or Focal H
-  } else if ( detType ==  DetConf::Type::Asic || detType == DetConf::Type::FocalH){
+  } else if ( detType ==  DetConf::Type::Asic ){
     std::cout << "PlotRunOverlaySpectra: this option hasn't been implemented yet!" << std::endl;
     // for (Int_t a = 0; a < setup->GetNMaxROUnit()+1; a++){  
     //   std::cout << "====> asic " << a << std::endl;
@@ -2236,5 +2269,19 @@ void MultiCanvas::PlotRunOverlaySpectra(  std::map<int,TileTrend>  trend, int nr
     //                          Form("%sTrend%s" ,nameOutputBase.Data(),namePlot.Data()), 
     //                          it->second, ExtPlot, scaleInt);
     // }
-  }  
+  }  else if ( detType ==  DetConf::Type::FocalH){
+    // std::cout << "PlotRunOverlaySpectra: FEB plotting" << std::endl;
+    for (Int_t f = 0; f < setup->GetNMaxModule()+1; f++){      
+      if (!setup->IsModuleOn(f)){
+        std::cout << "====> FEB " << f << " not enabled" << std::endl;
+        continue;
+      }    
+      std::cout << "====> FEB " << f  << std::endl;
+      PlotRunOverlayFoCalFEB ( canvasMulti,padMulti, legPlace_X, legPlace_Y, relTextSize, textSize,
+                              trend, nrun, option, xPMin,xPMax, f,
+                              Form("%s/SingleLayer/%s_FoCalFEB%02d.%s" ,nameOutputBase.Data(),namePlot.Data(), f, suffix.Data()), 
+                              Form("%s/Overlay%s" ,nameOutputBase.Data(),namePlot.Data()), 
+                              currRunInfo, ExtPlot);
+    }                           
+  }
 }
