@@ -342,7 +342,7 @@ if [ $2 = "wave" ]; then
       echo "$runNr " >> runlist.txt
     done
     runs=`cat runlist.txt`
-  elif [ $4 = "Oct_RF12_V43_T22" ]; then
+  elif [ $3 = "Oct_RF12_V43_T22" ]; then
     toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
     badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
 
@@ -368,7 +368,7 @@ if [ $2 = "wave" ]; then
       echo "$runNr " >> runlist.txt
     done
     runs=`cat runlist.txt`
-  elif [ $4 = "Oct_RF12_V45_T22" ]; then
+  elif [ $3 = "Oct_RF12_V45_T22" ]; then
     toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
     badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
 
@@ -394,7 +394,7 @@ if [ $2 = "wave" ]; then
       echo "$runNr " >> runlist.txt
     done
     runs=`cat runlist.txt`
-  elif [ $4 = "Oct_RF12_V43_T-27" ]; then
+  elif [ $3 = "Oct_RF12_V43_T-27" ]; then
     toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
     badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
 
@@ -420,7 +420,7 @@ if [ $2 = "wave" ]; then
       echo "$runNr " >> runlist.txt
     done
     runs=`cat runlist.txt`
-  elif [ $4 = "Oct_RF12_V45_T-27" ]; then
+  elif [ $3 = "Oct_RF12_V45_T-27" ]; then
     toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
     badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
 
@@ -446,7 +446,7 @@ if [ $2 = "wave" ]; then
       echo "$runNr " >> runlist.txt
     done
     runs=`cat runlist.txt`
-  elif [ $4 = "Oct_RF9_V43_T22" ]; then
+  elif [ $3 = "Oct_RF9_V43_T22" ]; then
     toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
     badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
 
@@ -457,7 +457,7 @@ if [ $2 = "wave" ]; then
       echo "$runNr " >> runlist.txt
     done
     runs=`cat runlist.txt`
-  elif [ $4 = "Oct_RF9_V45_T22" ]; then
+  elif [ $3 = "Oct_RF9_V45_T22" ]; then
     toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
     badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
 
@@ -468,7 +468,7 @@ if [ $2 = "wave" ]; then
       echo "$runNr " >> runlist.txt
     done
     runs=`cat runlist.txt`
-  elif [ $4 = "Oct_RF9_V43_T-27" ]; then
+  elif [ $3 = "Oct_RF9_V43_T-27" ]; then
     toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
     badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
 
@@ -479,7 +479,7 @@ if [ $2 = "wave" ]; then
       echo "$runNr " >> runlist.txt
     done
     runs=`cat runlist.txt`
-  elif [ $4 = "Oct_RF9_V45_T-27" ]; then
+  elif [ $3 = "Oct_RF9_V45_T-27" ]; then
     toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
     badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
 
