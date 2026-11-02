@@ -696,8 +696,7 @@ inline void PlotTrendingFoCalFEB (TCanvas* canvasFEB, TPad** pads, Double_t* top
   for (int r = 0; r < nRow; ++r){
     for (int c = 0; c < nCol; ++c){
       canvasFEB->cd();
-      int row = 3 - r;
-      int tempCellID = setupT->GetCellID(row, c, 0, mod);
+      int tempCellID = setupT->GetCellID(r, c, 0, mod);
       int p = setupT->GetChannelInLayer(tempCellID);
       pads[p]->Draw();
       pads[p]->cd();
@@ -721,7 +720,7 @@ inline void PlotTrendingFoCalFEB (TCanvas* canvasFEB, TPad** pads, Double_t* top
       dummyhist->Draw("axis");
       tempGraph->Draw("pe,same");
 
-      TString label = Form("row %d col %d", row, c);
+      TString label = Form("row %d col %d", r, c);
       TLatex* labelChannel = new TLatex(topRCornerX[p]-0.04, topRCornerY[p]-1.2*relSizeFEB[p], label);
       SetStyleTLatex(labelChannel, 0.85*textSizePixel, 4, 1, 43, kTRUE, 31);
       labelChannel->Draw();
@@ -751,11 +750,61 @@ inline void PlotRunOverlayFoCalFEB (TCanvas* canvasFEB, TPad** pads, Double_t* t
   int nCol = 8;
   int skipped = 0;
 
+  // evaluate whether its the same quantities
+  bool isSameRun      = false;
+  int altStyle        = 0;
+  if (commonRunInfo.runNr != -10000){
+    isSameRun         = true;
+    altStyle          = 1;
+  }
+  if (commonRunInfo.pdg != -10000)
+    altStyle          = 1;
+  bool isSameVoltage  = false;
+  double commonVoltage  = 0;
+  if (commonRunInfo.vop != -10000.){
+    isSameVoltage     = true;
+    commonVoltage     = commonRunInfo.vop;
+  }
+  Int_t nSameSettings = 0;
+  if (commonRunInfo.rf > -1) nSameSettings++;
+  if (commonRunInfo.cf > -1) nSameSettings++;
+  if (commonRunInfo.cfcomp > -1) nSameSettings++;
+  if (commonRunInfo.cc > -1) nSameSettings++;
+  if (commonRunInfo.vop > -1) nSameSettings++;
+
+  double lineBottom  = (1.4+5);
+  if (nruns < 6) lineBottom = (1.4);
+  else if (nruns < 11) lineBottom = (1.4+1);
+  else if (nruns < 16) lineBottom = (1.4+2);
+  else if (nruns < 21) lineBottom = (1.4+3);
+  else if (nruns < 26) lineBottom = (1.4+4);
+  if (nSameSettings == 4) lineBottom++;
+  TLegend* legend = nullptr;
+  
+  Double_t maxY         = 0.;
+  Double_t minY         = 9999.;
+  for (int r = 0; r < nRow; r++){
+    for (int c = 0; c < nCol; c++){
+      int tempCellID = setupT->GetCellID(r,c, 0, mod);
+      int p = setupT->GetChannelInLayer(tempCellID);
+      ithTrend=trending.find(tempCellID);
+      if (ithTrend==trending.end()) continue;
+      if (optionTrend == 0){      // HG
+        if(maxY<ithTrend->second.GetMaxHGSpec()) maxY=ithTrend->second.GetMaxHGSpec();
+        if(minY>ithTrend->second.GetMinHGSpec()) minY=ithTrend->second.GetMinHGSpec();
+      } else if (optionTrend == 1){   //LG
+        if(maxY<ithTrend->second.GetMaxLGSpec()) maxY=ithTrend->second.GetMaxLGSpec();
+        if(minY>ithTrend->second.GetMinLGSpec()) minY=ithTrend->second.GetMinLGSpec();
+      } 
+    }
+  }
+  
+  TH1D* histos[30];
+  
   for (int r = 0; r < nRow; ++r){
     for (int c = 0; c < nCol; ++c){
       canvasFEB->cd();
-      int row = 3 - r;
-      int tempCellID = setupT->GetCellID(row, c, 0, mod);
+      int tempCellID = setupT->GetCellID(r, c, 0, mod);
       int p = setupT->GetChannelInLayer(tempCellID);
       pads[p]->Draw();
       pads[p]->cd();
@@ -769,16 +818,62 @@ inline void PlotRunOverlayFoCalFEB (TCanvas* canvasFEB, TPad** pads, Double_t* t
         continue;
       }
 
-      TGraphErrors* tempGraph = ithTrend->second.GetTrendingBasedOnOption(optionTrend);
-      if (!tempGraph) continue;
-      SetMarkerDefaultsTGraphErr(tempGraph, 20, 1, kBlue+1, kBlue+1);
-      tempGraph->GetXaxis()->SetRangeUser(xPMin, xPMax);
-      tempGraph->Draw("pe, same");
-
-      TString label = Form("row %d col %d", row, c);
+      if (p == 31 ){
+        double startLegY  = topRCornerY[p]-lineBottom*relSizeFEB[p];
+        double endLegY    = topRCornerY[p]-1.4*relSizeFEB[p];
+        TString header    = "";
+        double width      = 0.9;
+        if (nSameSettings == 4){
+            // std::cout <<  commonRunInfo.rf << "\t" << commonRunInfo.cf << "\t" << commonRunInfo.cfcomp << "\t" << commonRunInfo.cc << "\t" << commonRunInfo.vop << std::endl;
+            if (commonRunInfo.rf < 0)
+              header = "RF (k#Omega)";
+            if (commonRunInfo.cf < 0) header = "CF (fF)";
+            if (commonRunInfo.cfcomp < 0) header = "CF_{comp} (fF)";
+            if (commonRunInfo.cc < 0)  header = "CC";
+            if (commonRunInfo.vop < 0)  header = "V_{op} (V)";
+        }
+        legend = GetAndSetLegend2(  0.045, startLegY, width, endLegY,
+                                    0.85*textSizePixel, 5, "",43,0.25);
+      }
+      
+      for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
+        int tmpRunNr = ithTrend->second.GetRunNr(rc);
+        histos[rc] = nullptr;
+        if (tmpRunNr != -1 && !isSameRun) {
+          if (optionTrend == 0){      // HG
+            histos[rc] = ithTrend->second.GetHGTriggRun(ithTrend->second.GetRunNr(rc));
+          } else if (optionTrend == 1){      // LG
+            histos[rc] = ithTrend->second.GetLGTriggRun(ithTrend->second.GetRunNr(rc));
+          }
+        } else if (isSameRun && tmpRunNr != -1){
+          if (optionTrend == 0){      // HG
+            histos[rc] = ithTrend->second.GetHGTriggRun(rc);
+          } else if (optionTrend == 1){      // LG
+            histos[rc] = ithTrend->second.GetLGTriggRun(rc);
+          }              
+        }
+        
+        if (histos[rc]){
+          SetStyleHistoTH1ForGraphs( histos[rc], histos[rc]->GetXaxis()->GetTitle(), histos[rc]->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.95, 1.3,  510, 510, 43, 63);  
+          SetLineDefaults(histos[rc], GetColorLayer(rc), 2, GetLineStyleLayer(rc));   
+          if(rc == 0){
+            histos[rc]->GetXaxis()->SetRangeUser(xPMin,xPMax);
+            histos[rc]->GetYaxis()->SetRangeUser(minY,maxY);
+            histos[rc]->Draw("hist");
+          } else {
+            histos[rc]->Draw("same,hist");
+          }
+          if(p == 31) legend->AddEntry(histos[rc],ithTrend->second.GetLabel(rc),"l");
+        }
+      }
+      if (histos[0]) histos[0]->Draw("axis,same");                
+      
+      TString label = Form("row %d col %d", r, c);
       TLatex* labelChannel = new TLatex(topRCornerX[p]-0.04, topRCornerY[p]-1.2*relSizeFEB[p], label);
       SetStyleTLatex(labelChannel, 0.85*textSizePixel, 4, 1, 43, kTRUE, 31);
       labelChannel->Draw();
+      if (p == 31)
+        legend->Draw();
     }
   }
 
@@ -800,12 +895,48 @@ inline void PlotRunOverlayProfileFoCalFEB (TCanvas* canvasFEB, TPad** pads, Doub
   int nRow = 4;
   int nCol = 8;
   int skipped = 0;
+  
+  // evaluate whether its the same quantities
+  bool isSameRun      = false;
+  int altStyle        = 0;
+  if (commonRunInfo.runNr != -10000){
+    isSameRun         = true;
+    altStyle          = 1;
+  }
+  if (commonRunInfo.pdg != -10000)
+    altStyle          = 1;
+  bool isSameVoltage  = false;
+  double commonVoltage  = 0;
+  if (commonRunInfo.vop != -10000.){
+    isSameVoltage     = true;
+    commonVoltage     = commonRunInfo.vop;
+  }
 
+  Int_t nSameSettings = 0;
+  if (commonRunInfo.rf > -1) nSameSettings++;
+  if (commonRunInfo.cf > -1) nSameSettings++;
+  if (commonRunInfo.cfcomp > -1) nSameSettings++;
+  if (commonRunInfo.cc > -1) nSameSettings++;
+  if (commonRunInfo.vop > -1) nSameSettings++;
+  
+  TProfile* profs[30];
+
+  double lineBottom  = (1.4+5);
+  if (nruns < 6) lineBottom = (1.4);
+  else if (nruns < 11) lineBottom = (1.4+1);
+  else if (nruns < 16) lineBottom = (1.4+2);
+  else if (nruns < 21) lineBottom = (1.4+3);
+  else if (nruns < 26) lineBottom = (1.4+4);
+  if (nSameSettings == 4) lineBottom++;
+  TLegend* legend = nullptr;
+
+  
   for (int r = 0; r < nRow; ++r){
     for (int c = 0; c < nCol; ++c){
       canvasFEB->cd();
-      int row = 3 - r;
-      int tempCellID = setupT->GetCellID(row, c, 0, mod);
+      int tempCellID = setupT->GetCellID(r, c, 0, mod);
+      std::cout << "feb: " <<mod << "r: " << r << "\t c: " << c << "\t CellID: " << tempCellID << std::endl;
+    
       int p = setupT->GetChannelInLayer(tempCellID);
       pads[p]->Draw();
       pads[p]->cd();
@@ -819,20 +950,77 @@ inline void PlotRunOverlayProfileFoCalFEB (TCanvas* canvasFEB, TPad** pads, Doub
         continue;
       }
 
-      TProfile* prof = nullptr;
-      if (option == 0) prof = ithTrend->second.GetLGHGTriggRun(ithTrend->second.GetRunNr(0));
-      else if (option == 1) prof = ithTrend->second.GetWave1DRun(ithTrend->second.GetRunNr(0));
-      if (prof){
-        if (scaleInt) prof->Scale(1/prof->Integral());
-        prof->GetXaxis()->SetRangeUser(xPMin, xPMax);
-        prof->GetYaxis()->SetRangeUser(yPMin, yPMax);
-        prof->Draw("pe, same");
+      if (p == 31 ){
+        double startLegY  = topRCornerY[p]-lineBottom*relSizeFEB[p];
+        double endLegY    = topRCornerY[p]-1.4*relSizeFEB[p];
+        TString header    = "";
+        double width      = 0.9;
+        if (nSameSettings == 4){
+            // std::cout <<  commonRunInfo.rf << "\t" << commonRunInfo.cf << "\t" << commonRunInfo.cfcomp << "\t" << commonRunInfo.cc << "\t" << commonRunInfo.vop << std::endl;
+            if (commonRunInfo.rf < 0)
+              header = "RF (k#Omega)";
+            if (commonRunInfo.cf < 0) header = "CF (fF)";
+            if (commonRunInfo.cfcomp < 0) header = "CF_{comp} (fF)";
+            if (commonRunInfo.cc < 0)  header = "CC";
+            if (commonRunInfo.vop < 0)  header = "V_{op} (V)";
+        }
+        legend = GetAndSetLegend2(  0.045, startLegY, width, endLegY,
+                                    0.85*textSizePixel, 5, "",43,0.25);
       }
+      
+      TH1D* dummyhist = nullptr;
+      for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
+        int tmpRunNr = ithTrend->second.GetRunNr(rc);
+        profs[rc] = nullptr;
+        if (tmpRunNr != -1) {
+          if (option == 0)
+            profs[rc] = ithTrend->second.GetLGHGTriggRun(ithTrend->second.GetRunNr(rc));
+          else if (option == 1)
+            profs[rc] = ithTrend->second.GetWave1DRun(ithTrend->second.GetRunNr(rc));
+          else if (option == 2)
+            profs[rc] = ithTrend->second.GetTOARun(ithTrend->second.GetRunNr(rc));
+          else if (option == 3)  
+            profs[rc] = ithTrend->second.GetTOTRun(ithTrend->second.GetRunNr(rc));
+          if (scaleInt && profs[rc] != nullptr) profs[rc]->Scale(1/profs[rc]->Integral());
+        }
+        if (profs[rc]){
+          if (rc == 0){
+            TString yTitle = profs[rc]->GetYaxis()->GetTitle();
+            if (scaleInt && profs[rc] != nullptr) yTitle = Form("%s/ integral", yTitle.Data());
+            dummyhist = new TH1D(Form("dummyhist_%d_%d_%d",option, mod,p), "", profs[rc]->GetNbinsX(), profs[rc]->GetXaxis()->GetXmin(), profs[rc]->GetXaxis()->GetXmax());
+            dummyhist->SetDirectory(0);
+            SetStyleHistoTH1ForGraphs( dummyhist, profs[rc]->GetXaxis()->GetTitle(), profs[rc]->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
+            dummyhist->GetXaxis()->SetRangeUser(xPMin,xPMax);
+            dummyhist->GetYaxis()->SetRangeUser(yPMin,yPMax);
+            dummyhist->Draw("axis");
+          }
 
-      TString label = Form("row %d col %d", row, c);
+          SetLineDefaults(profs[rc], GetColorLayer(rc, altStyle), 2, GetLineStyleLayer(rc, altStyle));   
+          profs[rc]->SetMarkerStyle(GetMarkerLayer(rc));
+          profs[rc]->Draw("same,pe");
+          if(p == 31){
+            TString labelLegend = ithTrend->second.GetLabel(rc);
+            if (nSameSettings == 4){
+              if (commonRunInfo.vop < 0) labelLegend = Form("%.1f",(double)ithTrend->second.GetVoltage(rc));
+              if (commonRunInfo.rf < 0) labelLegend = Form("%.1f",ReturnRFValue(ithTrend->second.GetRF(rc)));
+              if (commonRunInfo.cf < 0) labelLegend = Form("%.0f",ReturnCFValue(ithTrend->second.GetCF(rc)));
+              if (commonRunInfo.cfcomp < 0) labelLegend = Form("%.0f",ReturnCFCompValue(ithTrend->second.GetCFComp(rc)));
+              if (commonRunInfo.cc < 0)  labelLegend = Form("%.0f",ReturnCCValue(ithTrend->second.GetCC(rc)));
+            }
+            legend->AddEntry(profs[rc],labelLegend.Data(),"p");
+          }
+        // } else {
+          // std::cout << "couldn't find object " << option << "\t" << rc<< std::endl;
+        } 
+      }
+      if (dummyhist) dummyhist->Draw("axis,same");                
+     
+      TString label = Form("row %d col %d", r, c);
       TLatex* labelChannel = new TLatex(topRCornerX[p]-0.04, topRCornerY[p]-1.2*relSizeFEB[p], label);
       SetStyleTLatex(labelChannel, 0.85*textSizePixel, 4, 1, 43, kTRUE, 31);
       labelChannel->Draw();
+      if (p == 31)
+        legend->Draw();
     }
   }
 

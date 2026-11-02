@@ -1223,7 +1223,7 @@
     int nMod = setupT->GetNMaxModule()+1;
     int skipped = 0;
     
-        // evaluate whether its the same quantities
+    // evaluate whether its the same quantities
     bool isSameRun      = false;
     int altStyle        = 0;
     if (commonRunInfo.runNr != -10000){

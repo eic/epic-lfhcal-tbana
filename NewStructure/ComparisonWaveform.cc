@@ -245,6 +245,12 @@ bool ComparisonWaveform::ProcessWaveformCompare(void){
         itrend->second.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(),itRun->second.pdg, -10000., -10000.,itRun->second.energy,itRun->second.temp);
         itrend->second.FillExtended(Xvalue,profCellWave->GetEntries(), (int)calib.GetRunNumber(), histCellTOT, histCellTOA, nullptr, profCellWave);
         itrend->second.FillHGCROCSetting (set_rf, set_cf, set_cfcomp, set_cc, set_injec);
+        if (histCellTOT ){
+          double tot = 0;
+          int maxBin  = histCellTOT->GetMaximumBin();
+          tot         = histCellTOT->GetBinCenter(maxBin);
+          itrend->second.FillHGCROCVals(Xvalue, tot);
+        }
       // create new TileTrend object if not yet available in map
       } else {
         TileTrend atrend=TileTrend(itcalib->first,0, 2);
@@ -252,6 +258,13 @@ bool ComparisonWaveform::ProcessWaveformCompare(void){
         atrend.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(), itRun->second.pdg, -10000., -10000.,itRun->second.energy,itRun->second.temp );
         atrend.FillExtended(Xvalue,profCellWave->GetEntries(), (int)calib.GetRunNumber(),histCellTOT,  histCellTOA, nullptr, profCellWave);
         atrend.FillHGCROCSetting (set_rf, set_cf, set_cfcomp, set_cc, set_injec);
+        
+        if (histCellTOT ){
+          double tot = 0;
+          int maxBin  = histCellTOT->GetMaximumBin();
+          tot         = histCellTOT->GetBinCenter(maxBin);
+          atrend.FillHGCROCVals(Xvalue, tot);
+        }
         // append TileTrend object to map
         trend[itcalib->first]=atrend;
       }
@@ -345,21 +358,24 @@ bool ComparisonWaveform::ProcessWaveformCompare(void){
   DefaultCanvasSettings( canvas1DRunsOverlay, 0.075, 0.015, 0.025, 0.09);
 
   PlotCalibRunOverlay( canvas1DRunsOverlay, 0, sumCalibs, textSizeRel, 
-                      Form("%s/HGPedSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
+                      Form("%s/PedSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
   PlotCalibRunOverlay( canvas1DRunsOverlay, 1, sumCalibs, textSizeRel, 
-                      Form("%s/HGPedWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
+                      Form("%s/PedWidthSummary_RunOverlay.%s",OutputNameDirPlots.Data(),plotSuffix.Data()), commonRunInfo,"", debug);
   
   // plotting individual layers/asics
-  DetConf::Type detConf = DetConf::Type::Asic;
-  // DetConf::Type detConf = DetConf::Type::Single8M;
-  // DetConf::Type detConf = DetConf::Type::Dual8M;
+  DetConf::Type detConf = setup->GetDetectorConfig();
   MultiCanvas panelPlot2D(detConf, "Waveform");
   bool init2D = panelPlot2D.Initialize(2);
+  MultiCanvas panelPlot(detConf, "Spectra");
+  bool init1D = panelPlot.Initialize(1);
   
-  // panelPlot2D.PlotTrending(trend, 0, Xmin,Xmax, OutputNameDirPlots, "PedADC", plotSuffix, commonRunInfo, ExtPlot );
+  panelPlot.PlotTrending(trend, 32, Xmin,Xmax, OutputNameDirPlots, "TOT", plotSuffix, commonRunInfo, ExtPlot );
+  panelPlot.PlotTrending(trend, 19, Xmin,Xmax, OutputNameDirPlots, "Ped", plotSuffix, commonRunInfo, true );
+  panelPlot.PlotTrending(trend, 20, Xmin,Xmax, OutputNameDirPlots, "Pedwidth", plotSuffix, commonRunInfo, true );
+
   panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, -25, 25*commonRunInfo.samples, -10, -10000, OutputNameDirPlots, "WaveOverlay", plotSuffix, commonRunInfo, ExtPlot );
-  // panelPlot2D.PlotRunOverlayProfile(trend, nRun, 3, 0, 18*7, 0,-10000, OutputNameDirPlots, "TOTOverlay", plotSuffix, commonRunInfo, ExtPlot );
-  // panelPlot2D.PlotRunOverlayProfile(trend, nRun, 2, 0, 18*7, 0,1024, OutputNameDirPlots, "TOAOverlay", plotSuffix, commonRunInfo, ExtPlot );
+  panelPlot.PlotRunOverlaySpectra(trend, nRun, 0, 0, 4148, OutputNameDirPlots, "TOTOverlay", plotSuffix, commonRunInfo, ExtPlot, debug, 0 );
+  panelPlot.PlotRunOverlaySpectra(trend, nRun, 1, 0, 1024, OutputNameDirPlots, "TOAOverlay", plotSuffix, commonRunInfo, ExtPlot, debug, 0 );
 
   std::vector <int> cellVec;
   if (cellList.CompareTo("")!= 0){
