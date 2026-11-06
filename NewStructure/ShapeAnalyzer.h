@@ -18,6 +18,7 @@
 #include "Tile.h"
 #include "HGCROC.h"
 #include "Caen.h"
+#include "CommonHelperFunctions.h"
     
 class ShapeAnalyzer{
 
@@ -62,6 +63,16 @@ class ShapeAnalyzer{
   inline void PlotHGCROC_TOTData()                {plotHGCROC = true; dataTypeHGCROC = 2; }
   inline void PlotHGCROC_ADCmipCorr()             {plotHGCROC = true; dataTypeHGCROC = 3; }
   inline void PlotHGCROC_E()                      {plotHGCROC = true; dataTypeHGCROC = 4; }
+
+  // clustering thresholds (defaults in ClusteringSettings, CommonHelperFunctions.h)
+  inline void SetClusterCellThreshold(double e)   {clusterSettings.cellThreshold = e;};
+  inline void SetClusterSeedValue(double e)       {clusterSettings.seedValue = e;};
+  inline void SetClusterGrowFraction(double f)    {clusterSettings.growFraction = f;};
+  inline void SetClusterMinEnergy(double e)       {clusterSettings.minClusterE = e;};
+  inline void SetClusterWindowSize(int n)         {clusterSettings.windowSize = n;};
+  inline void SetClusterMaxClusters(int n)        {clusterSettings.maxClusters = n;};
+  inline void SetClusteringSettings(const ClusteringSettings& s) {clusterSettings = s;};
+  inline const ClusteringSettings& GetClusteringSettings() const {return clusterSettings;};
   
   //General methods
   bool CheckAndOpenIO(void);
@@ -94,6 +105,7 @@ class ShapeAnalyzer{
   int minTilesHit             = 0;
   bool plotHGCROC             = false;
   int dataTypeHGCROC          = 0; // 0 - ADC, 1 - ADC-pedestal, 2 - ToT, 3 - ADC/mip-scale
+  ClusteringSettings clusterSettings;     // clustering thresholds used throughout ShapeAnalyzer
   
   TTree* TsetupIn=nullptr;
   TTree* TdataIn=nullptr;
@@ -104,11 +116,21 @@ class ShapeAnalyzer{
 
  private:
   bool Plot();
-TH2D* Normalize2D(TH2D* hist);
-  void Plot1D(TH1D* hist, std::string Name, int sample);
-  void Plot1D_NonLog(TH1D* hist, std::string Name, int sample);
-  void Plot1D_Compare(TH1D* hist, std::string Name, TH1D* hist2, std::string Name2, int sample);
-  void Plot2D(TH2D* hist, std::string Name, int sample);
+  TH2D* Normalize2D(TH2D* hist);
+  // All plot functions share the style defined in ShapeAnalyzer.cc (namespace PlotStyle); axis titles
+  // are taken from the histograms themselves. 'label' is printed below the run header.
+  void Plot1D(TH1D* hist, std::string Name, int sample, bool logY = true, std::string label = "");
+  void Plot1D_Compare(TH1D* hist, std::string label, TH1D* hist2, std::string label2, std::string Name);
+  void Plot2D(TH2D* hist, std::string Name, int sample, std::string label = "");
+  void Plot1D_Comparison(TH1D* h1, TH1D* h2, std::string label1, std::string label2,
+                         std::string prefix, std::string Name, bool logY, std::string label = "");
+  void Plot1D_Comparison(std::vector<TH1D*> hists, std::vector<std::string> labels,
+                         std::string prefix, std::string Name, bool logY, std::string label = "");
+  void Plot2D_Comparison(TH2D* h1, TH2D* h2, std::string label1, std::string label2,
+                         std::string prefix, std::string Name, std::string countLabel = "clusters");
+  void Plot2D_Correlation(TH2D* hist, std::string Name, std::string label = "");
+
+  TString plotHeader;   // run description drawn on top of every plot, set in Plot()
  };
 
 

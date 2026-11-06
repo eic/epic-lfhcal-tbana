@@ -10,6 +10,8 @@
   #include "TH3F.h"
   #include "TMath.h"
   #include <vector>
+  #include <algorithm>
+  #include <cmath>
   #include <map>
   #include <utility>
 
@@ -111,414 +113,350 @@
     double injDAC;
   } ;
 
+//__________________________________________________________________________________________________________
+//__________________ Clustering ____________________________________________________________________________
+//__________________________________________________________________________________________________________
+// Both clustering methods work on the per-event TH3F map, filled as Fill(z, x, y, E)
+// (histogram X axis = z / layer, Y axis = x, Z axis = y). All coordinates below are bin indices.
+// Clustered cells are removed (set to 0) from the input histogram.
+//
+// All clustering thresholds in one place. Defaults are the standard settings; change them on the
+// ClusteringSettings object that is passed to DoClustering_Seeded_3D, DoClustering_Window and FindIsolatedCells
+// (in ShapeAnalyzer via its Set* methods). Energies are in the units of the event map (e.g. mip eq.).
+struct ClusteringSettings{
+  double cellThreshold = 3.;    // minimum cell energy to join a seeded cluster and to count in the cell-based
+                                // observables (hitTowers, maxTowerSizeZ, cell/tower spectra)
+  double seedValue     = 10.;    // minimum energy of a seed cell;
+  double growFraction  = 0.25;  // added cells with E > growFraction*seedValue grow a seeded cluster further
+  double minClusterE   = 20.;   // minimum cluster energy: window clustering stops below it, analysis cut on clusters
+  int    windowSize    = 3;     // window size in towers for DoClustering_Window
+  int    maxClusters   = 2;    // maximum number of clusters per event
+
+  double GrowThreshold() const { return growFraction*seedValue; }
+};
+
+// Observables are defined identically for both methods (see ClusteringDetail::MakeCluster):
 struct Cluster{
-  Cluster(): x(0), y(0), highestcellx(0), highestcelly(0),highestcellz(0),highestx(0),highesty(0),highestz(0),highesttowerenergy(0),highestcellenergy(0),highestzE(0),firstz(0),lastz(0),hitTowers(0), energy(0), eventenergy(0) {}
-    int x;
-    int y;
-  int highestx;
-  int highesty;
-  int highestz;
-    int highestcellx;
-    int highestcelly;
-    float highesttowerenergy;
-  float highestcellenergy;
-    int highestcellz;
-    float highestzE;
-    int firstz;
-    int lastz;
-    int sizez;
-    int hitTowers;
-    float energy;
-    float eventenergy;
-  } ;
+  Cluster(): x(0), y(0), highestx(0), highesty(0), highestz(0), highestcellx(0), highestcelly(0), highestcellz(0),
+             highesttowerenergy(0), highestcellenergy(0), highestzE(0), firstz(0), lastz(0), sizez(0),
+             hitTowers(0), maxTowerSizeZ(0), energy(0), eventenergy(0) {}
+  float x;                  // energy-weighted centroid of the cluster cells (bin units)
+  float y;
+  int   highestx;           // tower (cluster cells summed over z) with the largest energy
+  int   highesty;
+  int   highestz;           // z-bin with the largest summed cluster energy
+  int   highestcellx;       // single cluster cell with the largest energy
+  int   highestcelly;
+  int   highestcellz;
+  float highesttowerenergy; // energy of tower (highestx, highesty), cluster cells only
+  float highestcellenergy;  // energy of cell (highestcellx, highestcelly, highestcellz)
+  float highestzE;          // cluster energy in z-bin highestz
+  int   firstz;             // first z-bin with cluster energy
+  int   lastz;              // last z-bin with cluster energy
+  int   sizez;              // number of z-bins with cluster energy
+  float hitTowers;          // average number of cells >= cellThreshold per hit z-bin (nCells/sizez)
+  int   maxTowerSizeZ;      // largest number of z-bins with a cell >= cellThreshold in any single tower (x,y)
+  float energy;             // total cluster energy
+  float eventenergy;        // total event energy before any clustering
+  std::vector<float> cellEnergies; // energies of all cells in the cluster
+};
 
+namespace ClusteringDetail {
 
-inline std::vector<Cluster> DoClustering_Seeded_3D(TH3F* hXYZMapEvt, double minwindow, double seedvalue){
+  struct Cell{
+    int   z;
+    int   x;
+    int   y;
+    float e;
+  };
 
-  std::vector<Cluster> ClusterVec;
-  Cluster TestCluster;
-  //PERFORM CLUSTERING ON COMPLETED hXYZ
+  // Dense copy of the event map, indexed with the histogram's own global bin numbers
+  struct EventGrid{
+    int nz;
+    int nx;
+    int ny;
+    int strideX;
+    int strideY;
+    std::vector<float> e;
+    double total;
 
-  std::vector<int> zValues = {3,8,13,18,26,36,46,56};
-  
-  for(int cluster = 0; cluster < 10; cluster++){
-    TH2F* hXYMapEvt = (TH2F*) hXYZMapEvt->Project3D("zy");
-    float towersx = hXYMapEvt->GetXaxis()->GetNbins();
-    float towersy = hXYMapEvt->GetYaxis()->GetNbins();
-    float towersz = hXYZMapEvt->GetXaxis()->GetNbins();
-    //HAS TO BE DERIVED FROM CALIBRATION
-    int cellsinwindow_xy = 0;
-    int cellsinwindow_z = 0;
-    double maxwindowenergy = 0;
-    double maxcellinwindow = 0;
-    double maxtowerinwindow = 0;
-    double maxcellenergy = 0;
-    double maxcellenergy_temp = 0;
-    double maxtowerenergy = 0;
-    double maxwindow_i = 0;
-    double maxwindow_j = 0;
-    double maxwindowcenter_x = 0;
-    double maxwindowcenter_y = 0;
-    double maxcell_x = 0;
-    double maxcell_y = 0;
-    double maxcell_z = 0;
-    double truemaxcell_z = 0;
-    double truemaxcell_x = 0;
-    double truemaxcell_y = 0;
-    
+    explicit EventGrid(TH3F* h)
+      : nz(h->GetNbinsX()), nx(h->GetNbinsY()), ny(h->GetNbinsZ()),
+        strideX(h->GetNbinsX()+2), strideY((h->GetNbinsX()+2)*(h->GetNbinsY()+2)),
+        e(h->GetArray(), h->GetArray()+h->GetNcells()), total(0.) {
+      for(int y = 1; y <= ny; y++)
+        for(int x = 1; x <= nx; x++)
+          for(int z = 1; z <= nz; z++)
+            total += e[Bin(z,x,y)];
+    }
 
-    double eventenergy = 0;
-    double cellenergy = 0;
-    double towerenergy = 0;
-    double cellenergy_stepx = 0;
-    double cellenergy_stepy = 0;
-    double cellenergy_stepz = 0;
+    int Bin(int z, int x, int y) const { return z + strideX*x + strideY*y; }
 
+    // remove a cell from the grid and from the input histogram
+    void Consume(TH3F* h, int bin){
+      e[bin] = 0.f;
+      h->SetBinContent(bin, 0.);
+      if(h->GetSumw2N() > 0) h->SetBinError(bin, 0.); // SetBinError would otherwise allocate Sumw2
+    }
+  };
 
-    //Depreciated??
-    
-    //std::cout << "clustered haha " << std::endl;
+  // Common definition of all cluster observables
+  inline Cluster MakeCluster(const std::vector<Cell>& cells, double eventEnergy, double cellThreshold){
+    Cluster cl;
+    cl.eventenergy = eventEnergy;
+    if(cells.empty()) return cl;
 
-    double zslice = 0;
-    double ztotal = 0;
-    double filled = 0;
-    double maxzE = 0;
-    double zE_temp = 0;
-    int maxz = 0;
-    int maxx = 0;
-    int maxy = 0;
-    int lastz = 0;
-    int sizez = 0;
-    int firstz = 60;
-    //
-    
-  
-    for(int x = 1; x <= towersx; x++){
-      for(int y = 1; y <= towersy; y++){
-	for(int z = 1; z <= towersz; z++){
-	  cellenergy = (hXYZMapEvt->GetBinContent(z,x,y));
-	  eventenergy+=cellenergy;
-	  if (cellenergy > maxcellenergy)
-	    {
-	      maxcellenergy = cellenergy;
-	      maxcell_x = x;
-	      maxcell_y = y;
-	      maxcell_z = z;	
-	    }
-	}
-	
-	towerenergy = (hXYMapEvt->GetBinContent(x,y));
-	if (towerenergy > maxtowerenergy)
-	  {
-	    maxtowerenergy = towerenergy;
-	    maxx = x;
-	    maxy = y;	
-	  }
+    std::map<std::pair<int,int>, double> towerE;
+    std::map<std::pair<int,int>, int> towerSizeZ;   // cells >= cellThreshold per tower (one cell per z-bin)
+    std::map<int, double> layerE;
+    double sumE = 0, sumX = 0, sumY = 0;
+    int nCells = 0;
+    const Cell* maxCell = &cells[0];
+    cl.cellEnergies.reserve(cells.size());
+    for(const Cell& c : cells){
+      sumE += c.e;
+      sumX += c.e*c.x;
+      sumY += c.e*c.y;
+      if(c.e > maxCell->e) maxCell = &c;
+      if(c.e >= cellThreshold){
+        nCells++;
+        towerSizeZ[std::make_pair(c.x, c.y)]++;
+      }
+      towerE[std::make_pair(c.x, c.y)] += c.e;
+      layerE[c.z] += c.e;
+      cl.cellEnergies.push_back(c.e);
+    }
+    for(const auto& t : towerSizeZ) cl.maxTowerSizeZ = std::max(cl.maxTowerSizeZ, t.second);
+
+    cl.energy = sumE;
+    if(sumE > 0){
+      cl.x = sumX/sumE;
+      cl.y = sumY/sumE;
+    }
+
+    cl.highestcellx      = maxCell->x;
+    cl.highestcelly      = maxCell->y;
+    cl.highestcellz      = maxCell->z;
+    cl.highestcellenergy = maxCell->e;
+
+    double maxTower = -1;
+    for(const auto& t : towerE){
+      if(t.second > maxTower){
+        maxTower     = t.second;
+        cl.highestx  = t.first.first;
+        cl.highesty  = t.first.second;
       }
     }
-    truemaxcell_z = maxcell_z;
-    truemaxcell_x = maxcell_x;
-    truemaxcell_y = maxcell_y;
-    //save for later
-    if(maxcellenergy < seedvalue){delete hXYMapEvt;break;}
-    //std::cout << std::endl <<  maxcellenergy << " passed cut " << seedvalue << std::endl;
-    maxwindowcenter_x+=maxcellenergy*maxcell_x;
-    maxwindowcenter_y+=maxcellenergy*maxcell_y;
-    maxwindowenergy+=maxcellenergy;
-    cellsinwindow_xy+=1;
-  
-    if(maxcell_z > lastz){
-      lastz = maxcell_z;
-      sizez+=1;
-    }
-    if(maxcell_z < firstz){
-      firstz = maxcell_z;
-      sizez+=1;
-    }
-  
-    //std::cout << " z: " << maxcell_z << std::endl;
-    //std::cout << " Adding " << maxcellenergy << ", now total " << maxwindowenergy << std::endl;
-    hXYZMapEvt->SetBinContent(maxcell_z,maxcell_x,maxcell_y,0);
-    
-  
-    //loop around max seed value and cluster in
-    std::vector<int> thingstocluster_x;
-    std::vector<int> thingstocluster_y;
-    std::vector<int> thingstocluster_z;
-    thingstocluster_x.push_back(maxcell_x);
-    thingstocluster_y.push_back(maxcell_y);
-    thingstocluster_z.push_back(maxcell_z);
-  
-    while(thingstocluster_x.size() != 0){
+    cl.highesttowerenergy = maxTower;
 
-      maxcell_x = thingstocluster_x[0];
-      maxcell_y = thingstocluster_y[0];
-      maxcell_z = thingstocluster_z[0];
-
-      thingstocluster_x.erase(thingstocluster_x.begin());
-      thingstocluster_y.erase(thingstocluster_y.begin());
-      thingstocluster_z.erase(thingstocluster_z.begin());
-    
-      for(int z = -1; z<= 1; z++){
-	int zreal = z;
-	zE_temp = 0;
-	if(z == 0 && maxcell_z == truemaxcell_z){zE_temp+=maxcellenergy;}
-	    
-	if(zreal != 0){
-	  while(std::find(zValues.begin(),zValues.end(),maxcell_z+zreal) == zValues.end()){
-	    zreal+=z;
-	    if(zreal+maxcell_z < 0 || zreal+maxcell_z > towersz){break;}
-		
-	  }
-	}
-
-	if(zreal+maxcell_z < 0 || zreal+maxcell_z > towersz){continue;}
-      
-	if(maxcell_z+zreal > lastz){
-	  lastz = maxcell_z+zreal;
-	  sizez+=1;
-	}
-	if(maxcell_z+zreal < firstz){
-	  firstz = maxcell_z+zreal;
-	  sizez+=1;
-	}
-  
-	for(int x = -1; x <= 1; x++){
-	  for(int y = -1; y <= 1; y++){
-	  
-	    cellenergy = (hXYZMapEvt->GetBinContent(maxcell_z+zreal,maxcell_x+x,maxcell_y+y));
-	    if(cellenergy < 1){continue;}
-
-	    zE_temp+=cellenergy;
-	    cellsinwindow_xy+=1;
-	    maxwindowenergy+=cellenergy;	   
-	    maxwindowcenter_x+=cellenergy*maxcell_x+x;
-	    maxwindowcenter_y+=cellenergy*maxcell_y+y;
-
-	    if(cellenergy > seedvalue*0.25){
-	      thingstocluster_x.push_back(maxcell_x+x);
-	      thingstocluster_y.push_back(maxcell_y+y);
-	      thingstocluster_z.push_back(maxcell_z+zreal);
-
-	    }
-	    hXYZMapEvt->SetBinContent(maxcell_z+zreal,maxcell_x+x,maxcell_y+y,0);
-	        
-
-	  }
-
-	}
-	if(maxzE < zE_temp){maxzE = zE_temp;maxz = maxcell_z+zreal;}
+    double maxLayer = -1;
+    for(const auto& l : layerE){
+      if(l.second > maxLayer){
+        maxLayer      = l.second;
+        cl.highestz   = l.first;
       }
     }
-
-    maxwindowcenter_x=maxwindowcenter_x/maxwindowenergy;
-    maxwindowcenter_y=maxwindowcenter_y/maxwindowenergy;
-    //std::cout << "done stepping " << std::endl;
-  
-    //std::cout << cellsinwindow_xy << " and " << sizez << std::endl;
-    sizez-=1;
-    cellsinwindow_xy = cellsinwindow_xy/sizez;
-
-    maxcellinwindow=maxcellenergy;
-    maxtowerinwindow=maxtowerenergy;
-      
-    //if(maxcellinwindow != maxwindowenergy){std::cout << "clustered some " << maxcellinwindow/maxwindowenergy << std::endl;}
-
-    //Set ClusterValues
-    TestCluster.x = maxwindowcenter_x;
-    TestCluster.y = maxwindowcenter_y;
-    TestCluster.highestcellx = truemaxcell_x;
-    TestCluster.highestcelly = truemaxcell_y;
-    TestCluster.highestcellz = truemaxcell_z;
-    
-    TestCluster.highestx = maxx;
-    TestCluster.highesty = maxy;
-    TestCluster.highestz = maxz;
-    TestCluster.highestcellenergy = maxcellinwindow;
-    TestCluster.highesttowerenergy = maxtowerinwindow;
-    TestCluster.highestz = maxz;
-    TestCluster.highestzE = maxzE;
-    TestCluster.firstz = firstz;
-    TestCluster.lastz = lastz;
-    TestCluster.sizez = sizez;
-    TestCluster.hitTowers = cellsinwindow_xy;
-    TestCluster.energy = maxwindowenergy;
-    TestCluster.eventenergy = eventenergy;
-
-    
-    ClusterVec.push_back(TestCluster);
-
-    delete hXYMapEvt;
+    cl.highestzE = maxLayer;
+    cl.firstz    = layerE.begin()->first;
+    cl.lastz     = layerE.rbegin()->first;
+    cl.sizez     = layerE.size();
+    cl.hitTowers = (float)nCells/cl.sizez;
+    return cl;
   }
-  //std::cout << "really clustered" << std::endl;
-  
-  return ClusterVec;
+
+  // z-bins of the readout layers (geometry specific). The depth neighbours of z-bin z are zUp[z] and zDown[z],
+  // the next readout layer up/down (0 if there is none).
+  inline void ReadoutLayerNeighbours(int nz, std::vector<int>& zUp, std::vector<int>& zDown){
+    static const std::vector<int> zLayers = {3,8,13,18,26,36,46,56};
+    zUp.assign(nz+2, 0);
+    zDown.assign(nz+2, 0);
+    for(int z = 1; z <= nz; z++){
+      for(int zl : zLayers){
+        if(zl > z && zl <= nz){ zUp[z] = zl; break; }
+      }
+      for(auto it = zLayers.rbegin(); it != zLayers.rend(); ++it){
+        if(*it < z && *it >= 1){ zDown[z] = *it; break; }
+      }
+    }
+  }
 }
 
+//__________________________________________________________________________________________________________
+// Isolated cells: cells with 0 < E < settings.seedValue that have no other cell with E > 0 in the clustering
+// neighbourhood (3x3 in x,y on the same z-bin and on the next readout layer up/down, as in DoClustering_Seeded_3D).
+// Such cells can never be part of a seeded cluster. The input histogram is not modified.
+inline std::vector<float> FindIsolatedCells(TH3F* hXYZMapEvt, const ClusteringSettings& settings = ClusteringSettings()){
+  const double seedvalue = settings.seedValue;
+  ClusteringDetail::EventGrid grid(hXYZMapEvt);
+  std::vector<int> zUp, zDown;
+  ClusteringDetail::ReadoutLayerNeighbours(grid.nz, zUp, zDown);
 
-inline std::vector<Cluster> DoClustering_Window(TH3F* hXYZMapEvt, int windowsize, double minwindow){
+  std::vector<float> isolated;
+  for(int y = 1; y <= grid.ny; y++)
+    for(int x = 1; x <= grid.nx; x++)
+      for(int z = 1; z <= grid.nz; z++){
+        const float e = grid.e[grid.Bin(z,x,y)];
+        if(e <= 0 || e >= seedvalue) continue;
+        bool hasNeighbour = false;
+        const int zNeighbours[3] = {zDown[z], z, zUp[z]};
+        for(int zz : zNeighbours){
+          if(zz < 1) continue;
+          for(int xx = std::max(1, x-1); xx <= std::min(grid.nx, x+1) && !hasNeighbour; xx++)
+            for(int yy = std::max(1, y-1); yy <= std::min(grid.ny, y+1); yy++){
+              if(zz == z && xx == x && yy == y) continue;
+              if(grid.e[grid.Bin(zz,xx,yy)] > 0){ hasNeighbour = true; break; }
+            }
+          if(hasNeighbour) break;
+        }
+        if(!hasNeighbour) isolated.push_back(e);
+      }
+  return isolated;
+}
 
-  std::vector<Cluster> ClusterVec;
-  Cluster TestCluster;
-  //PERFORM CLUSTERING ON COMPLETED hXYZ
-  
-  for(int cluster = 0; cluster < 10; cluster++){
-    TH2F* hXYMapEvt = (TH2F*) hXYZMapEvt->Project3D("zy");
-  
-    float towersx = hXYMapEvt->GetXaxis()->GetNbins();
-    float towersy = hXYMapEvt->GetYaxis()->GetNbins();
-    float towersz = hXYZMapEvt->GetXaxis()->GetNbins();
-    //HAS TO BE DERIVED FROM CALIBRATION
-    int cellsinwindow_xy = 0;
-    double maxwindowenergy = 0;
-    double maxcellinwindow = 0;
-    double maxcellenergy = 0;
-    double maxcellenergy_temp = 0;
-    double maxwindow_i = 0;
-    double maxwindow_j = 0;
-    double maxwindowcenter_x = 0;
-    double maxwindowcenter_y = 0;
-    double maxcell_x = 0;
-    double maxcell_y = 0;
-    
-    double eventenergy = 0;
-    double cellenergy = 0;
-    for(int x = 1; x <= towersx; x++){
-      for(int y = 1; y <= towersy; y++){
-	cellenergy = (hXYMapEvt->GetBinContent(x,y));
-	eventenergy+=cellenergy;
+//__________________________________________________________________________________________________________
+// Seeded clustering: the highest remaining cell >= seedValue starts a cluster. Cells >= cellThreshold in the
+// 3x3 neighbourhood of a cluster cell (same layer and next readout layer up/down) are added; added cells with
+// E > growFraction*seedValue are themselves used to grow the cluster further.
+// minClusterE is not used here, the cluster energy cut is applied by the caller.
+inline std::vector<Cluster> DoClustering_Seeded_3D(TH3F* hXYZMapEvt, const ClusteringSettings& settings = ClusteringSettings()){
+  using ClusteringDetail::Cell;
+  const double seedvalue     = settings.seedValue;
+  const double cellThreshold = settings.cellThreshold;
+  const int    maxClusters   = settings.maxClusters;
+  std::vector<Cluster> clusters;
+  ClusteringDetail::EventGrid grid(hXYZMapEvt);
+
+  std::vector<int> zUp, zDown;
+  ClusteringDetail::ReadoutLayerNeighbours(grid.nz, zUp, zDown);
+
+  // seed candidates, highest first
+  std::vector<Cell> seeds;
+  for(int y = 1; y <= grid.ny; y++)
+    for(int x = 1; x <= grid.nx; x++)
+      for(int z = 1; z <= grid.nz; z++){
+        float e = grid.e[grid.Bin(z,x,y)];
+        if(e >= seedvalue) seeds.push_back({z, x, y, e});
+      }
+  std::sort(seeds.begin(), seeds.end(), [](const Cell& a, const Cell& b){ return a.e > b.e; });
+
+  const double growThreshold = settings.GrowThreshold();
+  std::vector<Cell> members;
+  std::vector<Cell> toGrow;
+  for(const Cell& seed : seeds){
+    if((int)clusters.size() >= maxClusters) break;
+    int seedBin = grid.Bin(seed.z, seed.x, seed.y);
+    if(grid.e[seedBin] <= 0) continue;          // already part of a previous cluster
+
+    members.clear();
+    toGrow.clear();
+    grid.Consume(hXYZMapEvt, seedBin);
+    members.push_back(seed);
+    toGrow.push_back(seed);
+
+    while(!toGrow.empty()){
+      Cell cur = toGrow.back();
+      toGrow.pop_back();
+      const int zNeighbours[3] = {zDown[cur.z], cur.z, zUp[cur.z]};
+      for(int zz : zNeighbours){
+        if(zz < 1) continue;
+        for(int xx = std::max(1, cur.x-1); xx <= std::min(grid.nx, cur.x+1); xx++){
+          for(int yy = std::max(1, cur.y-1); yy <= std::min(grid.ny, cur.y+1); yy++){
+            int bin = grid.Bin(zz, xx, yy);
+            float e = grid.e[bin];
+            if(e <= 0 || e < cellThreshold) continue;
+            Cell c = {zz, xx, yy, e};
+            grid.Consume(hXYZMapEvt, bin);
+            members.push_back(c);
+            if(e > growThreshold) toGrow.push_back(c);
+          }
+        }
       }
     }
-
-    for(int window_i = 1; window_i <= towersx-(windowsize-1); window_i++){
-      for(int window_j = 1; window_j <= towersy-(windowsize-1); window_j++){
-
-	double windowenergy = 0;
-	cellenergy = 0;
-	double windowcenter_x = 0;
-	double windowcenter_y = 0;
-	maxcellenergy_temp = 0;
-	for(int x = 1; x <= windowsize; x++){
-	  for(int y = 1; y <= windowsize; y++){
-	    cellenergy = (hXYMapEvt->GetBinContent(window_i+x-1,window_j+y-1));
-	    if(cellenergy > maxcellenergy){
-	      maxcellenergy = cellenergy;
-	      maxcell_x = x+window_i-1;
-	      maxcell_y = y+window_j-1;
-	    }
-	    if(cellenergy > maxcellenergy_temp){
-	      maxcellenergy_temp = cellenergy;
-	    }
-	    windowenergy+=cellenergy;
-	    windowcenter_x+= x*cellenergy;
-	    windowcenter_y+=y*cellenergy;
-	  }
-	}
-	windowcenter_x=windowcenter_x/(windowenergy);
-	windowcenter_y=windowcenter_y/(windowenergy);
-	if(windowenergy >= maxwindowenergy){
-	  maxcellinwindow=maxcellenergy_temp;
-	  maxwindowenergy = windowenergy;
-	  maxwindow_i = window_i;
-	  maxwindow_j = window_j;
-	  maxwindowcenter_x = windowcenter_x;
-	  maxwindowcenter_y = windowcenter_y;
-	}
-      }
-    }
-    if(cluster > 0 && maxwindowenergy < minwindow){delete hXYMapEvt;break;}
-  
-    
-    double zcenter_x = maxwindow_i-1+round(maxwindowcenter_x);
-    double zcenter_y = maxwindow_j-1+round(maxwindowcenter_y);
-
-    double zslice = 0;
-    double ztotal = 0;
-
-    //coordinates got flipped in projection, weird
-    double xleft = zcenter_x-(windowsize-1)/2;
-    double xright = zcenter_x+(windowsize-1)/2;
-    if(xleft < 1){xleft = 1;}
-    if(xright > towersx){xright = towersx;}
-    double yleft = zcenter_y-(windowsize-1)/2;
-    double yright = zcenter_y+(windowsize-1)/2;
-    if(yleft < 1){yleft = 1;}
-    if(yright > towersy){yright = towersy;}
-
-    double filled = 0;
-    double maxzE = 0;
-    double maxz = 0;
-    double lastz = 0;
-    double sizez = 0;
-    double firstz = 0;
-
-    for(int z = 1; z <= towersz; z++){
-      
-      zslice = hXYZMapEvt->Integral(z,z,xleft,xright,yleft,yright);
-      //std::cout << zslice << std::endl;
-      ztotal+=zslice;
-
-      
-      if(zslice > maxzE){
-	maxz = z;
-	maxzE = zslice;
-      }
-
-      for(int x = xleft; x <= xright; x++){
-	for(int y = yleft; y <= yright; y++){
-
-	  if(hXYZMapEvt->GetBinContent(z,x,y) > 1){
-	    cellsinwindow_xy+=1;
-	  }
-	  
-	  hXYZMapEvt->SetBinContent(z,x,y,0);
-	  hXYZMapEvt->SetBinError(z,x,y,0);
-	  
-	  
-	  
-	  if(z == 1){
-	    hXYMapEvt->SetBinContent(x,y,0);
-	    hXYMapEvt->SetBinError(x,y,0);
-	    //std::cout << "setting zero x: " << xtest << "/" << xright << " and " << " y: " << ytest << "/"<< yright << std::endl;
-	  } 
-	}
-      }
-      
-      if(zslice > 0 && filled == 0){
-	filled = 1;
-	firstz=z;
-      }
-      if(zslice > 0){
-	lastz=z;
-	sizez+=1;
-      }
-    
-    }
-    cellsinwindow_xy = cellsinwindow_xy/sizez;
-  
-    //if(maxcellinwindow != maxcellenergy){maxwindowenergy = 0;ztotal = 0;}
-  
-    //Set ClusterValues
-    TestCluster.x = maxwindowcenter_x;
-    TestCluster.y = maxwindowcenter_y;
-    TestCluster.highestx = maxcell_x;
-    TestCluster.highesty = maxcell_y;
-    TestCluster.highestcellenergy = maxcellinwindow;
-    TestCluster.highesttowerenergy = maxcellinwindow;
-    TestCluster.highestz = maxz;
-    TestCluster.highestzE = maxzE;
-    TestCluster.firstz = firstz;
-    TestCluster.lastz = lastz;
-    TestCluster.sizez = sizez;
-    TestCluster.hitTowers = cellsinwindow_xy;
-    TestCluster.energy = ztotal;
-    TestCluster.eventenergy = eventenergy;
-  
-    
-    ClusterVec.push_back(TestCluster);
-    delete hXYMapEvt;
+    clusters.push_back(ClusteringDetail::MakeCluster(members, grid.total, cellThreshold));
   }
-  return ClusterVec;
+  return clusters;
+}
+
+//__________________________________________________________________________________________________________
+// Window clustering: find the windowsize x windowsize tower window with the highest energy, re-centre it on its
+// energy-weighted centroid and take all cells (all z) in the re-centred window as the cluster. Repeat until the
+// best window has less than minClusterE energy.
+inline std::vector<Cluster> DoClustering_Window(TH3F* hXYZMapEvt, const ClusteringSettings& settings = ClusteringSettings()){
+  using ClusteringDetail::Cell;
+  int          windowsize    = settings.windowSize;
+  const double minwindow     = settings.minClusterE;
+  const double cellThreshold = settings.cellThreshold;
+  const int    maxClusters   = settings.maxClusters;
+  std::vector<Cluster> clusters;
+  ClusteringDetail::EventGrid grid(hXYZMapEvt);
+  const int nx = grid.nx;
+  const int ny = grid.ny;
+  const int nz = grid.nz;
+  if(windowsize < 1) windowsize = 1;
+  const int wx   = std::min(windowsize, nx);
+  const int wy   = std::min(windowsize, ny);
+  const int half = (windowsize-1)/2;
+
+  // tower energies and their 2D prefix sums (any window sum in O(1))
+  std::vector<double> tower((nx+2)*(ny+2), 0.);
+  std::vector<double> prefix((nx+1)*(ny+1), 0.);
+  auto T = [&](int x, int y) -> double& { return tower[x + (nx+2)*y]; };
+  auto P = [&](int x, int y) -> double& { return prefix[x + (nx+1)*y]; };
+  for(int y = 1; y <= ny; y++)
+    for(int x = 1; x <= nx; x++)
+      for(int z = 1; z <= nz; z++)
+        T(x,y) += grid.e[grid.Bin(z,x,y)];
+
+  std::vector<Cell> members;
+  auto collect = [&](int x0, int x1, int y0, int y1){
+    for(int y = y0; y <= y1; y++){
+      for(int x = x0; x <= x1; x++){
+        for(int z = 1; z <= nz; z++){
+          int bin = grid.Bin(z,x,y);
+          float e = grid.e[bin];
+          if(e == 0) continue;
+          members.push_back({z, x, y, e});
+          grid.Consume(hXYZMapEvt, bin);
+        }
+        T(x,y) = 0.;
+      }
+    }
+  };
+
+  for(int iCl = 0; iCl < maxClusters; iCl++){
+    for(int y = 1; y <= ny; y++)
+      for(int x = 1; x <= nx; x++)
+        P(x,y) = T(x,y) + P(x-1,y) + P(x,y-1) - P(x-1,y-1);
+
+    double best = 0;
+    int bi = 0, bj = 0;
+    for(int i = 1; i <= nx-wx+1; i++){
+      for(int j = 1; j <= ny-wy+1; j++){
+        double s = P(i+wx-1,j+wy-1) - P(i-1,j+wy-1) - P(i+wx-1,j-1) + P(i-1,j-1);
+        if(s > 0 && s >= best){ best = s; bi = i; bj = j; }
+      }
+    }
+    if(best <= 0 || best < minwindow) break;
+
+    // re-centre on the energy-weighted centroid of the best window
+    double sw = 0, sx = 0, sy = 0;
+    for(int x = bi; x < bi+wx; x++)
+      for(int y = bj; y < bj+wy; y++){
+        sw += T(x,y);
+        sx += T(x,y)*x;
+        sy += T(x,y)*y;
+      }
+    const int cx = (int)std::lround(sx/sw);
+    const int cy = (int)std::lround(sy/sw);
+
+    members.clear();
+    collect(std::max(1, cx-half), std::min(nx, cx+half), std::max(1, cy-half), std::min(ny, cy+half));
+    if(members.empty()) collect(bi, bi+wx-1, bj, bj+wy-1);   // re-centred window empty: use the best window
+    if(members.empty()) break;
+
+    clusters.push_back(ClusteringDetail::MakeCluster(members, grid.total, cellThreshold));
+  }
+  return clusters;
 }
 
 
