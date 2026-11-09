@@ -20,8 +20,8 @@ fi
 
 runNrFile=../configs/TB2026/DataTakingDB_TBPST10_202604_HGCROC.csv
 
-runs='Muon_FullSetH_1'
-#runs = '437'
+runs='437'
+#runs = 'Muon_FullSetH_1'
 
 for runNr in $runs; do 
   if [[ $2 = "tot" ]]; then

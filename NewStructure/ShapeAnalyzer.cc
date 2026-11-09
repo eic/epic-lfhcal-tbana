@@ -26,8 +26,16 @@
 #include <algorithm>
 
 namespace {
-  // upper edge of all cluster-energy axes
+  // upper edge of all cluster-energy axes (sums of E_cell)
   const double kMaxClusterE = 1000.;
+  // E_eff = E_cell/N_layers axes (1 mip per detector layer at the MIP peak):
+  // cell spectra 0-10 in 0.05 bins, max-cell spectra (seed cells, cells above threshold) 0-30 in 0.2 bins
+  const double kMaxCellEff     = 10.;
+  const int    kNBinsCellEff   = 200;
+  const double kMaxMaxCellEff  = 30.;
+  const int    kNBinsMaxCellEff = 150;
+  // tower energies (sums of E_cell over all readout layers)
+  const double kMaxTowerE = 300.;
   // clusters with fewer cells per hit layer than this are classified as muon-like
   const double kMuonCellsPerLayer = 1.5;
 
@@ -38,9 +46,6 @@ namespace {
   const int kMinTrackTowerSizeZ = 5;
   inline bool IsBackgroundCluster(const Cluster& cl){ return cl.maxTowerSizeZ < kMinTrackTowerSizeZ; }
 
-  // ---------------------------------------------------------------------------------------------
-  // Common style for every plot produced by ShapeAnalyzer
-  // ---------------------------------------------------------------------------------------------
   namespace PlotStyle {
     const Font_t  kFont       = 42;
     const double  kTitleSize  = 0.045;   // axis titles
@@ -201,17 +206,21 @@ namespace {
     TH2D* e_sizeZ;
     TH2D* e_cellsPerLayer;
 
-    // eUnit: unit of the cell values (e.g. "mip eq.")
-    ClusterHists(TString t, TString lab, TString eUnit, int nx, int ny, int nz, int nLayers) : tag(t), label(lab) {
+    // eUnit: unit of the cell values (e.g. "mip eq."); nLayers: number of readout layers, all z observables
+    // are in readout-layer index 1..nLayers (see ClusteringSettings::readoutZBins)
+    // maxCellImbalance: upper edge of E_eff(max cell or max layer)/E_cluster = 1/(smallest N_layers)
+    ClusterHists(TString t, TString lab, TString eUnit, int nx, int ny, int nLayers, double maxCellImbalance)
+      : tag(t), label(lab) {
       auto n = [&](const char* base){ return TString(base)+tag; };
+      const int    nz     = nLayers;
       const TString tE      = Form("#it{E}_{cluster} (%s)", eUnit.Data());
-      const TString tFirstZ = "first layer of cluster";
-      const TString tLastZ  = "last layer of cluster";
-      const TString tMaxZ   = "layer with max. energy";
-      const TString tSizeZ  = "#it{N}_{layers} in cluster";
+      const TString tFirstZ = "first readout layer of cluster";
+      const TString tLastZ  = "last readout layer of cluster";
+      const TString tMaxZ   = "readout layer with max. energy";
+      const TString tSizeZ  = "#it{N}_{readout layers} in cluster";
       const TString tCells  = "cells per hit layer";
       const TString tTowImb = "#it{E}_{max tower}/#it{E}_{cluster}";
-      const TString tSeedC  = Form("#it{E}_{max cell} (%s)", eUnit.Data());
+      const TString tSeedC  = Form("#it{E}_{max cell}/#it{N}_{layers} (%s)", eUnit.Data());   // E_eff of the max cell
       const TString tSeedT  = Form("#it{E}_{max tower} (%s)", eUnit.Data());
       auto t1 = [](const TString& x){ return TString(";")+x+";counts"; };
       auto tE2 = [&](const TString& y){ return TString(";")+tE+";"+y+";counts"; };
@@ -223,10 +232,10 @@ namespace {
       sizeZ            = new TH1D(n("Clusters_sizeZ"),          t1(tSizeZ),  nLayers, 0.5, nLayers+0.5);
       cellsPerLayer    = new TH1D(n("Clusters_spreadX"),        t1(tCells),  12, -0.5, 11.5);
       towerImbalance   = new TH1D(n("Clusters_imbalance"),      t1(tTowImb), 50, 0, 1);
-      cellImbalance    = new TH1D(n("Clusters_cell_imbalance"), t1("#it{E}_{max cell}/#it{E}_{cluster}"),  50, 0, 1);
-      zImbalance       = new TH1D(n("Clusters_z_imbalance"),    t1("#it{E}_{max layer}/#it{E}_{cluster}"), 50, 0, 1);
-      seedCellE        = new TH1D(n("SeedCells_energy"),        t1(tSeedC),  100, 0, 300);
-      seedTowerE       = new TH1D(n("SeedTowers_energy"),       t1(tSeedT),  100, 0, 300);
+      cellImbalance    = new TH1D(n("Clusters_cell_imbalance"), t1("(#it{E}_{max cell}/#it{N}_{layers})/#it{E}_{cluster}"), 50, 0, maxCellImbalance);
+      zImbalance       = new TH1D(n("Clusters_z_imbalance"),    t1("(#it{E}_{max layer}/#it{N}_{layers})/#it{E}_{cluster}"), 50, 0, maxCellImbalance);
+      seedCellE        = new TH1D(n("SeedCells_energy"),        t1(tSeedC),  kNBinsMaxCellEff, 0, kMaxMaxCellEff);
+      seedTowerE       = new TH1D(n("SeedTowers_energy"),       t1(tSeedT),  100, 0, kMaxTowerE);
 
       xy               = new TH2D(n("ClustersXY"),    ";#it{x}_{cluster} (tower);#it{y}_{cluster} (tower);counts",
                                   nx*10, 0.5, nx+0.5, ny*10, 0.5, ny+0.5);
@@ -236,7 +245,7 @@ namespace {
                                   nx, 0.5, nx+0.5, ny, 0.5, ny+0.5);
 
       e_towerImbalance = new TH2D(n("Clusters_Energy_Imbalance"),       tE2(tTowImb), 50, 0, kMaxClusterE, 50, 0, 1);
-      e_seedCellE      = new TH2D(n("Clusters_Energy_SeedCellsEnergy"), tE2(tSeedC),  50, 0, kMaxClusterE, 100, 0, 300);
+      e_seedCellE      = new TH2D(n("Clusters_Energy_SeedCellsEnergy"), tE2(tSeedC),  50, 0, kMaxClusterE, kNBinsMaxCellEff, 0, kMaxMaxCellEff);
       e_firstZ         = new TH2D(n("Clusters_Energy_FirstZ"),          tE2(tFirstZ), 50, 0, kMaxClusterE, nz, 0.5, nz+0.5);
       e_lastZ          = new TH2D(n("Clusters_Energy_LastZ"),           tE2(tLastZ),  50, 0, kMaxClusterE, nz, 0.5, nz+0.5);
       e_maxZ           = new TH2D(n("Clusters_Energy_MaxZ"),            tE2(tMaxZ),   50, 0, kMaxClusterE, nz, 0.5, nz+0.5);
@@ -251,9 +260,9 @@ namespace {
     void Fill(const Cluster& cl){
       const double E = cl.energy;
       energy->Fill(E);
-      firstZ->Fill(cl.firstz);
-      lastZ->Fill(cl.lastz);
-      maxZ->Fill(cl.highestz);
+      firstZ->Fill(cl.firstlayer);
+      lastZ->Fill(cl.lastlayer);
+      maxZ->Fill(cl.highestlayer);
       sizeZ->Fill(cl.sizez);
       cellsPerLayer->Fill(cl.hitTowers);
       towerImbalance->Fill(cl.highesttowerenergy/E);
@@ -268,9 +277,9 @@ namespace {
 
       e_towerImbalance->Fill(E, cl.highesttowerenergy/E);
       e_seedCellE->Fill(E, cl.highestcellenergy);
-      e_firstZ->Fill(E, cl.firstz);
-      e_lastZ->Fill(E, cl.lastz);
-      e_maxZ->Fill(E, cl.highestz);
+      e_firstZ->Fill(E, cl.firstlayer);
+      e_lastZ->Fill(E, cl.lastlayer);
+      e_maxZ->Fill(E, cl.highestlayer);
       e_sizeZ->Fill(E, cl.sizez);
       e_cellsPerLayer->Fill(E, cl.hitTowers);
     }
@@ -583,15 +592,70 @@ bool ShapeAnalyzer::Plot(){
   // is run on the same events for the seeded vs window comparisons (Comparisons/SeededVsWindow_*).
   // All thresholds come from clusterSettings (see ClusteringSettings in CommonHelperFunctions.h and the
   // SetCluster* methods in ShapeAnalyzer.h); the local names below are just shorthands.
+  // per-event cell map, filled as (z, x, y)
+  TH3F* hXYZMapEvt = new TH3F("hXYZMapEvt","",towersz, towersz_min, towersz_max, towersx, towersx_min, towersx_max, towersy, towersy_min, towersy_max);
+
+  // readout layers: the z-bins of hXYZMapEvt that hold at least one channel of the setup stored in the input
+  // file, using the same bad-channel selection as the event loop below (unless set explicitly beforehand)
+  // The segment depth of each readout layer (number of detector layers summed into it) is taken from the setup
+  // as well; without segment information in the setup it is estimated from the readout z-bin spacing.
+  {
+    std::vector<double> cellZ;
+    std::map<int,int> setupWidth;   // readout z-bin -> segment depth from the setup
+    for(int cellID = 0; cellID <= setup->GetMaxCellID(); cellID++){
+      if(!setup->ContainedInSetup(cellID)) continue;
+      const bool good = (calib.GetBadChannel(cellID) == 3) || (plotHGCROC && !calib.GetBCCalib());
+      if(!good) continue;
+      cellZ.push_back(setup->GetZ(cellID));
+      const int zb = hXYZMapEvt->GetXaxis()->FindFixBin(setup->GetZ(cellID));
+      setupWidth[zb] = std::max(setupWidth[zb], setup->GetLayersInSegment(cellID));
+    }
+    if(clusterSettings.readoutZBins.empty())
+      clusterSettings.readoutZBins = FindReadoutZBins(hXYZMapEvt->GetXaxis(), cellZ);
+    if(clusterSettings.readoutZWidths.size() != clusterSettings.readoutZBins.size()){
+      std::vector<int> w;
+      bool hasSegmentInfo = false;
+      for(int zb : clusterSettings.readoutZBins){
+        const int wz = setupWidth.count(zb) ? setupWidth[zb] : 1;
+        w.push_back(wz);
+        if(wz > 1) hasSegmentInfo = true;
+      }
+      if(!hasSegmentInfo) w = ReadoutWidthsFromSpacing(clusterSettings.readoutZBins);
+      clusterSettings.readoutZWidths = w;
+    }
+  }
   const ClusteringSettings& cs = clusterSettings;
   const double minwindow     = cs.minClusterE;     // minimum cluster energy for a cluster to be analysed
   const double seedValue     = cs.seedValue;       // minimum seed-cell energy
-  const double cellThreshold = cs.cellThreshold;   // minimum cell energy (clustering and cell/tower spectra)
-  const int    nLayers       = setup->GetNMaxLayer()+1;
+  const double cellThreshold = cs.cellThreshold;   // minimum cell E_eff (clustering and cell spectra)
+  const int    nLayers       = cs.NReadoutLayers(towersz);   // number of readout layers
   std::cout << "clustering settings: cell threshold " << cs.cellThreshold << ", seed " << cs.seedValue
             << ", grow threshold " << cs.growFraction << "*seed = " << cs.GrowThreshold()
             << ", min. cluster energy " << cs.minClusterE << ", window size " << cs.windowSize
             << ", max. clusters " << cs.maxClusters << std::endl;
+  std::cout << nLayers << " readout layers, z-bins (of " << towersz << "):";
+  for(int zb : cs.readoutZBins) std::cout << " " << zb;
+  std::cout << ", segment depths:";
+  for(int w : cs.readoutZWidths) std::cout << " " << w;
+  std::cout << std::endl;
+
+  // readout layers grouped by segment depth, ascending depth; segGroupOfZ[z] = group index of z-bin z (-1: none)
+  std::vector<int> segDepths(cs.readoutZWidths.begin(), cs.readoutZWidths.end());
+  std::sort(segDepths.begin(), segDepths.end());
+  segDepths.erase(std::unique(segDepths.begin(), segDepths.end()), segDepths.end());
+  std::vector<int> segGroupOfZ(towersz+2, -1);
+  std::vector<int> segNLayers(segDepths.size(), 0);   // readout layers per group
+  for(size_t i = 0; i < cs.readoutZBins.size() && i < cs.readoutZWidths.size(); i++){
+    const int g = std::lower_bound(segDepths.begin(), segDepths.end(), cs.readoutZWidths[i]) - segDepths.begin();
+    if(cs.readoutZBins[i] >= 1 && cs.readoutZBins[i] <= towersz) segGroupOfZ[cs.readoutZBins[i]] = g;
+    segNLayers[g]++;
+  }
+  // N_layers per z-bin (1 outside the readout layers): a readout cell with energy E counts as N_layers cells of
+  // E_eff = E/N_layers in all cell spectra (see ClusteringSettings)
+  std::vector<int> nLayOfZ(towersz+2, 1);
+  for(size_t i = 0; i < cs.readoutZBins.size() && i < cs.readoutZWidths.size(); i++)
+    if(cs.readoutZBins[i] >= 1 && cs.readoutZBins[i] <= towersz && cs.readoutZWidths[i] > 0)
+      nLayOfZ[cs.readoutZBins[i]] = cs.readoutZWidths[i];
   std::vector<Cluster> ClusterVec;
   std::vector<Cluster> ClusterVecWindow;
   double timeSeeded = 0, timeWindow = 0;   // total clustering time in us
@@ -603,10 +667,13 @@ bool ShapeAnalyzer::Plot(){
   auto eTitle = [&](const char* sub){ return TString(Form("#it{E}_{%s} (%s)", sub, eUnit.Data())); };
   auto t1     = [](const TString& x, const char* y = "counts"){ return TString(";")+x+";"+y; };
   const TString tNCl = Form("#it{N}_{clusters} (#it{E}_{cluster} > %g %s)", minwindow, eUnit.Data());
+  // all cell spectra are in E_eff = E_cell/N_layers, weighted with N_layers ("layer cells")
+  const TString tEff = Form("#it{E}_{cell}/#it{N}_{layers} (%s)", eUnit.Data());
+  const char*   tLayerCells = "layer cells";
 
   // event-level histograms (inclusive only)
-  TH1D* Cells_energy                    = new TH1D("Cells_energy",                    t1(eTitle("cell")),                100,0,300);
-  TH1D* Towers_energy                   = new TH1D("Towers_energy",                   t1(eTitle("tower")),               100,0,300);
+  TH1D* Cells_energy                    = new TH1D("Cells_energy",                    t1(tEff, tLayerCells),             kNBinsMaxCellEff,0,kMaxMaxCellEff);
+  TH1D* Towers_energy                   = new TH1D("Towers_energy",                   t1(eTitle("tower")),               100,0,kMaxTowerE);
   TH1D* Clusters_NClusters              = new TH1D("Clusters_NClusters",              t1("#it{N}_{clusters}"),           11,-0.5,10.5);
   TH1D* Clusters_energy_first           = new TH1D("Clusters_energy_first",           t1(eTitle("1st cluster")),         50,0,kMaxClusterE);
   TH1D* Clusters_energy_second          = new TH1D("Clusters_energy_second",          t1(eTitle("2nd cluster")),         50,0,kMaxClusterE);
@@ -615,22 +682,50 @@ bool ShapeAnalyzer::Plot(){
   TH1D* MuonPurity_Energy               = new TH1D("MuonPurity_energy",               t1(eTitle("cluster"), "muon-like fraction"), 50,0,kMaxClusterE);
 
   // Background (muon runs only, see IsBackgroundCluster) vs inclusive seeded clusters, both without the
-  // minwindow cluster-energy cut. Cell energies are booked over 0-50 so that the shape comparison is
-  // normalised in that range.
+  // minwindow cluster-energy cut. Cell spectra (E_eff) are booked over 0-kMaxCellEff, so the shape comparisons
+  // are normalised in that range.
   const bool isMuonRun = (species == 2);
-  TH1D* ClusterCells_energy       = new TH1D("ClusterCells_energy",       t1(eTitle("cell")),    100, 0, 10);
-  TH1D* BackgroundCells_energy    = new TH1D("BackgroundCells_energy",    t1(eTitle("cell")),    100, 0, 10);
+  TH1D* ClusterCells_energy       = new TH1D("ClusterCells_energy",       t1(tEff, tLayerCells), kNBinsCellEff, 0, 2);
+  TH1D* BackgroundCells_energy    = new TH1D("BackgroundCells_energy",    t1(tEff, tLayerCells), kNBinsCellEff, 0, 2);
   // isolated cells (all runs): below seed threshold and no neighbouring cell with energy, see FindIsolatedCells
-  TH1D* IsolatedCells_energy      = new TH1D("IsolatedCells_energy",      t1(eTitle("cell")),    100, 0, 10);
+  TH1D* IsolatedCells_energy      = new TH1D("IsolatedCells_energy",      t1(tEff, tLayerCells), kNBinsCellEff, 0, 2);
   TH1D* InclusiveClusters_energy  = new TH1D("InclusiveClusters_energy",  t1(eTitle("cluster")), 100, 0, kMaxClusterE);
   TH1D* BackgroundClusters_energy = new TH1D("BackgroundClusters_energy", t1(eTitle("cluster")), 100, 0, kMaxClusterE);
   int nBackgroundClusters = 0, nInclusiveClusters = 0;
 
+  // every cell spectrum split by segment depth (one histogram per depth group), Comparisons/SegmentDepth_*
+  std::vector<std::string> segLabels;
+  for(size_t g = 0; g < segDepths.size(); g++)
+    segLabels.push_back(Form("%d-layer segm. #times%d", segDepths[g], segNLayers[g]));
+  struct SegHists{
+    std::vector<TH1D*> h;
+    void Fill(int g, double e, double w = 1.){ if(g >= 0 && g < (int)h.size()) h[g]->Fill(e, w); }
+  };
+  auto bookSeg = [&](const char* base, TH1D* like){
+    SegHists s;
+    for(size_t g = 0; g < segDepths.size(); g++){
+      TH1D* hg = (TH1D*)like->Clone(Form("%s_Seg%dL", base, segDepths[g]));
+      hg->Reset();
+      s.h.push_back(hg);
+    }
+    return s;
+  };
+  TH1D* AllCells_energy = new TH1D("AllCells_energy", t1(tEff, tLayerCells), kNBinsCellEff, 0, kMaxCellEff);   // every cell with E > 0
+  SegHists SegAllCells        = bookSeg("AllCells_energy",        AllCells_energy);
+  SegHists SegCells           = bookSeg("Cells_energy",           Cells_energy);
+  SegHists SegClusterCells    = bookSeg("ClusterCells_energy",    ClusterCells_energy);
+  SegHists SegBackgroundCells = bookSeg("BackgroundCells_energy", BackgroundCells_energy);
+  SegHists SegIsolatedCells   = bookSeg("IsolatedCells_energy",   IsolatedCells_energy);
+
   // cluster histograms, identical sets for all clusters, muon-like and non-muon-like clusters
-  ClusterHists hAll    ("",         "seeded clustering, all clusters",  eUnit, towersx, towersy, towersz, nLayers);
-  ClusterHists hMuon   ("_Muon",    "seeded clustering, muon-like",     eUnit, towersx, towersy, towersz, nLayers);
-  ClusterHists hNonMuon("_nonMuon", "seeded clustering, non-muon-like", eUnit, towersx, towersy, towersz, nLayers);
-  ClusterHists hWindow ("_Window",  "window clustering, all clusters",  eUnit, towersx, towersy, towersz, nLayers);
+  // E_eff(max cell)/E_cluster can reach at most 1/(smallest N_layers)
+  const int    minNLayers  = segDepths.empty() ? 1 : std::max(1, segDepths.front());
+  const double maxCellImb  = 1./minNLayers;
+  ClusterHists hAll    ("",         "seeded clustering, all clusters",  eUnit, towersx, towersy, nLayers, maxCellImb);
+  ClusterHists hMuon   ("_Muon",    "seeded clustering, muon-like",     eUnit, towersx, towersy, nLayers, maxCellImb);
+  ClusterHists hNonMuon("_nonMuon", "seeded clustering, non-muon-like", eUnit, towersx, towersy, nLayers, maxCellImb);
+  ClusterHists hWindow ("_Window",  "window clustering, all clusters",  eUnit, towersx, towersy, nLayers, maxCellImb);
+  SegHists SegMaxCell = bookSeg("SeedCells_energy", hAll.seedCellE);   // max cell of analysed seeded clusters
 
   // seeded vs window, per event (only clusters with energy > minwindow are counted)
   const TString tSumE  = eTitle("#Sigma clusters");
@@ -653,9 +748,6 @@ bool ShapeAnalyzer::Plot(){
   TH2D* SeededVsWindow_LeadDist    = new TH2D("SeededVsWindow_LeadPosDiff",
                                               ";#it{x}_{lead, window} - #it{x}_{lead, seeded} (tower);#it{y}_{lead, window} - #it{y}_{lead, seeded} (tower);events",
                                               100,-3,3,100,-3,3);
-
-  // per-event cell map, filled as (z, x, y)
-  TH3F* hXYZMapEvt = new TH3F("hXYZMapEvt","",towersz, towersz_min, towersz_max, towersx, towersx_min, towersx_max, towersy, towersy_min, towersy_max);
 
   // common plot style and run header
   StyleSettingsBasics(plotSuffix);
@@ -913,7 +1005,11 @@ bool ShapeAnalyzer::Plot(){
     ClusterVecWindow.clear();
 
     // isolated cells, from the full event map (they can never be part of a seeded cluster)
-    for(float e : FindIsolatedCells(hXYZMapEvt, cs)) IsolatedCells_energy->Fill(e);
+    // (cell spectra: E_eff, weight N_layers)
+    for(const auto& c : FindIsolatedCells(hXYZMapEvt, cs)){
+      IsolatedCells_energy->Fill(c.eff, c.n);
+      SegIsolatedCells.Fill(segGroupOfZ[c.z], c.eff, c.n);
+    }
 
     // background vs inclusive clusters: every seeded cluster, no minimum cluster energy
     for(const Cluster& cl : ClusterVec){
@@ -924,11 +1020,28 @@ bool ShapeAnalyzer::Plot(){
         nBackgroundClusters++;
         BackgroundClusters_energy->Fill(cl.energy);
       }
-      for(float e : cl.cellEnergies){
-        ClusterCells_energy->Fill(e);
-        if(isBackground) BackgroundCells_energy->Fill(e);
+      for(size_t k = 0; k < cl.cellEnergies.size(); k++){
+        const float  e = cl.cellEnergies[k];   // E_eff
+        const double w = cl.cellNLayers[k];
+        const int    g = segGroupOfZ[cl.cellZ[k]];
+        ClusterCells_energy->Fill(e, w);
+        SegClusterCells.Fill(g, e, w);
+        if(isBackground){
+          BackgroundCells_energy->Fill(e, w);
+          SegBackgroundCells.Fill(g, e, w);
+        }
       }
     }
+
+    // every cell of the event map with E > 0
+    for(int y = 1; y <= towersy; y++)
+      for(int x = 1; x <= towersx; x++)
+        for(int z = 1; z <= towersz; z++){
+          const double e = hXYZMapEvt->GetBinContent(z, x, y);
+          if(e <= 0) continue;
+          AllCells_energy->Fill(e/nLayOfZ[z], nLayOfZ[z]);
+          SegAllCells.Fill(segGroupOfZ[z], e/nLayOfZ[z], nLayOfZ[z]);
+        }
 
     bool hasGoodCluster = false;
     for(size_t iCl = 0; iCl < ClusterVec.size(); iCl++){
@@ -937,6 +1050,7 @@ bool ShapeAnalyzer::Plot(){
       hasGoodCluster = true;
 
       hAll.Fill(cl);
+      SegMaxCell.Fill(segGroupOfZ[cl.highestcellz], cl.highestcellenergy);
       if(IsMuonLikeCluster(cl)) hMuon.Fill(cl);
       else                      hNonMuon.Fill(cl);
 
@@ -955,10 +1069,12 @@ bool ShapeAnalyzer::Plot(){
         for(int y = 1; y <= towersy; y++){
           double towerenergy = 0;
           for(int z = 1; z <= towersz; z++){
-            double cellenergy = hXYZMapEvt->GetBinContent(z,x,y);
-            if(cellenergy >= cellThreshold){   // same cell definition as the clustering
-              towerenergy += cellenergy;
-              Cells_energy->Fill(cellenergy);
+            const double cellenergy = hXYZMapEvt->GetBinContent(z,x,y);
+            const double eff        = cellenergy/nLayOfZ[z];
+            if(cellenergy > 0 && eff >= cellThreshold){   // same cell definition as the clustering
+              towerenergy += cellenergy;                   // tower energy: plain sum
+              Cells_energy->Fill(eff, nLayOfZ[z]);
+              SegCells.Fill(segGroupOfZ[z], eff, nLayOfZ[z]);
             }
           }
           if(towerenergy > 0) Towers_energy->Fill(towerenergy);
@@ -1036,14 +1152,34 @@ bool ShapeAnalyzer::Plot(){
     Plot1D_Comparison(BackgroundClusters_energy, InclusiveClusters_energy, "background clusters", "all clusters",
                       "BackgroundVsAll", "ClusterEnergy", true, bgLabel);
     Plot1D_Comparison({ClusterCells_energy, BackgroundCells_energy, IsolatedCells_energy},
-                      {"all clusters", "background clusters", Form("isolated cells, #it{E} < %g", seedValue)},
+                      {"all clusters", "background clusters", Form("isolated cells, #it{E}_{eff} < %g", seedValue)},
                       "BackgroundVsAll", "CellEnergy_WithIsolated", true, bgLabel);
   } else {
     std::cout << "not a muon run, skipping background-cluster comparison" << std::endl;
-    Plot1D_Comparison(IsolatedCells_energy, ClusterCells_energy, Form("isolated cells, #it{E} < %g", seedValue),
+    Plot1D_Comparison(IsolatedCells_energy, ClusterCells_energy, Form("isolated cells, #it{E}_{eff} < %g", seedValue),
                       "all clusters", "IsolatedVsAll", "CellEnergy", true);
   }
   std::cout << "isolated cells: " << IsolatedCells_energy->GetEntries() << std::endl;
+
+  //
+  // Cell energies by segment depth, Comparisons/SegmentDepth_*
+  //
+  if(segDepths.size() > 1){
+    Plot1D_Comparison(SegAllCells.h,     segLabels, "SegmentDepth", "AllCellEnergy",      true, "all cells with #it{E} > 0");
+    Plot1D_Comparison(SegCells.h,        segLabels, "SegmentDepth", "CellEnergy",         true,
+                      Form("cells with #it{E}_{cell}/#it{N}_{layers} #geq %g, events with a cluster", cellThreshold));
+    Plot1D_Comparison(SegClusterCells.h, segLabels, "SegmentDepth", "ClusterCellEnergy",  true,
+                      "cells in seeded clusters, no #it{E}_{cluster} cut");
+    Plot1D_Comparison(SegMaxCell.h,      segLabels, "SegmentDepth", "MaxCellEnergy",      true,
+                      Form("max. cell of seeded clusters, #it{E}_{cluster} > %g", minwindow));
+    Plot1D_Comparison(SegIsolatedCells.h, segLabels, "SegmentDepth", "IsolatedCellEnergy", true,
+                      Form("isolated cells, #it{E}_{cell}/#it{N}_{layers} < %g", seedValue));
+    if(isMuonRun)
+      Plot1D_Comparison(SegBackgroundCells.h, segLabels, "SegmentDepth", "BackgroundCellEnergy", true,
+                        Form("cells in background clusters (no tower with #geq %d hit layers)", kMinTrackTowerSizeZ));
+  } else {
+    std::cout << "only one segment depth, skipping segment-depth comparison" << std::endl;
+  }
 
   if(nEvts > 0)
     std::cout << "average clustering time per event: seeded " << timeSeeded/nEvts << " us, window " << timeWindow/nEvts << " us" << std::endl;

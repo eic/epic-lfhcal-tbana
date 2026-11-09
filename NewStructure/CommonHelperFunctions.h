@@ -123,42 +123,97 @@
 // All clustering thresholds in one place. Defaults are the standard settings; change them on the
 // ClusteringSettings object that is passed to DoClustering_Seeded_3D, DoClustering_Window and FindIsolatedCells
 // (in ShapeAnalyzer via its Set* methods). Energies are in the units of the event map (e.g. mip eq.).
+//
+// Effective cell energy: a readout cell sums N_layers detector layers (ClusteringSettings::readoutZWidths), so all
+// cell-level thresholds (cellThreshold, seedValue, grow threshold) are applied to E_eff = E_cell/N_layers, and in
+// cell spectra a readout cell counts as N_layers cells of E_eff (weight N_layers). Cluster, tower and layer energies
+// are plain sums of E_cell and are not affected.
 struct ClusteringSettings{
-  double cellThreshold = 3.;    // minimum cell energy to join a seeded cluster and to count in the cell-based
-                                // observables (hitTowers, maxTowerSizeZ, cell/tower spectra)
-  double seedValue     = 10.;    // minimum energy of a seed cell;
-  double growFraction  = 0.25;  // added cells with E > growFraction*seedValue grow a seeded cluster further
+  double cellThreshold = 0.5;    // minimum E_eff of a cell to join a seeded cluster and to count in the cell-based
+                                // observables (hitTowers, maxTowerSizeZ, cell spectra)
+  double seedValue     = 1.;    // minimum E_eff of a seed cell;
+  double growFraction  = 0.6;  // added cells with E_eff > growFraction*seedValue grow a seeded cluster further
   double minClusterE   = 20.;   // minimum cluster energy: window clustering stops below it, analysis cut on clusters
   int    windowSize    = 3;     // window size in towers for DoClustering_Window
   int    maxClusters   = 2;    // maximum number of clusters per event
+  std::vector<int> readoutZBins; // z-bins (event-map X axis) that hold a readout layer, ascending; they define
+                                 // the depth neighbours and the readout-layer index of the cluster observables.
+                                 // Fill with FindReadoutZBins; empty = every z-bin is a readout layer.
+  std::vector<int> readoutZWidths; // depth (in z-bins = detector layers) of the segment read out by each entry
+                                   // of readoutZBins; empty = unknown (see ReadoutWidthsFromSpacing)
 
   double GrowThreshold() const { return growFraction*seedValue; }
+  int    NReadoutLayers(int nz) const { return readoutZBins.empty() ? nz : (int)readoutZBins.size(); }
 };
+
+//__________________________________________________________________________________________________________
+// Readout z-bins of the event map: the bins of zAxis that contain at least one of the given cell z positions
+// (e.g. Setup::GetZ of all active channels in the file). Sorted, unique, out-of-range positions are ignored.
+inline std::vector<int> FindReadoutZBins(const TAxis* zAxis, const std::vector<double>& cellZ){
+  std::vector<int> bins;
+  for(double z : cellZ){
+    const int b = zAxis->FindFixBin(z);
+    if(b >= 1 && b <= zAxis->GetNbins()) bins.push_back(b);
+  }
+  std::sort(bins.begin(), bins.end());
+  bins.erase(std::unique(bins.begin(), bins.end()), bins.end());
+  return bins;
+}
+
+// Segment depth of each readout layer estimated from the spacing of the (ascending) readout z-bins, for use
+// when the setup has no segment information. Each layer gets one of its two adjacent spacings; where they
+// differ (transition between segment depths) the spacing that continues on its side is taken, e.g.
+// {3,8,13,18,26,36,46,56} -> {5,5,5,5,10,10,10,10}. Works for any number and order of segment groups that
+// have at least two layers each.
+inline std::vector<int> ReadoutWidthsFromSpacing(const std::vector<int>& zb){
+  const int n = zb.size();
+  std::vector<int> w(n, 1);
+  if(n < 2) return w;
+  std::vector<int> s(n-1);
+  for(int j = 0; j < n-1; j++) s[j] = zb[j+1]-zb[j];
+  for(int i = 0; i < n; i++){
+    const int left  = (i > 0)   ? s[i-1] : -1;
+    const int right = (i < n-1) ? s[i]   : -1;
+    if(left < 0)        { w[i] = right; continue; }
+    if(right < 0)       { w[i] = left;  continue; }
+    if(left == right)   { w[i] = left;  continue; }
+    if(i >= 2 && s[i-2] == left)      w[i] = left;    // left spacing continues a group
+    else if(i+1 < n-1 && s[i+1] == right) w[i] = right;
+    else                              w[i] = std::min(left, right);
+  }
+  return w;
+}
 
 // Observables are defined identically for both methods (see ClusteringDetail::MakeCluster):
 struct Cluster{
   Cluster(): x(0), y(0), highestx(0), highesty(0), highestz(0), highestcellx(0), highestcelly(0), highestcellz(0),
              highesttowerenergy(0), highestcellenergy(0), highestzE(0), firstz(0), lastz(0), sizez(0),
+             firstlayer(0), lastlayer(0), highestlayer(0),
              hitTowers(0), maxTowerSizeZ(0), energy(0), eventenergy(0) {}
   float x;                  // energy-weighted centroid of the cluster cells (bin units)
   float y;
   int   highestx;           // tower (cluster cells summed over z) with the largest energy
   int   highesty;
-  int   highestz;           // z-bin with the largest summed cluster energy
-  int   highestcellx;       // single cluster cell with the largest energy
+  int   highestz;           // z-bin with the largest summed E_eff (E_cell/N_layers) of the cluster cells
+  int   highestcellx;       // single cluster cell with the largest E_eff
   int   highestcelly;
   int   highestcellz;
   float highesttowerenergy; // energy of tower (highestx, highesty), cluster cells only
-  float highestcellenergy;  // energy of cell (highestcellx, highestcelly, highestcellz)
-  float highestzE;          // cluster energy in z-bin highestz
+  float highestcellenergy;  // E_eff of cell (highestcellx, highestcelly, highestcellz)
+  float highestzE;          // summed E_eff (E_cell/N_layers) of the cluster cells in z-bin highestz
   int   firstz;             // first z-bin with cluster energy
   int   lastz;              // last z-bin with cluster energy
-  int   sizez;              // number of z-bins with cluster energy
-  float hitTowers;          // average number of cells >= cellThreshold per hit z-bin (nCells/sizez)
-  int   maxTowerSizeZ;      // largest number of z-bins with a cell >= cellThreshold in any single tower (x,y)
-  float energy;             // total cluster energy
+  int   sizez;              // number of z-bins (= readout layers) with cluster energy
+  int   firstlayer;         // readout-layer index (1..N, see ClusteringSettings::readoutZBins) of firstz
+  int   lastlayer;          // readout-layer index of lastz
+  int   highestlayer;       // readout-layer index of highestz
+  float hitTowers;          // average number of readout cells with E_eff >= cellThreshold per hit z-bin (nCells/sizez)
+  int   maxTowerSizeZ;      // largest number of z-bins with a cell E_eff >= cellThreshold in any single tower (x,y)
+  float energy;             // total cluster energy (sum of E_cell)
   float eventenergy;        // total event energy before any clustering
-  std::vector<float> cellEnergies; // energies of all cells in the cluster
+  std::vector<float> cellEnergies; // E_eff of all readout cells in the cluster
+  std::vector<int>   cellZ;        // z-bin of each entry of cellEnergies
+  std::vector<int>   cellNLayers;  // N_layers of each entry of cellEnergies (weight in cell spectra)
 };
 
 namespace ClusteringDetail {
@@ -167,7 +222,9 @@ namespace ClusteringDetail {
     int   z;
     int   x;
     int   y;
-    float e;
+    float e;     // E_cell (readout cell energy)
+    float eff;   // E_eff = E_cell/n
+    int   n;     // N_layers summed in this readout cell
   };
 
   // Dense copy of the event map, indexed with the histogram's own global bin numbers
@@ -200,31 +257,74 @@ namespace ClusteringDetail {
     }
   };
 
+  // Readout layers of the event map, from ClusteringSettings::readoutZBins (all z-bins if empty).
+  // layer[z]: readout-layer index 1..N of z-bin z (0 if z holds no readout layer);
+  // zUp[z]/zDown[z]: z-bin of the next readout layer up/down from z-bin z (0 if there is none);
+  // nLayers[z]: number of detector layers summed in z-bin z (ClusteringSettings::readoutZWidths, 1 if unknown).
+  struct ReadoutLayers{
+    std::vector<int> layer;
+    std::vector<int> zUp;
+    std::vector<int> zDown;
+    std::vector<int> nLayers;
+
+    ReadoutLayers(int nz, const ClusteringSettings& settings)
+      : layer(nz+2, 0), zUp(nz+2, 0), zDown(nz+2, 0), nLayers(nz+2, 1) {
+      const std::vector<int>& readoutZBins = settings.readoutZBins;
+      for(size_t i = 0; i < readoutZBins.size() && i < settings.readoutZWidths.size(); i++)
+        if(readoutZBins[i] >= 1 && readoutZBins[i] <= nz && settings.readoutZWidths[i] > 0)
+          nLayers[readoutZBins[i]] = settings.readoutZWidths[i];
+      std::vector<int> zb;
+      for(int z : readoutZBins) if(z >= 1 && z <= nz) zb.push_back(z);
+      if(zb.empty()) for(int z = 1; z <= nz; z++) zb.push_back(z);
+      std::sort(zb.begin(), zb.end());
+      zb.erase(std::unique(zb.begin(), zb.end()), zb.end());
+      for(size_t i = 0; i < zb.size(); i++) layer[zb[i]] = i+1;
+      for(int z = 1; z <= nz; z++){
+        auto up = std::upper_bound(zb.begin(), zb.end(), z);    // first readout bin > z
+        auto lo = std::lower_bound(zb.begin(), zb.end(), z);    // first readout bin >= z
+        if(up != zb.end())   zUp[z]   = *up;
+        if(lo != zb.begin()) zDown[z] = *(lo-1);
+      }
+    }
+
+    Cell MakeCell(int z, int x, int y, float e) const {
+      const int n = nLayers[z];
+      return {z, x, y, e, e/n, n};
+    }
+  };
+
   // Common definition of all cluster observables
-  inline Cluster MakeCluster(const std::vector<Cell>& cells, double eventEnergy, double cellThreshold){
+  inline Cluster MakeCluster(const std::vector<Cell>& cells, double eventEnergy, double cellThreshold,
+                             const ReadoutLayers& layers){
     Cluster cl;
     cl.eventenergy = eventEnergy;
     if(cells.empty()) return cl;
 
     std::map<std::pair<int,int>, double> towerE;
     std::map<std::pair<int,int>, int> towerSizeZ;   // cells >= cellThreshold per tower (one cell per z-bin)
-    std::map<int, double> layerE;
+    std::map<int, double> layerE;     // sum of E_cell per z-bin
+    std::map<int, double> layerEff;   // sum of E_eff per z-bin (selects the max-energy layer)
     double sumE = 0, sumX = 0, sumY = 0;
     int nCells = 0;
     const Cell* maxCell = &cells[0];
     cl.cellEnergies.reserve(cells.size());
+    cl.cellZ.reserve(cells.size());
+    cl.cellNLayers.reserve(cells.size());
     for(const Cell& c : cells){
       sumE += c.e;
       sumX += c.e*c.x;
       sumY += c.e*c.y;
-      if(c.e > maxCell->e) maxCell = &c;
-      if(c.e >= cellThreshold){
+      if(c.eff > maxCell->eff) maxCell = &c;
+      if(c.eff >= cellThreshold){
         nCells++;
         towerSizeZ[std::make_pair(c.x, c.y)]++;
       }
       towerE[std::make_pair(c.x, c.y)] += c.e;
       layerE[c.z] += c.e;
-      cl.cellEnergies.push_back(c.e);
+      layerEff[c.z] += c.eff;
+      cl.cellEnergies.push_back(c.eff);
+      cl.cellZ.push_back(c.z);
+      cl.cellNLayers.push_back(c.n);
     }
     for(const auto& t : towerSizeZ) cl.maxTowerSizeZ = std::max(cl.maxTowerSizeZ, t.second);
 
@@ -237,7 +337,7 @@ namespace ClusteringDetail {
     cl.highestcellx      = maxCell->x;
     cl.highestcelly      = maxCell->y;
     cl.highestcellz      = maxCell->z;
-    cl.highestcellenergy = maxCell->e;
+    cl.highestcellenergy = maxCell->eff;
 
     double maxTower = -1;
     for(const auto& t : towerE){
@@ -250,7 +350,7 @@ namespace ClusteringDetail {
     cl.highesttowerenergy = maxTower;
 
     double maxLayer = -1;
-    for(const auto& l : layerE){
+    for(const auto& l : layerEff){
       if(l.second > maxLayer){
         maxLayer      = l.second;
         cl.highestz   = l.first;
@@ -261,42 +361,31 @@ namespace ClusteringDetail {
     cl.lastz     = layerE.rbegin()->first;
     cl.sizez     = layerE.size();
     cl.hitTowers = (float)nCells/cl.sizez;
+    auto layerOf = [&](int z){ return (z >= 0 && z < (int)layers.layer.size()) ? layers.layer[z] : 0; };
+    cl.firstlayer   = layerOf(cl.firstz);
+    cl.lastlayer    = layerOf(cl.lastz);
+    cl.highestlayer = layerOf(cl.highestz);
     return cl;
-  }
-
-  // z-bins of the readout layers (geometry specific). The depth neighbours of z-bin z are zUp[z] and zDown[z],
-  // the next readout layer up/down (0 if there is none).
-  inline void ReadoutLayerNeighbours(int nz, std::vector<int>& zUp, std::vector<int>& zDown){
-    static const std::vector<int> zLayers = {3,8,13,18,26,36,46,56};
-    zUp.assign(nz+2, 0);
-    zDown.assign(nz+2, 0);
-    for(int z = 1; z <= nz; z++){
-      for(int zl : zLayers){
-        if(zl > z && zl <= nz){ zUp[z] = zl; break; }
-      }
-      for(auto it = zLayers.rbegin(); it != zLayers.rend(); ++it){
-        if(*it < z && *it >= 1){ zDown[z] = *it; break; }
-      }
-    }
   }
 }
 
 //__________________________________________________________________________________________________________
-// Isolated cells: cells with 0 < E < settings.seedValue that have no other cell with E > 0 in the clustering
-// neighbourhood (3x3 in x,y on the same z-bin and on the next readout layer up/down, as in DoClustering_Seeded_3D).
-// Such cells can never be part of a seeded cluster. The input histogram is not modified.
-inline std::vector<float> FindIsolatedCells(TH3F* hXYZMapEvt, const ClusteringSettings& settings = ClusteringSettings()){
+// Isolated cells: cells with E > 0 and E_eff < settings.seedValue that have no other cell with E > 0 in the
+// clustering neighbourhood (3x3 in x,y on the same z-bin and on the next readout layer up/down, as in
+// DoClustering_Seeded_3D). Such cells can never be part of a seeded cluster. The input histogram is not modified.
+inline std::vector<ClusteringDetail::Cell> FindIsolatedCells(TH3F* hXYZMapEvt, const ClusteringSettings& settings = ClusteringSettings()){
   const double seedvalue = settings.seedValue;
   ClusteringDetail::EventGrid grid(hXYZMapEvt);
-  std::vector<int> zUp, zDown;
-  ClusteringDetail::ReadoutLayerNeighbours(grid.nz, zUp, zDown);
+  const ClusteringDetail::ReadoutLayers layers(grid.nz, settings);
+  const std::vector<int>& zUp   = layers.zUp;
+  const std::vector<int>& zDown = layers.zDown;
 
-  std::vector<float> isolated;
+  std::vector<ClusteringDetail::Cell> isolated;
   for(int y = 1; y <= grid.ny; y++)
     for(int x = 1; x <= grid.nx; x++)
       for(int z = 1; z <= grid.nz; z++){
         const float e = grid.e[grid.Bin(z,x,y)];
-        if(e <= 0 || e >= seedvalue) continue;
+        if(e <= 0 || e/layers.nLayers[z] >= seedvalue) continue;
         bool hasNeighbour = false;
         const int zNeighbours[3] = {zDown[z], z, zUp[z]};
         for(int zz : zNeighbours){
@@ -308,15 +397,15 @@ inline std::vector<float> FindIsolatedCells(TH3F* hXYZMapEvt, const ClusteringSe
             }
           if(hasNeighbour) break;
         }
-        if(!hasNeighbour) isolated.push_back(e);
+        if(!hasNeighbour) isolated.push_back(layers.MakeCell(z, x, y, e));
       }
   return isolated;
 }
 
 //__________________________________________________________________________________________________________
-// Seeded clustering: the highest remaining cell >= seedValue starts a cluster. Cells >= cellThreshold in the
-// 3x3 neighbourhood of a cluster cell (same layer and next readout layer up/down) are added; added cells with
-// E > growFraction*seedValue are themselves used to grow the cluster further.
+// Seeded clustering: the remaining cell with the highest E_eff >= seedValue starts a cluster. Cells with
+// E_eff >= cellThreshold in the 3x3 neighbourhood of a cluster cell (same layer and next readout layer up/down)
+// are added; added cells with E_eff > growFraction*seedValue are themselves used to grow the cluster further.
 // minClusterE is not used here, the cluster energy cut is applied by the caller.
 inline std::vector<Cluster> DoClustering_Seeded_3D(TH3F* hXYZMapEvt, const ClusteringSettings& settings = ClusteringSettings()){
   using ClusteringDetail::Cell;
@@ -325,19 +414,21 @@ inline std::vector<Cluster> DoClustering_Seeded_3D(TH3F* hXYZMapEvt, const Clust
   const int    maxClusters   = settings.maxClusters;
   std::vector<Cluster> clusters;
   ClusteringDetail::EventGrid grid(hXYZMapEvt);
+  const ClusteringDetail::ReadoutLayers layers(grid.nz, settings);
+  const std::vector<int>& zUp   = layers.zUp;
+  const std::vector<int>& zDown = layers.zDown;
 
-  std::vector<int> zUp, zDown;
-  ClusteringDetail::ReadoutLayerNeighbours(grid.nz, zUp, zDown);
-
-  // seed candidates, highest first
+  // seed candidates, highest E_eff first
   std::vector<Cell> seeds;
   for(int y = 1; y <= grid.ny; y++)
     for(int x = 1; x <= grid.nx; x++)
       for(int z = 1; z <= grid.nz; z++){
         float e = grid.e[grid.Bin(z,x,y)];
-        if(e >= seedvalue) seeds.push_back({z, x, y, e});
+        if(e <= 0) continue;
+        Cell c = layers.MakeCell(z, x, y, e);
+        if(c.eff >= seedvalue) seeds.push_back(c);
       }
-  std::sort(seeds.begin(), seeds.end(), [](const Cell& a, const Cell& b){ return a.e > b.e; });
+  std::sort(seeds.begin(), seeds.end(), [](const Cell& a, const Cell& b){ return a.eff > b.eff; });
 
   const double growThreshold = settings.GrowThreshold();
   std::vector<Cell> members;
@@ -363,16 +454,17 @@ inline std::vector<Cluster> DoClustering_Seeded_3D(TH3F* hXYZMapEvt, const Clust
           for(int yy = std::max(1, cur.y-1); yy <= std::min(grid.ny, cur.y+1); yy++){
             int bin = grid.Bin(zz, xx, yy);
             float e = grid.e[bin];
-            if(e <= 0 || e < cellThreshold) continue;
-            Cell c = {zz, xx, yy, e};
+            if(e <= 0) continue;
+            Cell c = layers.MakeCell(zz, xx, yy, e);
+            if(c.eff < cellThreshold) continue;
             grid.Consume(hXYZMapEvt, bin);
             members.push_back(c);
-            if(e > growThreshold) toGrow.push_back(c);
+            if(c.eff > growThreshold) toGrow.push_back(c);
           }
         }
       }
     }
-    clusters.push_back(ClusteringDetail::MakeCluster(members, grid.total, cellThreshold));
+    clusters.push_back(ClusteringDetail::MakeCluster(members, grid.total, cellThreshold, layers));
   }
   return clusters;
 }
@@ -389,6 +481,7 @@ inline std::vector<Cluster> DoClustering_Window(TH3F* hXYZMapEvt, const Clusteri
   const int    maxClusters   = settings.maxClusters;
   std::vector<Cluster> clusters;
   ClusteringDetail::EventGrid grid(hXYZMapEvt);
+  const ClusteringDetail::ReadoutLayers layers(grid.nz, settings);
   const int nx = grid.nx;
   const int ny = grid.ny;
   const int nz = grid.nz;
@@ -415,7 +508,7 @@ inline std::vector<Cluster> DoClustering_Window(TH3F* hXYZMapEvt, const Clusteri
           int bin = grid.Bin(z,x,y);
           float e = grid.e[bin];
           if(e == 0) continue;
-          members.push_back({z, x, y, e});
+          members.push_back(layers.MakeCell(z, x, y, e));
           grid.Consume(hXYZMapEvt, bin);
         }
         T(x,y) = 0.;
@@ -454,7 +547,7 @@ inline std::vector<Cluster> DoClustering_Window(TH3F* hXYZMapEvt, const Clusteri
     if(members.empty()) collect(bi, bi+wx-1, bj, bj+wy-1);   // re-centred window empty: use the best window
     if(members.empty()) break;
 
-    clusters.push_back(ClusteringDetail::MakeCluster(members, grid.total, cellThreshold));
+    clusters.push_back(ClusteringDetail::MakeCluster(members, grid.total, cellThreshold, layers));
   }
   return clusters;
 }
