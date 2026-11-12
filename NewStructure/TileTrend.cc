@@ -10,6 +10,13 @@
 #include "TileTrend.h"
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
+#include "TSpectrum.h"
+
+struct PeakInfo {
+  double xCenter = -999;
+  double fwhm = -999;  // full width at half maximum
+  double sigma = -999; // Gaussian-like sigma estimate
+};
 
 ClassImp(TileTrend);
 
@@ -34,68 +41,214 @@ ClassImp(TileTrend);
  * @return True if the calibration values are recorded successfully.
  */
 //===============================================================================
-bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt, int pdg,  double hgmaxerr, double lgmaxerr, double tempE, double temper){
-  gTrendLGped   .AddPoint     (x,tc.PedestalMeanL);
-  gTrendLGped   .SetPointError(gTrendLGped.GetN()-1,0.,tc.PedestalSigL);
-  if(tc.PedestalMeanL<MinLGped && tc.PedestalMeanL > -100) MinLGped=tc.PedestalMeanL;
-  if(tc.PedestalMeanL>MaxLGped) MaxLGped=tc.PedestalMeanL;
-  
-  gTrendHGped   .AddPoint     (x,tc.PedestalMeanH);
-  gTrendHGped   .SetPointError(gTrendHGped.GetN()-1,0.,tc.PedestalSigH);
-  if(tc.PedestalMeanH<MinHGped && tc.PedestalMeanH > -100) MinHGped=tc.PedestalMeanH;
-  if(tc.PedestalMeanH>MaxHGped) MaxHGped=tc.PedestalMeanH;
+bool TileTrend::Fill(double x, const TileCalib &tc, int runNr, double volt, int pdg, double hgmaxerr, double lgmaxerr,
+                     double tempE, double temper) {
+  gTrendLGped.AddPoint(x, tc.PedestalMeanL);
+  gTrendLGped.SetPointError(gTrendLGped.GetN() - 1, 0., tc.PedestalSigL);
+  if (tc.PedestalMeanL < MinLGped && tc.PedestalMeanL > -100)
+    MinLGped = tc.PedestalMeanL;
+  if (tc.PedestalMeanL > MaxLGped)
+    MaxLGped = tc.PedestalMeanL;
 
-  gTrendLGpedwidth   .AddPoint     (x,tc.PedestalSigL);
-  gTrendLGpedwidth   .SetPointError(gTrendLGpedwidth.GetN()-1,0.,0.);
-  if(tc.PedestalSigL<MinLGpedwidth && tc.PedestalSigL > -100) MinLGpedwidth=tc.PedestalSigL;
-  if(tc.PedestalSigL>MaxLGpedwidth) MaxLGpedwidth=tc.PedestalSigL;
-  
-  gTrendHGpedwidth   .AddPoint     (x,tc.PedestalSigH);
-  gTrendHGpedwidth   .SetPointError(gTrendHGpedwidth.GetN()-1,0.,0.);
-  if(tc.PedestalSigH<MinHGpedwidth && tc.PedestalSigH > -100) MinHGpedwidth=tc.PedestalSigH;
-  if(tc.PedestalSigH>MaxHGpedwidth) MaxHGpedwidth=tc.PedestalSigH;
-  
-  gTrendLGscale .AddPoint     (x,tc.ScaleL       );
+  gTrendHGped.AddPoint(x, tc.PedestalMeanH);
+  gTrendHGped.SetPointError(gTrendHGped.GetN() - 1, 0., tc.PedestalSigH);
+  if (tc.PedestalMeanH < MinHGped && tc.PedestalMeanH > -100)
+    MinHGped = tc.PedestalMeanH;
+  if (tc.PedestalMeanH > MaxHGped)
+    MaxHGped = tc.PedestalMeanH;
+
+  gTrendLGpedwidth.AddPoint(x, tc.PedestalSigL);
+  gTrendLGpedwidth.SetPointError(gTrendLGpedwidth.GetN() - 1, 0., 0.);
+  if (tc.PedestalSigL < MinLGpedwidth && tc.PedestalSigL > -100)
+    MinLGpedwidth = tc.PedestalSigL;
+  if (tc.PedestalSigL > MaxLGpedwidth)
+    MaxLGpedwidth = tc.PedestalSigL;
+
+  gTrendHGpedwidth.AddPoint(x, tc.PedestalSigH);
+  gTrendHGpedwidth.SetPointError(gTrendHGpedwidth.GetN() - 1, 0., 0.);
+  if (tc.PedestalSigH < MinHGpedwidth && tc.PedestalSigH > -100)
+    MinHGpedwidth = tc.PedestalSigH;
+  if (tc.PedestalSigH > MaxHGpedwidth)
+    MaxHGpedwidth = tc.PedestalSigH;
+
+  gTrendLGscale.AddPoint(x, tc.ScaleL);
   if (lgmaxerr > -10000.)
-    gTrendLGscale .SetPointError(gTrendLGscale.GetN()-1,0.,lgmaxerr);
-  else 
-    gTrendLGscale .SetPointError(gTrendLGscale.GetN()-1,0.,tc.ScaleWidthL);
-  if(tc.ScaleL<MinLGscale && tc.ScaleL > 0) MinLGscale=tc.ScaleL;
-  if(tc.ScaleL>MaxLGscale) MaxLGscale=tc.ScaleL;
-  
-  gTrendHGscale .AddPoint     (x,tc.ScaleH       );
+    gTrendLGscale.SetPointError(gTrendLGscale.GetN() - 1, 0., lgmaxerr);
+  else
+    gTrendLGscale.SetPointError(gTrendLGscale.GetN() - 1, 0., tc.ScaleWidthL);
+  if (tc.ScaleL < MinLGscale && tc.ScaleL > 0)
+    MinLGscale = tc.ScaleL;
+  if (tc.ScaleL > MaxLGscale)
+    MaxLGscale = tc.ScaleL;
+
+  gTrendHGscale.AddPoint(x, tc.ScaleH);
   if (hgmaxerr > -10000.)
-    gTrendHGscale .SetPointError(gTrendHGscale.GetN()-1,0.,hgmaxerr);
-  else 
-    gTrendHGscale .SetPointError(gTrendHGscale.GetN()-1,0.,tc.ScaleWidthH);
-  if(tc.ScaleH<MinHGscale  && tc.ScaleH > 0) MinHGscale=tc.ScaleH;
-  if(tc.ScaleH>MaxHGscale) MaxHGscale=tc.ScaleH;
-  
-  gTrendHGLGcorr.AddPoint     (x,tc.HGLGCorr     );
-  gTrendHGLGcorr.SetPointError(gTrendHGLGcorr.GetN()-1,0.,0.);
-  if(tc.HGLGCorr<MinHGLGcorr && tc.HGLGCorr > 0) MinHGLGcorr=tc.HGLGCorr;
-  if(tc.HGLGCorr>MaxHGLGcorr && tc.HGLGCorr > 0) MaxHGLGcorr=tc.HGLGCorr;
+    gTrendHGscale.SetPointError(gTrendHGscale.GetN() - 1, 0., hgmaxerr);
+  else
+    gTrendHGscale.SetPointError(gTrendHGscale.GetN() - 1, 0., tc.ScaleWidthH);
+  if (tc.ScaleH < MinHGscale && tc.ScaleH > 0)
+    MinHGscale = tc.ScaleH;
+  if (tc.ScaleH > MaxHGscale)
+    MaxHGscale = tc.ScaleH;
 
-  gTrendHGLGOffset.AddPoint     (x,tc.HGLGCorrOff     );
-  gTrendHGLGOffset.SetPointError(gTrendHGLGOffset.GetN()-1,0.,0.);
-  if(tc.HGLGCorrOff<MinHGLGOff && tc.HGLGCorrOff != -1000.) MinHGLGOff=tc.HGLGCorrOff;
-  if(tc.HGLGCorrOff>MaxHGLGOff && tc.HGLGCorrOff != -1000.) MaxHGLGOff=tc.HGLGCorrOff;
-  
-  gTrendLGHGcorr.AddPoint     (x,tc.LGHGCorr     );
-  gTrendLGHGcorr.SetPointError(gTrendLGHGcorr.GetN()-1,0.,0.);
-  if(tc.LGHGCorr<MinLGHGcorr && tc.LGHGCorr > 0) MinLGHGcorr=tc.LGHGCorr;
-  if(tc.LGHGCorr>MaxLGHGcorr && tc.LGHGCorr > 0) MaxLGHGcorr=tc.LGHGCorr;
+  gTrendHGLGcorr.AddPoint(x, tc.HGLGCorr);
+  gTrendHGLGcorr.SetPointError(gTrendHGLGcorr.GetN() - 1, 0., 0.);
+  if (tc.HGLGCorr < MinHGLGcorr && tc.HGLGCorr > 0)
+    MinHGLGcorr = tc.HGLGCorr;
+  if (tc.HGLGCorr > MaxHGLGcorr && tc.HGLGCorr > 0)
+    MaxHGLGcorr = tc.HGLGCorr;
 
-  gTrendLGHGOffset.AddPoint     (x,tc.LGHGCorrOff     );
-  gTrendLGHGOffset.SetPointError(gTrendLGHGOffset.GetN()-1,0.,0.);
-  if(tc.LGHGCorrOff<MinLGHGOff && tc.LGHGCorrOff != -1000.) MinLGHGOff=tc.LGHGCorrOff;
-  if(tc.LGHGCorrOff>MaxLGHGOff && tc.LGHGCorrOff != -1000.) MaxLGHGOff=tc.LGHGCorrOff;
-  
+  gTrendHGLGOffset.AddPoint(x, tc.HGLGCorrOff);
+  gTrendHGLGOffset.SetPointError(gTrendHGLGOffset.GetN() - 1, 0., 0.);
+  if (tc.HGLGCorrOff < MinHGLGOff && tc.HGLGCorrOff != -1000.)
+    MinHGLGOff = tc.HGLGCorrOff;
+  if (tc.HGLGCorrOff > MaxHGLGOff && tc.HGLGCorrOff != -1000.)
+    MaxHGLGOff = tc.HGLGCorrOff;
+
+  gTrendLGHGcorr.AddPoint(x, tc.LGHGCorr);
+  gTrendLGHGcorr.SetPointError(gTrendLGHGcorr.GetN() - 1, 0., 0.);
+  if (tc.LGHGCorr < MinLGHGcorr && tc.LGHGCorr > 0)
+    MinLGHGcorr = tc.LGHGCorr;
+  if (tc.LGHGCorr > MaxLGHGcorr && tc.LGHGCorr > 0)
+    MaxLGHGcorr = tc.LGHGCorr;
+
+  gTrendLGHGOffset.AddPoint(x, tc.LGHGCorrOff);
+  gTrendLGHGOffset.SetPointError(gTrendLGHGOffset.GetN() - 1, 0., 0.);
+  if (tc.LGHGCorrOff < MinLGHGOff && tc.LGHGCorrOff != -1000.)
+    MinLGHGOff = tc.LGHGCorrOff;
+  if (tc.LGHGCorrOff > MaxLGHGOff && tc.LGHGCorrOff != -1000.)
+    MaxLGHGOff = tc.LGHGCorrOff;
+
   voltages.push_back(volt);
   runNrs.push_back(runNr);
   pdgs.push_back(pdg);
   energy.push_back(tempE);
   temp.push_back(temper);
+  return true;
+}
+
+//===============================================================================
+/**
+ * @brief Store the per-run extended spectra and profiles for this cell.
+ *
+ * The provided histograms and profiles are copied into the internal run-indexed maps,
+ * normalized according to the selected trend mode, and the min/max bookkeeping used
+ * by the plotting helpers is updated.
+ *
+ * @param x Trend coordinate for the current run.
+ * @param triggers Number of triggers used to normalize the stored spectra.
+ * @param runNr Run identifier used as the map key.
+ * @param histHG High-gain spectrum for the run.
+ * @param histLG Low-gain spectrum for the run.
+ * @param profLGHG Correlation profile to be stored for the run.
+ * @param wave Optional waveform profile to be stored for the run.
+ * @return True if the extended data were stored successfully.
+ */
+//===============================================================================
+bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D *histHG, TH1D *histLG, TProfile *profLGHG,
+                             TProfile *wave) {
+
+  if (extended == 1 || extended == 2) {
+
+    gTrendTrigger.AddPoint(x, triggers);
+    gTrendTrigger.SetPointError(gTrendTrigger.GetN() - 1, 0., 0.);
+    if (triggers < MinTrigg)
+      MinTrigg = triggers;
+    if (triggers > MaxTrigg)
+      MaxTrigg = triggers;
+
+    if (histHG) {
+      TH1D temp = *histHG;
+      temp.SetName(Form("%s_Run%i", histHG->GetName(), runNr));
+      temp.SetDirectory(0);
+      if (triggers > 0.)
+        temp.Scale(1. / triggers);
+      temp.GetYaxis()->SetTitle("Counts/ local mip trigger");
+      temp.Rebin(2);
+      if (MinHGSpec > 1. / triggers && triggers > 0.)
+        MinHGSpec = (double)1. / triggers;
+      if (MaxHGSpec < temp.GetMaximum())
+        MaxHGSpec = temp.GetMaximum();
+      HGTriggRuns[runNr] = temp;
+    }
+    if (histLG) {
+      TH1D temp2 = *histLG;
+      temp2.SetName(Form("%s_Run%i", histLG->GetName(), runNr));
+      temp2.SetDirectory(0);
+      if (triggers > 0.)
+        temp2.Scale(1. / triggers);
+      temp2.GetYaxis()->SetTitle("Counts/ local mip trigger");
+      if (MinLGSpec > 1. / triggers && triggers > 0.)
+        MinLGSpec = (double)1. / triggers;
+      if (MaxLGSpec < temp2.GetMaximum())
+        MaxLGSpec = temp2.GetMaximum();
+      LGTriggRuns[runNr] = temp2;
+    }
+  }
+  if (profLGHG) {
+    TProfile temp3 = *profLGHG;
+    temp3.SetName(Form("%s_Run%i", profLGHG->GetName(), runNr));
+    temp3.SetDirectory(0);
+    // temp3.Scale(1./triggers);
+    LGHGTriggRuns[runNr] = temp3;
+  }
+
+  if (wave) {
+    TProfile temp = *wave;
+    temp.SetName(Form("%s_Run%i", wave->GetName(), runNr));
+    temp.SetDirectory(0);
+    if (MaxInjADC < temp.GetMaximum())
+      MaxInjADC = temp.GetMaximum();
+    Wave1DProf[runNr] = temp;
+  }
+
+  if (extended == 4) {
+    if (histHG) {
+      TH1D temp = *histHG;
+      temp.SetName(Form("%s_Run%i", histHG->GetName(), runNr));
+      temp.SetDirectory(0);
+      double scaler = 1. / temp.GetEntries();
+      if (scaler > 0.) {
+        temp.Scale(scaler);
+      } else {
+        scaler = 1.;
+      }
+      temp.GetYaxis()->SetTitle("Counts/ trigger");
+      TString name = histHG->GetName();
+      if (name.Contains("TOT")) {
+        temp.Rebin(8);
+      } else
+        temp.Rebin(2);
+      if (MinHGSpec > scaler)
+        MinHGSpec = (double)scaler;
+      if (MaxHGSpec < temp.GetMaximum())
+        MaxHGSpec = temp.GetMaximum();
+      HGTriggRuns[runNr] = temp;
+    }
+    if (histLG) {
+      TH1D temp2 = *histLG;
+      temp2.SetName(Form("%s_Run%i", histLG->GetName(), runNr));
+      temp2.SetDirectory(0);
+      if (triggers > 0.)
+        temp2.Scale(1. / triggers);
+      temp2.GetYaxis()->SetTitle("Counts/ trigger");
+      if (MinLGSpec > 1. / triggers && triggers > 0.)
+        MinLGSpec = (double)1. / triggers;
+      if (MaxLGSpec < temp2.GetMaximum())
+        MaxLGSpec = temp2.GetMaximum();
+      LGTriggRuns[runNr] = temp2;
+    }
+    if (wave) {
+      TProfile temp = *wave;
+      // std::cout << "filling wave " <<  wave->GetName() << std::endl;
+      temp.SetName(Form("%s_Run%i", wave->GetName(), runNr));
+      temp.SetDirectory(0);
+      if (MaxInjADC < temp.GetMaximum())
+        MaxInjADC = temp.GetMaximum();
+      Wave1DProf[runNr] = temp;
+    }
+  }
+
   return true;
 }
 
@@ -107,104 +260,81 @@ bool TileTrend::Fill(double x, const TileCalib& tc, int runNr, double volt, int 
  * normalizes them when needed, and updates the min/max statistics used by the plotting
  * layers.
  *
- * @param x Trend coordinate for this run.
- * @param triggers Number of triggers used to normalize the spectra.
- * @param runNr Run identifier used as the map key.
- * @param histHG High-gain spectrum for the run.
- * @param histLG Low-gain spectrum for the run.
- * @param profLGHG Correlation profile to be stored for the run.
- * @param wave Optional waveform profile to be recorded.
- * @return True if the extended data were stored successfully.
  */
 //===============================================================================
-bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH1D* histLG, TProfile* profLGHG, TProfile* wave ){
-  
-  if (extended == 1 || extended == 2 ){
-    
-    gTrendTrigger.AddPoint     (x,triggers     );
-    gTrendTrigger.SetPointError(gTrendTrigger.GetN()-1,0.,0.);
-    if(triggers<MinTrigg) MinTrigg  = triggers;
-    if(triggers>MaxTrigg) MaxTrigg  = triggers;
-    
-    if (histHG){
-      TH1D temp = *histHG;
-      temp.SetName(Form("%s_Run%i",histHG->GetName(),runNr));
-      temp.SetDirectory(0);
-      if(triggers > 0. ) temp.Scale(1./triggers);
-      temp.GetYaxis()->SetTitle("Counts/ local mip trigger");
-      temp.Rebin(2);
-      if (MinHGSpec > 1./triggers && triggers > 0.) MinHGSpec = (double)1./triggers;
-      if (MaxHGSpec < temp.GetMaximum()) MaxHGSpec = temp.GetMaximum();
-      HGTriggRuns[runNr] = temp;
-    }
-    if (histLG){
-      TH1D temp2 = *histLG;
-      temp2.SetName(Form("%s_Run%i",histLG->GetName(),runNr));
-      temp2.SetDirectory(0);
-      if(triggers > 0. ) temp2.Scale(1./triggers);
-      temp2.GetYaxis()->SetTitle("Counts/ local mip trigger");
-      if (MinLGSpec > 1./triggers && triggers > 0.) MinLGSpec = (double)1./triggers;
-      if (MaxLGSpec < temp2.GetMaximum()) MaxLGSpec = temp2.GetMaximum();
-      LGTriggRuns[runNr] = temp2;
-    }
+bool TileTrend::FillHGCROCDetailed(double x, int triggers, int runNr, TH1D *histADC, TH1D *histTOA, TH1D *histTOT,
+                                   TProfile *wave, TProfile *prof2D) {
+  if (extended != 4) {
+    std::cout << "TileTrend::FillHGCROCDetailed() is only valid for extended==4 mode." << std::endl;
+    return false;
   }
-  if (profLGHG){
-    TProfile temp3 = *profLGHG;
-    temp3.SetName(Form("%s_Run%i",profLGHG->GetName(),runNr));
+
+  if (histADC) {
+    TH1D temp = *histADC;
+    temp.SetName(Form("%s_Run%i", histADC->GetName(), runNr));
+    temp.SetDirectory(0);
+    double scaler = 1. / temp.GetEntries();
+    if (scaler > 0.) {
+      temp.Scale(scaler);
+    } else {
+      scaler = 1.;
+    }
+    temp.GetYaxis()->SetTitle("Counts/ trigger");
+    TString name = histADC->GetName();
+    temp.Rebin(2);
+    if (MinHGSpec > scaler)
+      MinHGSpec = (double)scaler;
+    if (MaxHGSpec < temp.GetMaximum())
+      MaxHGSpec = temp.GetMaximum();
+    HGTriggRuns[runNr] = temp;
+  }
+
+  if (histTOT) {
+    TH1D temp = *histTOT;
+    temp.SetName(Form("%s_Run%i", histTOT->GetName(), runNr));
+    temp.SetDirectory(0);
+    double scaler = 1. / temp.GetEntries();
+    if (scaler > 0.) {
+      temp.Scale(scaler);
+    } else {
+      scaler = 1.;
+    }
+    temp.GetYaxis()->SetTitle("Counts/ trigger");
+    temp.Rebin(8);
+    if (MinTOTSpec > scaler)
+      MinTOTSpec = (double)scaler;
+    if (MaxTOTSpec < temp.GetMaximum())
+      MaxTOTSpec = temp.GetMaximum();
+    TOTRuns[runNr] = temp;
+  }
+
+  if (wave) {
+    TProfile temp = *wave;
+    // std::cout << "filling wave " <<  wave->GetName() << std::endl;
+    temp.SetName(Form("%s_Run%i", wave->GetName(), runNr));
+    temp.SetDirectory(0);
+    if (MaxInjADC < temp.GetMaximum())
+      MaxInjADC = temp.GetMaximum();
+    Wave1DProf[runNr] = temp;
+  }
+  if (histTOA) {
+    TH1D temp3 = *histTOA;
+    temp3.SetName(Form("%s_Run%i", histTOA->GetName(), runNr));
     temp3.SetDirectory(0);
-    // temp3.Scale(1./triggers);
-    LGHGTriggRuns[runNr] = temp3;
+    double scaler = 1. / temp3.GetEntries();
+    if (scaler > 0.) {
+      temp3.Scale(scaler);
+    } else {
+      scaler = 1.;
+    }
+    if (MinTOASpec > scaler)
+      MinTOASpec = (double)scaler;
+    if (MaxTOASpec < temp3.GetMaximum())
+      MaxTOASpec = temp3.GetMaximum();
+
+    TOARuns[runNr] = temp3;
   }
-  
-  if (wave){
-      TProfile temp = *wave;
-      temp.SetName(Form("%s_Run%i",wave->GetName(),runNr));
-      temp.SetDirectory(0);
-      if (MaxInjADC < temp.GetMaximum()) MaxInjADC = temp.GetMaximum();
-      Wave1DProf[runNr] = temp;
-    }
-  
-  if (extended == 4){
-    if (histHG){
-      TH1D temp = *histHG;
-      temp.SetName(Form("%s_Run%i",histHG->GetName(),runNr));
-      temp.SetDirectory(0);
-      double scaler = 1./temp.GetEntries();
-      if(scaler > 0. ){ 
-        temp.Scale(scaler);
-      } else {
-        scaler = 1.;
-      }
-      temp.GetYaxis()->SetTitle("Counts/ trigger");
-      TString name = histHG->GetName();
-      if (name.Contains("TOT")){
-        temp.Rebin(8);
-      } else 
-        temp.Rebin(2);
-      if (MinHGSpec > scaler) MinHGSpec = (double)scaler;
-      if (MaxHGSpec < temp.GetMaximum()) MaxHGSpec = temp.GetMaximum();
-      HGTriggRuns[runNr] = temp;
-    }
-    if (histLG){
-      TH1D temp2 = *histLG;
-      temp2.SetName(Form("%s_Run%i",histLG->GetName(),runNr));
-      temp2.SetDirectory(0);
-      if(triggers > 0. ) temp2.Scale(1./triggers);
-      temp2.GetYaxis()->SetTitle("Counts/ trigger");
-      if (MinLGSpec > 1./triggers && triggers > 0.) MinLGSpec = (double)1./triggers;
-      if (MaxLGSpec < temp2.GetMaximum()) MaxLGSpec = temp2.GetMaximum();
-      LGTriggRuns[runNr] = temp2;
-    }
-    if (wave){
-      TProfile temp = *wave;
-      // std::cout << "filling wave " <<  wave->GetName() << std::endl;
-      temp.SetName(Form("%s_Run%i",wave->GetName(),runNr));
-      temp.SetDirectory(0);
-      if (MaxInjADC < temp.GetMaximum()) MaxInjADC = temp.GetMaximum();
-      Wave1DProf[runNr] = temp;
-    }
-  }
-  
+
   return true;
 }
 
@@ -230,52 +360,53 @@ bool TileTrend::FillExtended(double x, int triggers, int runNr, TH1D* histHG, TH
  * @return True if the injection profile was recorded successfully.
  */
 //===============================================================================
-bool TileTrend::FillInjection(
-                                double x, double ped, int runNr, 
-                                TProfile* wave, TProfile* toa, TProfile* tot, 
-                                double val_rf, double val_cf, double val_cfcomp, double val_cc, double val_inj
-                              ){
-  
-  if (extended != 3 ){
+bool TileTrend::FillInjection(double x, double ped, int runNr, TProfile *wave, TProfile *toa, TProfile *tot,
+                              double val_rf, double val_cf, double val_cfcomp, double val_cc, double val_inj) {
+
+  if (extended != 3) {
     std::cout << "This option Filling option isn't implemented for the current extended option" << std::endl;
     return false;
   }
 
-  gTrendHGped.AddPoint     (x,ped     );
-  gTrendHGped.SetPointError     (gTrendHGped.GetN()-1,0.,0.);
+  gTrendHGped.AddPoint(x, ped);
+  gTrendHGped.SetPointError(gTrendHGped.GetN() - 1, 0., 0.);
 
-  if(ped<MinHGped) MinHGped  = ped;
-  if(ped>MaxHGped) MaxHGped  = ped;
-    
-  if (wave){
+  if (ped < MinHGped)
+    MinHGped = ped;
+  if (ped > MaxHGped)
+    MaxHGped = ped;
+
+  if (wave) {
     TProfile temp = *wave;
-    temp.SetName(Form("%s_Run%i",wave->GetName(),runNr));
+    temp.SetName(Form("%s_Run%i", wave->GetName(), runNr));
     temp.SetDirectory(0);
     MinHGSpec = 0;
-    if (MaxInjADC < temp.GetMaximum()) MaxInjADC = temp.GetMaximum();
+    if (MaxInjADC < temp.GetMaximum())
+      MaxInjADC = temp.GetMaximum();
     Wave1DProf[runNr] = temp;
   }
-  
-  if (toa){
+
+  if (toa) {
     TProfile temp = *toa;
-    temp.SetName(Form("%s_Run%i",toa->GetName(),runNr));
+    temp.SetName(Form("%s_Run%i", toa->GetName(), runNr));
     temp.SetDirectory(0);
     TOAProf[runNr] = temp;
   }
-  if (tot){
+  if (tot) {
     TProfile temp = *tot;
-    temp.SetName(Form("%s_Run%i",tot->GetName(),runNr));
-    if (MaxInjTOT < temp.GetMaximum()) MaxInjTOT = temp.GetMaximum();
+    temp.SetName(Form("%s_Run%i", tot->GetName(), runNr));
+    if (MaxInjTOT < temp.GetMaximum())
+      MaxInjTOT = temp.GetMaximum();
     temp.SetDirectory(0);
     TOTProf[runNr] = temp;
   }
-  
+
   rf.push_back(val_rf);
   cf.push_back(val_cf);
   cfcomp.push_back(val_cfcomp);
   cc.push_back(val_cc);
   inj.push_back(val_inj);
-  
+
   return true;
 }
 
@@ -292,7 +423,7 @@ bool TileTrend::FillInjection(
  * @param val_cc CC configuration value.
  * @param val_inj Injection setting value.
  */
-void TileTrend::FillHGCROCSetting (double val_rf, double val_cf, double val_cfcomp, double val_cc, double val_inj){
+void TileTrend::FillHGCROCSetting(double val_rf, double val_cf, double val_cfcomp, double val_cc, double val_inj) {
   rf.push_back(val_rf);
   cf.push_back(val_cf);
   cfcomp.push_back(val_cfcomp);
@@ -309,13 +440,16 @@ void TileTrend::FillHGCROCSetting (double val_rf, double val_cf, double val_cfco
  * @return true on success
  */
 //===============================================================================
-bool TileTrend::FillHGCROCVals (double x, double tot){
-  gTrendTOT.AddPoint     (x,tot     );
-  gTrendTOT.SetPointError     (gTrendTOT.GetN()-1,0.,0.);
-  if(tot<MinTOT) MinTOT  = tot;
-  if(tot>MaxTOT) MaxTOT  = tot;
- 
-  if (MaxTOT > 4095 ) MaxTOT = 4095;  
+bool TileTrend::FillHGCROCVals(double x, double tot) {
+  gTrendTOT.AddPoint(x, tot);
+  gTrendTOT.SetPointError(gTrendTOT.GetN() - 1, 0., 0.);
+  if (tot < MinTOT)
+    MinTOT = tot;
+  if (tot > MaxTOT)
+    MaxTOT = tot;
+
+  if (MaxTOT > 4095)
+    MaxTOT = 4095;
   return true;
 }
 
@@ -336,57 +470,72 @@ bool TileTrend::FillHGCROCVals (double x, double tot){
  * @return true on success, false if extended mode unsupported
  */
 //===============================================================================
-bool  TileTrend::FillInjectionDACVal  ( double x, double ped, double adc, double toa, double tot, 
-                                        int adcSatN, int totSatN, int nTOA, int nSampToA){
-  if (extended != 4 ){
+bool TileTrend::FillInjectionDACVal(double x, double ped, double adc, double toa, double tot, int adcSatN, int totSatN,
+                                    int nTOA, int nSampToA) {
+  if (extended != 4) {
     std::cout << "This option Filling option isn't implemented for the current extended option" << std::endl;
     return false;
   }
 
-  gTrendHGped.AddPoint     (x,ped     );
-  gTrendHGped.SetPointError     (gTrendHGped.GetN()-1,0.,0.);
-  if(ped<MinHGped) MinHGped  = ped;
-  if(ped>MaxHGped) MaxHGped  = ped;
-    
-  gTrendADCMax.AddPoint     (x,adc     );
-  gTrendADCMax.SetPointError     (gTrendADCMax.GetN()-1,0.,0.);
-  if(adc<MinADCmax) MinADCmax  = adc;
-  if(adc>MaxADCmax) MaxADCmax  = adc;
-    
-  gTrendTOA.AddPoint     (x,toa     );
-  gTrendTOA.SetPointError     (gTrendTOA.GetN()-1,0.,0.);
-  if(toa<MinTOA) MinTOA  = toa;
-  if(toa>MaxTOA) MaxTOA  = toa;
+  gTrendHGped.AddPoint(x, ped);
+  gTrendHGped.SetPointError(gTrendHGped.GetN() - 1, 0., 0.);
+  if (ped < MinHGped)
+    MinHGped = ped;
+  if (ped > MaxHGped)
+    MaxHGped = ped;
 
-  gTrendTOT.AddPoint     (x,tot     );
-  gTrendTOT.SetPointError     (gTrendTOT.GetN()-1,0.,0.);
-  if(tot<MinTOT) MinTOT  = tot;
-  if(tot>MaxTOT) MaxTOT  = tot;
- 
-  if (MaxTOT > 4095 ) MaxTOT = 4095;
-  
-  
-  gTrendADCSaturated.AddPoint     (x,adcSatN     );
-  gTrendADCSaturated.SetPointError     (gTrendADCSaturated.GetN()-1,0.,0.);
-  if(adcSatN<MinADCsat) MinADCsat  = adcSatN;
-  if(adcSatN>MaxADCsat) MaxADCsat  = adcSatN;
-  
-  
-  gTrendTOTSaturated.AddPoint     (x,totSatN     );
-  gTrendTOTSaturated.SetPointError     (gTrendTOTSaturated.GetN()-1,0.,0.);
-  if(totSatN<MinTOTsat) MinTOTsat  = totSatN;
-  if(totSatN>MaxTOTsat) MaxTOTsat  = totSatN;
-  
-  gTrendNSampTOA.AddPoint     (x,nSampToA     );
-  gTrendNSampTOA.SetPointError     (gTrendNSampTOA.GetN()-1,0.,0.);
-  if(nSampToA<MinNSampTOA) MinNSampTOA  = nSampToA;
-  if(nSampToA>MaxNSampTOA) MaxNSampTOA  = nSampToA;
-  
-  gTrendNTOA.AddPoint     (x,nTOA     );
-  gTrendNTOA.SetPointError     (gTrendNTOA.GetN()-1,0.,0.);
-  if(nTOA<MinNTOA) MinNTOA  = nTOA;
-  if(nTOA>MaxNTOA) MaxNTOA  = nTOA;
-  
+  gTrendADCMax.AddPoint(x, adc);
+  gTrendADCMax.SetPointError(gTrendADCMax.GetN() - 1, 0., 0.);
+  if (adc < MinADCmax)
+    MinADCmax = adc;
+  if (adc > MaxADCmax)
+    MaxADCmax = adc;
+
+  gTrendTOA.AddPoint(x, toa);
+  gTrendTOA.SetPointError(gTrendTOA.GetN() - 1, 0., 0.);
+  if (toa < MinTOA)
+    MinTOA = toa;
+  if (toa > MaxTOA)
+    MaxTOA = toa;
+
+  gTrendTOT.AddPoint(x, tot);
+  gTrendTOT.SetPointError(gTrendTOT.GetN() - 1, 0., 0.);
+  if (tot < MinTOT)
+    MinTOT = tot;
+  if (tot > MaxTOT)
+    MaxTOT = tot;
+
+  if (MaxTOT > 4095)
+    MaxTOT = 4095;
+
+  gTrendADCSaturated.AddPoint(x, adcSatN);
+  gTrendADCSaturated.SetPointError(gTrendADCSaturated.GetN() - 1, 0., 0.);
+  if (adcSatN < MinADCsat)
+    MinADCsat = adcSatN;
+  if (adcSatN > MaxADCsat)
+    MaxADCsat = adcSatN;
+
+  gTrendTOTSaturated.AddPoint(x, totSatN);
+  gTrendTOTSaturated.SetPointError(gTrendTOTSaturated.GetN() - 1, 0., 0.);
+  if (totSatN < MinTOTsat)
+    MinTOTsat = totSatN;
+  if (totSatN > MaxTOTsat)
+    MaxTOTsat = totSatN;
+
+  gTrendNSampTOA.AddPoint(x, nSampToA);
+  gTrendNSampTOA.SetPointError(gTrendNSampTOA.GetN() - 1, 0., 0.);
+  if (nSampToA < MinNSampTOA)
+    MinNSampTOA = nSampToA;
+  if (nSampToA > MaxNSampTOA)
+    MaxNSampTOA = nSampToA;
+
+  gTrendNTOA.AddPoint(x, nTOA);
+  gTrendNTOA.SetPointError(gTrendNTOA.GetN() - 1, 0., 0.);
+  if (nTOA < MinNTOA)
+    MinNTOA = nTOA;
+  if (nTOA > MaxNTOA)
+    MaxNTOA = nTOA;
+
   return true;
 }
 
@@ -396,16 +545,20 @@ bool  TileTrend::FillInjectionDACVal  ( double x, double ped, double adc, double
  * Updates associated min/max trackers.
  */
 //===============================================================================
-void TileTrend::FillMPV(double x, double hgmpv, double ehgmpv, double lgmpv, double elgmpv){
-  gTrendHGLMPV.AddPoint     (x,hgmpv     );
-  gTrendHGLMPV.SetPointError(gTrendHGLMPV.GetN()-1,0.,ehgmpv);
-  if(hgmpv<MinHGMPV) MinHGMPV  = hgmpv;
-  if(hgmpv>MaxHGMPV) MaxHGMPV  = hgmpv;
-    
-  gTrendLGLMPV.AddPoint     (x,lgmpv     );
-  gTrendLGLMPV.SetPointError(gTrendLGLMPV.GetN()-1,0.,elgmpv);
-  if(lgmpv<MinLGMPV) MinLGMPV  = lgmpv;
-  if(lgmpv>MaxLGMPV) MaxLGMPV  = lgmpv;
+void TileTrend::FillMPV(double x, double hgmpv, double ehgmpv, double lgmpv, double elgmpv) {
+  gTrendHGLMPV.AddPoint(x, hgmpv);
+  gTrendHGLMPV.SetPointError(gTrendHGLMPV.GetN() - 1, 0., ehgmpv);
+  if (hgmpv < MinHGMPV)
+    MinHGMPV = hgmpv;
+  if (hgmpv > MaxHGMPV)
+    MaxHGMPV = hgmpv;
+
+  gTrendLGLMPV.AddPoint(x, lgmpv);
+  gTrendLGLMPV.SetPointError(gTrendLGLMPV.GetN() - 1, 0., elgmpv);
+  if (lgmpv < MinLGMPV)
+    MinLGMPV = lgmpv;
+  if (lgmpv > MaxLGMPV)
+    MaxLGMPV = lgmpv;
 }
 
 //===============================================================================
@@ -414,16 +567,20 @@ void TileTrend::FillMPV(double x, double hgmpv, double ehgmpv, double lgmpv, dou
  * Updates min/max bounds used for plotting ranges.
  */
 //===============================================================================
-void TileTrend::FillLSigma(double x, double hglsig, double ehglsig, double lglsig, double elglsig){
-  gTrendHGLSigma.AddPoint     (x,hglsig     );
-  gTrendHGLSigma.SetPointError(gTrendHGLSigma.GetN()-1,0.,ehglsig);
-  if(hglsig<MinHGLSigma ) MinHGLSigma  = hglsig;
-  if(hglsig>MaxHGLSigma ) MaxHGLSigma  = hglsig;
-    
-  gTrendLGLSigma.AddPoint     (x,lglsig     );
-  gTrendLGLSigma.SetPointError(gTrendLGLSigma.GetN()-1,0.,elglsig);
-  if(lglsig<MinLGLSigma ) MinLGLSigma  = lglsig;
-  if(lglsig>MaxLGLSigma ) MaxLGLSigma  = lglsig;
+void TileTrend::FillLSigma(double x, double hglsig, double ehglsig, double lglsig, double elglsig) {
+  gTrendHGLSigma.AddPoint(x, hglsig);
+  gTrendHGLSigma.SetPointError(gTrendHGLSigma.GetN() - 1, 0., ehglsig);
+  if (hglsig < MinHGLSigma)
+    MinHGLSigma = hglsig;
+  if (hglsig > MaxHGLSigma)
+    MaxHGLSigma = hglsig;
+
+  gTrendLGLSigma.AddPoint(x, lglsig);
+  gTrendLGLSigma.SetPointError(gTrendLGLSigma.GetN() - 1, 0., elglsig);
+  if (lglsig < MinLGLSigma)
+    MinLGLSigma = lglsig;
+  if (lglsig > MaxLGLSigma)
+    MaxLGLSigma = lglsig;
 }
 
 //===============================================================================
@@ -432,16 +589,20 @@ void TileTrend::FillLSigma(double x, double hglsig, double ehglsig, double lglsi
  * Updates min/max bounds used for plotting ranges.
  */
 //===============================================================================
-void TileTrend::FillGSigma(double x, double hggsig, double ehggsig, double lggsig, double elggsig){
-  gTrendHGGSigma.AddPoint     (x,hggsig     );
-  gTrendHGGSigma.SetPointError(gTrendHGGSigma.GetN()-1,0.,ehggsig);
-  if(hggsig<MinHGGSigma) MinHGGSigma  = hggsig;
-  if(hggsig>MaxHGGSigma) MaxHGGSigma  = hggsig;
-    
-  gTrendLGGSigma.AddPoint     (x,lggsig     );
-  gTrendLGGSigma.SetPointError(gTrendLGGSigma.GetN()-1,0.,elggsig);
-  if(lggsig<MinLGGSigma) MinLGGSigma  = lggsig;
-  if(lggsig>MaxLGGSigma) MaxLGGSigma  = lggsig;
+void TileTrend::FillGSigma(double x, double hggsig, double ehggsig, double lggsig, double elggsig) {
+  gTrendHGGSigma.AddPoint(x, hggsig);
+  gTrendHGGSigma.SetPointError(gTrendHGGSigma.GetN() - 1, 0., ehggsig);
+  if (hggsig < MinHGGSigma)
+    MinHGGSigma = hggsig;
+  if (hggsig > MaxHGGSigma)
+    MaxHGGSigma = hggsig;
+
+  gTrendLGGSigma.AddPoint(x, lggsig);
+  gTrendLGGSigma.SetPointError(gTrendLGGSigma.GetN() - 1, 0., elggsig);
+  if (lggsig < MinLGGSigma)
+    MinLGGSigma = lggsig;
+  if (lggsig > MaxLGGSigma)
+    MaxLGGSigma = lggsig;
 }
 
 //===============================================================================
@@ -450,16 +611,20 @@ void TileTrend::FillGSigma(double x, double hggsig, double ehggsig, double lggsi
  * Keeps min/max counters for later range calculations.
  */
 //===============================================================================
-void TileTrend::FillSB(double x, double sbsig, double sbnoise){
-  gTrendSBNoise.AddPoint     (x,sbnoise     );
-  gTrendSBNoise.SetPointError(gTrendSBNoise.GetN()-1,0.,0.);
-  if(sbnoise<MinSBNoise) MinSBNoise  = sbnoise;
-  if(sbnoise>MaxSBNoise) MaxSBNoise  = sbnoise;
+void TileTrend::FillSB(double x, double sbsig, double sbnoise) {
+  gTrendSBNoise.AddPoint(x, sbnoise);
+  gTrendSBNoise.SetPointError(gTrendSBNoise.GetN() - 1, 0., 0.);
+  if (sbnoise < MinSBNoise)
+    MinSBNoise = sbnoise;
+  if (sbnoise > MaxSBNoise)
+    MaxSBNoise = sbnoise;
 
-  gTrendSBSignal.AddPoint     (x,sbsig     );
-  gTrendSBSignal.SetPointError(gTrendSBSignal.GetN()-1,0.,0.);
-  if(sbsig<MinSBSignal) MinSBSignal  = sbsig;
-  if(sbsig>MaxSBSignal) MaxSBSignal  = sbsig;  
+  gTrendSBSignal.AddPoint(x, sbsig);
+  gTrendSBSignal.SetPointError(gTrendSBSignal.GetN() - 1, 0., 0.);
+  if (sbsig < MinSBSignal)
+    MinSBSignal = sbsig;
+  if (sbsig > MaxSBSignal)
+    MaxSBSignal = sbsig;
 }
 
 //===============================================================================
@@ -468,16 +633,20 @@ void TileTrend::FillSB(double x, double sbsig, double sbnoise){
  * Stores values with associated uncertainties and updates min/max offsets.
  */
 //===============================================================================
-void TileTrend::FillCorrOffset(double x, double lghgoff, double lghgoff_e, double hglgoff,double hglgoff_e ){
-  gTrendLGHGOffset.AddPoint     (x,lghgoff     );
-  gTrendLGHGOffset.SetPointError(gTrendLGHGOffset.GetN()-1,0.,lghgoff_e);
-  if(lghgoff<MinLGHGOff && lghgoff != -10000.) MinLGHGOff  = lghgoff;
-  if(lghgoff>MaxLGHGOff && lghgoff != -10000.) MaxLGHGOff  = lghgoff;
+void TileTrend::FillCorrOffset(double x, double lghgoff, double lghgoff_e, double hglgoff, double hglgoff_e) {
+  gTrendLGHGOffset.AddPoint(x, lghgoff);
+  gTrendLGHGOffset.SetPointError(gTrendLGHGOffset.GetN() - 1, 0., lghgoff_e);
+  if (lghgoff < MinLGHGOff && lghgoff != -10000.)
+    MinLGHGOff = lghgoff;
+  if (lghgoff > MaxLGHGOff && lghgoff != -10000.)
+    MaxLGHGOff = lghgoff;
 
-  gTrendHGLGOffset.AddPoint     (x,hglgoff     );
-  gTrendHGLGOffset.SetPointError(gTrendHGLGOffset.GetN()-1,0.,hglgoff_e);
-  if(hglgoff<MinHGLGOff && hglgoff != -10000.) MinHGLGOff  = hglgoff;
-  if(hglgoff>MaxHGLGOff && hglgoff != -10000.) MaxHGLGOff  = hglgoff;  
+  gTrendHGLGOffset.AddPoint(x, hglgoff);
+  gTrendHGLGOffset.SetPointError(gTrendHGLGOffset.GetN() - 1, 0., hglgoff_e);
+  if (hglgoff < MinHGLGOff && hglgoff != -10000.)
+    MinHGLGOff = hglgoff;
+  if (hglgoff > MaxHGLGOff && hglgoff != -10000.)
+    MaxHGLGOff = hglgoff;
 }
 
 //************************************************************************
@@ -494,10 +663,10 @@ void TileTrend::FillCorrOffset(double x, double lghgoff, double lghgoff_e, doubl
  * Returns nullptr if the run number is not present.
  * @param run run number key
  */
-TH1D* TileTrend::GetHGTriggRun(int run){
+TH1D *TileTrend::GetHGTriggRun(int run) {
   std::map<int, TH1D>::iterator currRun;
-  currRun=HGTriggRuns.find(run);
-  if(currRun!=HGTriggRuns.end()){
+  currRun = HGTriggRuns.find(run);
+  if (currRun != HGTriggRuns.end()) {
     return &currRun->second;
   } else {
     return nullptr;
@@ -509,10 +678,10 @@ TH1D* TileTrend::GetHGTriggRun(int run){
  * Returns nullptr if the run number is not present.
  * @param run run number key
  */
-TH1D* TileTrend::GetLGTriggRun(int run){
+TH1D *TileTrend::GetLGTriggRun(int run) {
   std::map<int, TH1D>::iterator currRun;
-  currRun=LGTriggRuns.find(run);
-  if(currRun!=LGTriggRuns.end()){
+  currRun = LGTriggRuns.find(run);
+  if (currRun != LGTriggRuns.end()) {
     return &currRun->second;
   } else {
     return nullptr;
@@ -525,10 +694,10 @@ TH1D* TileTrend::GetLGTriggRun(int run){
  * Returns nullptr if the run number is not present.
  * @param run run number key
  */
-TProfile* TileTrend::GetLGHGTriggRun(int run){
+TProfile *TileTrend::GetLGHGTriggRun(int run) {
   std::map<int, TProfile>::iterator currRun;
-  currRun=LGHGTriggRuns.find(run);
-  if(currRun!=LGHGTriggRuns.end()){
+  currRun = LGHGTriggRuns.find(run);
+  if (currRun != LGHGTriggRuns.end()) {
     return &currRun->second;
   } else {
     return nullptr;
@@ -541,10 +710,10 @@ TProfile* TileTrend::GetLGHGTriggRun(int run){
  * Returns nullptr if not present.
  * @param run run number key
  */
-TProfile* TileTrend::GetWave1DRun(int run){
+TProfile *TileTrend::GetWave1DRun(int run) {
   std::map<int, TProfile>::iterator currRun;
-  currRun=Wave1DProf.find(run);
-  if(currRun!=Wave1DProf.end()){
+  currRun = Wave1DProf.find(run);
+  if (currRun != Wave1DProf.end()) {
     return &currRun->second;
   } else {
     return nullptr;
@@ -556,10 +725,25 @@ TProfile* TileTrend::GetWave1DRun(int run){
  * GetTOARun: return stored per-run TOA TProfile pointer, or nullptr if missing.
  * @param run run number key
  */
-TProfile* TileTrend::GetTOARun(int run){
+TProfile *TileTrend::GetTOARun(int run) {
   std::map<int, TProfile>::iterator currRun;
-  currRun=TOAProf.find(run);
-  if(currRun!=TOAProf.end()){
+  currRun = TOAProf.find(run);
+  if (currRun != TOAProf.end()) {
+    return &currRun->second;
+  } else {
+    return nullptr;
+  }
+}
+
+//===============================================================================
+/**
+ * GetTOAHistRun: return stored per-run TOA TH1D pointer, or nullptr if missing.
+ * @param run run number key
+ */
+TH1D *TileTrend::GetTOAHistRun(int run) {
+  std::map<int, TH1D>::iterator currRun;
+  currRun = TOARuns.find(run);
+  if (currRun != TOARuns.end()) {
     return &currRun->second;
   } else {
     return nullptr;
@@ -571,14 +755,44 @@ TProfile* TileTrend::GetTOARun(int run){
  * GetTOTRun: return stored per-run TOT TProfile pointer, or nullptr if missing.
  * @param run run number key
  */
-TProfile* TileTrend::GetTOTRun(int run){
+TProfile *TileTrend::GetTOTRun(int run) {
   std::map<int, TProfile>::iterator currRun;
-  currRun=TOTProf.find(run);
-  if(currRun!=TOTProf.end()){
+  currRun = TOTProf.find(run);
+  if (currRun != TOTProf.end()) {
     return &currRun->second;
   } else {
     return nullptr;
   }
+}
+
+//===============================================================================
+/**
+ * GetTOTHistRun: return stored per-run TOT TH1D pointer, or nullptr if missing.
+ * @param run run number key
+ */
+TH1D *TileTrend::GetTOTHistRun(int run) {
+  std::map<int, TH1D>::iterator currRun;
+  currRun = TOTRuns.find(run);
+  if (currRun != TOTRuns.end()) {
+    return &currRun->second;
+  } else {
+    return nullptr;
+  }
+}
+
+/**
+ * @brief Return the position of a run number inside the stored run vector.
+ *
+ * @param runNr Run number to locate in the per-cell trend collection.
+ * @return Index of the run in the internal run list, or -1 if it is not present.
+ */
+int TileTrend::GetIndexRun(int runNr) const {
+  for (int i = 0; i < (int)runNrs.size(); ++i) {
+    if (runNrs[i] == runNr) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 //************************************************************************
@@ -596,7 +810,7 @@ TProfile* TileTrend::GetTOTRun(int run){
  * @param opt ROOT draw option string forwarded to TGraphErrors::Draw
  * @return true on success
  */
-bool TileTrend::DrawLGped(TString opt){
+bool TileTrend::DrawLGped(TString opt) {
   gTrendLGped.Draw(opt.Data());
   return true;
 }
@@ -604,7 +818,7 @@ bool TileTrend::DrawLGped(TString opt){
 /**
  * DrawHGped: draw the high-gain pedestal trend graph.
  */
-bool TileTrend::DrawHGped(TString opt){
+bool TileTrend::DrawHGped(TString opt) {
   gTrendHGped.Draw(opt.Data());
   return true;
 }
@@ -612,7 +826,7 @@ bool TileTrend::DrawHGped(TString opt){
 /**
  * DrawLGscale: draw the low-gain scale trend graph.
  */
-bool TileTrend::DrawLGscale(TString opt){
+bool TileTrend::DrawLGscale(TString opt) {
   gTrendLGscale.Draw(opt.Data());
   return true;
 }
@@ -620,7 +834,7 @@ bool TileTrend::DrawLGscale(TString opt){
 /**
  * DrawHGscale: draw the high-gain scale trend graph.
  */
-bool TileTrend::DrawHGscale(TString opt){
+bool TileTrend::DrawHGscale(TString opt) {
   gTrendHGscale.Draw(opt.Data());
   return true;
 }
@@ -628,7 +842,7 @@ bool TileTrend::DrawHGscale(TString opt){
 /**
  * DrawHGLGcorr: draw HG/LG correlation trend graph.
  */
-bool TileTrend::DrawHGLGcorr(TString opt){
+bool TileTrend::DrawHGLGcorr(TString opt) {
   gTrendHGLGcorr.Draw(opt.Data());
   return true;
 }
@@ -636,7 +850,7 @@ bool TileTrend::DrawHGLGcorr(TString opt){
 /**
  * DrawLGHGcorr: draw LG/HG correlation trend graph.
  */
-bool TileTrend::DrawLGHGcorr(TString opt){
+bool TileTrend::DrawLGHGcorr(TString opt) {
   gTrendLGHGcorr.Draw(opt.Data());
   return true;
 }
@@ -644,7 +858,7 @@ bool TileTrend::DrawLGHGcorr(TString opt){
 /**
  * DrawTrigger: draw trigger-count trend graph.
  */
-bool TileTrend::DrawTrigger(TString opt){
+bool TileTrend::DrawTrigger(TString opt) {
   gTrendTrigger.Draw(opt.Data());
   return true;
 }
@@ -652,7 +866,7 @@ bool TileTrend::DrawTrigger(TString opt){
 /**
  * DrawSBNoise: draw S/B noise-region trend graph.
  */
-bool TileTrend::DrawSBNoise(TString opt){
+bool TileTrend::DrawSBNoise(TString opt) {
   gTrendSBNoise.Draw(opt.Data());
   return true;
 }
@@ -660,7 +874,7 @@ bool TileTrend::DrawSBNoise(TString opt){
 /**
  * DrawSBSignal: draw S/B signal-region trend graph.
  */
-bool TileTrend::DrawSBSignal(TString opt){
+bool TileTrend::DrawSBSignal(TString opt) {
   gTrendSBSignal.Draw(opt.Data());
   return true;
 }
@@ -668,7 +882,7 @@ bool TileTrend::DrawSBSignal(TString opt){
 /**
  * DrawHGLMPV: draw high-gain MPV trend graph.
  */
-bool TileTrend::DrawHGLMPV(TString opt){
+bool TileTrend::DrawHGLMPV(TString opt) {
   gTrendHGLMPV.Draw(opt.Data());
   return true;
 }
@@ -676,7 +890,7 @@ bool TileTrend::DrawHGLMPV(TString opt){
 /**
  * DrawLGLMPV: draw low-gain MPV trend graph.
  */
-bool TileTrend::DrawLGLMPV(TString opt){
+bool TileTrend::DrawLGLMPV(TString opt) {
   gTrendLGLMPV.Draw(opt.Data());
   return true;
 }
@@ -684,7 +898,7 @@ bool TileTrend::DrawLGLMPV(TString opt){
 /**
  * DrawHGLSigma: draw HG landau-fit sigma trend graph.
  */
-bool TileTrend::DrawHGLSigma(TString opt){
+bool TileTrend::DrawHGLSigma(TString opt) {
   gTrendHGLSigma.Draw(opt.Data());
   return true;
 }
@@ -692,7 +906,7 @@ bool TileTrend::DrawHGLSigma(TString opt){
 /**
  * DrawLGLSigma: draw LG landau-fit sigma trend graph.
  */
-bool TileTrend::DrawLGLSigma(TString opt){
+bool TileTrend::DrawLGLSigma(TString opt) {
   gTrendLGLSigma.Draw(opt.Data());
   return true;
 }
@@ -700,7 +914,7 @@ bool TileTrend::DrawLGLSigma(TString opt){
 /**
  * DrawHGGSigma: draw HG gaussian-fit sigma trend graph.
  */
-bool TileTrend::DrawHGGSigma(TString opt){
+bool TileTrend::DrawHGGSigma(TString opt) {
   gTrendHGGSigma.Draw(opt.Data());
   return true;
 }
@@ -708,7 +922,7 @@ bool TileTrend::DrawHGGSigma(TString opt){
 /**
  * DrawLGGSigma: draw LG gaussian-fit sigma trend graph.
  */
-bool TileTrend::DrawLGGSigma(TString opt){
+bool TileTrend::DrawLGGSigma(TString opt) {
   gTrendLGGSigma.Draw(opt.Data());
   return true;
 }
@@ -716,7 +930,7 @@ bool TileTrend::DrawLGGSigma(TString opt){
 /**
  * DrawHGLGOffset: draw HG-LG offset trend graph.
  */
-bool TileTrend::DrawHGLGOffset(TString opt){
+bool TileTrend::DrawHGLGOffset(TString opt) {
   gTrendHGLGOffset.Draw(opt.Data());
   return true;
 }
@@ -724,7 +938,7 @@ bool TileTrend::DrawHGLGOffset(TString opt){
 /**
  * DrawLGHGOffset: draw LG-HG offset trend graph.
  */
-bool TileTrend::DrawLGHGOffset(TString opt){
+bool TileTrend::DrawLGHGOffset(TString opt) {
   gTrendLGHGOffset.Draw(opt.Data());
   return true;
 }
@@ -733,7 +947,7 @@ bool TileTrend::DrawLGHGOffset(TString opt){
 /**
  * DrawADCmax: draw ADC max trend graph (injection/DAC mode).
  */
-bool TileTrend::DrawADCmax(TString opt){
+bool TileTrend::DrawADCmax(TString opt) {
   gTrendADCMax.Draw(opt.Data());
   return true;
 }
@@ -742,7 +956,7 @@ bool TileTrend::DrawADCmax(TString opt){
 /**
  * DrawADCsat: draw ADC saturation counts trend graph.
  */
-bool TileTrend::DrawADCsat(TString opt){
+bool TileTrend::DrawADCsat(TString opt) {
   gTrendADCSaturated.Draw(opt.Data());
   return true;
 }
@@ -751,7 +965,7 @@ bool TileTrend::DrawADCsat(TString opt){
 /**
  * DrawTOT: draw TOT (time-over-threshold) trend graph.
  */
-bool TileTrend::DrawTOT(TString opt){
+bool TileTrend::DrawTOT(TString opt) {
   gTrendTOT.Draw(opt.Data());
   return true;
 }
@@ -760,7 +974,7 @@ bool TileTrend::DrawTOT(TString opt){
 /**
  * DrawTOTsat: draw TOT saturation counts trend graph.
  */
-bool TileTrend::DrawTOTsat(TString opt){
+bool TileTrend::DrawTOTsat(TString opt) {
   gTrendTOTSaturated.Draw(opt.Data());
   return true;
 }
@@ -769,7 +983,7 @@ bool TileTrend::DrawTOTsat(TString opt){
 /**
  * DrawTOA: draw time-of-arrival trend graph.
  */
-bool TileTrend::DrawTOA(TString opt){
+bool TileTrend::DrawTOA(TString opt) {
   gTrendTOA.Draw(opt.Data());
   return true;
 }
@@ -778,7 +992,7 @@ bool TileTrend::DrawTOA(TString opt){
 /**
  * DrawNSampTOA: draw number of samples firing TOA trend graph.
  */
-bool TileTrend::DrawNSampTOA(TString opt){
+bool TileTrend::DrawNSampTOA(TString opt) {
   gTrendNSampTOA.Draw(opt.Data());
   return true;
 }
@@ -787,7 +1001,7 @@ bool TileTrend::DrawNSampTOA(TString opt){
 /**
  * DrawNTOA: draw number of TOA events trend graph.
  */
-bool TileTrend::DrawNTOA(TString opt){
+bool TileTrend::DrawNTOA(TString opt) {
   gTrendNTOA.Draw(opt.Data());
   return true;
 }
@@ -805,45 +1019,47 @@ bool TileTrend::DrawNTOA(TString opt){
  * SetLineColor: apply a uniform line color to all relevant trend graphs
  * depending on the current extended mode.
  */
-bool TileTrend::SetLineColor(uint col){
-  if (extended < 3){
-    gTrendLGped    .SetLineColor(col);
-    gTrendHGped    .SetLineColor(col);
+bool TileTrend::SetLineColor(uint col) {
+  if (extended < 3) {
+    gTrendLGped.SetLineColor(col);
+    gTrendHGped.SetLineColor(col);
     gTrendLGpedwidth.SetLineColor(col);
     gTrendHGpedwidth.SetLineColor(col);
-    gTrendLGscale  .SetLineColor(col);
-    if(fittedLG) fitLGScale.SetLineColor(col+1);
-    gTrendHGscale  .SetLineColor(col);
-    if(fittedHG) fitHGScale.SetLineColor(col+1);
-    gTrendHGLGcorr .SetLineColor(col);
-    gTrendLGHGcorr .SetLineColor(col);
-    gTrendHGLGOffset .SetLineColor(col);
-    gTrendLGHGOffset .SetLineColor(col);
-    gTrendTOT .SetLineColor(col);
-    if (extended == 1 || extended == 2 ){
-      gTrendTrigger .SetLineColor(col);
-      gTrendSBNoise .SetLineColor(col);
+    gTrendLGscale.SetLineColor(col);
+    if (fittedLG)
+      fitLGScale.SetLineColor(col + 1);
+    gTrendHGscale.SetLineColor(col);
+    if (fittedHG)
+      fitHGScale.SetLineColor(col + 1);
+    gTrendHGLGcorr.SetLineColor(col);
+    gTrendLGHGcorr.SetLineColor(col);
+    gTrendHGLGOffset.SetLineColor(col);
+    gTrendLGHGOffset.SetLineColor(col);
+    gTrendTOT.SetLineColor(col);
+    if (extended == 1 || extended == 2) {
+      gTrendTrigger.SetLineColor(col);
+      gTrendSBNoise.SetLineColor(col);
       gTrendSBSignal.SetLineColor(col);
     }
-    if (extended == 1){
-      gTrendHGLMPV  .SetLineColor(col);
-      gTrendLGLMPV  .SetLineColor(col);
+    if (extended == 1) {
+      gTrendHGLMPV.SetLineColor(col);
+      gTrendLGLMPV.SetLineColor(col);
       gTrendHGLSigma.SetLineColor(col);
       gTrendLGLSigma.SetLineColor(col);
       gTrendHGGSigma.SetLineColor(col);
       gTrendLGGSigma.SetLineColor(col);
     }
-  } else if (extended == 3){
-    gTrendHGped     .SetLineColor(col);
+  } else if (extended == 3) {
+    gTrendHGped.SetLineColor(col);
     gTrendHGpedwidth.SetLineColor(col);
-  } else if (extended == 4){
-    gTrendHGped       .SetLineColor(col);
-    gTrendHGpedwidth  .SetLineColor(col);
+  } else if (extended == 4) {
+    gTrendHGped.SetLineColor(col);
+    gTrendHGpedwidth.SetLineColor(col);
     gTrendADCSaturated.SetLineColor(col);
-    gTrendTOA         .SetLineColor(col);
-    gTrendNSampTOA    .SetLineColor(col);
-    gTrendNTOA        .SetLineColor(col);
-    gTrendTOT         .SetLineColor(col);
+    gTrendTOA.SetLineColor(col);
+    gTrendNSampTOA.SetLineColor(col);
+    gTrendNTOA.SetLineColor(col);
+    gTrendTOT.SetLineColor(col);
     gTrendTOTSaturated.SetLineColor(col);
   }
   return true;
@@ -853,45 +1069,47 @@ bool TileTrend::SetLineColor(uint col){
  * SetMarkerColor: apply a uniform marker color to all relevant trend graphs
  * depending on the current extended mode.
  */
-bool TileTrend::SetMarkerColor(uint col){
-  if (extended < 3){
-    gTrendLGped    .SetMarkerColor(col);
-    gTrendHGped    .SetMarkerColor(col);
+bool TileTrend::SetMarkerColor(uint col) {
+  if (extended < 3) {
+    gTrendLGped.SetMarkerColor(col);
+    gTrendHGped.SetMarkerColor(col);
     gTrendLGpedwidth.SetMarkerColor(col);
     gTrendHGpedwidth.SetMarkerColor(col);
-    gTrendLGscale  .SetMarkerColor(col);
-    if(fittedLG) fitLGScale.SetMarkerColor(col+1);
-    gTrendHGscale  .SetMarkerColor(col);
-    if(fittedHG) fitHGScale.SetMarkerColor(col+1);
-    gTrendHGLGcorr .SetMarkerColor(col);
-    gTrendLGHGcorr .SetMarkerColor(col);
-    gTrendHGLGOffset .SetMarkerColor(col);
-    gTrendLGHGOffset .SetMarkerColor(col);
-    gTrendTOT .SetMarkerColor(col);
-    if (extended == 1 || extended == 2 ){
-      gTrendTrigger .SetMarkerColor(col);
-      gTrendSBNoise .SetMarkerColor(col);
+    gTrendLGscale.SetMarkerColor(col);
+    if (fittedLG)
+      fitLGScale.SetMarkerColor(col + 1);
+    gTrendHGscale.SetMarkerColor(col);
+    if (fittedHG)
+      fitHGScale.SetMarkerColor(col + 1);
+    gTrendHGLGcorr.SetMarkerColor(col);
+    gTrendLGHGcorr.SetMarkerColor(col);
+    gTrendHGLGOffset.SetMarkerColor(col);
+    gTrendLGHGOffset.SetMarkerColor(col);
+    gTrendTOT.SetMarkerColor(col);
+    if (extended == 1 || extended == 2) {
+      gTrendTrigger.SetMarkerColor(col);
+      gTrendSBNoise.SetMarkerColor(col);
       gTrendSBSignal.SetMarkerColor(col);
     }
-    if (extended == 1){
-      gTrendHGLMPV  .SetMarkerColor(col);
-      gTrendLGLMPV  .SetMarkerColor(col);
+    if (extended == 1) {
+      gTrendHGLMPV.SetMarkerColor(col);
+      gTrendLGLMPV.SetMarkerColor(col);
       gTrendHGLSigma.SetMarkerColor(col);
       gTrendLGLSigma.SetMarkerColor(col);
       gTrendHGGSigma.SetMarkerColor(col);
       gTrendLGGSigma.SetMarkerColor(col);
     }
-  } else if (extended == 3){
-    gTrendHGped     .SetMarkerColor(col);
+  } else if (extended == 3) {
+    gTrendHGped.SetMarkerColor(col);
     gTrendHGpedwidth.SetMarkerColor(col);
-  } else if (extended == 4){
-    gTrendHGped       .SetMarkerColor(col);
-    gTrendHGpedwidth  .SetMarkerColor(col);
+  } else if (extended == 4) {
+    gTrendHGped.SetMarkerColor(col);
+    gTrendHGpedwidth.SetMarkerColor(col);
     gTrendADCSaturated.SetMarkerColor(col);
-    gTrendTOA         .SetMarkerColor(col);
-    gTrendNSampTOA    .SetMarkerColor(col);
-    gTrendNTOA        .SetMarkerColor(col);
-    gTrendTOT         .SetMarkerColor(col);
+    gTrendTOA.SetMarkerColor(col);
+    gTrendNSampTOA.SetMarkerColor(col);
+    gTrendNTOA.SetMarkerColor(col);
+    gTrendTOT.SetMarkerColor(col);
     gTrendTOTSaturated.SetMarkerColor(col);
   }
   return true;
@@ -901,47 +1119,49 @@ bool TileTrend::SetMarkerColor(uint col){
  * SetMarkerStyle: apply a uniform marker style to all relevant trend graphs
  * depending on the current extended mode.
  */
-bool TileTrend::SetMarkerStyle(uint col){
-  if (extended < 3){
-    gTrendLGped    .SetMarkerStyle(col);
-    gTrendHGped    .SetMarkerStyle(col);
+bool TileTrend::SetMarkerStyle(uint col) {
+  if (extended < 3) {
+    gTrendLGped.SetMarkerStyle(col);
+    gTrendHGped.SetMarkerStyle(col);
     gTrendLGpedwidth.SetMarkerStyle(col);
     gTrendHGpedwidth.SetMarkerStyle(col);
-    gTrendLGscale  .SetMarkerStyle(col);
-    if(fittedLG) fitLGScale.SetMarkerStyle(col);
-    gTrendHGscale  .SetMarkerStyle(col);
-    if(fittedHG) fitHGScale.SetMarkerStyle(col);
-    gTrendHGLGcorr .SetMarkerStyle(col);
-    gTrendLGHGcorr .SetMarkerStyle(col);
-    gTrendHGLGOffset .SetMarkerStyle(col);
-    gTrendLGHGOffset .SetMarkerStyle(col);
-    gTrendTOT .SetMarkerStyle(col);
-    if (extended == 1 || extended == 2 ){
-      gTrendTrigger .SetMarkerStyle(col);
-      gTrendSBNoise .SetMarkerStyle(col);
+    gTrendLGscale.SetMarkerStyle(col);
+    if (fittedLG)
+      fitLGScale.SetMarkerStyle(col);
+    gTrendHGscale.SetMarkerStyle(col);
+    if (fittedHG)
+      fitHGScale.SetMarkerStyle(col);
+    gTrendHGLGcorr.SetMarkerStyle(col);
+    gTrendLGHGcorr.SetMarkerStyle(col);
+    gTrendHGLGOffset.SetMarkerStyle(col);
+    gTrendLGHGOffset.SetMarkerStyle(col);
+    gTrendTOT.SetMarkerStyle(col);
+    if (extended == 1 || extended == 2) {
+      gTrendTrigger.SetMarkerStyle(col);
+      gTrendSBNoise.SetMarkerStyle(col);
       gTrendSBSignal.SetMarkerStyle(col);
     }
-    if (extended == 1){
-      gTrendHGLMPV  .SetMarkerStyle(col);
-      gTrendLGLMPV  .SetMarkerStyle(col);
+    if (extended == 1) {
+      gTrendHGLMPV.SetMarkerStyle(col);
+      gTrendLGLMPV.SetMarkerStyle(col);
       gTrendHGLSigma.SetMarkerStyle(col);
       gTrendLGLSigma.SetMarkerStyle(col);
       gTrendHGGSigma.SetMarkerStyle(col);
       gTrendLGGSigma.SetMarkerStyle(col);
     }
-  } else if (extended == 3){
-    gTrendHGped     .SetMarkerStyle(col);
+  } else if (extended == 3) {
+    gTrendHGped.SetMarkerStyle(col);
     gTrendHGpedwidth.SetMarkerStyle(col);
-  } else if (extended == 4){
-    gTrendHGped       .SetMarkerStyle(col);
-    gTrendHGpedwidth  .SetMarkerStyle(col);
+  } else if (extended == 4) {
+    gTrendHGped.SetMarkerStyle(col);
+    gTrendHGpedwidth.SetMarkerStyle(col);
     gTrendADCSaturated.SetMarkerStyle(col);
-    gTrendTOA         .SetMarkerStyle(col);
-    gTrendNSampTOA    .SetMarkerStyle(col);
-    gTrendNTOA        .SetMarkerStyle(col);
-    gTrendTOT         .SetMarkerStyle(col);
+    gTrendTOA.SetMarkerStyle(col);
+    gTrendNSampTOA.SetMarkerStyle(col);
+    gTrendNTOA.SetMarkerStyle(col);
+    gTrendTOT.SetMarkerStyle(col);
     gTrendTOTSaturated.SetMarkerStyle(col);
-  }  
+  }
   return true;
 }
 //===============================================================================
@@ -949,44 +1169,45 @@ bool TileTrend::SetMarkerStyle(uint col){
  * SetXAxisTitle: set the X-axis title for all relevant trend graphs.
  * @param title title string to apply
  */
-bool TileTrend::SetXAxisTitle(TString title){
-  if (extended < 3){
-    gTrendLGped    .GetXaxis()->SetTitle(title.Data());
-    gTrendHGped    .GetXaxis()->SetTitle(title.Data());
+bool TileTrend::SetXAxisTitle(TString title) {
+  std::cout << "resetting title: " << title.Data() << "\t ext opt: " << extended << std::endl;
+  if (extended < 3) {
+    gTrendLGped.GetXaxis()->SetTitle(title.Data());
+    gTrendHGped.GetXaxis()->SetTitle(title.Data());
     gTrendLGpedwidth.GetXaxis()->SetTitle(title.Data());
     gTrendHGpedwidth.GetXaxis()->SetTitle(title.Data());
-    gTrendLGscale  .GetXaxis()->SetTitle(title.Data());
-    gTrendHGscale  .GetXaxis()->SetTitle(title.Data());
-    gTrendHGLGcorr .GetXaxis()->SetTitle(title.Data());
-    gTrendLGHGcorr .GetXaxis()->SetTitle(title.Data());
+    gTrendLGscale.GetXaxis()->SetTitle(title.Data());
+    gTrendHGscale.GetXaxis()->SetTitle(title.Data());
+    gTrendHGLGcorr.GetXaxis()->SetTitle(title.Data());
+    gTrendLGHGcorr.GetXaxis()->SetTitle(title.Data());
     gTrendHGLGOffset.GetXaxis()->SetTitle(title.Data());
     gTrendLGHGOffset.GetXaxis()->SetTitle(title.Data());
-    gTrendTOT .GetXaxis()->SetTitle(title.Data());
-    if (extended == 1 || extended == 2 ){
-      gTrendTrigger .GetXaxis()->SetTitle(title.Data());
-      gTrendSBNoise .GetXaxis()->SetTitle(title.Data());
+    gTrendTOT.GetXaxis()->SetTitle(title.Data());
+    if (extended == 1 || extended == 2) {
+      gTrendTrigger.GetXaxis()->SetTitle(title.Data());
+      gTrendSBNoise.GetXaxis()->SetTitle(title.Data());
       gTrendSBSignal.GetXaxis()->SetTitle(title.Data());
     }
-    if (extended == 1){
-      gTrendHGLMPV  .GetXaxis()->SetTitle(title.Data());
-      gTrendLGLMPV  .GetXaxis()->SetTitle(title.Data());
+    if (extended == 1) {
+      gTrendHGLMPV.GetXaxis()->SetTitle(title.Data());
+      gTrendLGLMPV.GetXaxis()->SetTitle(title.Data());
       gTrendHGLSigma.GetXaxis()->SetTitle(title.Data());
       gTrendLGLSigma.GetXaxis()->SetTitle(title.Data());
       gTrendHGGSigma.GetXaxis()->SetTitle(title.Data());
       gTrendLGGSigma.GetXaxis()->SetTitle(title.Data());
     }
-  } else if (extended == 3){
-    gTrendHGped    .GetXaxis()->SetTitle(title.Data());
-    gTrendHGpedwidth.GetXaxis()->SetTitle(title.Data());    
-  } else if (extended == 4){
-    gTrendHGped       .GetXaxis()->SetTitle(title.Data());
-    gTrendHGpedwidth  .GetXaxis()->SetTitle(title.Data());    
-    gTrendADCSaturated.GetXaxis()->SetTitle(title.Data());    
-    gTrendTOA         .GetXaxis()->SetTitle(title.Data());    
-    gTrendNSampTOA    .GetXaxis()->SetTitle(title.Data());    
-    gTrendNTOA        .GetXaxis()->SetTitle(title.Data());    
-    gTrendTOT         .GetXaxis()->SetTitle(title.Data());    
-    gTrendTOTSaturated.GetXaxis()->SetTitle(title.Data());    
+  } else if (extended == 3) {
+    gTrendHGped.GetXaxis()->SetTitle(title.Data());
+    gTrendHGpedwidth.GetXaxis()->SetTitle(title.Data());
+  } else if (extended == 4) {
+    gTrendHGped.GetXaxis()->SetTitle(title.Data());
+    gTrendHGpedwidth.GetXaxis()->SetTitle(title.Data());
+    gTrendADCSaturated.GetXaxis()->SetTitle(title.Data());
+    gTrendTOA.GetXaxis()->SetTitle(title.Data());
+    gTrendNSampTOA.GetXaxis()->SetTitle(title.Data());
+    gTrendNTOA.GetXaxis()->SetTitle(title.Data());
+    gTrendTOT.GetXaxis()->SetTitle(title.Data());
+    gTrendTOTSaturated.GetXaxis()->SetTitle(title.Data());
   }
   return true;
 }
@@ -1000,50 +1221,50 @@ bool TileTrend::SetXAxisTitle(TString title){
  * some ROOT drawing/line interpolation behavior and for consistent
  * min/max computation after appends.
  */
-void TileTrend::Sort(){
-  if (extended < 3){
-    gTrendLGped    .Sort();
-    gTrendHGped    .Sort();
+void TileTrend::Sort() {
+  if (extended < 3) {
+    gTrendLGped.Sort();
+    gTrendHGped.Sort();
     gTrendLGpedwidth.Sort();
     gTrendHGpedwidth.Sort();
-    gTrendLGscale  .Sort();
-    gTrendHGscale  .Sort();
-    gTrendHGLGcorr .Sort();
-    gTrendLGHGcorr .Sort();
-    gTrendHGLGOffset .Sort();
-    gTrendLGHGOffset .Sort();
+    gTrendLGscale.Sort();
+    gTrendHGscale.Sort();
+    gTrendHGLGcorr.Sort();
+    gTrendLGHGcorr.Sort();
+    gTrendHGLGOffset.Sort();
+    gTrendLGHGOffset.Sort();
     gTrendTOT.Sort();
-    if (extended == 1 || extended == 2 ){
-      gTrendTrigger .Sort();
-      gTrendSBNoise .Sort();
+    if (extended == 1 || extended == 2) {
+      gTrendTrigger.Sort();
+      gTrendSBNoise.Sort();
       gTrendSBSignal.Sort();
     }
-    if (extended == 1){
-      gTrendHGLMPV  .Sort();
-      gTrendLGLMPV  .Sort();
+    if (extended == 1) {
+      gTrendHGLMPV.Sort();
+      gTrendLGLMPV.Sort();
       gTrendHGLSigma.Sort();
       gTrendLGLSigma.Sort();
       gTrendHGGSigma.Sort();
       gTrendLGGSigma.Sort();
     }
-  } else if (extended == 3){
-    gTrendHGped    .Sort();
+  } else if (extended == 3) {
+    gTrendHGped.Sort();
     gTrendHGpedwidth.Sort();
-  } else if (extended == 4){
-    gTrendHGped       .Sort();
-    gTrendADCMax      .Sort();
+  } else if (extended == 4) {
+    gTrendHGped.Sort();
+    gTrendADCMax.Sort();
     gTrendADCSaturated.Sort();
-    gTrendTOA         .Sort();
-    gTrendNSampTOA    .Sort();
-    gTrendNTOA        .Sort();
-    gTrendTOT         .Sort();
+    gTrendTOA.Sort();
+    gTrendNSampTOA.Sort();
+    gTrendNTOA.Sort();
+    gTrendTOT.Sort();
     gTrendTOTSaturated.Sort();
-  } 
-  return;  
+  }
+  return;
 }
 
 //************************************************************************
-// Write 
+// Write
 //************************************************************************
 /**
  * Write: serialize all configured trend graphs into the provided TFile
@@ -1052,113 +1273,117 @@ void TileTrend::Sort(){
  * @param f opened TFile pointer where graphs are written
  * @return true on success
  */
-bool TileTrend::Write(TFile* f){
+bool TileTrend::Write(TFile *f) {
   f->cd();
-  TDirectoryFile* dirIndCells = (TDirectoryFile*)f->Get("IndividualCells");
+  TDirectoryFile *dirIndCells = (TDirectoryFile *)f->Get("IndividualCells");
   if (!dirIndCells)
     f->mkdir("IndividualCells");
   f->cd("IndividualCells");
-  if (extended < 3){
-    gTrendLGped    .Write();
-    gTrendHGped    .Write();
+  if (extended < 3) {
+    gTrendLGped.Write();
+    gTrendHGped.Write();
     gTrendLGpedwidth.Write();
     gTrendHGpedwidth.Write();
-    gTrendLGscale  .Write();
-    if(fittedLG) fitLGScale.Write();
-    gTrendHGscale  .Write();
-    if(fittedHG) fitHGScale.Write();
-    gTrendHGLGcorr .Write();
-    gTrendLGHGcorr .Write();
-    gTrendHGLGOffset .Write();
-    gTrendLGHGOffset .Write();
-    gTrendTOT .Write();
-    if (extended == 1 || extended == 2 ){
-      gTrendTrigger .Write();
-      gTrendSBNoise .Write();
+    gTrendLGscale.Write();
+    if (fittedLG)
+      fitLGScale.Write();
+    gTrendHGscale.Write();
+    if (fittedHG)
+      fitHGScale.Write();
+    gTrendHGLGcorr.Write();
+    gTrendLGHGcorr.Write();
+    gTrendHGLGOffset.Write();
+    gTrendLGHGOffset.Write();
+    gTrendTOT.Write();
+    if (extended == 1 || extended == 2) {
+      gTrendTrigger.Write();
+      gTrendSBNoise.Write();
       gTrendSBSignal.Write();
     }
-    if (extended == 1){
-      gTrendHGLMPV  .Write();
-      gTrendLGLMPV  .Write();
+    if (extended == 1) {
+      gTrendHGLMPV.Write();
+      gTrendLGLMPV.Write();
       gTrendHGLSigma.Write();
       gTrendLGLSigma.Write();
       gTrendHGGSigma.Write();
       gTrendLGGSigma.Write();
     }
   }
-  if (extended == 3){
-    gTrendHGped    .Write();
+  if (extended == 3) {
+    gTrendHGped.Write();
     gTrendHGpedwidth.Write();
   }
-  if (extended == 4){
-    gTrendHGped       .Write();
-    gTrendHGpedwidth  .Write();
-    gTrendADCMax      .Write();
+  if (extended == 4) {
+    gTrendHGped.Write();
+    gTrendHGpedwidth.Write();
+    gTrendADCMax.Write();
     gTrendADCSaturated.Write();
-    gTrendTOA         .Write();
-    gTrendNSampTOA    .Write();
-    gTrendNTOA        .Write();
-    gTrendTOT         .Write();
+    gTrendTOA.Write();
+    gTrendNSampTOA.Write();
+    gTrendNTOA.Write();
+    gTrendTOT.Write();
     gTrendTOTSaturated.Write();
-  } 
-  
+  }
+
   return true;
 }
 
 //************************************************************************
-// Write 
+// Write
 //************************************************************************
 /**
  * Write (no-arg): write graphs using the current ROOT file context.
  * Convenience wrapper matching the Write(TFile*) behavior but relying on an
  * externally selected current file.
  */
-bool TileTrend::Write(){
+bool TileTrend::Write() {
 
-  if (extended < 3){
-    gTrendLGped    .Write();
-    gTrendHGped    .Write();
+  if (extended < 3) {
+    gTrendLGped.Write();
+    gTrendHGped.Write();
     gTrendLGpedwidth.Write();
     gTrendHGpedwidth.Write();
-    gTrendLGscale  .Write();
-    if(fittedLG) fitLGScale.Write();
-    gTrendHGscale  .Write();
-    if(fittedHG) fitHGScale.Write();
-    gTrendHGLGcorr .Write();
-    gTrendLGHGcorr .Write();
-    gTrendHGLGOffset .Write();
-    gTrendLGHGOffset .Write();
-    gTrendTOT .Write();
-    if (extended == 1 || extended == 2 ){
-      gTrendTrigger .Write();
-      gTrendSBNoise .Write();
+    gTrendLGscale.Write();
+    if (fittedLG)
+      fitLGScale.Write();
+    gTrendHGscale.Write();
+    if (fittedHG)
+      fitHGScale.Write();
+    gTrendHGLGcorr.Write();
+    gTrendLGHGcorr.Write();
+    gTrendHGLGOffset.Write();
+    gTrendLGHGOffset.Write();
+    gTrendTOT.Write();
+    if (extended == 1 || extended == 2) {
+      gTrendTrigger.Write();
+      gTrendSBNoise.Write();
       gTrendSBSignal.Write();
     }
-    if (extended == 1){
-      gTrendHGLMPV  .Write();
-      gTrendLGLMPV  .Write();
+    if (extended == 1) {
+      gTrendHGLMPV.Write();
+      gTrendLGLMPV.Write();
       gTrendHGLSigma.Write();
       gTrendLGLSigma.Write();
       gTrendHGGSigma.Write();
       gTrendLGGSigma.Write();
     }
   }
-  if (extended == 3){
-    gTrendHGped    .Write();
+  if (extended == 3) {
+    gTrendHGped.Write();
     gTrendHGpedwidth.Write();
   }
-  if (extended == 4){
-    gTrendHGped       .Write();
-    gTrendHGpedwidth  .Write();
-    gTrendADCMax      .Write();
+  if (extended == 4) {
+    gTrendHGped.Write();
+    gTrendHGpedwidth.Write();
+    gTrendADCMax.Write();
     gTrendADCSaturated.Write();
-    gTrendTOA         .Write();
-    gTrendNSampTOA    .Write();
-    gTrendNTOA        .Write();
-    gTrendTOT         .Write();
+    gTrendTOA.Write();
+    gTrendNSampTOA.Write();
+    gTrendNTOA.Write();
+    gTrendTOT.Write();
     gTrendTOTSaturated.Write();
-  } 
-  
+  }
+
   return true;
 }
 
@@ -1166,9 +1391,7 @@ bool TileTrend::Write(){
  * SetLabelPerRun: store a textual label associated with the next appended run.
  * These labels are used for legend entries when plotting multiple runs.
  */
-void TileTrend::SetLabelPerRun(TString label){
-  labels.push_back(label);
-}
+void TileTrend::SetLabelPerRun(TString label) { labels.push_back(label); }
 
 //*************************************************************************
 // Labeling legend entries
@@ -1181,55 +1404,81 @@ void TileTrend::SetLabelPerRun(TString label){
  * @param nSameSettings number of settings grouped for the comparison
  * @return formatted label string
  */
-TString TileTrend::GetLabelLegend( RunInfo commonRunInfo, int runIndex, int nSameSettings){
-  
-  TString labelLegend = "";
-  if (commonRunInfo.species.Contains("injection")){
-    if (nSameSettings == 6){
-      if (commonRunInfo.vop < -9999) labelLegend = Form("%.1f",(double)GetVoltage(runIndex));
-      if (commonRunInfo.rf < -9999) labelLegend = Form("%.1f",ReturnRFValue(GetRF(runIndex)));
-      if (commonRunInfo.cf < -9999) labelLegend = Form("%.0f",ReturnCFValue(GetCF(runIndex)));
-      if (commonRunInfo.cfcomp < -9999) labelLegend = Form("%.0f",ReturnCFCompValue(GetCFComp(runIndex)));
-      if (commonRunInfo.cc < -9999)  labelLegend = Form("%.3f",ReturnCCValue(GetCC(runIndex)));
-      if (commonRunInfo.injDAC < -9999)  labelLegend = Form("%.0f",GetInj(runIndex));
-      if (commonRunInfo.energy < -9999)  labelLegend = Form("%.0f",GetEnergy(runIndex));
-    } else if (nSameSettings == 5){
-      if (commonRunInfo.vop < -9999) labelLegend = Form("%.1f ",(double)GetVoltage(runIndex));
-      if (commonRunInfo.rf < -9999) labelLegend = labelLegend+Form("%.1f ",ReturnRFValue(GetRF(runIndex)));
-      if (commonRunInfo.cf < -9999) labelLegend = labelLegend+Form("%.0f ",ReturnCFValue(GetCF(runIndex)));
-      if (commonRunInfo.cfcomp < -9999) labelLegend = labelLegend+Form("%.0f ",ReturnCFCompValue(GetCFComp(runIndex)));
-      if (commonRunInfo.cc < -9999)  labelLegend = labelLegend+Form("%.3f ",ReturnCCValue(GetCC(runIndex)));
-      if (commonRunInfo.injDAC < -9999)  labelLegend = labelLegend+Form("%.0f",GetInj(runIndex));
-      if (commonRunInfo.energy < -9999)  labelLegend = labelLegend+Form("%.0f",GetEnergy(runIndex));
-    }
-  } else if (commonRunInfo.species.Contains("laser")){
-    if (commonRunInfo.energy < -9999)  labelLegend = Form("%.0f",GetEnergy(runIndex));
-    if (commonRunInfo.temp < -9999)  labelLegend = Form("%.0f",GetTemp(runIndex));
-  // labeling for waveform compare from beam data 5 same settings
-  } else if (nSameSettings == 5){
-    if (commonRunInfo.vop < -9999) labelLegend = Form("%.1f",(double)GetVoltage(runIndex));
-    if (commonRunInfo.rf < -9999) labelLegend = Form("%.1f",ReturnRFValue(GetRF(runIndex)));
-    if (commonRunInfo.cf < -9999) labelLegend = Form("%.0f",ReturnCFValue(GetCF(runIndex)));
-    if (commonRunInfo.cfcomp < -9999) labelLegend = Form("%.0f",ReturnCFCompValue(GetCFComp(runIndex)));
-    if (commonRunInfo.cc < -9999)  labelLegend = Form("%.3f",ReturnCCValue(GetCC(runIndex)));
-    if (commonRunInfo.energy < -9999)  labelLegend = Form("%.0f",GetEnergy(runIndex));
-  // labeling for waveform compare from beam data 4 same settings    
-  } else if (nSameSettings == 4){
-    if (commonRunInfo.vop < -9999) labelLegend = Form("%.1f ",(double)GetVoltage(runIndex));
-    if (commonRunInfo.rf < -9999) labelLegend = labelLegend+Form("%.1f ",ReturnRFValue(GetRF(runIndex)));
-    if (commonRunInfo.cf < -9999) labelLegend = labelLegend+Form("%.0f ",ReturnCFValue(GetCF(runIndex)));
-    if (commonRunInfo.cfcomp < -9999) labelLegend = labelLegend+Form("%.0f ",ReturnCFCompValue(GetCFComp(runIndex)));
-    if (commonRunInfo.cc < -9999)  labelLegend = labelLegend+Form("%.3f ",ReturnCCValue(GetCC(runIndex)));
-    if (commonRunInfo.energy < -9999)  labelLegend = labelLegend+Form("%.0f",GetEnergy(runIndex));
-  }
-    
-    
-  if (labelLegend.CompareTo("") == 0)
-    labelLegend = Form("%i",GetRunNr(runIndex) );
-    
-  return   labelLegend;
-}
+TString TileTrend::GetLabelLegend(RunInfo commonRunInfo, int runIndex, int nSameSettings) {
 
+  TString labelLegend = "";
+  if (commonRunInfo.species.Contains("injection")) {
+    if (nSameSettings == 6) {
+      if (commonRunInfo.vop < -9999)
+        labelLegend = Form("%.1f", (double)GetVoltage(runIndex));
+      if (commonRunInfo.rf < -9999)
+        labelLegend = Form("%.1f", ReturnRFValue(GetRF(runIndex)));
+      if (commonRunInfo.cf < -9999)
+        labelLegend = Form("%.0f", ReturnCFValue(GetCF(runIndex)));
+      if (commonRunInfo.cfcomp < -9999)
+        labelLegend = Form("%.0f", ReturnCFCompValue(GetCFComp(runIndex)));
+      if (commonRunInfo.cc < -9999)
+        labelLegend = Form("%.3f", ReturnCCValue(GetCC(runIndex)));
+      if (commonRunInfo.injDAC < -9999)
+        labelLegend = Form("%.0f", GetInj(runIndex));
+      if (commonRunInfo.energy < -9999)
+        labelLegend = Form("%.0f", GetEnergy(runIndex));
+    } else if (nSameSettings == 5) {
+      if (commonRunInfo.vop < -9999)
+        labelLegend = Form("%.1f ", (double)GetVoltage(runIndex));
+      if (commonRunInfo.rf < -9999)
+        labelLegend = labelLegend + Form("%.1f ", ReturnRFValue(GetRF(runIndex)));
+      if (commonRunInfo.cf < -9999)
+        labelLegend = labelLegend + Form("%.0f ", ReturnCFValue(GetCF(runIndex)));
+      if (commonRunInfo.cfcomp < -9999)
+        labelLegend = labelLegend + Form("%.0f ", ReturnCFCompValue(GetCFComp(runIndex)));
+      if (commonRunInfo.cc < -9999)
+        labelLegend = labelLegend + Form("%.3f ", ReturnCCValue(GetCC(runIndex)));
+      if (commonRunInfo.injDAC < -9999)
+        labelLegend = labelLegend + Form("%.0f", GetInj(runIndex));
+      if (commonRunInfo.energy < -9999)
+        labelLegend = labelLegend + Form("%.0f", GetEnergy(runIndex));
+    }
+  } else if (commonRunInfo.species.Contains("laser")) {
+    if (commonRunInfo.energy < -9999)
+      labelLegend = Form("%.0f", GetEnergy(runIndex));
+    if (commonRunInfo.temp < -9999)
+      labelLegend = Form("%.0f", GetTemp(runIndex));
+    // labeling for waveform compare from beam data 5 same settings
+  } else if (nSameSettings == 5) {
+    if (commonRunInfo.vop < -9999)
+      labelLegend = Form("%.1f", (double)GetVoltage(runIndex));
+    if (commonRunInfo.rf < -9999)
+      labelLegend = Form("%.1f", ReturnRFValue(GetRF(runIndex)));
+    if (commonRunInfo.cf < -9999)
+      labelLegend = Form("%.0f", ReturnCFValue(GetCF(runIndex)));
+    if (commonRunInfo.cfcomp < -9999)
+      labelLegend = Form("%.0f", ReturnCFCompValue(GetCFComp(runIndex)));
+    if (commonRunInfo.cc < -9999)
+      labelLegend = Form("%.3f", ReturnCCValue(GetCC(runIndex)));
+    if (commonRunInfo.energy < -9999)
+      labelLegend = Form("%.0f", GetEnergy(runIndex));
+    // labeling for waveform compare from beam data 4 same settings
+  } else if (nSameSettings == 4) {
+    if (commonRunInfo.vop < -9999)
+      labelLegend = Form("%.1f ", (double)GetVoltage(runIndex));
+    if (commonRunInfo.rf < -9999)
+      labelLegend = labelLegend + Form("%.1f ", ReturnRFValue(GetRF(runIndex)));
+    if (commonRunInfo.cf < -9999)
+      labelLegend = labelLegend + Form("%.0f ", ReturnCFValue(GetCF(runIndex)));
+    if (commonRunInfo.cfcomp < -9999)
+      labelLegend = labelLegend + Form("%.0f ", ReturnCFCompValue(GetCFComp(runIndex)));
+    if (commonRunInfo.cc < -9999)
+      labelLegend = labelLegend + Form("%.3f ", ReturnCCValue(GetCC(runIndex)));
+    if (commonRunInfo.energy < -9999)
+      labelLegend = labelLegend + Form("%.0f", GetEnergy(runIndex));
+  }
+
+  if (labelLegend.CompareTo("") == 0)
+    labelLegend = Form("%i", GetRunNr(runIndex));
+
+  return labelLegend;
+}
 
 //*************************************************************************
 // Printing min & max ranges for all properties
@@ -1239,44 +1488,44 @@ TString TileTrend::GetLabelLegend( RunInfo commonRunInfo, int runIndex, int nSam
  * ranges for all tracked quantities to stdout. Useful for quick sanity checks
  * when tuning plot ranges.
  */
-void TileTrend::PrintMinMaxRanges(){
+void TileTrend::PrintMinMaxRanges() {
   std::cout << "=================================================" << std::endl;
-  std::cout << "===== Printing min and max ranges ===============" << std::endl; 
+  std::cout << "===== Printing min and max ranges ===============" << std::endl;
   std::cout << "=================================================" << std::endl;
   std::cout << " +++++++ Cell ID: " << CellID << "+++++++++++++++" << std::endl;
-  std::cout << "HG Ped :\t"       << MinHGped       << "\t" << MaxHGped       << std::endl;
-  std::cout << "HG Ped width :\t" << MinHGpedwidth  << "\t" << MaxHGpedwidth  << std::endl;
-  std::cout << "HG Scale :\t"     << MinHGscale     << "\t" << MaxHGscale     << std::endl;
-  std::cout << "LG-HG Corr :\t"   << MinLGHGcorr    << "\t" << MaxLGHGcorr    << std::endl;
-  std::cout << "LG-HG Off :\t"    << MinLGHGOff     << "\t" << MaxLGHGOff     << std::endl;
-  std::cout << "Trigg :\t"        << MinTrigg       << "\t" << MaxTrigg       << std::endl;
-  std::cout << "HG Spec :\t"      << MinHGSpec      << "\t" << MaxHGSpec      << std::endl;
-  std::cout << "HG MPV :\t"       << MinHGMPV       << "\t" << MaxHGMPV       << std::endl;
-  std::cout << "HG Land Sigma :\t" << MinHGLSigma   << "\t" << MaxHGLSigma    << std::endl;
-  std::cout << "HG Gaus Sigma :\t" << MinHGGSigma   << "\t" << MaxHGGSigma    << std::endl;
+  std::cout << "HG Ped :\t" << MinHGped << "\t" << MaxHGped << std::endl;
+  std::cout << "HG Ped width :\t" << MinHGpedwidth << "\t" << MaxHGpedwidth << std::endl;
+  std::cout << "HG Scale :\t" << MinHGscale << "\t" << MaxHGscale << std::endl;
+  std::cout << "LG-HG Corr :\t" << MinLGHGcorr << "\t" << MaxLGHGcorr << std::endl;
+  std::cout << "LG-HG Off :\t" << MinLGHGOff << "\t" << MaxLGHGOff << std::endl;
+  std::cout << "Trigg :\t" << MinTrigg << "\t" << MaxTrigg << std::endl;
+  std::cout << "HG Spec :\t" << MinHGSpec << "\t" << MaxHGSpec << std::endl;
+  std::cout << "HG MPV :\t" << MinHGMPV << "\t" << MaxHGMPV << std::endl;
+  std::cout << "HG Land Sigma :\t" << MinHGLSigma << "\t" << MaxHGLSigma << std::endl;
+  std::cout << "HG Gaus Sigma :\t" << MinHGGSigma << "\t" << MaxHGGSigma << std::endl;
   std::cout << "-------------------------------------------------" << std::endl;
-  std::cout << "LG Ped :\t"       << MinLGped       << "\t" << MaxLGped       << std::endl;
-  std::cout << "LG Ped width :\t" << MinLGpedwidth  << "\t" << MaxLGpedwidth  << std::endl;
-  std::cout << "LG Scale :\t"     << MinLGscale     << "\t" << MaxLGscale     << std::endl;
-  std::cout << "HG-LG Corr :\t"   << MinHGLGcorr    << "\t" << MaxHGLGcorr    << std::endl;
-  std::cout << "HG-LG Off :\t"    << MinHGLGOff     << "\t" << MaxHGLGOff     << std::endl;
-  std::cout << "LG Spec :\t"      << MinLGSpec      << "\t" << MaxLGSpec      << std::endl;
-  std::cout << "LG MPV :\t"       << MinLGMPV       << "\t" << MaxLGMPV       << std::endl;
-  std::cout << "LG Land Sigma :\t" << MinLGLSigma   << "\t" << MaxLGLSigma    << std::endl;
-  std::cout << "LG Gaus Sigma :\t" << MinLGGSigma   << "\t" << MaxLGGSigma    << std::endl;
+  std::cout << "LG Ped :\t" << MinLGped << "\t" << MaxLGped << std::endl;
+  std::cout << "LG Ped width :\t" << MinLGpedwidth << "\t" << MaxLGpedwidth << std::endl;
+  std::cout << "LG Scale :\t" << MinLGscale << "\t" << MaxLGscale << std::endl;
+  std::cout << "HG-LG Corr :\t" << MinHGLGcorr << "\t" << MaxHGLGcorr << std::endl;
+  std::cout << "HG-LG Off :\t" << MinHGLGOff << "\t" << MaxHGLGOff << std::endl;
+  std::cout << "LG Spec :\t" << MinLGSpec << "\t" << MaxLGSpec << std::endl;
+  std::cout << "LG MPV :\t" << MinLGMPV << "\t" << MaxLGMPV << std::endl;
+  std::cout << "LG Land Sigma :\t" << MinLGLSigma << "\t" << MaxLGLSigma << std::endl;
+  std::cout << "LG Gaus Sigma :\t" << MinLGGSigma << "\t" << MaxLGGSigma << std::endl;
   std::cout << "-------------------------------------------------" << std::endl;
-  std::cout << "S/B Noise :\t"    << MinSBNoise     << "\t" << MaxSBNoise     << std::endl;
-  std::cout << "S/B Signal :\t"   << MinSBSignal    << "\t" << MaxSBSignal    << std::endl;
-  std::cout << "inj Dac :\t"      << MaxInjADC                                << std::endl;
-  std::cout << "inj TOT :\t"      << MaxInjTOT                                << std::endl;
-  std::cout << "ADC max :\t"      << MinADCmax      << "\t"<< MaxADCmax       << std::endl;
-  std::cout << "ADC sat :\t"      << MinADCsat      << "\t"<< MaxADCsat       << std::endl;
-  std::cout << "TOT :\t"          << MinTOT         << "\t"<< MaxTOT          << std::endl;
-  std::cout << "TOT sat :\t"      << MinTOTsat      << "\t"<< MaxTOTsat       << std::endl;
-  std::cout << "TOA :\t"          << MinTOA         << "\t"<< MaxTOA          << std::endl;
-  std::cout << "n TOA :\t"        << MinNSampTOA    << "\t"<< MaxNSampTOA     << std::endl;
-  std::cout << "nSample TOA :\t"  << MinNSampTOA    << "\t"<< MaxNSampTOA     << std::endl;
-  std::cout << "n TOA :\t"        << MinNTOA        << "\t"<< MaxNTOA         << std::endl;
+  std::cout << "S/B Noise :\t" << MinSBNoise << "\t" << MaxSBNoise << std::endl;
+  std::cout << "S/B Signal :\t" << MinSBSignal << "\t" << MaxSBSignal << std::endl;
+  std::cout << "inj Dac :\t" << MaxInjADC << std::endl;
+  std::cout << "inj TOT :\t" << MaxInjTOT << std::endl;
+  std::cout << "ADC max :\t" << MinADCmax << "\t" << MaxADCmax << std::endl;
+  std::cout << "ADC sat :\t" << MinADCsat << "\t" << MaxADCsat << std::endl;
+  std::cout << "TOT :\t" << MinTOT << "\t" << MaxTOT << std::endl;
+  std::cout << "TOT sat :\t" << MinTOTsat << "\t" << MaxTOTsat << std::endl;
+  std::cout << "TOA :\t" << MinTOA << "\t" << MaxTOA << std::endl;
+  std::cout << "n TOA :\t" << MinNSampTOA << "\t" << MaxNSampTOA << std::endl;
+  std::cout << "nSample TOA :\t" << MinNSampTOA << "\t" << MaxNSampTOA << std::endl;
+  std::cout << "n TOA :\t" << MinNTOA << "\t" << MaxNTOA << std::endl;
   std::cout << "=================================================" << std::endl;
 }
 
@@ -1289,35 +1538,62 @@ void TileTrend::PrintMinMaxRanges(){
  * @param option numeric selector
  * @return pointer to the chosen graph or nullptr if unknown
  */
-TGraphErrors* TileTrend::GetTrendingBasedOnOption(int option){
-  if (option == 0)       return GetHGped();
-  else if (option == 1)  return GetLGped();
-  else if (option == 2)  return GetHGScale();            
-  else if (option == 3)  return GetLGScale();
-  else if (option == 4)  return GetLGHGcorr();
-  else if (option == 5)  return GetHGLGcorr();
-  else if (option == 6)  return GetTrigger();
-  else if (option == 7)  return GetSBSignal();
-  else if (option == 8)  return GetSBNoise();
-  else if (option == 9)  return GetHGLMPV();
-  else if (option == 10) return GetLGLMPV();
-  else if (option == 11) return GetHGLSigma();
-  else if (option == 12) return GetLGLSigma();
-  else if (option == 13) return GetHGGSigma();
-  else if (option == 14) return GetLGGSigma();
-  else if (option == 15) return GetHGpedwidth();
-  else if (option == 16) return GetLGpedwidth();
-  else if (option == 17) return GetLGHGOff();
-  else if (option == 18) return GetHGLGOff();
-    // special mode for injections
-  else if (option == 30) return GetADCmax();
-  else if (option == 31) return GetADCsat();
-  else if (option == 32) return GetTOT();
-  else if (option == 33) return GetTOTsat();
-  else if (option == 34) return GetTOA();
-  else if (option == 35) return GetNSampTOA();
-  else if (option == 36) return GetNTOA();
-  else return nullptr;
+TGraphErrors *TileTrend::GetTrendingBasedOnOption(int option) {
+  if (option == 0)
+    return GetHGped();
+  else if (option == 1)
+    return GetLGped();
+  else if (option == 2)
+    return GetHGScale();
+  else if (option == 3)
+    return GetLGScale();
+  else if (option == 4)
+    return GetLGHGcorr();
+  else if (option == 5)
+    return GetHGLGcorr();
+  else if (option == 6)
+    return GetTrigger();
+  else if (option == 7)
+    return GetSBSignal();
+  else if (option == 8)
+    return GetSBNoise();
+  else if (option == 9)
+    return GetHGLMPV();
+  else if (option == 10)
+    return GetLGLMPV();
+  else if (option == 11)
+    return GetHGLSigma();
+  else if (option == 12)
+    return GetLGLSigma();
+  else if (option == 13)
+    return GetHGGSigma();
+  else if (option == 14)
+    return GetLGGSigma();
+  else if (option == 15)
+    return GetHGpedwidth();
+  else if (option == 16)
+    return GetLGpedwidth();
+  else if (option == 17)
+    return GetLGHGOff();
+  else if (option == 18)
+    return GetHGLGOff();
+  // special mode for injections
+  else if (option == 30)
+    return GetADCmax();
+  else if (option == 31)
+    return GetADCsat();
+  else if (option == 32)
+    return GetTOT();
+  else if (option == 33)
+    return GetTOTsat();
+  else if (option == 34)
+    return GetTOA();
+  else if (option == 35)
+    return GetNSampTOA();
+  else if (option == 36)
+    return GetNTOA();
+  else
+    return nullptr;
   return nullptr;
 }
 
@@ -1330,189 +1606,505 @@ TGraphErrors* TileTrend::GetTrendingBasedOnOption(int option){
  * @param min reference to min value to update
  * @param max reference to max value to update
  */
-void TileTrend::GetMinMaxBasedOnOptionAndCompare(int option, Double_t &min, Double_t &max){
-  if (option == 0){
-    if(min>GetMinHGped()) min=GetMinHGped();
-    if(max<GetMaxHGped()) max=GetMaxHGped();
-  } else if (option == 1){
-    if(min>GetMinLGped()) min=GetMinLGped();
-    if(max<GetMaxLGped()) max=GetMaxLGped();
-  } else if (option == 2){
-    if(min>GetMinHGscale()) min=GetMinHGscale();
-    if(max<GetMaxHGscale()) max=GetMaxHGscale();
-  } else if (option == 3){
-    if(min>GetMinLGscale()) min=GetMinLGscale();
-    if(max<GetMaxLGscale()) max=GetMaxLGscale();
-  } else if (option == 4){
-    if(min>GetMinLGHGcorr()) min=GetMinLGHGcorr();
-    if(max<GetMaxLGHGcorr()) max=GetMaxLGHGcorr();
-  } else if (option == 5){
-    if(min>GetMinHGLGcorr()) min=GetMinHGLGcorr();
-    if(max<GetMaxHGLGcorr()) max=GetMaxHGLGcorr();          
-  } else if (option == 6){
-    if(min>GetMinTrigg()) min=GetMinTrigg();
-    if(max<GetMaxTrigg()) max=GetMaxTrigg();          
-  } else if (option == 7){
-    if(min>GetMinSBSignal()) min=GetMinSBSignal();
-    if(max<GetMaxSBSignal()) max=GetMaxSBSignal();          
-  } else if (option == 8){
-    if(min>GetMinSBNoise()) min=GetMinSBNoise();
-    if(max<GetMaxSBNoise()) max=GetMaxSBNoise();          
-  } else if (option == 9){
-    if(min>GetMinHGMPV()) min=GetMinHGMPV();
-    if(max<GetMaxHGMPV()) max=GetMaxHGMPV();          
-  } else if (option == 10){
-    if(min>GetMinLGMPV()) min=GetMinLGMPV();
-    if(max<GetMaxLGMPV()) max=GetMaxLGMPV();          
-  } else if (option == 11){
-    if(min>GetMinHGLSigma()) min=GetMinHGLSigma();
-    if(max<GetMaxHGLSigma()) max=GetMaxHGLSigma();          
-  } else if (option == 12){
-    if(min>GetMinLGLSigma()) min=GetMinLGLSigma();
-    if(max<GetMaxLGLSigma()) max=GetMaxLGLSigma();          
-  } else if (option == 13){
-    if(min>GetMinHGGSigma()) min=GetMinHGGSigma();
-    if(max<GetMaxHGGSigma()) max=GetMaxHGGSigma();          
-  } else if (option == 14){
-    if(min>GetMinLGGSigma()) min=GetMinLGGSigma();
-    if(max<GetMaxLGGSigma()) max=GetMaxLGGSigma();          
-  } else if (option == 15){
-    if(min>GetMinHGpedwidth()) min=GetMinHGpedwidth();
-    if(max<GetMaxHGpedwidth()) max=GetMaxHGpedwidth();          
-  } else if (option == 16){
-    if(min>GetMinLGpedwidth()) min=GetMinLGpedwidth();
-    if(max<GetMaxLGpedwidth()) max=GetMaxLGpedwidth();          
-  } else if (option == 17){
-    if(min>GetMinLGHGOffset()) min=GetMinLGHGOffset();
-    if(max<GetMaxLGHGOffset()) max=GetMaxLGHGOffset();          
-  } else if (option == 18){
-    if(min>GetMinHGLGOffset()) min=GetMinHGLGOffset();
-    if(max<GetMaxHGLGOffset()) max=GetMaxHGLGOffset();          
-  } else if (option == 19){
-    if(min>GetMinHGped()) min=GetMinHGped();
-    if(max<GetMaxHGped()) max=GetMaxHGped();
-    if(min>GetMinLGped()) min=GetMinLGped();
-    if(max<GetMaxLGped()) max=GetMaxLGped();
-  } else if (option == 20){
-    if(min>GetMinHGpedwidth()) min=GetMinHGpedwidth();
-    if(max<GetMaxHGpedwidth()) max=GetMaxHGpedwidth();          
-    if(min>GetMinLGpedwidth()) min=GetMinLGpedwidth();
-    if(max<GetMaxLGpedwidth()) max=GetMaxLGpedwidth();          
-  } else if (option == 30){
-    if(min>GetMinADCmax()) min=GetMinADCmax();
-    if(max<GetMaxADCmax()) max=GetMaxADCmax();          
-  } else if (option == 31){
-    if(min>GetMinADCsat()) min=GetMinADCsat();
-    if(max<GetMaxADCsat()) max=GetMaxADCsat();          
-  } else if (option == 32){
-    if(min>GetMinTOT()) min=GetMinTOT();
-    if(max<GetMaxTOT()) max=GetMaxTOT();          
-  } else if (option == 33){
-    if(min>GetMinTOTsat()) min=GetMinTOTsat();
-    if(max<GetMaxTOTsat()) max=GetMaxTOTsat();          
-  } else if (option == 34){
-    if(min>GetMinTOA()) min=GetMinTOA();
-    if(max<GetMaxTOA()) max=GetMaxTOA();          
-  } else if (option == 35){ 
-    if(min>GetMinNSampTOA()) min=GetMinNSampTOA();
-    if(max<GetMaxNSampTOA()) max=GetMaxNSampTOA();          
-  } else if (option == 36){
-    if(min>GetMinNTOA()) min=GetMinNTOA();
-    if(max<GetMaxNTOA()) max=GetMaxNTOA();          
+void TileTrend::GetMinMaxBasedOnOptionAndCompare(int option, Double_t &min, Double_t &max) {
+  if (option == 0) {
+    if (min > GetMinHGped())
+      min = GetMinHGped();
+    if (max < GetMaxHGped())
+      max = GetMaxHGped();
+  } else if (option == 1) {
+    if (min > GetMinLGped())
+      min = GetMinLGped();
+    if (max < GetMaxLGped())
+      max = GetMaxLGped();
+  } else if (option == 2) {
+    if (min > GetMinHGscale())
+      min = GetMinHGscale();
+    if (max < GetMaxHGscale())
+      max = GetMaxHGscale();
+  } else if (option == 3) {
+    if (min > GetMinLGscale())
+      min = GetMinLGscale();
+    if (max < GetMaxLGscale())
+      max = GetMaxLGscale();
+  } else if (option == 4) {
+    if (min > GetMinLGHGcorr())
+      min = GetMinLGHGcorr();
+    if (max < GetMaxLGHGcorr())
+      max = GetMaxLGHGcorr();
+  } else if (option == 5) {
+    if (min > GetMinHGLGcorr())
+      min = GetMinHGLGcorr();
+    if (max < GetMaxHGLGcorr())
+      max = GetMaxHGLGcorr();
+  } else if (option == 6) {
+    if (min > GetMinTrigg())
+      min = GetMinTrigg();
+    if (max < GetMaxTrigg())
+      max = GetMaxTrigg();
+  } else if (option == 7) {
+    if (min > GetMinSBSignal())
+      min = GetMinSBSignal();
+    if (max < GetMaxSBSignal())
+      max = GetMaxSBSignal();
+  } else if (option == 8) {
+    if (min > GetMinSBNoise())
+      min = GetMinSBNoise();
+    if (max < GetMaxSBNoise())
+      max = GetMaxSBNoise();
+  } else if (option == 9) {
+    if (min > GetMinHGMPV())
+      min = GetMinHGMPV();
+    if (max < GetMaxHGMPV())
+      max = GetMaxHGMPV();
+  } else if (option == 10) {
+    if (min > GetMinLGMPV())
+      min = GetMinLGMPV();
+    if (max < GetMaxLGMPV())
+      max = GetMaxLGMPV();
+  } else if (option == 11) {
+    if (min > GetMinHGLSigma())
+      min = GetMinHGLSigma();
+    if (max < GetMaxHGLSigma())
+      max = GetMaxHGLSigma();
+  } else if (option == 12) {
+    if (min > GetMinLGLSigma())
+      min = GetMinLGLSigma();
+    if (max < GetMaxLGLSigma())
+      max = GetMaxLGLSigma();
+  } else if (option == 13) {
+    if (min > GetMinHGGSigma())
+      min = GetMinHGGSigma();
+    if (max < GetMaxHGGSigma())
+      max = GetMaxHGGSigma();
+  } else if (option == 14) {
+    if (min > GetMinLGGSigma())
+      min = GetMinLGGSigma();
+    if (max < GetMaxLGGSigma())
+      max = GetMaxLGGSigma();
+  } else if (option == 15) {
+    if (min > GetMinHGpedwidth())
+      min = GetMinHGpedwidth();
+    if (max < GetMaxHGpedwidth())
+      max = GetMaxHGpedwidth();
+  } else if (option == 16) {
+    if (min > GetMinLGpedwidth())
+      min = GetMinLGpedwidth();
+    if (max < GetMaxLGpedwidth())
+      max = GetMaxLGpedwidth();
+  } else if (option == 17) {
+    if (min > GetMinLGHGOffset())
+      min = GetMinLGHGOffset();
+    if (max < GetMaxLGHGOffset())
+      max = GetMaxLGHGOffset();
+  } else if (option == 18) {
+    if (min > GetMinHGLGOffset())
+      min = GetMinHGLGOffset();
+    if (max < GetMaxHGLGOffset())
+      max = GetMaxHGLGOffset();
+  } else if (option == 19) {
+    if (min > GetMinHGped())
+      min = GetMinHGped();
+    if (max < GetMaxHGped())
+      max = GetMaxHGped();
+    if (min > GetMinLGped())
+      min = GetMinLGped();
+    if (max < GetMaxLGped())
+      max = GetMaxLGped();
+  } else if (option == 20) {
+    if (min > GetMinHGpedwidth())
+      min = GetMinHGpedwidth();
+    if (max < GetMaxHGpedwidth())
+      max = GetMaxHGpedwidth();
+    if (min > GetMinLGpedwidth())
+      min = GetMinLGpedwidth();
+    if (max < GetMaxLGpedwidth())
+      max = GetMaxLGpedwidth();
+  } else if (option == 30) {
+    if (min > GetMinADCmax())
+      min = GetMinADCmax();
+    if (max < GetMaxADCmax())
+      max = GetMaxADCmax();
+  } else if (option == 31) {
+    if (min > GetMinADCsat())
+      min = GetMinADCsat();
+    if (max < GetMaxADCsat())
+      max = GetMaxADCsat();
+  } else if (option == 32) {
+    if (min > GetMinTOT())
+      min = GetMinTOT();
+    if (max < GetMaxTOT())
+      max = GetMaxTOT();
+  } else if (option == 33) {
+    if (min > GetMinTOTsat())
+      min = GetMinTOTsat();
+    if (max < GetMaxTOTsat())
+      max = GetMaxTOTsat();
+  } else if (option == 34) {
+    if (min > GetMinTOA())
+      min = GetMinTOA();
+    if (max < GetMaxTOA())
+      max = GetMaxTOA();
+  } else if (option == 35) {
+    if (min > GetMinNSampTOA())
+      min = GetMinNSampTOA();
+    if (max < GetMaxNSampTOA())
+      max = GetMaxNSampTOA();
+  } else if (option == 36) {
+    if (min > GetMinNTOA())
+      min = GetMinNTOA();
+    if (max < GetMaxNTOA())
+      max = GetMaxNTOA();
+  } else if (option == 50) {
+    if (min > GetMinADCmax())
+      min = GetMinADCmax();
+    if (max < GetMaxADCmax())
+      max = GetMaxADCmax();
+    if (min > GetMinTOT())
+      min = GetMinTOT();
+    if (max < GetMaxTOT())
+      max = GetMaxTOT();
   }
   return;
 }
-
 
 //*************************************************************************
 /**
  * Fitting of Scale graphs with constant or linear function
-*/
-void TileTrend::FitScale(int optionReadout, int optionFit){
-  
+ */
+void TileTrend::FitScale(int optionReadout, int optionFit) {
+
   // HGCROC read-out
-  if (optionReadout == 1) { 
-    if (gTrendHGscale.GetN() == 0) return;
-    // linear fit 
-    if (optionFit == 1){  
-      fitHGScale  = TF1(Form("fitADCScale_CellID%d",CellID),"[0]+[1]*x",
-                        gTrendHGscale.GetX()[0], gTrendHGscale.GetX()[gTrendHGscale.GetN()-1]);
+  if (optionReadout == 1) {
+    if (gTrendHGscale.GetN() == 0)
+      return;
+    // linear fit
+    if (optionFit == 1) {
+      fitHGScale = TF1(Form("fitADCScale_CellID%d", CellID), "[0]+[1]*x", gTrendHGscale.GetX()[0],
+                       gTrendHGscale.GetX()[gTrendHGscale.GetN() - 1]);
       fitHGScale.SetParLimits(1, 0, 1000);
       fitHGScale.SetParLimits(0, -2000, 2000);
-      gTrendHGscale.Fit(&fitHGScale,"NQEX0");
-      fittedHG  = true;
-    // constant fit
+      gTrendHGscale.Fit(&fitHGScale, "NQEX0");
+      fittedHG = true;
+      // constant fit
     } else {
-      fitHGScale  = TF1(Form("fitADCScale_CellID%d",CellID),"[0]",
-                        gTrendHGscale.GetX()[0], gTrendHGscale.GetX()[gTrendHGscale.GetN()-1]);
-      gTrendHGscale.Fit(&fitHGScale,"NQEX0");
-      fittedHG  = true;      
+      fitHGScale = TF1(Form("fitADCScale_CellID%d", CellID), "[0]", gTrendHGscale.GetX()[0],
+                       gTrendHGscale.GetX()[gTrendHGscale.GetN() - 1]);
+      gTrendHGscale.Fit(&fitHGScale, "NQEX0");
+      fittedHG = true;
     }
-  // CAEN read-out
+    // CAEN read-out
   } else {
-    if (gTrendHGscale.GetN() > 0){ 
-      // linear fit 
-      if (optionFit == 1){  
-        fitHGScale  = TF1(Form("fitHGScale_CellID%d",CellID),"[0]+[1]*x",
-                          gTrendHGscale.GetX()[0], gTrendHGscale.GetX()[gTrendHGscale.GetN()-1]);
+    if (gTrendHGscale.GetN() > 0) {
+      // linear fit
+      if (optionFit == 1) {
+        fitHGScale = TF1(Form("fitHGScale_CellID%d", CellID), "[0]+[1]*x", gTrendHGscale.GetX()[0],
+                         gTrendHGscale.GetX()[gTrendHGscale.GetN() - 1]);
         fitHGScale.SetParLimits(1, 0, 1000);
         fitHGScale.SetParLimits(0, -2000, 2000);
-        gTrendHGscale.Fit(&fitHGScale,"NQEX0");
-        fittedHG  = true;
-      // constant fit
+        gTrendHGscale.Fit(&fitHGScale, "NQEX0");
+        fittedHG = true;
+        // constant fit
       } else {
-        fitHGScale  = TF1(Form("fitHGScale_CellID%d",CellID),"[0]",
-                          gTrendHGscale.GetX()[0], gTrendHGscale.GetX()[gTrendHGscale.GetN()-1]);
-        gTrendHGscale.Fit(&fitHGScale,"NQEX0");
-        fittedHG  = true;      
+        fitHGScale = TF1(Form("fitHGScale_CellID%d", CellID), "[0]", gTrendHGscale.GetX()[0],
+                         gTrendHGscale.GetX()[gTrendHGscale.GetN() - 1]);
+        gTrendHGscale.Fit(&fitHGScale, "NQEX0");
+        fittedHG = true;
       }
     }
-    if (gTrendLGscale.GetN() > 0){ 
-      // linear fit 
-      if (optionFit == 1){  
-        fitLGScale  = TF1(Form("fitLGScale_CellID%d",CellID),"[0]+[1]*x",
-                          gTrendLGscale.GetX()[0], gTrendLGscale.GetX()[gTrendLGscale.GetN()-1]);
+    if (gTrendLGscale.GetN() > 0) {
+      // linear fit
+      if (optionFit == 1) {
+        fitLGScale = TF1(Form("fitLGScale_CellID%d", CellID), "[0]+[1]*x", gTrendLGscale.GetX()[0],
+                         gTrendLGscale.GetX()[gTrendLGscale.GetN() - 1]);
         fitLGScale.SetParLimits(1, 0, 1000);
         fitLGScale.SetParLimits(0, -2000, 2000);
-        gTrendLGscale.Fit(&fitLGScale,"NQEX0");
-        fittedLG  = true;
-      // constant fit
+        gTrendLGscale.Fit(&fitLGScale, "NQEX0");
+        fittedLG = true;
+        // constant fit
       } else {
-        fitLGScale  = TF1(Form("fitLGScale_CellID%d",CellID),"[0]",
-                          gTrendLGscale.GetX()[0], gTrendLGscale.GetX()[gTrendLGscale.GetN()-1]);
-        gTrendLGscale.Fit(&fitLGScale,"NQEX0");
-        fittedLG  = true;      
+        fitLGScale = TF1(Form("fitLGScale_CellID%d", CellID), "[0]", gTrendLGscale.GetX()[0],
+                         gTrendLGscale.GetX()[gTrendLGscale.GetN() - 1]);
+        gTrendLGscale.Fit(&fitLGScale, "NQEX0");
+        fittedLG = true;
       }
     }
   }
   return;
 }
 
-
-double TileTrend::GetFuncZeroHGFit(){ 
-  if (fittedHG){
-    if (fitHGScale.GetNpar() > 1){
-      double zp = (0. - fitHGScale.GetParameter(0))/fitHGScale.GetParameter(1);
+/**
+ * @brief Estimate the x-position where the fitted HG scale crosses zero.
+ *
+ * This is the extrapolated run-axis value for which the fitted HG calibration trend
+ * reaches zero, provided the underlying linear fit is valid and the result lies within
+ * a physically reasonable range.
+ *
+ * @return Zero-crossing value, or -10000 if the fit is unavailable or the estimate is invalid.
+ */
+double TileTrend::GetFuncZeroHGFit() {
+  if (fittedHG) {
+    if (fitHGScale.GetNpar() > 1) {
+      double zp = (0. - fitHGScale.GetParameter(0)) / fitHGScale.GetParameter(1);
       // limit zero point
       if (zp > 200 || zp < -200)
         return -10000.;
-      else 
+      else
         return zp;
     }
-  } 
+  }
   return -10000.;
 };
 
-double TileTrend::GetFuncZeroLGFit()    { 
-  if (fittedLG){
-    if (fitLGScale.GetNpar() > 1){
-      double zp = (0. - fitLGScale.GetParameter(0))/fitLGScale.GetParameter(1);
+/**
+ * @brief Estimate the x-position where the fitted LG scale crosses zero.
+ *
+ * This is the extrapolated run-axis value for which the fitted LG calibration trend
+ * reaches zero, provided the underlying linear fit is valid and the result lies within
+ * a physically reasonable range.
+ *
+ * @return Zero-crossing value, or -10000 if the fit is unavailable or the estimate is invalid.
+ */
+double TileTrend::GetFuncZeroLGFit() {
+  if (fittedLG) {
+    if (fitLGScale.GetNpar() > 1) {
+      double zp = (0. - fitLGScale.GetParameter(0)) / fitLGScale.GetParameter(1);
       // limit zero point
       if (zp > 200 || zp < -200)
         return -10000.;
-      else 
+      else
         return zp;
     }
-  } 
+  }
   return -10000.;
 };
+
+/**
+ * @brief Scan stored run spectra for peak candidates and report their positions and widths.
+ *
+ * The function iterates over the per-run HG trigger histograms, searches for peaks with
+ * TSpectrum, estimates each peak width from the half-maximum crossings, and stores the
+ * results in the run trend graph.
+ *
+ * @param option Controls how the x-axis of the trend is chosen for the plotted peak positions.
+ */
+void TileTrend::EvalTotPeaks(int option) {
+
+  for (const auto &entry : TOTRuns) {
+    int runNr = entry.first;
+    double xAxis = runNr;
+    const TH1D &h = entry.second;
+    int indexRun = -1;
+
+    if (option != 0 || option != 3 || option != 4 || option != 2)
+      indexRun = GetIndexRun(runNr);
+    if (indexRun != -1) {
+      if (option == 1)
+        xAxis = GetVoltage(indexRun);
+      else if (option == 5)
+        xAxis = GetEnergy(indexRun);
+      else if (option == 6)
+        xAxis = GetTemp(indexRun);
+    }
+
+    TH1D hist = h; // copy so TSpectrum can work on it
+    TSpectrum spec(10);
+
+    int nPeaks = spec.Search(&hist, 2.0, "", 0.05);
+
+    double *peakX = spec.GetPositionX();
+    double *peakY = spec.GetPositionY();
+
+    std::vector<PeakInfo> peaks;
+    peaks.reserve(nPeaks);
+
+    for (int i = 0; i < nPeaks; ++i) {
+      double x0 = peakX[i];
+      double y0 = peakY[i];
+
+      if (y0 <= 0)
+        continue;
+
+      int bin0 = hist.GetXaxis()->FindBin(x0);
+      double halfMax = y0 / 2.0;
+
+      // Find left half-maximum crossing
+      int leftBin = bin0;
+      while (leftBin > 1) {
+        double yLeft = hist.GetBinContent(leftBin);
+        if (yLeft <= halfMax)
+          break;
+        --leftBin;
+      }
+
+      // Find right half-maximum crossing
+      int rightBin = bin0;
+      while (rightBin < hist.GetNbinsX()) {
+        double yRight = hist.GetBinContent(rightBin);
+        if (yRight <= halfMax)
+          break;
+        ++rightBin;
+      }
+
+      double xLeft = hist.GetXaxis()->GetBinLowEdge(leftBin);
+      double xRight = hist.GetXaxis()->GetBinUpEdge(rightBin);
+
+      // linear interpolation for more precise crossing
+      if (leftBin > 1 && leftBin < hist.GetNbinsX()) {
+        double yL1 = hist.GetBinContent(leftBin);
+        double yL0 = hist.GetBinContent(leftBin - 1);
+        if (yL1 != yL0) {
+          double frac = (halfMax - yL1) / (yL0 - yL1);
+          xLeft = hist.GetXaxis()->GetBinLowEdge(leftBin) + hist.GetXaxis()->GetBinWidth(leftBin) * frac;
+        }
+      }
+
+      if (rightBin > 1 && rightBin < hist.GetNbinsX()) {
+        double yR0 = hist.GetBinContent(rightBin);
+        double yR1 = hist.GetBinContent(rightBin + 1);
+        if (yR0 != yR1) {
+          double frac = (halfMax - yR0) / (yR1 - yR0);
+          xRight = hist.GetXaxis()->GetBinLowEdge(rightBin) + hist.GetXaxis()->GetBinWidth(rightBin) * (1.0 - frac);
+        }
+      }
+
+      PeakInfo p;
+      p.xCenter = x0;
+      p.fwhm = xRight - xLeft;
+      p.sigma = p.fwhm / (2.0 * std::sqrt(2.0 * std::log(2.0)));
+
+      peaks.push_back(p);
+    }
+
+    if (debug > 0)
+      std::cout << "Run Nr. " << runNr << " has " << peaks.size() << " peaks\n";
+    for (const auto &p : peaks) {
+      if (debug > 0)
+        std::cout << "  peak at x = " << p.xCenter << ", FWHM = " << p.fwhm << ", sigma = " << p.sigma << "\n";
+      gTrendTOT.AddPoint(xAxis, p.xCenter);
+      gTrendTOT.SetPointError(gTrendTOT.GetN() - 1, 0, p.fwhm);
+      if (p.xCenter < MinTOT)
+        MinTOT = p.xCenter;
+      if (p.xCenter > MaxTOT) {
+        MaxTOT = p.xCenter;
+      }
+    }
+  }
+
+  return;
+}
+
+/**
+ * @brief Scan stored run spectra for peak candidates and report their positions and widths.
+ *
+ * The function iterates over the per-run HG trigger histograms, searches for peaks with
+ * TSpectrum, estimates each peak width from the half-maximum crossings, and stores the
+ * results in the run trend graph.
+ *
+ * @param option Controls how the x-axis of the trend is chosen for the plotted peak positions.
+ */
+void TileTrend::EvalADCPeaks(int option) {
+
+  for (const auto &entry : HGTriggRuns) {
+    int runNr = entry.first;
+    double xAxis = runNr;
+    const TH1D &h = entry.second;
+    int indexRun = -1;
+
+    if (option != 0 || option != 3 || option != 4 || option != 2)
+      indexRun = GetIndexRun(runNr);
+    if (indexRun != -1) {
+      if (option == 1)
+        xAxis = GetVoltage(indexRun);
+      else if (option == 5)
+        xAxis = GetEnergy(indexRun);
+      else if (option == 6)
+        xAxis = GetTemp(indexRun);
+    }
+
+    TH1D hist = h; // copy so TSpectrum can work on it
+    TSpectrum spec(10);
+
+    int nPeaks = spec.Search(&hist, 4.0, "", 1);
+
+    double *peakX = spec.GetPositionX();
+    double *peakY = spec.GetPositionY();
+
+    std::vector<PeakInfo> peaks;
+    peaks.reserve(nPeaks);
+
+    for (int i = 0; i < nPeaks; ++i) {
+      double x0 = peakX[i];
+      double y0 = peakY[i];
+
+      if (y0 <= 0)
+        continue;
+
+      int bin0 = hist.GetXaxis()->FindBin(x0);
+      double halfMax = y0 / 2.0;
+
+      // Find left half-maximum crossing
+      int leftBin = bin0;
+      while (leftBin > 1) {
+        double yLeft = hist.GetBinContent(leftBin);
+        if (yLeft <= halfMax)
+          break;
+        --leftBin;
+      }
+
+      // Find right half-maximum crossing
+      int rightBin = bin0;
+      while (rightBin < hist.GetNbinsX()) {
+        double yRight = hist.GetBinContent(rightBin);
+        if (yRight <= halfMax)
+          break;
+        ++rightBin;
+      }
+
+      double xLeft = hist.GetXaxis()->GetBinLowEdge(leftBin);
+      double xRight = hist.GetXaxis()->GetBinUpEdge(rightBin);
+
+      // linear interpolation for more precise crossing
+      if (leftBin > 1 && leftBin < hist.GetNbinsX()) {
+        double yL1 = hist.GetBinContent(leftBin);
+        double yL0 = hist.GetBinContent(leftBin - 1);
+        if (yL1 != yL0) {
+          double frac = (halfMax - yL1) / (yL0 - yL1);
+          xLeft = hist.GetXaxis()->GetBinLowEdge(leftBin) + hist.GetXaxis()->GetBinWidth(leftBin) * frac;
+        }
+      }
+
+      if (rightBin > 1 && rightBin < hist.GetNbinsX()) {
+        double yR0 = hist.GetBinContent(rightBin);
+        double yR1 = hist.GetBinContent(rightBin + 1);
+        if (yR0 != yR1) {
+          double frac = (halfMax - yR0) / (yR1 - yR0);
+          xRight = hist.GetXaxis()->GetBinLowEdge(rightBin) + hist.GetXaxis()->GetBinWidth(rightBin) * (1.0 - frac);
+        }
+      }
+
+      PeakInfo p;
+      p.xCenter = x0;
+      p.fwhm = xRight - xLeft;
+      p.sigma = p.fwhm / (2.0 * std::sqrt(2.0 * std::log(2.0)));
+
+      peaks.push_back(p);
+    }
+
+    if (debug > 0)
+      std::cout << "Run Nr. " << runNr << " has " << peaks.size() << " peaks\n";
+    for (const auto &p : peaks) {
+      if (debug > 0)
+        std::cout << "  peak at x = " << p.xCenter << ", FWHM = " << p.fwhm << ", sigma = " << p.sigma << "\n";
+      gTrendADCMax.AddPoint(xAxis, p.xCenter);
+      gTrendADCMax.SetPointError(gTrendADCMax.GetN() - 1, 0, p.fwhm);
+      if (p.xCenter < MinADCmax)
+        MinADCmax = p.xCenter;
+      if (p.xCenter > MaxADCmax) {
+        MaxADCmax = p.xCenter;
+      }
+    }
+  }
+
+  return;
+}

@@ -24,7 +24,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Find ROOT package
-find_package(ROOT REQUIRED COMPONENTS Core RIO Hist Tree Gpad Graf)
+find_package(ROOT REQUIRED COMPONENTS Core RIO Hist Tree Gpad Graf Spectrum)
 include(${ROOT_USE_FILE})
 
 # Add common compiler flags

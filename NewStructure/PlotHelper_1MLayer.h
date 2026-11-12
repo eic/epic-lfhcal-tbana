@@ -357,6 +357,16 @@ inline void PlotRunOverlay1MLayer(TCanvas *canvas2Panel, Double_t topRCornerX, D
       maxY = ithTrend->second.GetMaxLGSpec();
     if (minY > ithTrend->second.GetMinLGSpec())
       minY = ithTrend->second.GetMinLGSpec();
+  }  else if (optionTrend == 2) { // TOT
+    if (maxY < ithTrend->second.GetMaxTOTSpec())
+      maxY = ithTrend->second.GetMaxTOTSpec();
+    if (minY > ithTrend->second.GetMinTOTSpec())
+      minY = ithTrend->second.GetMinTOTSpec();
+  }  else if (optionTrend == 3) { // TOA
+    if (maxY < ithTrend->second.GetMaxTOASpec())
+      maxY = ithTrend->second.GetMaxTOASpec();
+    if (minY > ithTrend->second.GetMinTOASpec())
+      minY = ithTrend->second.GetMinTOASpec();
   }
 
   // evaluate whether its the same quantities
@@ -414,7 +424,9 @@ inline void PlotRunOverlay1MLayer(TCanvas *canvas2Panel, Double_t topRCornerX, D
                                      labelScaleL * textSizePixel, columns, header, 43, 0.25);
 
   TH1D *histos[30];
-  for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++) {
+  int maxRC = ithTrend->second.GetNRuns();
+  if (maxRC > 30) maxRC = 30;
+  for (int rc = maxRC-1; rc > -1 ; rc-- ){
     int tmpRunNr = ithTrend->second.GetRunNr(rc);
     histos[rc] = nullptr;
     if (tmpRunNr != -1 && !isSameRun) {
@@ -422,12 +434,20 @@ inline void PlotRunOverlay1MLayer(TCanvas *canvas2Panel, Double_t topRCornerX, D
         histos[rc] = ithTrend->second.GetHGTriggRun(ithTrend->second.GetRunNr(rc));
       } else if (optionTrend == 1) { // LG
         histos[rc] = ithTrend->second.GetLGTriggRun(ithTrend->second.GetRunNr(rc));
+      } else if (optionTrend == 2) { // TOT
+        histos[rc] = ithTrend->second.GetTOTHistRun(ithTrend->second.GetRunNr(rc));
+      } else if (optionTrend == 3) { // TOA
+        histos[rc] = ithTrend->second.GetTOAHistRun(ithTrend->second.GetRunNr(rc));
       }
     } else if (isSameRun && tmpRunNr != -1) {
       if (optionTrend == 0) { // HG
         histos[rc] = ithTrend->second.GetHGTriggRun(rc);
       } else if (optionTrend == 1) { // LG
         histos[rc] = ithTrend->second.GetLGTriggRun(rc);
+      } else if (optionTrend == 2) { // TOT
+        histos[rc] = ithTrend->second.GetTOTHistRun(rc);
+      } else if (optionTrend == 3) { // TOA
+        histos[rc] = ithTrend->second.GetTOAHistRun(rc);
       }
     }
 
@@ -440,7 +460,7 @@ inline void PlotRunOverlay1MLayer(TCanvas *canvas2Panel, Double_t topRCornerX, D
         SetLineDefaults(histos[rc], GetColorLayer(rc, altStyle), 3, GetLineStyleLayer(rc, altStyle));
         drawOpt = "l";
       }
-      if (rc == 0) {
+      if (rc == maxRC-1) {
         histos[rc]->GetXaxis()->SetRangeUser(xPMin, xPMax);
         histos[rc]->GetYaxis()->SetRangeUser(minY, maxY);
         histos[rc]->Draw("hist");
@@ -456,8 +476,8 @@ inline void PlotRunOverlay1MLayer(TCanvas *canvas2Panel, Double_t topRCornerX, D
       }
     }
   }
-  if (histos[0])
-    histos[0]->Draw("axis,same");
+  if (histos[maxRC-1])
+    histos[maxRC-1]->Draw("axis,same");
 
   // labeling right top corner & legend drawing
   legend->Draw();
@@ -694,6 +714,9 @@ inline void PlotTrending1MLayer( TCanvas *canvas2Panel,  Double_t topRCornerX, D
   }  else if (optionTrend == 20) {
     tempGraph = ithTrend->second.GetTrendingBasedOnOption(15);
     tempGraph2 = ithTrend->second.GetTrendingBasedOnOption(16);
+  } else if (optionTrend == 50){
+    tempGraph = ithTrend->second.GetTrendingBasedOnOption(30);
+    tempGraph2 = ithTrend->second.GetTrendingBasedOnOption(32);
   } else {
     tempGraph = ithTrend->second.GetTrendingBasedOnOption(optionTrend);
   }
@@ -751,12 +774,15 @@ inline void PlotTrending1MLayer( TCanvas *canvas2Panel,  Double_t topRCornerX, D
   if (tempGraph2){
     TLegend *legend = GetAndSetLegend2(0.3, 0.8, 0.6, 0.95, 0.85 * textSizePixel, 2, "", 43, 0.12);
 
-    if (currRunInfo.readout == "CAEN"){
+    if (currRunInfo.readout == "CAEN" && optionTrend != 50){
       legend->AddEntry(tempGraph, "HG", "p");
       legend->AddEntry(tempGraph2, "LG", "p");
-    } else {
+    } else if (optionTrend != 50){
       legend->AddEntry(tempGraph, "0th sample", "p");
       legend->AddEntry(tempGraph2, "waveform fit", "p");
+    } else {
+      legend->AddEntry(tempGraph, "ADC max", "p");
+      legend->AddEntry(tempGraph2, "TOT", "p");              
     }
 
     legend->Draw();

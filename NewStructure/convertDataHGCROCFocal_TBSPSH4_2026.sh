@@ -62,7 +62,7 @@ elif [ $2 = "Sept" ]; then
 
 elif [ $2 = "Oct" ]; then
 #   for runNr in {001..002}; do 
-  for runNr in {650..1153}; do 
+  for runNr in {1373..1443}; do 
     echo $runNr;
     ./Convert -d 0 -f -w -c $dataRaw/Run$runNr.h2g -o $dataDir/rawHGCROC_$runNr.root -m $mapping -r $runList
   done

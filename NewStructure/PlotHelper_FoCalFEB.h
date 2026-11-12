@@ -680,7 +680,7 @@ inline void PlotCorr2DFoCalFEB (TCanvas* canvasFEB, TPad** pads, Double_t* topRC
 inline void PlotTrendingFoCalFEB (TCanvas* canvasFEB, TPad** pads, Double_t* topRCornerX, Double_t* topRCornerY,
                                  Double_t* relSizeFEB, Int_t textSizePixel, std::map<int,TileTrend> trending,
                                  int optionTrend, Double_t xPMin, Double_t xPMax, Double_t minY, Double_t maxY,
-                                 bool isSameVoltage, double commonVoltage, int mod, TString nameOutput,
+                                 int isSameVoltage, double commonVoltage, int mod, TString nameOutput,
                                  TString nameOutputSummary, RunInfo currRunInfo, Int_t detailedPlot = 1){
   Setup* setupT = Setup::GetInstance();
   std::map<int, TileTrend>::iterator ithTrend;
@@ -688,16 +688,57 @@ inline void PlotTrendingFoCalFEB (TCanvas* canvasFEB, TPad** pads, Double_t* top
   int nCol = 8;
   int skipped = 0;
 
+  ithTrend=trending.begin();
+  // Try to create general histo for plotting
+  TGraphErrors* tempGraph3= nullptr;
+  TGraphErrors* tempGraph32= nullptr;
+  if (optionTrend != 19 && optionTrend != 20 && optionTrend != 50 ){
+    tempGraph3 = ithTrend->second.GetTrendingBasedOnOption(optionTrend);
+  } else if (optionTrend == 19){
+    tempGraph3  = ithTrend->second.GetTrendingBasedOnOption(0);
+    tempGraph32 = ithTrend->second.GetTrendingBasedOnOption(1);
+  } else if (optionTrend == 20){
+    tempGraph3 = ithTrend->second.GetTrendingBasedOnOption(15);
+    tempGraph32 = ithTrend->second.GetTrendingBasedOnOption(16);
+  } else if (optionTrend == 50){
+    tempGraph3 = ithTrend->second.GetTrendingBasedOnOption(30);
+    tempGraph32 = ithTrend->second.GetTrendingBasedOnOption(32);
+  }
+  if (!tempGraph3){
+    std::cout << "No graphs for this option available: "<< optionTrend  << std::endl; 
+    return;
+  }
+  TString yAxisT  = tempGraph3->GetYaxis()->GetTitle();
+  if (tempGraph32){ 
+    yAxisT.ReplaceAll("(arb. units)","");
+    yAxisT        = yAxisT+", "+tempGraph32->GetYaxis()->GetTitle();
+  }
+
+  
   TH1D* dummyhist = new TH1D("dummyhistFoCalFEBTrend", "", 100, xPMin, xPMax);
-  SetStyleHistoTH1ForGraphs(dummyhist, "run", "value", 0.85*textSizePixel, textSizePixel,
-                           0.85*textSizePixel, textSizePixel, 0.9, 1.5, 510, 510, 43, 63);
+  SetStyleHistoTH1ForGraphs(dummyhist, tempGraph3->GetXaxis()->GetTitle(), yAxisT, 0.85*textSizePixel, textSizePixel,
+                           0.85*textSizePixel, textSizePixel, 0.9, 1.3, 510, 510, 43, 63);
   dummyhist->GetYaxis()->SetRangeUser(minY, maxY);
 
+  // set common labels
+  TString lab1 = Form("#it{#bf{%s TB:}} %s", (currRunInfo.detector).Data(), GetStringFromRunInfo(currRunInfo, 9).Data());
+  TString lab2 = GetStringFromRunInfo(currRunInfo, 8);
+  TString lab3 = GetStringFromRunInfo(currRunInfo, 10);
+  
   for (int r = 0; r < nRow; ++r){
     for (int c = 0; c < nCol; ++c){
       canvasFEB->cd();
       int tempCellID = setupT->GetCellID(r, c, 0, mod);
       int p = setupT->GetChannelInLayer(tempCellID);
+
+      TString label = Form("row %d col %d", r, c);
+      TString labelAsic = Form("a %d ch %d",setupT->GetROunit(tempCellID) , setupT->GetROchannel(tempCellID));
+      TString label2          = Form("Common V_{op} = %2.1f V", commonVoltage);
+      if (isSameVoltage > 1) 
+        label2                = label2+Form(",%s", (GetSpeciesStringFromPDG(currRunInfo.pdg).Data()));
+      if (isSameVoltage > 2) 
+        label2                = label2+Form(", Run %d", currRunInfo.runNr);
+
       pads[p]->Draw();
       pads[p]->cd();
       if (optionTrend == 6)
@@ -713,21 +754,82 @@ inline void PlotTrendingFoCalFEB (TCanvas* canvasFEB, TPad** pads, Double_t* top
         dummyhist->Draw("axis");
         continue;
       }
+      
+      TGraphErrors* tempGraph   = nullptr;
+      TGraphErrors* tempGraph2  = nullptr;    
+      TF1* fit                  = nullptr;
+      if (optionTrend != 19 && optionTrend != 20 && optionTrend != 50 ){
+        tempGraph = ithTrend->second.GetTrendingBasedOnOption(optionTrend);
+      } else if (optionTrend == 19){
+        tempGraph = ithTrend->second.GetTrendingBasedOnOption(0);
+        tempGraph2 = ithTrend->second.GetTrendingBasedOnOption(1);
+      } else if (optionTrend == 20){
+        tempGraph = ithTrend->second.GetTrendingBasedOnOption(15);
+        tempGraph2 = ithTrend->second.GetTrendingBasedOnOption(16);
+      } else if (optionTrend == 50){
+        tempGraph = ithTrend->second.GetTrendingBasedOnOption(30);
+        tempGraph2 = ithTrend->second.GetTrendingBasedOnOption(32);
+      }
+      if (optionTrend == 2){
+        fit       = ithTrend->second.GetHGScaleFit();
+      } else if (optionTrend == 3){
+        fit       = ithTrend->second.GetLGScaleFit();
+      }
 
-      TGraphErrors* tempGraph = ithTrend->second.GetTrendingBasedOnOption(optionTrend);
       if (!tempGraph) continue;
       SetMarkerDefaultsTGraphErr(tempGraph, 20, 1, kBlue+1, kBlue+1);
+      
+      // plot
       dummyhist->Draw("axis");
+      
+      if (fit){
+        SetLineDefaultsTF1(fit, kRed+2, 2, 3);
+        fit->Draw("same");
+      }
+      
       tempGraph->Draw("pe,same");
-
-      TString label = Form("row %d col %d", r, c);
+      if (tempGraph2){
+        SetMarkerDefaultsTGraphErr(tempGraph2, 25, 1, kRed+1, kRed+1);   
+        tempGraph2->Draw("pe, same");
+      }
+      
       TLatex* labelChannel = new TLatex(topRCornerX[p]-0.04, topRCornerY[p]-1.2*relSizeFEB[p], label);
       SetStyleTLatex(labelChannel, 0.85*textSizePixel, 4, 1, 43, kTRUE, 31);
       labelChannel->Draw();
+      TLatex* labelChannelAsic = new TLatex(topRCornerX[p]-0.04, topRCornerY[p]-2.*relSizeFEB[p], labelAsic);
+      SetStyleTLatex(labelChannelAsic, 0.85*textSizePixel, 4, 1, 43, kTRUE, 31);
+      labelChannelAsic->Draw();
 
       if (p == 31){
-        DrawLatex(topRCornerX[p]-0.04, topRCornerY[p]-2.4*relSizeFEB[p], GetStringFromRunInfo(currRunInfo, 2), true, 0.85*relSizeFEB[p], 42);
-        DrawLatex(topRCornerX[p]-0.04, topRCornerY[p]-3.6*relSizeFEB[p], GetStringFromRunInfo(currRunInfo, 3), true, 0.85*relSizeFEB[p], 42);
+        DrawLatex(topRCornerX[p]-0.04, topRCornerY[p]-1.2*relSizeFEB[p]-2*0.85*relSizeFEB[p], label2, true, 0.85*textSizePixel, 43);
+      }
+      if (p == 24){  
+        DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSizeFEB[p]-2*0.85*relSizeFEB[p], lab1, true, 0.85*textSizePixel, 43);
+        DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSizeFEB[p]-3*0.85*relSizeFEB[p], lab2, true, 0.85*textSizePixel, 43);
+        DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSizeFEB[p]-4*0.85*relSizeFEB[p], lab3, true, 0.85*textSizePixel, 43);
+          
+        if (tempGraph2 ){
+          double startLegY  = topRCornerY[p]-1.2*relSizeFEB[p]-4.5*0.85*relSizeFEB[p];
+          double endLegY    = topRCornerY[p]-1.2*relSizeFEB[p]-5.5*0.85*relSizeFEB[p];
+          TLegend* legend = nullptr;
+          if (currRunInfo.readout == "CAEN" && optionTrend != 50){
+            legend = GetAndSetLegend2(  0.7, startLegY, topRCornerX[p]-0.045/2, endLegY,
+                                    0.85*textSizePixel, 2, "",43,0.22);
+            legend->AddEntry(tempGraph, "HG", "p");
+            legend->AddEntry(tempGraph2, "LG", "p");
+          } else if (optionTrend != 50){
+            legend = GetAndSetLegend2(  0.3, startLegY, topRCornerX[p]-0.045/2, endLegY,
+                                    0.85*textSizePixel, 2, "",43,0.12);
+            legend->AddEntry(tempGraph, "0th sample", "p");
+            legend->AddEntry(tempGraph2, "waveform fit", "p");              
+          } else {
+            legend = GetAndSetLegend2(  0.3, startLegY, topRCornerX[p]-0.045/2, endLegY,
+                                    0.85*textSizePixel, 2, "",43,0.12);
+            legend->AddEntry(tempGraph, "ADC max", "p");
+            legend->AddEntry(tempGraph2, "TOT", "p");              
+          }
+          legend->Draw();
+        }
       }
     }
   }
@@ -772,12 +874,12 @@ inline void PlotRunOverlayFoCalFEB (TCanvas* canvasFEB, TPad** pads, Double_t* t
   if (commonRunInfo.cc > -1) nSameSettings++;
   if (commonRunInfo.vop > -1) nSameSettings++;
 
-  double lineBottom  = (1.4+5);
-  if (nruns < 6) lineBottom = (1.4);
-  else if (nruns < 11) lineBottom = (1.4+1);
-  else if (nruns < 16) lineBottom = (1.4+2);
-  else if (nruns < 21) lineBottom = (1.4+3);
-  else if (nruns < 26) lineBottom = (1.4+4);
+  double lineBottom  = (2.4+5);
+  if (nruns < 6) lineBottom = (2.4);
+  else if (nruns < 11) lineBottom = (2.4+1);
+  else if (nruns < 16) lineBottom = (2.4+2);
+  else if (nruns < 21) lineBottom = (2.4+3);
+  else if (nruns < 26) lineBottom = (2.4+4);
   if (nSameSettings == 4) lineBottom++;
   TLegend* legend = nullptr;
   
@@ -795,10 +897,17 @@ inline void PlotRunOverlayFoCalFEB (TCanvas* canvasFEB, TPad** pads, Double_t* t
       } else if (optionTrend == 1){   //LG
         if(maxY<ithTrend->second.GetMaxLGSpec()) maxY=ithTrend->second.GetMaxLGSpec();
         if(minY>ithTrend->second.GetMinLGSpec()) minY=ithTrend->second.GetMinLGSpec();
+      } else if (optionTrend == 2){   //TOT
+        if(maxY<ithTrend->second.GetMaxTOT()) maxY=ithTrend->second.GetMaxTOTSpec();
+        if(minY>ithTrend->second.GetMinTOT()) minY=ithTrend->second.GetMinTOTSpec();
+      } else if (optionTrend == 3){   //TOA
+        if(maxY<ithTrend->second.GetMaxTOASpec()) maxY=ithTrend->second.GetMaxTOASpec();
+        if(minY>ithTrend->second.GetMinTOASpec()) minY=ithTrend->second.GetMinTOASpec();
       } 
     }
   }
-  
+  std::cout << " minY: " << minY << "\t maxY: " << maxY << std::endl;
+
   TH1D* histos[30];
   
   for (int r = 0; r < nRow; ++r){
@@ -820,7 +929,7 @@ inline void PlotRunOverlayFoCalFEB (TCanvas* canvasFEB, TPad** pads, Double_t* t
 
       if (p == 31 ){
         double startLegY  = topRCornerY[p]-lineBottom*relSizeFEB[p];
-        double endLegY    = topRCornerY[p]-1.4*relSizeFEB[p];
+        double endLegY    = topRCornerY[p]-2.4*relSizeFEB[p];
         TString header    = "";
         double width      = 0.9;
         if (nSameSettings == 4){
@@ -836,7 +945,11 @@ inline void PlotRunOverlayFoCalFEB (TCanvas* canvasFEB, TPad** pads, Double_t* t
                                     0.85*textSizePixel, 5, "",43,0.25);
       }
       
-      for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
+      int maxRC = ithTrend->second.GetNRuns();
+      if (maxRC > 30) maxRC = 30;
+      int first = maxRC-1;
+      bool firstFound = false;
+      for (int rc = maxRC-1; rc > -1 ; rc-- ){
         int tmpRunNr = ithTrend->second.GetRunNr(rc);
         histos[rc] = nullptr;
         if (tmpRunNr != -1 && !isSameRun) {
@@ -844,34 +957,53 @@ inline void PlotRunOverlayFoCalFEB (TCanvas* canvasFEB, TPad** pads, Double_t* t
             histos[rc] = ithTrend->second.GetHGTriggRun(ithTrend->second.GetRunNr(rc));
           } else if (optionTrend == 1){      // LG
             histos[rc] = ithTrend->second.GetLGTriggRun(ithTrend->second.GetRunNr(rc));
+          } else if (optionTrend == 2){      // TOT
+            histos[rc] = ithTrend->second.GetTOTHistRun(ithTrend->second.GetRunNr(rc));
+          } else if (optionTrend == 3){      // TOA
+            histos[rc] = ithTrend->second.GetTOAHistRun(ithTrend->second.GetRunNr(rc));
           }
         } else if (isSameRun && tmpRunNr != -1){
           if (optionTrend == 0){      // HG
             histos[rc] = ithTrend->second.GetHGTriggRun(rc);
           } else if (optionTrend == 1){      // LG
             histos[rc] = ithTrend->second.GetLGTriggRun(rc);
-          }              
+          } else if (optionTrend == 2){      // TOT
+            histos[rc] = ithTrend->second.GetTOTHistRun(rc);
+          } else if (optionTrend == 3){      // TOA
+            histos[rc] = ithTrend->second.GetTOAHistRun(rc);
+          }
         }
         
-        if (histos[rc]){
+        if (histos[rc] && histos[rc]->GetEntries() > 0){
+          if (!firstFound && histos[rc]->GetEntries() > 0){
+            first = rc;
+            firstFound = true;
+          }
           SetStyleHistoTH1ForGraphs( histos[rc], histos[rc]->GetXaxis()->GetTitle(), histos[rc]->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.95, 1.3,  510, 510, 43, 63);  
           SetLineDefaults(histos[rc], GetColorLayer(rc), 2, GetLineStyleLayer(rc));   
-          if(rc == 0){
-            histos[rc]->GetXaxis()->SetRangeUser(xPMin,xPMax);
-            histos[rc]->GetYaxis()->SetRangeUser(minY,maxY);
-            histos[rc]->Draw("hist");
-          } else {
-            histos[rc]->Draw("same,hist");
+          if (histos[rc]->GetEntries()  > 0) {
+            if(rc == first){
+              histos[rc]->GetXaxis()->SetRangeUser(xPMin,xPMax);
+              histos[rc]->GetYaxis()->SetRangeUser(minY,maxY);
+              histos[rc]->Draw("hist");
+            } else {
+              histos[rc]->Draw("same,hist");
+            }
           }
           if(p == 31) legend->AddEntry(histos[rc],ithTrend->second.GetLabel(rc),"l");
         }
       }
-      if (histos[0]) histos[0]->Draw("axis,same");                
+      if (firstFound && histos[first]) histos[first]->Draw("axis,same");                
       
       TString label = Form("row %d col %d", r, c);
+      TString labelAsic = Form("a %d ch %d",setupT->GetROunit(tempCellID) , setupT->GetROchannel(tempCellID));
+
       TLatex* labelChannel = new TLatex(topRCornerX[p]-0.04, topRCornerY[p]-1.2*relSizeFEB[p], label);
       SetStyleTLatex(labelChannel, 0.85*textSizePixel, 4, 1, 43, kTRUE, 31);
       labelChannel->Draw();
+      TLatex* labelChannelAsic = new TLatex(topRCornerX[p]-0.04, topRCornerY[p]-2.*relSizeFEB[p], labelAsic);
+      SetStyleTLatex(labelChannelAsic, 0.85*textSizePixel, 4, 1, 43, kTRUE, 31);
+      labelChannelAsic->Draw();
       if (p == 31)
         legend->Draw();
     }
@@ -921,12 +1053,12 @@ inline void PlotRunOverlayProfileFoCalFEB (TCanvas* canvasFEB, TPad** pads, Doub
   
   TProfile* profs[30];
 
-  double lineBottom  = (1.4+5);
-  if (nruns < 6) lineBottom = (1.4);
-  else if (nruns < 11) lineBottom = (1.4+1);
-  else if (nruns < 16) lineBottom = (1.4+2);
-  else if (nruns < 21) lineBottom = (1.4+3);
-  else if (nruns < 26) lineBottom = (1.4+4);
+  double lineBottom  = (2.4+5);
+  if (nruns < 6) lineBottom = (2.4);
+  else if (nruns < 11) lineBottom = (2.4+1);
+  else if (nruns < 16) lineBottom = (2.4+2);
+  else if (nruns < 21) lineBottom = (2.4+3);
+  else if (nruns < 26) lineBottom = (2.4+4);
   if (nSameSettings == 4) lineBottom++;
   TLegend* legend = nullptr;
 
@@ -935,7 +1067,7 @@ inline void PlotRunOverlayProfileFoCalFEB (TCanvas* canvasFEB, TPad** pads, Doub
     for (int c = 0; c < nCol; ++c){
       canvasFEB->cd();
       int tempCellID = setupT->GetCellID(r, c, 0, mod);
-      std::cout << "feb: " <<mod << "r: " << r << "\t c: " << c << "\t CellID: " << tempCellID << std::endl;
+      //std::cout << "feb: " <<mod << "\t r: " << r << "\t c: " << c << "\t CellID: " << tempCellID << std::endl;
     
       int p = setupT->GetChannelInLayer(tempCellID);
       pads[p]->Draw();
@@ -952,7 +1084,7 @@ inline void PlotRunOverlayProfileFoCalFEB (TCanvas* canvasFEB, TPad** pads, Doub
 
       if (p == 31 ){
         double startLegY  = topRCornerY[p]-lineBottom*relSizeFEB[p];
-        double endLegY    = topRCornerY[p]-1.4*relSizeFEB[p];
+        double endLegY    = topRCornerY[p]-2.4*relSizeFEB[p];
         TString header    = "";
         double width      = 0.9;
         if (nSameSettings == 4){
@@ -989,7 +1121,7 @@ inline void PlotRunOverlayProfileFoCalFEB (TCanvas* canvasFEB, TPad** pads, Doub
             if (scaleInt && profs[rc] != nullptr) yTitle = Form("%s/ integral", yTitle.Data());
             dummyhist = new TH1D(Form("dummyhist_%d_%d_%d",option, mod,p), "", profs[rc]->GetNbinsX(), profs[rc]->GetXaxis()->GetXmin(), profs[rc]->GetXaxis()->GetXmax());
             dummyhist->SetDirectory(0);
-            SetStyleHistoTH1ForGraphs( dummyhist, profs[rc]->GetXaxis()->GetTitle(), profs[rc]->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.5, 510, 510, 43, 63);  
+            SetStyleHistoTH1ForGraphs( dummyhist, profs[rc]->GetXaxis()->GetTitle(), profs[rc]->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.9, 1.3, 510, 510, 43, 63);  
             dummyhist->GetXaxis()->SetRangeUser(xPMin,xPMax);
             dummyhist->GetYaxis()->SetRangeUser(yPMin,yPMax);
             dummyhist->Draw("axis");
@@ -1016,9 +1148,14 @@ inline void PlotRunOverlayProfileFoCalFEB (TCanvas* canvasFEB, TPad** pads, Doub
       if (dummyhist) dummyhist->Draw("axis,same");                
      
       TString label = Form("row %d col %d", r, c);
+      TString labelAsic = Form("a %d ch %d",setupT->GetROunit(tempCellID) , setupT->GetROchannel(tempCellID));
       TLatex* labelChannel = new TLatex(topRCornerX[p]-0.04, topRCornerY[p]-1.2*relSizeFEB[p], label);
       SetStyleTLatex(labelChannel, 0.85*textSizePixel, 4, 1, 43, kTRUE, 31);
       labelChannel->Draw();
+      TLatex* labelChannelAsic = new TLatex(topRCornerX[p]-0.04, topRCornerY[p]-2.*relSizeFEB[p], labelAsic);
+      SetStyleTLatex(labelChannelAsic, 0.85*textSizePixel, 4, 1, 43, kTRUE, 31);
+      labelChannelAsic->Draw();
+     
       if (p == 31)
         legend->Draw();
     }

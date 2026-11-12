@@ -141,6 +141,20 @@ class TileTrend: public TObject{
   bool FillExtended   (double, int, int, TH1D*, TH1D*, TProfile*, TProfile* wave = nullptr);
 
   /**
+   * @brief Add detailed HGCROC per-run histograms and profiles to the trend object.
+   * @param x Trend coordinate for the run.
+   * @param triggers Number of triggers used for normalization.
+   * @param runNr Run identifier.
+   * @param histADC ADC spectrum for the run.
+   * @param histTOA TOA spectrum for the run.
+   * @param histTOT TOT spectrum for the run.
+   * @param wave Optional waveform profile.
+   * @param prof2D Optional 2D correlation profile.
+   * @return True if the extended data are accepted.
+   */
+  bool FillHGCROCDetailed(double , int, int, TH1D*, TH1D*, TH1D*, TProfile *wave = nullptr, TProfile *prof2D = nullptr);
+
+  /**
    * @brief Update the most-probable-value trend for the channel.
    */
   void FillMPV        (double, double, double, double, double);
@@ -205,52 +219,127 @@ class TileTrend: public TObject{
   bool FillHGCROCVals (double x, double tot);
 
 
-  // Drawing functions for graphs
+  /**
+   * @brief Draw the low-gain pedestal trend graph using ROOT draw options.
+   * @param opt ROOT drawing options to forward to TGraphErrors::Draw.
+   * @return True on successful draw invocation.
+   */
   bool DrawLGped      (TString);
+  /** @brief Draw the high-gain pedestal trend graph. */
   bool DrawHGped      (TString);
+  /** @brief Draw the low-gain pedestal-width trend graph. */
   bool DrawLGpedwidth (TString);
+  /** @brief Draw the high-gain pedestal-width trend graph. */
   bool DrawHGpedwidth (TString);
+  /** @brief Draw the low-gain scale trend graph. */
   bool DrawLGscale    (TString);
+  /** @brief Draw the high-gain scale trend graph. */
   bool DrawHGscale    (TString);
+  /** @brief Draw the HG/LG correlation trend graph. */
   bool DrawHGLGcorr   (TString);
+  /** @brief Draw the LG/HG correlation trend graph. */
   bool DrawLGHGcorr   (TString);
+  /** @brief Draw the trigger-count trend graph. */
   bool DrawTrigger    (TString);
+  /** @brief Draw the signal-to-background noise trend graph. */
   bool DrawSBNoise    (TString);
+  /** @brief Draw the signal-to-background signal trend graph. */
   bool DrawSBSignal   (TString);
+  /** @brief Draw the high-gain low-side MPV trend graph. */
   bool DrawHGLMPV     (TString);
+  /** @brief Draw the low-gain low-side MPV trend graph. */
   bool DrawLGLMPV     (TString);
+  /** @brief Draw the high-gain low-side sigma trend graph. */
   bool DrawHGLSigma   (TString);
+  /** @brief Draw the low-gain low-side sigma trend graph. */
   bool DrawLGLSigma   (TString);
+  /** @brief Draw the high-gain Gaussian sigma trend graph. */
   bool DrawHGGSigma   (TString);
+  /** @brief Draw the low-gain Gaussian sigma trend graph. */
   bool DrawLGGSigma   (TString);
+  /** @brief Draw the HG/LG offset trend graph. */
   bool DrawHGLGOffset (TString);
+  /** @brief Draw the LG/HG offset trend graph. */
   bool DrawLGHGOffset (TString);
+  /** @brief Draw the ADC maximum trend graph. */
   bool DrawADCmax     (TString);
+  /** @brief Draw the ADC saturation-count trend graph. */
   bool DrawADCsat     (TString);
+  /** @brief Draw the TOT trend graph. */
   bool DrawTOT        (TString);
+  /** @brief Draw the TOT saturation-count trend graph. */
   bool DrawTOTsat     (TString);
+  /** @brief Draw the TOA trend graph. */
   bool DrawTOA        (TString);
+  /** @brief Draw the number-of-samples-TOA trend graph. */
   bool DrawNSampTOA   (TString);
+  /** @brief Draw the number-of-TOA events trend graph. */
   bool DrawNTOA       (TString);
+  /**
+   * @brief Build a legible per-run label string for plot legends.
+   * @param info Metadata associated with the run.
+   * @param index Run index of interest.
+   * @param mode Label mode selection.
+   * @return Run summary string for plotting labels.
+   */
   TString GetLabelLegend(RunInfo , int, int );
-  
-  // Set default drawing options for all graphs
+   
+  /**
+   * @brief Set the line color for all stored trend graphs.
+   * @param color ROOT color index to apply.
+   * @return True when the update succeeds.
+   */
   bool SetLineColor   (uint);
+  /**
+   * @brief Set the marker color for all stored trend graphs.
+   * @param color ROOT color index to apply.
+   * @return True when the update succeeds.
+   */
   bool SetMarkerColor (uint);
+  /**
+   * @brief Set the marker style for all stored trend graphs.
+   * @param style ROOT marker style index.
+   * @return True when the update succeeds.
+   */
   bool SetMarkerStyle (uint);
+  /**
+   * @brief Set the x-axis title for the active trend graphs.
+   * @param title New x-axis label.
+   * @return True when the title update succeeds.
+   */
   bool SetXAxisTitle  (TString);
+  /** @brief Set the label string used to annotate per-run entries. */
   void SetLabelPerRun (TString);
-  
-  // Sort graph according to voltage or run number
+   
+  /**
+   * @brief Sort the stored run vectors and graphs by voltage or run number.
+   */
   void Sort          ();
-  // Write graphs to file
+  /**
+   * @brief Write the stored trend graphs to a ROOT file.
+   * @param file Output file handle.
+   * @return True if the graphs are written successfully.
+   */
   bool Write          (TFile*);
+  /**
+   * @brief Write the stored trend graphs to the currently associated output file.
+   * @return True if the graphs are written successfully.
+   */
   bool Write          ();
+  /**
+   * @brief Print the collected min/max ranges for all trend graphs.
+   */
   void PrintMinMaxRanges ();
   
+  /**
+   * @brief Return the current trend-mode selector for the object.
+   * @return Current extended-mode option.
+   */
   inline double GetExtOpt()       {return extended;};
 
-  // Get minima and maxima for different graphs
+  /**
+   * @brief Return the minimum and maximum values for the low-gain pedestal trend.
+   */
   inline double GetMinLGped() const     {return MinLGped;};
   inline double GetMaxLGped() const     {return MaxLGped;};
   inline double GetMinHGped() const     {return MinHGped;};
@@ -300,26 +389,32 @@ class TileTrend: public TObject{
   inline double GetMaxADCmax() const    {return MaxADCmax;};
   inline double GetMaxADCsat() const    {return MaxADCsat;};
   inline double GetMaxTOT() const       {return MaxTOT;};
+  inline double GetMaxTOTSpec() const   {return MaxTOTSpec;};
   inline double GetMaxTOTsat() const    {return MaxTOTsat;};
   inline double GetMaxTOA() const       {return MaxTOA;};
+  inline double GetMaxTOASpec() const   {return MaxTOASpec;};
   inline double GetMaxNSampTOA() const  {return MaxNSampTOA;};
   inline double GetMaxNTOA() const      {return MaxNTOA;};
   inline double GetMinADCmax() const    {return MinADCmax;};
   inline double GetMinADCsat() const    {return MinADCsat;};
   inline double GetMinTOT() const       {return MinTOT;};
+  inline double GetMinTOTSpec() const   {return MinTOTSpec;};
   inline double GetMinTOTsat() const    {return MinTOTsat;};
   inline double GetMinTOA() const       {return MinTOA;};
+  inline double GetMinTOASpec() const   {return MinTOASpec;};
   inline double GetMinNSampTOA() const  {return MinNSampTOA;};
   inline double GetMinNTOA() const      {return MinNTOA;};
    
   inline double GetMaxInjADC() const {return MaxInjADC;};
+  inline double GetMaxInjTOA() const {return MaxInjTOA;};
   inline double GetMaxInjTOT() const {return MaxInjTOT;};
-   
-   
+  
+  
   inline int GetNRuns() const           {return (int)runNrs.size();};
   inline int GetFirstRun() const        {if (runNrs.size()> 0) return runNrs[0]; else return -1;};
   inline int GetLastRun() const         {if (runNrs.size()> 0) return runNrs[runNrs.size()-1]; else return -1;};
   inline int GetRunNr(int i) const      {if (runNrs.size()> 0 && i < (int)runNrs.size()) return runNrs[i]; else return -1;}
+  int GetIndexRun(int runNr) const;
   inline TString GetLabel(int i) const      {if (labels.size()> 0 && i < (int)labels.size()) return labels[i]; else return "";} 
   inline int GetPdg(int i)        {if (pdgs.size()> 0 && i < (int)pdgs.size()) return pdgs[i]; else return -1;}
   inline int GetVoltage(int i)    {if (voltages.size()> 0 && i < (int)voltages.size()) return voltages[i]; else return -1;}
@@ -405,6 +500,9 @@ class TileTrend: public TObject{
    */
   void GetMinMaxBasedOnOptionAndCompare(int, Double_t &, Double_t &);
     
+  void EvalADCPeaks(int option = 0);
+  void EvalTotPeaks(int option = 0);
+  
   /**
   * Initialize a TGraphErrors instance with a consistent style.
   *
@@ -424,6 +522,8 @@ class TileTrend: public TObject{
   // Getters for individual graph histgrams
   TH1D* GetHGTriggRun(int);
   TH1D* GetLGTriggRun(int);
+  TH1D* GetTOTHistRun(int);
+  TH1D* GetTOAHistRun(int);
   TProfile* GetLGHGTriggRun(int);
   TProfile* GetWave1DRun(int);
   TProfile* GetTOTRun(int);
@@ -488,12 +588,15 @@ class TileTrend: public TObject{
   double MaxLGHGOff   =-10000.;
   double MaxHGLGOff   =-10000.;
   double MaxInjADC    =-10000.;
+  double MaxInjTOA    =-10000.;
   double MaxInjTOT    =-10000.;
   double MaxADCmax    =0.;
   double MaxADCsat    =0.;
   double MaxTOT       =0.;
+  double MaxTOTSpec   =0.;
   double MaxTOTsat    =0.;
   double MaxTOA       =0.;
+  double MaxTOASpec   =0.;
   double MaxNSampTOA  =0.;
   double MaxNTOA      =0.;
 
@@ -521,8 +624,10 @@ class TileTrend: public TObject{
   double MinADCmax    =9999.;
   double MinADCsat    =9999.;
   double MinTOT       =9999.;
+  double MinTOTSpec   =9999.;
   double MinTOTsat    =9999.;
   double MinTOA       =9999.;
+  double MinTOASpec   =9999.;
   double MinNSampTOA  =9999.;
   double MinNTOA      =9999.;
   
@@ -542,12 +647,14 @@ class TileTrend: public TObject{
   std::vector<double> temp;
   std::map<int, TH1D> HGTriggRuns;
   std::map<int, TH1D> LGTriggRuns;
+  std::map<int, TH1D> TOARuns;
+  std::map<int, TH1D> TOTRuns;
   std::map<int, TProfile> LGHGTriggRuns;
   std::map<int, TProfile> Wave1DProf;
   std::map<int, TProfile> TOAProf;
   std::map<int, TProfile> TOTProf;
   
-  ClassDef(TileTrend,13);
+  ClassDef(TileTrend,14);
 };
 
 #endif

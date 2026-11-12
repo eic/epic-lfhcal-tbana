@@ -1866,8 +1866,8 @@ void MultiCanvas::PlotTrending(  std::map<int,TileTrend>  trend, int option,
   }
   itrend=trend.begin();
   std::cout << "resetting  range  "  << minY << "\t"<< maxY << std::endl;
-  if (option == 32)
-    maxY = maxY*1.2;
+  if (option == 32 || option == 30 || option == 50 )
+    maxY = maxY*1.25;
   
   Setup* setup = Setup::GetInstance();
   // Single tile plotting

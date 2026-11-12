@@ -38,7 +38,7 @@ if [ $2 = "pedestal" ]; then
   ######################## OCT Laser campaign ############################
   ########################################################################
   else 
-    runs='1 2 477 478 504 762 763 789 815 816 843 1105 1106 1133'
+    runs='1 2 477 478 504 718 719 745 762 763 789 815 816 843 1105 1106 1133'
   fi
   for runNr in $runs; do 
     printf -v runNrPed "%03d" "$runNr"
@@ -138,12 +138,87 @@ if [ $2 == "calibMuon" ]; then
       echo "$runNr " >> runlist.txt
     done
     runs=`cat runlist.txt`
+  elif [ $4 = "Oct_RF4_V43_T-27" ]; then
+    toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
+    badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
+
+    runNrPed='1106'
+    runs=''
+    echo "removing runlist"
+    rm runlist.txt
+    for runNr in {1107..1132}; do   #Set CA
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1158..1169}; do   #Set CC
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1194..1206}; do   #Set CC
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1207..1232}; do   #Set CE
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1239..1250}; do   #Set CG
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1257..1281}; do   #Set CI
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1301..1325}; do   #Set CK
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1351..1375}; do   #Set CI
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1396..1420}; do   #Set CK
+      echo "$runNr " >> runlist.txt
+    done
+    runs=`cat runlist.txt`
+  elif [ $4 = "Oct_RF4_V45_T-27" ]; then
+    toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
+    badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
+
+    runNrPed='1133'
+    runs=''
+    echo "removing runlist"
+    echo $runs
+    rm runlist.txt
+    ls runlist.txt
+    cat runlist.txt
+    for runNr in {1134..1157}; do   #Set CB
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1170..1193}; do   #Set CD
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1233..1238}; do   #Set CF
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1251..1256}; do   #Set CH
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1282..1300}; do   #Set CJ
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1326..1350}; do   #Set CL
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1376..1395}; do   #Set CN
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1421..1443}; do   #Set CP
+      echo "$runNr " >> runlist.txt
+    done
+    echo "after filling"
+    runs=`cat runlist.txt`
+    echo $runs
   elif [ $4 = "Oct_RF12_V43_T22" ]; then
     toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
     badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
 
     runNrPed='478'
     runs=''
+    
     rm runlist.txt
     for runNr in {479..503}; do   #Set AA
       echo "$runNr " >> runlist.txt
@@ -197,24 +272,25 @@ if [ $2 == "calibMuon" ]; then
     runNrPed='816'
     runs=''
     rm runlist.txt
+    
     for runNr in {817..842}; do   #Set BA
       echo "$runNr " >> runlist.txt
     done
-    for runNr in {869..893}; do   #Set BC
-      echo "$runNr " >> runlist.txt
-    done
-    for runNr in {919..956}; do   #Set BE
-      echo "$runNr " >> runlist.txt
-    done
-    for runNr in {971..995}; do   #Set BG
-      echo "$runNr " >> runlist.txt
-    done
-    for runNr in {1011..1035}; do   #Set BI
-      echo "$runNr " >> runlist.txt
-    done
-    for runNr in {1060..1084}; do   #Set BK
-      echo "$runNr " >> runlist.txt
-    done
+#     for runNr in {869..893}; do   #Set BC
+#       echo "$runNr " >> runlist.txt
+#     done
+#     for runNr in {919..956}; do   #Set BE
+#       echo "$runNr " >> runlist.txt
+#     done
+#     for runNr in {971..995}; do   #Set BG
+#       echo "$runNr " >> runlist.txt
+#     done
+#     for runNr in {1011..1035}; do   #Set BI
+#       echo "$runNr " >> runlist.txt
+#     done
+#     for runNr in {1060..1084}; do   #Set BK
+#       echo "$runNr " >> runlist.txt
+#     done
     runs=`cat runlist.txt`
   elif [ $4 = "Oct_RF12_V45_T-27" ]; then
     toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
@@ -271,7 +347,7 @@ if [ $2 == "calibMuon" ]; then
     runNrPed='763'
     runs=''
     rm runlist.txt
-    for runNr in {764..788}; do   #Set AAA
+    for runNr in {764..788}; do   #Set AAC
       echo "$runNr " >> runlist.txt
     done
     runs=`cat runlist.txt`
@@ -282,12 +358,13 @@ if [ $2 == "calibMuon" ]; then
     runNrPed='789'
     runs=''
     rm runlist.txt
-    for runNr in {790..814}; do   #Set AAB
+    for runNr in {790..814}; do   #Set AAD
       echo "$runNr " >> runlist.txt
     done
     runs=`cat runlist.txt`
   fi
   
+  echo $runs
   for runNr in $runs; do
     MuonCalibHGCROC $3 $runNrPed $runNr $dataDirRaw $dataDirOut Run_$runNr $badChannelMap $toaPhaseOffset 	
   done
@@ -331,7 +408,7 @@ if [ $2 = "wave" ]; then
   ########################################################################
   ######################## OCT Laser campaign ############################
   ########################################################################
-  elif [ $4 = "Oct_RF4_T22" ]; then
+  elif [ $3 = "Oct_RF4_T22" ]; then
     toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
     badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
 
@@ -342,6 +419,74 @@ if [ $2 = "wave" ]; then
       echo "$runNr " >> runlist.txt
     done
     runs=`cat runlist.txt`
+  elif [ $3 = "Oct_RF4_V43_T-27" ]; then
+    toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
+    badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
+
+    runNrPed='1106'
+    runs=''
+    rm runlist.txt
+    for runNr in {1107..1132}; do   #Set CA
+      echo "$runNr " >> runlist.txt
+    done
+#     for runNr in {1158..1169}; do   #Set CC
+#       echo "$runNr " >> runlist.txt
+#     done
+#     for runNr in {1194..1206}; do   #Set CC
+#       echo "$runNr " >> runlist.txt
+#     done
+#     for runNr in {1207..1232}; do   #Set CE
+#       echo "$runNr " >> runlist.txt
+#     done
+#     for runNr in {1239..1250}; do   #Set CG
+#       echo "$runNr " >> runlist.txt
+#     done
+#     for runNr in {1257..1281}; do   #Set CI
+#       echo "$runNr " >> runlist.txt
+#     done
+#     for runNr in {1301..1325}; do   #Set CK
+#       echo "$runNr " >> runlist.txt
+#     done
+    # for runNr in {1351..1375}; do   #Set CM
+    #   echo "$runNr " >> runlist.txt
+    # done
+    # for runNr in {1396..1420}; do   #Set CO
+    #   echo "$runNr " >> runlist.txt
+    # done
+    runs=`cat runlist.txt`
+  elif [ $3 = "Oct_RF4_V45_T-27" ]; then
+    toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
+    badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
+
+    runNrPed='1133'
+    runs=''
+    rm runlist.txt
+#     for runNr in {1134..1157}; do   #Set CB
+#       echo "$runNr " >> runlist.txt
+#     done
+#     for runNr in {1170..1193}; do   #Set CD
+#       echo "$runNr " >> runlist.txt
+#     done
+#     for runNr in {1233..1238}; do   #Set CF
+#       echo "$runNr " >> runlist.txt
+#     done
+#     for runNr in {1251..1256}; do   #Set CH
+#       echo "$runNr " >> runlist.txt
+#     done
+    for runNr in {1282..1300}; do   #Set CJ
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1326..1350}; do   #Set CL
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1376..1395}; do   #Set CN
+      echo "$runNr " >> runlist.txt
+    done
+    for runNr in {1421..1443}; do   #Set CP
+      echo "$runNr " >> runlist.txt
+    done
+    runs=`cat runlist.txt`
+    
   elif [ $3 = "Oct_RF12_V43_T22" ]; then
     toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
     badChannelMap=../configs/FOCalTest2026/dummyFocalTB.txt
@@ -404,21 +549,21 @@ if [ $2 = "wave" ]; then
     for runNr in {817..842}; do   #Set BA
       echo "$runNr " >> runlist.txt
     done
-    for runNr in {869..893}; do   #Set BC
-      echo "$runNr " >> runlist.txt
-    done
-    for runNr in {919..956}; do   #Set BE
-      echo "$runNr " >> runlist.txt
-    done
-    for runNr in {971..995}; do   #Set BG
-      echo "$runNr " >> runlist.txt
-    done
-    for runNr in {1011..1035}; do   #Set BI
-      echo "$runNr " >> runlist.txt
-    done
-    for runNr in {1060..1084}; do   #Set BK
-      echo "$runNr " >> runlist.txt
-    done
+    # for runNr in {869..893}; do   #Set BC
+    #   echo "$runNr " >> runlist.txt
+    # done
+    # for runNr in {919..956}; do   #Set BE
+    #   echo "$runNr " >> runlist.txt
+    # done
+    # for runNr in {971..995}; do   #Set BG
+    #   echo "$runNr " >> runlist.txt
+    # done
+    # for runNr in {1011..1035}; do   #Set BI
+    #   echo "$runNr " >> runlist.txt
+    # done
+    # for runNr in {1060..1084}; do   #Set BK
+    #   echo "$runNr " >> runlist.txt
+    # done
     runs=`cat runlist.txt`
   elif [ $3 = "Oct_RF12_V45_T-27" ]; then
     toaPhaseOffset='../configs/FOCalTest2026/toAOffset_SetA.txt'
@@ -494,7 +639,7 @@ if [ $2 = "wave" ]; then
 
   
   for runNr in $runs; do
-    time ./HGCROCStudy -d 2 -E 2 -f -w -i $dataDirRaw/rawHGCROC_wPed_wBC_$runNr.root -o $dataDirOut/rawHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWaveOffSetCorr/Run_$runNr -r $runList -t $toaPhaseOffset #-l $cellList
+    time ./HGCROCStudy -d 1 -E 2 -f -w -i $dataDirRaw/rawHGCROC_wPed_wBC_$runNr.root -o $dataDirOut/rawHGCROC_wave_Run_$runNr.root -O $PlotBaseDir/HGCROC_PlotsWaveOffSetCorr/Run_$runNr -r $runList -t $toaPhaseOffset #-l $cellList
   done
 fi
 

@@ -1253,6 +1253,12 @@
           } else if (optionTrend == 1){   //LG
             if(maxY<ithTrend->second.GetMaxLGSpec()) maxY=ithTrend->second.GetMaxLGSpec();
             if(minY>ithTrend->second.GetMinLGSpec()) minY=ithTrend->second.GetMinLGSpec();
+          } else if (optionTrend == 2){   //TOT
+            if(maxY<ithTrend->second.GetMaxTOTSpec()) maxY=ithTrend->second.GetMaxTOTSpec();
+            if(minY>ithTrend->second.GetMinTOTSpec()) minY=ithTrend->second.GetMinTOTSpec();
+          } else if (optionTrend == 3){   //TOA
+            if(maxY<ithTrend->second.GetMaxTOASpec()) maxY=ithTrend->second.GetMaxTOASpec();
+            if(minY>ithTrend->second.GetMinTOASpec()) minY=ithTrend->second.GetMinTOASpec();
           } 
         }
       }
@@ -1313,7 +1319,9 @@
                                         0.85*textSizePixel, 5, "",43,0.25);
           }
           
-          for (int rc = 0; rc < ithTrend->second.GetNRuns() && rc < 30; rc++ ){
+          int maxRC = ithTrend->second.GetNRuns();
+          if (maxRC > 30) maxRC = 30;
+          for (int rc = maxRC-1; rc > -1 ; rc-- ){
             int tmpRunNr = ithTrend->second.GetRunNr(rc);
             histos[rc] = nullptr;
             if (tmpRunNr != -1 && !isSameRun) {
@@ -1321,19 +1329,27 @@
                 histos[rc] = ithTrend->second.GetHGTriggRun(ithTrend->second.GetRunNr(rc));
               } else if (optionTrend == 1){      // LG
                 histos[rc] = ithTrend->second.GetLGTriggRun(ithTrend->second.GetRunNr(rc));
+              } else if (optionTrend == 2){      // TOT
+                histos[rc] = ithTrend->second.GetTOTHistRun(ithTrend->second.GetRunNr(rc));
+              } else if (optionTrend == 3){      // TOA
+                histos[rc] = ithTrend->second.GetTOAHistRun(ithTrend->second.GetRunNr(rc));
               }
             } else if (isSameRun && tmpRunNr != -1){
               if (optionTrend == 0){      // HG
                 histos[rc] = ithTrend->second.GetHGTriggRun(rc);
               } else if (optionTrend == 1){      // LG
                 histos[rc] = ithTrend->second.GetLGTriggRun(rc);
+              } else if (optionTrend == 2){      // TOT
+                histos[rc] = ithTrend->second.GetTOTHistRun(rc);
+              } else if (optionTrend == 3){      // TOA
+                histos[rc] = ithTrend->second.GetTOAHistRun(rc);
               }              
             }
             
             if (histos[rc]){
               SetStyleHistoTH1ForGraphs( histos[rc], histos[rc]->GetXaxis()->GetTitle(), histos[rc]->GetYaxis()->GetTitle(), 0.85*textSizePixel, textSizePixel, 0.85*textSizePixel, textSizePixel,0.95, 1.3,  510, 510, 43, 63);  
               SetLineDefaults(histos[rc], GetColorLayer(rc), 2, GetLineStyleLayer(rc));   
-              if(rc == 0){
+              if(rc == maxRC-1){
                 histos[rc]->GetXaxis()->SetRangeUser(xMin,xMax);
                 histos[rc]->GetYaxis()->SetRangeUser(minY,maxY);
                 histos[rc]->Draw("hist");
@@ -1343,7 +1359,7 @@
               if(p == 15) legend->AddEntry(histos[rc],ithTrend->second.GetLabel(rc),"l");
             }
           }
-          if (histos[0]) histos[0]->Draw("axis,same");                
+          if (histos[maxRC-1]) histos[maxRC-1]->Draw("axis,same");                
           
           // labeling inside the panels & legend drawing 
           DrawLatex(topRCornerX[p]-0.045, topRCornerY[p]-1.2*relSize8P[p], label, true, 0.85*textSizePixel, 43);

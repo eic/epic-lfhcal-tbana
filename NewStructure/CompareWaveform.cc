@@ -45,8 +45,7 @@ void PrintHelp(char* exe){
   std::cout<<"-o vvv   Output file name (mandatory)"<<std::endl;
   std::cout<<"-O kkk   Output directory name for plots (mandatory)"<<std::endl;
   std::cout<<"-r rrr   Name of run list file  2024 PS TB [../configs/DataTakingDB_202409_CAEN.csv] "<<std::endl;
-  std::cout<<"-R       Trending plots versus run #"<<std::endl;
-  std::cout<<"-V       Trending plots versus Vop"<<std::endl;
+  std::cout<<"-x XXXX  Give axis option with XXXX, defined: run, ite, integ, Vop, intensity"<<std::endl;
   //std::cout<<"-t       Trending plots versus BoR time"<<std::endl;
   std::cout<<"-h       this help"<<std::endl<<std::endl;
   std::cout<<"Examples:"<<std::endl;
@@ -69,7 +68,7 @@ int main(int argc, char* argv[]){
   CompAnalysis.SetIsHGCROC(true);
       
   int c;
-  while((c=getopt(argc,argv,"c:d:e:E:fF:i:I:L:o:O:r:RVth"))!=-1){
+  while((c=getopt(argc,argv,"c:d:e:E:fF:i:I:L:o:O:r:x:h"))!=-1){
     switch(c){
     case 'c':
       std::cout<<"Compare: set list of cells for detailed plotting " << optarg <<std::endl;
@@ -168,18 +167,37 @@ int main(int argc, char* argv[]){
       it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
       RootRegexp.erase(it);
       break;
-    case 'R':
-      std::cout<<"Compare: Trending plots versus run #"<<std::endl;
-      CompAnalysis.SetTrendingAxis(0);
-      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-R");
+    case 'x': { 
+      std::cout<<"Compare: Setting x-axis option: "<<optarg<<std::endl;
+      std::string xAxisOpt = Form("%s",optarg);
+      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-x");
       RootRegexp.erase(it);
-      break;
-    case 'V':
-      std::cout<<"Compare: Trending plots versus Vop"<<std::endl;
-      CompAnalysis.SetTrendingAxis(1);
-      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-V");
+      it=std::find(RootRegexp.begin(),RootRegexp.end(),Form("%s",optarg));
       RootRegexp.erase(it);
-      break;
+      if (xAxisOpt.compare("run") == 0 || xAxisOpt.compare("Run") == 0 ) {
+        std::cout<<"Compare: Trending plots versus run #, opt " << 0 <<std::endl;
+        CompAnalysis.SetTrendingAxis(0);
+      } else if (xAxisOpt.compare("Vop") == 0 || xAxisOpt.compare("VOP") == 0 || xAxisOpt.compare("vop") == 0 ) {
+        std::cout<<"Compare: Trending plots versus Vop, opt " << 1 <<std::endl;
+        CompAnalysis.SetTrendingAxis(1);
+      } else if (xAxisOpt.compare("ite") == 0 || xAxisOpt.compare("iteration") == 0 || xAxisOpt.compare("Ite") == 0 ) {
+        std::cout<<"Compare: Trending plots versus Iteration, opt " << 3 <<std::endl;
+        CompAnalysis.SetTrendingAxis(3);
+      } else if (xAxisOpt.compare("integ") == 0 || xAxisOpt.compare("Integ") == 0 || xAxisOpt.compare("Integration") == 0 ) {
+        std::cout<<"Compare: Trending plots versus Iteration, opt " << 4 <<std::endl;
+        CompAnalysis.SetTrendingAxis(4);
+      } else if (xAxisOpt.compare("intensity") == 0 || xAxisOpt.compare("laser") == 0 || xAxisOpt.compare("Intensity") == 0 ) {
+        std::cout<<"Compare: plot as function of laser intensity " <<std::endl;
+        CompAnalysis.SetTrendingAxis(5);
+      } else if (xAxisOpt.compare("temp") == 0 || xAxisOpt.compare("Temperature") == 0 || xAxisOpt.compare("temperature") == 0 ) {
+        std::cout<<"Compare: plot as function of temperature " <<std::endl;
+        CompAnalysis.SetTrendingAxis(6);
+      } else {
+        std::cout << "Compare: axis option unknown will plot against run # " << 0 <<std::endl;
+        CompAnalysis.SetTrendingAxis(0);
+      }
+      break; 
+    }      
     case '?':
       std::cout<<"Option "<<optarg <<" not supported, will be ignored "<<std::endl;
       break;

@@ -234,7 +234,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
 
 
   TH2D* hspectraTOTvsCellID      = new TH2D( "hspectraTOTvsCellID","TOT spectrums CellID; cell ID; TOT (arb. units) ",
-                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4096,0,4096);
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 4100,-0.5,4099.5);
   hspectraTOTvsCellID->SetDirectory(0);
   TH2D* hspectraTOAvsCellID      = new TH2D( "hspectraTOAvsCellID","TOA spectrums CellID; cell ID; TOA (arb. units) ",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 1024,0,1024);
@@ -243,6 +243,16 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   TH2D* hSampleTOAVsCellID       = new TH2D( "hSampleTOAvsCellID","#sample ToA; cell ID; #sample TOA",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 20,0,20);
   hSampleTOAVsCellID->SetDirectory(0);
+  TH2D* hSampleTOTVsCellID       = new TH2D( "hSampleTOTVsCellID","#sample TOT; cell ID; #sample TOT",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 20,0,20);
+  hSampleTOTVsCellID->SetDirectory(0);
+
+  TH2D* hNZTOAVsCellID           = new TH2D( "hNZTOAvsCellID","# non 0 ToA; cell ID; # non 0 TOA",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 20,0,20);
+  hNZTOAVsCellID->SetDirectory(0);
+  TH2D* hNZTOTVsCellID          = new TH2D( "hNZTOTVsCellID","# non 0 TOT; cell ID; # non 0 TOT",
+                                            setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 20,0,20);
+  hNZTOTVsCellID->SetDirectory(0);
 
   TH2D* hTOAPsVsCellID       = new TH2D( "hTOAPsVsCellID","ToA (ns); cell ID; ToA (ps)",
                                             setup->GetMaxCellID()+1, -0.5, setup->GetMaxCellID()+1-0.5, 500,-250,0);
@@ -260,14 +270,30 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   
   TH1D* hSampleTOA               = new TH1D( "hSampleTOA","#sample ToA; #sample TOA",
                                               20,0,20);
+  hSampleTOA->SetDirectory(0);
+  TH1D* hSampleTOT               = new TH1D( "hSampleTOT","#sample TOT; #sample TOT",
+                                              20,0,20);
+  hSampleTOT->SetDirectory(0);
+
+  TH1D* hNZTOA                   = new TH1D( "hNZTOA","# non 0 ToA; # non 0 TOA",
+                                              20,0,20);
+  hNZTOA->SetDirectory(0);
+  TH1D* hNZTOT                   = new TH1D( "hNZTOT","# non 0 TOT; # non 0 TOT",
+                                              20,0,20);
+  hNZTOT->SetDirectory(0);
+
   TH1D* hSampleMaxADC            = new TH1D( "hSampleMaxADC","#sample ToA; #sample maxADC",
                                               20,0,20);
+  hSampleMaxADC->SetDirectory(0);
   TH1D* hSampleAboveTh           = new TH1D( "hSampleAboveTh","#sample ToA; #sample above th",
                                               20,0,20);
+  hSampleAboveTh->SetDirectory(0);                                              
   TH1D* hSampleDiff              = new TH1D( "hSampleDiff","#sample ToA-#sample Max ADC; #sample maxADC-#sampleMax ADC",
                                               8,-0.5,7.5);
+  hSampleDiff->SetDirectory(0);
   TH1D* hSampleDiffMin           = new TH1D( "hSampleDiffMin","#sample ToA-#sample above th; #sample maxADC-#sample  above th",
                                               8,-0.5,7.5);
+  hSampleDiffMin->SetDirectory(0);
   
   RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->mkdir("IndividualCellsTrigg");
@@ -314,6 +340,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
 
   double minNSigma = 5;
   int nCellsAboveTOA  = 0;
+  int nCellsAboveTOT  = 0;
   int nCellsAboveMADC = 0;
   double totADCs      = 0.;
   //==================================================================================
@@ -328,6 +355,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
    
     // initialize counters per event
     nCellsAboveTOA  = 0;
+    nCellsAboveTOT  = 0;
     nCellsAboveMADC = 0;
     totADCs         = 0.;
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -360,6 +388,8 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
             pedErr  = 5;
           }
         }
+        if (ped < 0 || ped > 300)
+          std::cout << "WARNING: pedestal value for cellID " << cellID << " is " << ped << "\t" << calib.GetPedestalMeanH(cellID) << "\t" <<calib.GetPedestalMeanL(cellID) << " which is outside the expected range. Please check your calibration!" << std::endl;
         // reevaluate waveform
         waveform_builder->set_waveform(aTile->GetADCWaveform());
         waveform_builder->fit_with_average_ped(ped);
@@ -380,6 +410,7 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
         if (tot > 0)
           hasTOT        = true;
         Int_t nSampTOA  = aTile->GetFirstTOASample();        
+        Int_t nSampTOT  = aTile->GetFirstTOTSample();        
         double toaNs      = (double)aTile->GetLinearizedRawTOA()*aTile->GetTOATimeResolution();
         double toaCorrNs  = toaNs;
         if (calib.GetToAOff(cellID) != -1000.){
@@ -396,7 +427,17 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
         Int_t nDiffFirstM= nMaxADC-nADCFirst;
         Int_t nDiffMaxT  = nMaxADC-nSampTOA;
         Int_t nOffEmpty  = 2;
-        
+        Int_t nNZTOA     = aTile->GetNumberNonzeroTOASamples();        
+        Int_t nNZTOT     = aTile->GetNumberNonzeroTOTSamples();        
+
+        hNZTOAVsCellID->Fill(cellID,nNZTOA);
+        hNZTOTVsCellID->Fill(cellID,nNZTOT);
+        hNZTOA->Fill(nNZTOA);
+        hNZTOT->Fill(nNZTOT);
+
+        if (nNZTOT > 1 && tot < 4088 && debug > 2)
+          aTile->PrintWaveFormDebugInfo(calib.GetPedestalMeanH(cellID), calib.GetPedestalMeanL(cellID), calib.GetPedestalSigL(cellID));
+
         if (adc > 10)
           nCellsAboveMADC++; 
         
@@ -404,6 +445,11 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
           nCellsAboveTOA++;
           hSampleTOA->Fill(nSampTOA);
           hSampleTOAVsCellID->Fill(cellID,nSampTOA);
+        }
+        if (hasTOT){
+          nCellsAboveTOT++;
+          hSampleTOT->Fill(nSampTOT);
+          hSampleTOTVsCellID->Fill(cellID,nSampTOT);
         }
         if (adc > ped+2*pedErr){
           hSampleMaxADC->Fill(nMaxADC);
@@ -453,24 +499,24 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
         // fill spectra histos
         if(ithSpectra!=hSpectra.end()){
           ithSpectra->second.FillExtHGCROC(adc,toa,tot,nSampTOA,fixedTOASample);
-          if(fillToACorr) ithSpectra->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
+          if(fillToACorr) ithSpectra->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped,nOffEmpty);
         } else {
           RootOutputHist->cd("IndividualCells");
           hSpectra[cellID]=TileSpectra("full",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),nSampleHGCROCInt,debug);
           hSpectra[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA, fixedTOASample);
-          if(fillToACorr) hSpectra[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
+          if(fillToACorr) hSpectra[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped,nOffEmpty);
         }
         // fill spectra histos for signals with ToA
         if (hasTOA){      // needed for summing tests
           hHighestADCAbovePedVsLayer->Fill(layer,chInLayer, adc);
           if(ithSpectraTrigg!=hSpectraTrigg.end()){
             ithSpectraTrigg->second.FillExtHGCROC(adc,toa,tot,nSampTOA,fixedTOASample);
-            if(fillToACorr) ithSpectraTrigg->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
+            if(fillToACorr) ithSpectraTrigg->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped,nOffEmpty);
           } else {
             RootOutputHist->cd("IndividualCellsTrigg");
             hSpectraTrigg[cellID]=TileSpectra("signal",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(),nSampleHGCROCInt,debug);
             hSpectraTrigg[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,fixedTOASample);
-            if(fillToACorr) hSpectraTrigg[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
+            if(fillToACorr) hSpectraTrigg[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), ped,nOffEmpty);
           }
         }
       }
@@ -504,6 +550,11 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   DefaultCanvasSettings( canvas2DSigQA, 0.08, 0.13, 0.045, 0.07);
 
   PlotSimple2D( canvas2DSigQA, hSampleTOAVsCellID, (double)it->second.samples,setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleTOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DSigQA, hSampleTOTVsCellID, (double)it->second.samples,setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleTOTvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+
+  PlotSimple2D( canvas2DSigQA, hNZTOAVsCellID, (double)it->second.samples,setup->GetMaxCellID()+1, textSizeRel, Form("%s/NonZeroTOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+  PlotSimple2D( canvas2DSigQA, hNZTOTVsCellID, (double)it->second.samples,setup->GetMaxCellID()+1, textSizeRel, Form("%s/NonZeroTOTvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
+
   PlotSimple2D( canvas2DSigQA, hSampleMaxADCVsCellID, (double)it->second.samples, setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleMaxADCvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DSigQA, hSampleDiffvsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/SampleDiffvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
   PlotSimple2D( canvas2DSigQA, hspectraTOAvsCellID, -10000, setup->GetMaxCellID()+1, textSizeRel, Form("%s/TOAvsCellID.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1, kFALSE, "colz", true);
@@ -553,6 +604,9 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   DefaultCanvasSettings( canvas1DSimple, 0.08, 0.03, 0.03, 0.07);
 
   PlotSimple1D(canvas1DSimple, hSampleTOA, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleToA.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+  PlotSimple1D(canvas1DSimple, hSampleTOT, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleTOT.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+  PlotSimple1D(canvas1DSimple, hNZTOA, -10000, (double)it->second.samples, textSizeRel, Form("%s/NonZeroToA.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
+  PlotSimple1D(canvas1DSimple, hNZTOT, -10000, (double)it->second.samples, textSizeRel, Form("%s/NonZeroTOT.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
   PlotSimple1D(canvas1DSimple, hSampleMaxADC, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleMaxADC.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
   PlotSimple1D(canvas1DSimple, hSampleAboveTh, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleAboveTh.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
   PlotSimple1D(canvas1DSimple, hSampleDiff, -10000, (double)it->second.samples, textSizeRel, Form("%s/NSampleDiff.%s", outputDirPlots.Data(), plotSuffix.Data()), it->second, 1);
@@ -662,8 +716,15 @@ bool HGCROC_Waveform_Analysis::AnalyseWaveForm(void){
   RootOutputHist->cd();
   hHighestADCAbovePedVsLayer->Write();
   hSampleTOA->Write();
+  hSampleTOT->Write();
+  hNZTOA->Write();
+  hNZTOT->Write();
   hSampleMaxADC->Write();
   hSampleTOAVsCellID->Write();
+  hSampleTOTVsCellID->Write();
+  hNZTOAVsCellID->Write();
+  hNZTOTVsCellID->Write();
+
   hSampleMaxADCVsCellID->Write();
   hspectraTOAvsCellID->Write();
   hspectraTOTvsCellID->Write();

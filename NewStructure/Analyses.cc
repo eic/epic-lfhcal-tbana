@@ -1970,6 +1970,10 @@ bool Analyses::TransferCalib(void){
             ped = aTile->GetPedestal();              // event-by-event first sample
           }
         }
+        if (ped < 0 || ped > 300)
+          std::cout << "WARNING: pedestal value for cellID " << cellID << " is " << ped << "\t" << calib.GetPedestalMeanH(cellID) << "\t" <<calib.GetPedestalMeanL(cellID) << " which is outside the expected range. Please check your calibration!" << std::endl;
+
+
         // reevaluate waveform
         waveform_builder->set_waveform(aTile->GetADCWaveform());
         waveform_builder->fit_with_average_ped(ped);
@@ -2776,23 +2780,23 @@ bool Analyses::VisualizeWaveform(void){
       // fill spectra histos
       if(ithSpectra!=hSpectra.end()){
         ithSpectra->second.FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
-        ithSpectra->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
+        ithSpectra->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), aTile->GetPedestal(),nOffEmpty);
       } else {
         RootOutputHist->cd("IndividualCells");
         hSpectra[cellID]=TileSpectra("full",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(), nSampleHGCROCInt, debug);
         hSpectra[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
-        hSpectra[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
+        hSpectra[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), aTile->GetPedestal(),nOffEmpty);
       }
       // fill spectra histos for signals with ToA
       if (toa > 0 ){      // needed for summing tests
         if(ithSpectraTrigg!=hSpectraTrigg.end()){
           ithSpectraTrigg->second.FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
-          ithSpectraTrigg->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
+          ithSpectraTrigg->second.FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), aTile->GetPedestal(),nOffEmpty);
         } else {
           RootOutputHist->cd("IndividualCellsTrigg");
           hSpectraTrigg[cellID]=TileSpectra("signal",3,cellID,calib.GetTileCalib(cellID),event.GetROtype(), nSampleHGCROCInt, debug);
           hSpectraTrigg[cellID].FillExtHGCROC(adc,toa,tot,nSampTOA,-1);
-          hSpectraTrigg[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), calib.GetPedestalMeanH(cellID),nOffEmpty);
+          hSpectraTrigg[cellID].FillWaveformVsTime(aTile->GetADCWaveform(), aTile->GetCorrectedTOA(), aTile->GetPedestal(),nOffEmpty);
         }
       }
     }

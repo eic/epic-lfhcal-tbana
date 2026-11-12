@@ -66,14 +66,8 @@ int main(int argc, char* argv[]){
   }
   ComparisonCalib CompAnalysis;
   int c;
-  while((c=getopt(argc,argv,"ac:d:e:E:fF:Hi:I:L:o:O:r:sSx:h"))!=-1){
+  while((c=getopt(argc,argv,"c:d:e:E:fF:Hi:I:L:o:O:r:sSx:h"))!=-1){
     switch(c){
-    case 'a':
-      std::cout<<"Compare: plot as function of laser intensity " <<std::endl;
-      CompAnalysis.SetTrendingAxis(5);
-      it=std::find(RootRegexp.begin(),RootRegexp.end(),"-a");
-      RootRegexp.erase(it);
-      break;
     case 'c':
       std::cout<<"Compare: set list of cells for detailed plotting " << optarg <<std::endl;
       CompAnalysis.SetCellList(optarg);

@@ -100,8 +100,8 @@ bool TileSpectra::FillExtHGCROC(double adc = 0., double toa= 0., double tot= 0.,
 
   if (extend !=  5 ){
     hspectraHG.Fill(adc);
-    hspectraTOA.Fill(toa);  
-    hspectraTOT.Fill(tot);
+    if(toa > 0) hspectraTOA.Fill(toa);  
+    if(tot > 0) hspectraTOT.Fill(tot);
   }
   if (extend ==  2 ){
     if (tot > 0 && toa > 0){
@@ -151,6 +151,8 @@ bool TileSpectra::FillWaveformVsTime(std::vector<int> samples, double toalincorr
   for (int k = 0; k < (int)samples.size(); k++ ){
     double tempt = ((k+offset)*1024+toalincorr)*timeRes;
     hcorr.Fill(tempt,samples.at(k)-ped);
+    if (samples.at(k) > 1023) 
+      std::cout << "WARNING: ADC value for cellID " << cellID << " is " << samples.at(k) << " which is outside the expected range. Please check your calibration!" << "\t Ped was: " << ped << std::endl;
     if (extend == 3 || extend == 5 || extend == 6 || extend == 8 || extend == 2) hWaveForm.Fill(tempt,samples.at(k)-ped);
   }
   return true;
