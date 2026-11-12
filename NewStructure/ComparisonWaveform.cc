@@ -183,9 +183,29 @@ bool ComparisonWaveform::ProcessWaveformCompare(void){
     //        0 - Run number dependence
     //        1 - Operational Voltage dependence
     //        2 - Time dependence
+    //        3 - iterations
+    //        4 - integration option
+    //        5 - laser intensity
+    //        6 - temperature
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     Int_t runNumber = calib.GetRunNumber();
     Xvalue=calib.GetRunNumber();
+        if(Xaxis==0){//depending on run #
+      Xvalue=calib.GetRunNumber();
+    } else if(Xaxis==1){
+      Xvalue=itRun->second.vop;
+    } else if(Xaxis==2){
+      Xvalue=calib.GetBeginRunTime()->GetSec();
+    } else if(Xaxis==3){
+      Xvalue=nRun; 
+    } else if(Xaxis==4){
+      Xvalue=nRun; 
+    } else if(Xaxis==5){
+      Xvalue=itRun->second.energy;
+    } else if(Xaxis==6){
+      Xvalue=itRun->second.temp;
+    }
+    
     if(Xvalue<Xmin) Xmin=Xvalue;
     if(Xvalue>Xmax) Xmax=Xvalue;
 
@@ -214,12 +234,15 @@ bool ComparisonWaveform::ProcessWaveformCompare(void){
       // Reading additional cell histos from 2nd file
       // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
       TProfile* profCellWave= nullptr;
+      TH1D* histCellADC= nullptr;
       TH1D* histCellTOA= nullptr;
       TH1D* histCellTOT= nullptr;
       
       // std::cout << "celld id: " << itcalib->first << "\t "<< calib.GetPedestalMeanH(itcalib->first);
       // reading Waveform
       profCellWave     = (TProfile*)tempFile->Get(Form("IndividualCells/waveform1DfullCellID%i",itcalib->first));
+      // reading ADC
+      histCellADC      = (TH1D*)tempFile->Get(Form("IndividualCells/hspectrafullADCCellID%i",itcalib->first));
       // reading ToA
       histCellTOA      = (TH1D*)tempFile->Get(Form("IndividualCells/hspectrafullTOACellID%i",itcalib->first));
       // reading ToT
@@ -243,28 +266,16 @@ bool ComparisonWaveform::ProcessWaveformCompare(void){
       if(itrend!=trend.end()){
         // fill injection hists
         itrend->second.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(),itRun->second.pdg, -10000., -10000.,itRun->second.energy,itRun->second.temp);
-        itrend->second.FillExtended(Xvalue,profCellWave->GetEntries(), (int)calib.GetRunNumber(), histCellTOT, histCellTOA, nullptr, profCellWave);
+        itrend->second.FillHGCROCDetailed(Xvalue,profCellWave->GetEntries(), (int)calib.GetRunNumber(), histCellADC, histCellTOA, histCellTOT,  profCellWave, nullptr);
         itrend->second.FillHGCROCSetting (set_rf, set_cf, set_cfcomp, set_cc, set_injec);
-        if (histCellTOT ){
-          double tot = 0;
-          int maxBin  = histCellTOT->GetMaximumBin();
-          tot         = histCellTOT->GetBinCenter(maxBin);
-          itrend->second.FillHGCROCVals(Xvalue, tot);
-        }
       // create new TileTrend object if not yet available in map
       } else {
-        TileTrend atrend=TileTrend(itcalib->first,0, 2);
+        TileTrend atrend=TileTrend(itcalib->first,0, 4);
         // fill injection hists
         atrend.Fill(Xvalue,itcalib->second, (int)calib.GetRunNumber(), (double)calib.GetVop(), itRun->second.pdg, -10000., -10000.,itRun->second.energy,itRun->second.temp );
-        atrend.FillExtended(Xvalue,profCellWave->GetEntries(), (int)calib.GetRunNumber(),histCellTOT,  histCellTOA, nullptr, profCellWave);
+        atrend.FillHGCROCDetailed(Xvalue,profCellWave->GetEntries(), (int)calib.GetRunNumber(),histCellADC, histCellTOA, histCellTOT,  profCellWave, nullptr);
         atrend.FillHGCROCSetting (set_rf, set_cf, set_cfcomp, set_cc, set_injec);
         
-        if (histCellTOT ){
-          double tot = 0;
-          int maxBin  = histCellTOT->GetMaximumBin();
-          tot         = histCellTOT->GetBinCenter(maxBin);
-          atrend.FillHGCROCVals(Xvalue, tot);
-        }
         // append TileTrend object to map
         trend[itcalib->first]=atrend;
       }
@@ -280,6 +291,17 @@ bool ComparisonWaveform::ProcessWaveformCompare(void){
     nRun++;
   } // end loop over entries (runs) in calib tree
   
+  // ******************************************************************************************
+  // Evaluate the trending objects for each cell
+  // ******************************************************************************************
+  for(itrend=trend.begin(); itrend!=trend.end(); ++itrend){
+    std::cout << "Evaluating trending for cell: " << itrend->first << std::endl;
+    // evaluate TOT objects
+    itrend->second.EvalTotPeaks(Xaxis);
+    itrend->second.EvalADCPeaks(Xaxis);
+  }
+  
+
   // ******************************************************************************************
   // Print summary of calib runs
   // ******************************************************************************************    
@@ -308,13 +330,27 @@ bool ComparisonWaveform::ProcessWaveformCompare(void){
   // ******************************************************************************************
   // Set X axis title and ranges 
   // ******************************************************************************************
-  if (Xaxis == 0){
+  if (Xaxis == 0 ){
     Xmin= Xmin-10;
     Xmax= Xmax+10;
+  } else if ( Xaxis == 5){
+    Xmin= Xmin-25;
+    Xmax= Xmax+25;
+  } else if (Xaxis == 1 || Xaxis == 3 || Xaxis == 4 || Xaxis == 6){
+    Xmin= Xmin-0.5;
+    Xmax= Xmax+0.5;
   } 
 
   TString             xaxisTitle = "";
   if (Xaxis==0)       xaxisTitle = "Run Nr. ";
+  else if (Xaxis==1)  xaxisTitle = "V (V) ";
+  else if (Xaxis==3)  xaxisTitle = "iteration";
+  else if (Xaxis==4)  xaxisTitle = "integ. option";
+  else if (Xaxis==5)  xaxisTitle = "laser intensity";
+  else if (Xaxis==6)  xaxisTitle = "T (#circ C)";
+  else                xaxisTitle = "date";  
+  
+  std::cout << "X-axis for trending: " << xaxisTitle << std::endl;
   
   for(itrend=trend.begin(); itrend!=trend.end(); ++itrend){    
     // sort graphs
@@ -369,13 +405,16 @@ bool ComparisonWaveform::ProcessWaveformCompare(void){
   MultiCanvas panelPlot(detConf, "Spectra");
   bool init1D = panelPlot.Initialize(1);
   
+  panelPlot.PlotTrending(trend, 30, Xmin,Xmax, OutputNameDirPlots, "ADCmax", plotSuffix, commonRunInfo, ExtPlot );
   panelPlot.PlotTrending(trend, 32, Xmin,Xmax, OutputNameDirPlots, "TOT", plotSuffix, commonRunInfo, ExtPlot );
+  panelPlot.PlotTrending(trend, 50, Xmin,Xmax, OutputNameDirPlots, "TOTandADCmax", plotSuffix, commonRunInfo, ExtPlot );
   panelPlot.PlotTrending(trend, 19, Xmin,Xmax, OutputNameDirPlots, "Ped", plotSuffix, commonRunInfo, true );
   panelPlot.PlotTrending(trend, 20, Xmin,Xmax, OutputNameDirPlots, "Pedwidth", plotSuffix, commonRunInfo, true );
 
   panelPlot2D.PlotRunOverlayProfile(trend, nRun, 1, -25, 25*commonRunInfo.samples, -10, -10000, OutputNameDirPlots, "WaveOverlay", plotSuffix, commonRunInfo, ExtPlot );
-  panelPlot.PlotRunOverlaySpectra(trend, nRun, 0, 0, 4148, OutputNameDirPlots, "TOTOverlay", plotSuffix, commonRunInfo, ExtPlot, debug, 0 );
-  panelPlot.PlotRunOverlaySpectra(trend, nRun, 1, 0, 1024, OutputNameDirPlots, "TOAOverlay", plotSuffix, commonRunInfo, ExtPlot, debug, 0 );
+  panelPlot.PlotRunOverlaySpectra(trend, nRun, 0, 0, 4148, OutputNameDirPlots, "ADCOverlay", plotSuffix, commonRunInfo, ExtPlot, debug, 0 );
+  panelPlot.PlotRunOverlaySpectra(trend, nRun, 2, 0, 4148, OutputNameDirPlots, "TOTOverlay", plotSuffix, commonRunInfo, ExtPlot, debug, 0 );
+  panelPlot.PlotRunOverlaySpectra(trend, nRun, 3, 0, 1024, OutputNameDirPlots, "TOAOverlay", plotSuffix, commonRunInfo, ExtPlot, debug, 0 );
 
   std::vector <int> cellVec;
   if (cellList.CompareTo("")!= 0){
@@ -408,9 +447,11 @@ bool ComparisonWaveform::ProcessWaveformCompare(void){
     bool initSngle = panelSingleTile.Initialize(1);
     panelSingleTile.SetLabelOpt(1);
     
+    panelSingleTile.PlotTrending(trend, 50, Xmin,Xmax, OutputNameDirPlots, "TileTOTandADCmax", plotSuffix, commonRunInfo, ExtPlot );
     panelSingleTile.PlotRunOverlayProfile(trend, nRun, 1, -25, 25*commonRunInfo.samples, -10, 1324, OutputNameDirPlots, "TileWaveOverlay", plotSuffix, commonRunInfo, ExtPlot);
-    panelSingleTile.PlotRunOverlaySpectra(trend, nRun, 0, 0, 4148, OutputNameDirPlots, "TileTOTSpectra", plotSuffix, commonRunInfo, ExtPlot, debug, 0);
-    panelSingleTile.PlotRunOverlaySpectra(trend, nRun, 1, 0, 1024, OutputNameDirPlots, "TileTOASpectra", plotSuffix, commonRunInfo, ExtPlot, debug, 0);
+    panelSingleTile.PlotRunOverlaySpectra(trend, nRun, 0, 0, 4148, OutputNameDirPlots, "TileADCSpectra", plotSuffix, commonRunInfo, ExtPlot, debug, 0);
+    //panelSingleTile.PlotRunOverlaySpectra(trend, nRun, 2, 0, 4148, OutputNameDirPlots, "TileTOTSpectra", plotSuffix, commonRunInfo, ExtPlot, debug, 0);
+    panelSingleTile.PlotRunOverlaySpectra(trend, nRun, 3, 0, 1024, OutputNameDirPlots, "TileTOASpectra", plotSuffix, commonRunInfo, ExtPlot, debug, 0);
     
   }
   return status;

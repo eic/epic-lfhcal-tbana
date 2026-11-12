@@ -35,7 +35,7 @@ bool Hgcroc::IsSaturatedADC() const{
  */
 bool Hgcroc::IsSaturatedTOT() const{
   for (int k = 0; k < (int)tot_waveform.size(); k++ ){
-    if (tot_waveform.at(k) > 4090)
+    if (tot_waveform.at(k) >= 4088)
       return true;
   }
   return false;
@@ -107,6 +107,50 @@ int Hgcroc::GetFirstTOASample (void){
   }
   return nSampTOA;
 }
+
+/**
+ * @brief Return the first sample index carrying a non-zero TOT value.
+ * @return TOT sample index.
+ */
+int Hgcroc::GetFirstTOTSample (void){
+  int nSampTOT  = 0;
+  for (int k = 0; k < (int)tot_waveform.size(); k++ ){
+    if (tot_waveform.at(k) > 0){
+      nSampTOT = k;
+      break;
+    }
+  }
+  return nSampTOT;
+}
+
+/**
+ * @brief Return the number of TOA samples above zero.
+ * @return Number of non-zero TOA samples.
+ */
+int Hgcroc::GetNumberNonzeroTOASamples (void){
+  int nSampTOA  = 0;
+  for (int k = 0; k < (int)toa_waveform.size(); k++ ){
+    if (toa_waveform.at(k) > 0){
+      nSampTOA++;
+    }
+  }
+  return nSampTOA;
+}
+
+/**
+ * @brief Return the number of TOT samples above zero.
+ * @return Number of non-zero TOT samples.
+ */
+int Hgcroc::GetNumberNonzeroTOTSamples (void){
+  int nSampTOT  = 0;
+  for (int k = 0; k < (int)tot_waveform.size(); k++ ){
+    if (tot_waveform.at(k) > 0){
+      nSampTOT++;
+    }
+  }
+  return nSampTOT;
+}
+
 
 /**
  * @brief Return the TOT waveform stored in this tile.

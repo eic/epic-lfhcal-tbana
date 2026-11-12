@@ -44,6 +44,14 @@ class Hgcroc: public Tile {
 
  /** @brief Return the first sample index with a TOA above zero. */
  int GetFirstTOASample (void);
+ /** @brief Return the first sample index with a TOT above zero. */
+ int GetFirstTOTSample (void);
+
+ /** @brief Return the number of TOA samples above zero. */
+ int GetNumberNonzeroTOASamples (void);
+ /** @brief Return the number of TOT samples above zero. */
+ int GetNumberNonzeroTOTSamples (void);
+
 
  /**
   * @brief Return the corrected first TOA sample, optionally shifted by an offset.

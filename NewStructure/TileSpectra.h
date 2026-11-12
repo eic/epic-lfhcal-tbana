@@ -85,7 +85,7 @@ class TileSpectra: public TObject{
                            1024*integ+100,-100,1024*integ);
       hspectraHG.SetDirectory(0);      
       hspectraTOT    = TH1D(Form("hspectra%sTOTCellID%d",name.Data(),id),Form("ToT spectrum CellID %d; TOT (arb. units); counts",id),
-                            4197,-100,4097);
+                            4100,-0.5,4099.5);
       hspectraTOT.SetDirectory(0);
       hspectraTOA    = TH1D(Form("hspectra%sTOACellID%d",name.Data(),id),Form("ToA spectrum CellID %d; TOA (arb. units); counts",id),
                             1124,-100,1024);
@@ -183,7 +183,7 @@ class TileSpectra: public TObject{
                               1024,0,1024);
         hspectraTOA.SetDirectory(0);
         hspectraTOT    = TH1D(Form("hspectra%sTOTCellID%d",name.Data(),id),Form("TOT spectrumCellID %d; TOT (arb. units); counts",id),
-                              4096,0,4096);
+                              4100,-0.5,4099.5);
         hspectraTOT.SetDirectory(0);
         hADCTOT  = TProfile(Form("h%sTOTADCCellID%d",name.Data(),id),Form("TOT-ADC correlation CellID %d; ADC (arb. units); TOT  (arb. units)",id),
                             (1024+100)/8,-100,1024*integ); 
@@ -192,7 +192,7 @@ class TileSpectra: public TObject{
                              20,0,20, 1034, -10, 1024);
         hcorr.SetDirectory(0);
         hcorrADCTOT   = TH2D(Form("hCorr2DTOTADC%sCellID%d",name.Data(),id),Form("2D TOT-ADC CellID %d;  ADC (arb. units); TOT  (arb. units)",id),
-                             (1024+100)/8,-100,1024*integ, 4096/8,0,4096);
+                             (1024+100)/8,-100,1024*integ, 4100/8,-0.5,4099.5);
         hcorrADCTOT.SetDirectory(0);
         hWaveForm     = TProfile(Form("waveform1D%sCellID%d",name.Data(),id),Form("1D waveform CellID %d;  sample ; ADC (arb. units)",id),
                                  20,0,20);
@@ -208,7 +208,7 @@ class TileSpectra: public TObject{
         hspectraHG.SetDirectory(0);
         hspectraTOA    = TH1D(Form("hspectra%sTOACellID%d",name.Data(),id),Form("TOA spectrumCellID %d; TOA (arb. units); counts",id),1024,0,1024);
         hspectraTOA.SetDirectory(0);
-        hspectraTOT    = TH1D(Form("hspectra%sTOTCellID%d",name.Data(),id),Form("TOT spectrumCellID %d; TOT (arb. units); counts",id),4096,0,4096);
+        hspectraTOT    = TH1D(Form("hspectra%sTOTCellID%d",name.Data(),id),Form("TOT spectrumCellID %d; TOT (arb. units); counts",id),4100,-0.5,4099.5);
         hWaveForm     = TProfile(Form("waveform1D%sCellID%d",name.Data(),id),Form("1D waveform CellID %d;  t (ns) ; ADC (arb. units)",id),
                                  550,-50,500);
         hWaveForm.SetDirectory(0);
