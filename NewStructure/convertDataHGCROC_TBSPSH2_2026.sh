@@ -67,6 +67,9 @@ elif [ $1 = "kchandra" ]; then
 elif [ $1 = "eglimos" ]; then
   dataRaw=/home/ewa/EIC/DATA/2026_05_SPS_TestBeam/raw      # source directory for output files from DAQ system
   dataDir=/home/ewa/EIC/DATA/2026_05_SPS_TestBeam/converted           # base directory for root trees
+elif [ $1 = "godalale" ]; then
+  dataRaw=/gpfs02/eic/godal/lfhcal/TB # source directory for output files from DAQ system
+  dataDir=/gpfs02/eic/godal/lfhcal/converted # base directory for root trees
 fi
 
 

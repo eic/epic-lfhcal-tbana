@@ -37,6 +37,10 @@ elif [ $1 = "eglimos" ]; then
   dataDirRaw=/home/ewa/EIC/DATA/2026_05_SPS_TestBeam/converted
   dataDirOut=/home/ewa/EIC/DATA/2026_05_SPS_TestBeam/converted
   PlotBaseDir=/home/ewa/EIC/DATA/2026_05_SPS_TestBeam
+elif [ $1 = "godalale" ]; then
+  dataDirRaw=/gpfs02/eic/godal/lfhcal/converted
+  dataDirOut=/gpfs02/eic/godal/lfhcal/converted
+  PlotBaseDir=/gpfs02/eic/godal/lfhcal/plots
 else
   echo "Please select a known user name, otherwise I don't know where the data is"
   exit
@@ -234,7 +238,7 @@ if [ $2 == "calibMuon" ]; then
 #     runs='200 201'
 #     runs='202'
 #     runs='194'
-    runs='194 195 196 197 198 199 200 201 202'
+    runs='195 197 199 200 201 202'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_HVScan.csv'
   else 
     echo "No run selected, exiting..."
