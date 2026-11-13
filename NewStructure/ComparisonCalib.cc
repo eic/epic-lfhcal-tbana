@@ -1381,7 +1381,26 @@ bool ComparisonCalib::ProcessCalib(void){
 
     panelSingleTile.PlotTrending(trend, 32, Xmin,Xmax, OutputNameDirPlots, "TileTOTProb", plotSuffix, commonRunInfo, 1 );
   }
-  
+  if (ExtPlot > 2 && expandedList == 1 ){
+    detConf = DetConf::Type::SingleTile;
+    MultiCanvas panelSingleTile(detConf, "SingleTile");
+    if (cellVec.size() > 0){
+      std::cout << "setting single cell list, will plot " << cellVec.size()  << std::endl;
+      panelSingleTile.SetCellVector(cellVec);
+    }
+    bool initSngle = panelSingleTile.Initialize(1);
+    Int_t maxADC = 850;
+      TString nameADC = "TileMuonTriggers_HGDist";
+      if (isHGCROC){
+        maxADC = 350;
+        if (Xaxis == 4)
+          maxADC = 650;
+        nameADC = "TileMuonTriggers_ADCDist";
+      }
+      panelSingleTile.PlotRunOverlaySpectra(trend, nRun, 0, -15, maxADC, OutputNameDirPlots, nameADC, plotSuffix, commonRunInfo, enableSingleLayer);
+      panelSingleTile.PlotTrending(trend, 2, Xmin,Xmax, OutputNameDirPlots, "HGScale", plotSuffix, commonRunInfo, enableSingleLayer );
+
+  }
   return status;
 }
 
