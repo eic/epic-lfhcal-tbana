@@ -8,15 +8,233 @@
  */
 
 #include "TileTrend.h"
-#include "TFitResult.h"
-#include "TFitResultPtr.h"
-#include "TSpectrum.h"
+#include "RooAddPdf.h"
+#include "RooArgList.h"
+#include "RooDataHist.h"
+#include "RooFit.h"
+#include "RooFitResult.h"
+#include "RooGaussian.h"
+#include "RooMsgService.h"
+#include "RooRealVar.h"
+#include <algorithm>
+#include <cmath>
+#include <memory>
 
 struct PeakInfo {
+  /// Fitted peak location along the histogram x-axis.
   double xCenter = -999;
-  double fwhm = -999;  // full width at half maximum
-  double sigma = -999; // Gaussian-like sigma estimate
+  /// Gaussian full width at half maximum, derived from sigma.
+  double fwhm = -999;
+  /// Fitted Gaussian standard deviation.
+  double sigma = -999;
 };
+
+namespace {
+
+/**
+ * @brief Temporarily suppress routine RooFit messages during a fit.
+ *
+ * RooFit's global message threshold is restored when the guard leaves scope,
+ * including when the fit exits early.
+ */
+class RooFitMessageLevelGuard {
+ public:
+  /**
+   * @brief Save RooFit's current global threshold and suppress INFO and WARNING output.
+   *
+   * The threshold is global to RooFit, so the guard is kept narrowly scoped to the
+   * fit call rather than changing the application's logging policy permanently.
+   */
+  RooFitMessageLevelGuard() : messageService(RooMsgService::instance()), previousLevel(messageService.globalKillBelow()) {
+    messageService.setGlobalKillBelow(RooFit::ERROR);
+  }
+
+  /**
+   * @brief Restore the RooFit message threshold that was active before construction.
+   */
+  ~RooFitMessageLevelGuard() {
+    messageService.setGlobalKillBelow(previousLevel);
+  }
+
+ private:
+  /// Singleton service whose global message threshold is temporarily changed.
+  RooMsgService &messageService;
+  /// Original threshold to restore when this guard leaves scope.
+  RooFit::MsgLevel previousLevel;
+};
+
+/**
+ * @brief Seed and fit Gaussian components for significant peaks in a histogram.
+ *
+ * A Gaussian-smoothed copy is used only to identify candidate local maxima; the
+ * original histogram is fitted with a RooFit extended sum of Gaussian components.
+ * Candidates below @p thresholdFraction times the smoothed maximum are ignored,
+ * and at most ten candidates are fitted. Only successful fits and positive fitted
+ * means are returned.
+ *
+ * @param hist Input histogram to fit.
+ * @param smoothingSigmaBins Gaussian smoothing width, in histogram bins, used to seed candidates.
+ * @param thresholdFraction Minimum candidate height as a fraction of the smoothed maximum.
+ * @param peaks Output vector populated with fitted peak means, sigmas, and FWHM values.
+ * @param cellID Detector cell identifier, used to make RooFit object names unique.
+ * @param runNr Run number, used to make RooFit object names unique.
+ * @param spectrumName Short spectrum label used in RooFit object names and errors.
+ * @return True if the fit succeeds and at least one fitted peak has a positive mean.
+ */
+bool FitHistogramPeaks(const TH1D &hist, double smoothingSigmaBins, double thresholdFraction,
+                       std::vector<PeakInfo> &peaks, int cellID, int runNr, const char *spectrumName) {
+  // Peak seeding compares each bin to its neighbors, so histograms need at least
+  // one interior bin in addition to the two edge bins.
+  const int nBins = hist.GetNbinsX();
+  if (nBins < 3)
+    return false;
+
+  // Smooth only for locating candidate peaks. The RooFit likelihood below still
+  // uses the original, unmodified histogram.
+  const int smoothingRadius = static_cast<int>(std::ceil(3.0 * smoothingSigmaBins));
+  std::vector<double> smoothed(nBins + 1, 0.0);
+  for (int bin = 1; bin <= nBins; ++bin) {
+    double weightedSum = 0.0;
+    double weightSum = 0.0;
+    for (int offset = -smoothingRadius; offset <= smoothingRadius; ++offset) {
+      const int sourceBin = bin + offset;
+      if (sourceBin < 1 || sourceBin > nBins)
+        continue;
+      const double weight = std::exp(-0.5 * offset * offset / (smoothingSigmaBins * smoothingSigmaBins));
+      weightedSum += weight * hist.GetBinContent(sourceBin);
+      weightSum += weight;
+    }
+    if (weightSum > 0.0)
+      smoothed[bin] = weightedSum / weightSum;
+  }
+
+  // Ignore underflow and overflow; only physical histogram bins seed the fit.
+  const double maxSmoothed = *std::max_element(smoothed.begin() + 1, smoothed.end());
+  if (maxSmoothed <= 0.0)
+    return false;
+
+  // A candidate must clear the relative-height cut and be a local maximum;
+  // endpoints are excluded because they have no two-sided neighborhood.
+  std::vector<int> peakBins;
+  const double peakThreshold = thresholdFraction * maxSmoothed;
+  for (int bin = 2; bin < nBins; ++bin) {
+    if (smoothed[bin] > peakThreshold && smoothed[bin] > smoothed[bin - 1] &&
+        smoothed[bin] >= smoothed[bin + 1]) {
+      peakBins.push_back(bin);
+    }
+  }
+  // Retain the ten strongest candidates, then restore their x-axis order for fitting.
+  std::sort(peakBins.begin(), peakBins.end(), [&smoothed](int left, int right) {
+    return smoothed[left] > smoothed[right];
+  });
+  if (peakBins.size() > 10)
+    peakBins.resize(10);
+  std::sort(peakBins.begin(), peakBins.end());
+  if (peakBins.empty())
+    return false;
+
+  const double xMin = hist.GetXaxis()->GetXmin();
+  const double xMax = hist.GetXaxis()->GetXmax();
+  const double binWidth = hist.GetXaxis()->GetBinWidth(1);
+  const double total = hist.Integral();
+  if (total <= 0.0)
+    return false;
+
+  // RooDataHist binds the original histogram bins to the RooFit observable.
+  const TString observableName = Form("%sObservable_cell%d_run%d", spectrumName, cellID, runNr);
+  RooRealVar observable(observableName, spectrumName, xMin, xMax);
+  const TString dataName = Form("%sData_cell%d_run%d", spectrumName, cellID, runNr);
+  RooDataHist data(dataName, spectrumName, RooArgList(observable), &hist);
+
+  // RooArgList does not own its entries. Keep the RooFit variables and component
+  // PDFs alive through model construction and fitting.
+  RooArgList components;
+  RooArgList yields;
+  std::vector<std::unique_ptr<RooRealVar>> means;
+  std::vector<std::unique_ptr<RooRealVar>> sigmas;
+  std::vector<std::unique_ptr<RooRealVar>> componentYields;
+  std::vector<std::unique_ptr<RooGaussian>> gaussians;
+  means.reserve(peakBins.size());
+  sigmas.reserve(peakBins.size());
+  componentYields.reserve(peakBins.size());
+  gaussians.reserve(peakBins.size());
+
+  // Normalize candidate heights to allocate a starting yield for each component.
+  double peakHeightSum = 0.0;
+  for (int bin : peakBins)
+    peakHeightSum += smoothed[bin];
+
+  for (std::size_t i = 0; i < peakBins.size(); ++i) {
+    const double seed = hist.GetXaxis()->GetBinCenter(peakBins[i]);
+    // Restrict each mean to the region halfway to its neighboring peak seeds.
+    const double lowerBound =
+        i == 0 ? xMin : 0.5 * (seed + hist.GetXaxis()->GetBinCenter(peakBins[i - 1]));
+    const double upperBound =
+        i + 1 == peakBins.size() ? xMax : 0.5 * (seed + hist.GetXaxis()->GetBinCenter(peakBins[i + 1]));
+    const double sigmaMin = std::max(binWidth * 0.25, 1.e-6);
+    const double sigmaMax = std::max(sigmaMin * 1.01, std::min(xMax - xMin, upperBound - lowerBound));
+    const double sigmaInitial = std::max(sigmaMin, std::min(smoothingSigmaBins * binWidth, 0.5 * sigmaMax));
+    // Include cell, run, and peak index in names so RooFit objects cannot collide
+    // when many channels are fitted in one process.
+    const TString meanName = Form("%sMean_cell%d_run%d_peak%zu", spectrumName, cellID, runNr, i);
+    const TString sigmaName = Form("%sSigma_cell%d_run%d_peak%zu", spectrumName, cellID, runNr, i);
+    means.push_back(std::make_unique<RooRealVar>(meanName, "Peak mean", seed, lowerBound, upperBound));
+    sigmas.push_back(std::make_unique<RooRealVar>(sigmaName, "Peak sigma", sigmaInitial, sigmaMin, sigmaMax));
+
+    const TString gaussianName = Form("%sGaussian_cell%d_run%d_peak%zu", spectrumName, cellID, runNr, i);
+    gaussians.push_back(
+        std::make_unique<RooGaussian>(gaussianName, "Peak component", observable, *means.back(), *sigmas.back()));
+    components.add(*gaussians.back());
+
+    // Extended RooAddPdf takes component event yields, initialized in proportion
+    // to the smoothed candidate heights and bounded to avoid unphysical runaway fits.
+    const double initialYield = total * smoothed[peakBins[i]] / peakHeightSum;
+    const double maxYield = std::max(10.0 * total, 10.0 * initialYield);
+    const TString yieldName = Form("%sYield_cell%d_run%d_peak%zu", spectrumName, cellID, runNr, i);
+    componentYields.push_back(
+        std::make_unique<RooRealVar>(yieldName, "Peak yield", initialYield, 0.0, maxYield));
+    yields.add(*componentYields.back());
+  }
+
+  const TString modelName = Form("%sModel_cell%d_run%d", spectrumName, cellID, runNr);
+  // Use an extended sum so each Gaussian's yield is fitted independently.
+  RooAddPdf model(modelName, "Gaussian peak mixture", components, yields);
+  RooFitMessageLevelGuard messageLevelGuard;
+  // These spectra can be normalized per trigger and thus contain weighted bins;
+  // SumW2Error requests errors corrected for those bin weights.
+  std::unique_ptr<RooFitResult> fitResult(
+      model.fitTo(data, RooFit::Save(true), RooFit::PrintLevel(-1), RooFit::Warnings(false), RooFit::SumW2Error(true)));
+  if (!fitResult || fitResult->status() != 0) {
+    // Do not publish parameter values from a failed or missing minimization result.
+    std::cerr << "TileTrend::Eval" << spectrumName << "Peaks: RooFit failed for cell " << cellID << ", run " << runNr;
+    if (fitResult)
+      std::cerr << " with status " << fitResult->status();
+    std::cerr << std::endl;
+    return false;
+  }
+
+  peaks.clear();
+  peaks.reserve(means.size());
+  for (std::size_t i = 0; i < means.size(); ++i) {
+    PeakInfo peak;
+    peak.xCenter = means[i]->getVal();
+    // These scans report physical positive-value peaks only.
+    if (peak.xCenter <= 0.0)
+      continue;
+    peak.sigma = sigmas[i]->getVal();
+    // For a Gaussian, FWHM = 2*sqrt(2*ln(2))*sigma.
+    peak.fwhm = 2.0 * std::sqrt(2.0 * std::log(2.0)) * peak.sigma;
+    peaks.push_back(peak);
+  }
+  if (peaks.empty())
+    return false;
+  std::sort(peaks.begin(), peaks.end(), [](const PeakInfo &left, const PeakInfo &right) {
+    return left.xCenter < right.xCenter;
+  });
+  return true;
+}
+
+}
 
 ClassImp(TileTrend);
 
@@ -1880,24 +2098,32 @@ double TileTrend::GetFuncZeroLGFit() {
 };
 
 /**
- * @brief Scan stored run spectra for peak candidates and report their positions and widths.
+ * @brief Fit Gaussian peak components to the stored per-run TOT spectra.
  *
- * The function iterates over the per-run HG trigger histograms, searches for peaks with
- * TSpectrum, estimates each peak width from the half-maximum crossings, and stores the
- * results in the run trend graph.
+ * Each histogram is fitted independently. The shared peak fitter smooths the spectrum
+ * to seed at most ten candidate peaks, then fits a simultaneous Gaussian mixture to
+ * the original histogram. Only successful fits with positive fitted means are kept.
+ * The mean is added to the TOT trend graph at the selected run coordinate, and the
+ * fitted FWHM is stored as its y uncertainty. The minimum and maximum peak positions
+ * are updated as points are added.
  *
- * @param option Controls how the x-axis of the trend is chosen for the plotted peak positions.
+ * @param option Selects the trend x coordinate: run number by default, voltage for 1,
+ * energy for 5, or temperature for 6.
  */
 void TileTrend::EvalTotPeaks(int option) {
 
+  // Process each run's stored TOT spectrum independently.
   for (const auto &entry : TOTRuns) {
+    // Use the run number unless the selected option requests run metadata.
     int runNr = entry.first;
     double xAxis = runNr;
     const TH1D &h = entry.second;
     int indexRun = -1;
 
-    if (option != 0 || option != 3 || option != 4 || option != 2)
+    // Metadata vectors are indexed by the run's position in this TileTrend.
+    if (option == 1 || option == 5 || option == 6)
       indexRun = GetIndexRun(runNr);
+    // Keep the run number as the x coordinate if the metadata lookup fails.
     if (indexRun != -1) {
       if (option == 1)
         xAxis = GetVoltage(indexRun);
@@ -1907,75 +2133,12 @@ void TileTrend::EvalTotPeaks(int option) {
         xAxis = GetTemp(indexRun);
     }
 
-    TH1D hist = h; // copy so TSpectrum can work on it
-    TSpectrum spec(10);
-
-    int nPeaks = spec.Search(&hist, 2.0, "", 0.05);
-
-    double *peakX = spec.GetPositionX();
-    double *peakY = spec.GetPositionY();
-
+    // A smoothing width of two bins and a 5% relative cut define TOT candidates.
     std::vector<PeakInfo> peaks;
-    peaks.reserve(nPeaks);
+    if (!FitHistogramPeaks(h, 2.0, 0.05, peaks, CellID, runNr, "TOT"))
+      continue;
 
-    for (int i = 0; i < nPeaks; ++i) {
-      double x0 = peakX[i];
-      double y0 = peakY[i];
-
-      if (y0 <= 0)
-        continue;
-
-      int bin0 = hist.GetXaxis()->FindBin(x0);
-      double halfMax = y0 / 2.0;
-
-      // Find left half-maximum crossing
-      int leftBin = bin0;
-      while (leftBin > 1) {
-        double yLeft = hist.GetBinContent(leftBin);
-        if (yLeft <= halfMax)
-          break;
-        --leftBin;
-      }
-
-      // Find right half-maximum crossing
-      int rightBin = bin0;
-      while (rightBin < hist.GetNbinsX()) {
-        double yRight = hist.GetBinContent(rightBin);
-        if (yRight <= halfMax)
-          break;
-        ++rightBin;
-      }
-
-      double xLeft = hist.GetXaxis()->GetBinLowEdge(leftBin);
-      double xRight = hist.GetXaxis()->GetBinUpEdge(rightBin);
-
-      // linear interpolation for more precise crossing
-      if (leftBin > 1 && leftBin < hist.GetNbinsX()) {
-        double yL1 = hist.GetBinContent(leftBin);
-        double yL0 = hist.GetBinContent(leftBin - 1);
-        if (yL1 != yL0) {
-          double frac = (halfMax - yL1) / (yL0 - yL1);
-          xLeft = hist.GetXaxis()->GetBinLowEdge(leftBin) + hist.GetXaxis()->GetBinWidth(leftBin) * frac;
-        }
-      }
-
-      if (rightBin > 1 && rightBin < hist.GetNbinsX()) {
-        double yR0 = hist.GetBinContent(rightBin);
-        double yR1 = hist.GetBinContent(rightBin + 1);
-        if (yR0 != yR1) {
-          double frac = (halfMax - yR0) / (yR1 - yR0);
-          xRight = hist.GetXaxis()->GetBinLowEdge(rightBin) + hist.GetXaxis()->GetBinWidth(rightBin) * (1.0 - frac);
-        }
-      }
-
-      PeakInfo p;
-      p.xCenter = x0;
-      p.fwhm = xRight - xLeft;
-      p.sigma = p.fwhm / (2.0 * std::sqrt(2.0 * std::log(2.0)));
-
-      peaks.push_back(p);
-    }
-
+    // Add each fitted component as a point; store FWHM as the vertical error.
     if (debug > 0)
       std::cout << "Run Nr. " << runNr << " has " << peaks.size() << " peaks\n";
     for (const auto &p : peaks) {
@@ -1995,24 +2158,32 @@ void TileTrend::EvalTotPeaks(int option) {
 }
 
 /**
- * @brief Scan stored run spectra for peak candidates and report their positions and widths.
+ * @brief Fit Gaussian peak components to the stored per-run HG spectra.
  *
- * The function iterates over the per-run HG trigger histograms, searches for peaks with
- * TSpectrum, estimates each peak width from the half-maximum crossings, and stores the
- * results in the run trend graph.
+ * Each histogram is fitted independently. The shared peak fitter smooths the spectrum
+ * to seed at most ten candidate peaks, then fits a simultaneous Gaussian mixture to
+ * the original histogram. Only successful fits with positive fitted means are kept.
+ * The mean is added to the ADC-maximum trend graph at the selected run coordinate,
+ * and the fitted FWHM is stored as its y uncertainty. The minimum and maximum peak
+ * positions are updated as points are added.
  *
- * @param option Controls how the x-axis of the trend is chosen for the plotted peak positions.
+ * @param option Selects the trend x coordinate: run number by default, voltage for 1,
+ * energy for 5, or temperature for 6.
  */
 void TileTrend::EvalADCPeaks(int option) {
 
+  // Process each run's stored high-gain spectrum independently.
   for (const auto &entry : HGTriggRuns) {
+    // Use the run number unless the selected option requests run metadata.
     int runNr = entry.first;
     double xAxis = runNr;
     const TH1D &h = entry.second;
     int indexRun = -1;
 
-    if (option != 0 || option != 3 || option != 4 || option != 2)
+    // Metadata vectors are indexed by the run's position in this TileTrend.
+    if (option == 1 || option == 5 || option == 6)
       indexRun = GetIndexRun(runNr);
+    // Keep the run number as the x coordinate if the metadata lookup fails.
     if (indexRun != -1) {
       if (option == 1)
         xAxis = GetVoltage(indexRun);
@@ -2022,75 +2193,12 @@ void TileTrend::EvalADCPeaks(int option) {
         xAxis = GetTemp(indexRun);
     }
 
-    TH1D hist = h; // copy so TSpectrum can work on it
-    TSpectrum spec(10);
-
-    int nPeaks = spec.Search(&hist, 4.0, "", 1);
-
-    double *peakX = spec.GetPositionX();
-    double *peakY = spec.GetPositionY();
-
+    // A wider smoothing width is used for ADC spectra; candidate cut remains 5%.
     std::vector<PeakInfo> peaks;
-    peaks.reserve(nPeaks);
+    if (!FitHistogramPeaks(h, 4.0, 0.05, peaks, CellID, runNr, "ADC"))
+      continue;
 
-    for (int i = 0; i < nPeaks; ++i) {
-      double x0 = peakX[i];
-      double y0 = peakY[i];
-
-      if (y0 <= 0)
-        continue;
-
-      int bin0 = hist.GetXaxis()->FindBin(x0);
-      double halfMax = y0 / 2.0;
-
-      // Find left half-maximum crossing
-      int leftBin = bin0;
-      while (leftBin > 1) {
-        double yLeft = hist.GetBinContent(leftBin);
-        if (yLeft <= halfMax)
-          break;
-        --leftBin;
-      }
-
-      // Find right half-maximum crossing
-      int rightBin = bin0;
-      while (rightBin < hist.GetNbinsX()) {
-        double yRight = hist.GetBinContent(rightBin);
-        if (yRight <= halfMax)
-          break;
-        ++rightBin;
-      }
-
-      double xLeft = hist.GetXaxis()->GetBinLowEdge(leftBin);
-      double xRight = hist.GetXaxis()->GetBinUpEdge(rightBin);
-
-      // linear interpolation for more precise crossing
-      if (leftBin > 1 && leftBin < hist.GetNbinsX()) {
-        double yL1 = hist.GetBinContent(leftBin);
-        double yL0 = hist.GetBinContent(leftBin - 1);
-        if (yL1 != yL0) {
-          double frac = (halfMax - yL1) / (yL0 - yL1);
-          xLeft = hist.GetXaxis()->GetBinLowEdge(leftBin) + hist.GetXaxis()->GetBinWidth(leftBin) * frac;
-        }
-      }
-
-      if (rightBin > 1 && rightBin < hist.GetNbinsX()) {
-        double yR0 = hist.GetBinContent(rightBin);
-        double yR1 = hist.GetBinContent(rightBin + 1);
-        if (yR0 != yR1) {
-          double frac = (halfMax - yR0) / (yR1 - yR0);
-          xRight = hist.GetXaxis()->GetBinLowEdge(rightBin) + hist.GetXaxis()->GetBinWidth(rightBin) * (1.0 - frac);
-        }
-      }
-
-      PeakInfo p;
-      p.xCenter = x0;
-      p.fwhm = xRight - xLeft;
-      p.sigma = p.fwhm / (2.0 * std::sqrt(2.0 * std::log(2.0)));
-
-      peaks.push_back(p);
-    }
-
+    // Add each fitted component as a point; store FWHM as the vertical error.
     if (debug > 0)
       std::cout << "Run Nr. " << runNr << " has " << peaks.size() << " peaks\n";
     for (const auto &p : peaks) {
