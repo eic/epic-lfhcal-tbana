@@ -24,7 +24,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Find ROOT package
-find_package(ROOT REQUIRED COMPONENTS Core RIO Hist Tree Gpad Graf Spectrum)
+find_package(ROOT REQUIRED COMPONENTS Core RIO Hist Tree Gpad Graf RooFit RooFitCore)
 include(${ROOT_USE_FILE})
 
 # Add common compiler flags
@@ -118,7 +118,7 @@ endif()
 message(STATUS "Adaptive HGCROC Langau: ${LFHCAL_USE_ADAPTIVE_LANGAU}")
 
 # Link against ROOT libraries
-target_link_libraries(LFHCAL PUBLIC ${ROOT_LIBRARIES})
+target_link_libraries(LFHCAL PUBLIC ${ROOT_LIBRARIES} ROOT::RooFit ROOT::RooFitCore)
 
 # Attach the ROOT dictionary to the library that contains it. This makes
 # ROOT autoload libLFHCAL.so rather than the nonexistent libCint.so.
@@ -244,4 +244,3 @@ endif()
 
 # Set default build target
 set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT DataPrep)
-
