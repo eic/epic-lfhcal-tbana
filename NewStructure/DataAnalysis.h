@@ -80,6 +80,7 @@ class DataAnalysis{
   //General methods
   bool CreateOutputRootFile(void);
   bool CreateOutputRootFileHist(void);
+  bool ValidateRequest(std::string& error) const;
   bool CheckAndOpenIO(void);
   bool Process(void);
 
@@ -128,6 +129,8 @@ class DataAnalysis{
 
 
  private:
+  TString GetCalibrationTextOutputName(void) const;
+  bool WriteCalibrationTextOutput(void);
   bool QAData(void);
   bool SimpleQAData(void);
  };

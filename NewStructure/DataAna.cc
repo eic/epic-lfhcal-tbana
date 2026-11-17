@@ -23,12 +23,13 @@
 #include "HGCROC.h"
 #include "Caen.h"
 #include "DataAnalysis.h"
+#include "CheckedIO.h"
 
 void PrintHelp(char* exe){
   std::cout<<"Usage:"<<std::endl;
   std::cout<<exe<<" [-option (arguments)]"<<std::endl;
   std::cout<<"Options:"<<std::endl;
-  std::cout<<"-a       printing calib object to file (using name of output root or calib root file ending in txt)"<<std::endl;
+  std::cout<<"-a       print calib object to text (selected -o/-O name must contain .root)"<<std::endl;
   std::cout<<"-d [0-n] switch on debug info with debug level 0 to n"<<std::endl;
   std::cout<<"-f       Force to write output if already exist"<<std::endl;
   std::cout<<"-F fff   set plot extension explicitly, default is pdf "<<std::endl;
@@ -139,13 +140,30 @@ int main(int argc, char* argv[]){
       return 0;
     }
   }
-  if(!AnAnalysis.CheckAndOpenIO()){
-    std::cout<<"Check input and configurations, inconsistency or error with I/O detected"<<std::endl;
-    PrintHelp(argv[0]);
-    return -1;
+  std::string requestError;
+  if (!AnAnalysis.ValidateRequest(requestError)) {
+    std::cerr << "DataAna: invalid request: " << requestError << std::endl;
+    return 1;
   }
-
-  AnAnalysis.Process();
+  lfhcal::RootIOErrors io;
+  try {
+    if (!AnAnalysis.CheckAndOpenIO()) {
+      std::cerr << "DataAna: input/configuration check failed" << std::endl;
+      return 1;
+    }
+    const bool processed = AnAnalysis.Process();
+    if (AnAnalysis.RootInput && AnAnalysis.RootInput->IsOpen())
+      AnAnalysis.RootInput->Close();
+    const bool written = lfhcal::CloseAndCheckOutputs(
+        {AnAnalysis.RootOutput, AnAnalysis.RootOutputHist});
+    if (!processed || !written || !io.ok()) {
+      std::cerr << "DataAna: processing or I/O failed" << std::endl;
+      return 1;
+    }
+  } catch (const std::exception& error) {
+    std::cerr << "DataAna: processing or I/O failed: " << error.what() << std::endl;
+    return 1;
+  }
   std::cout<<"Exiting"<<std::endl;
   return 0;
 }

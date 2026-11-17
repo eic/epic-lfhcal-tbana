@@ -19,6 +19,54 @@
 #include "TMath.h"
 #include "Math/Minimizer.h"
 #include "Math/MinimizerOptions.h"
+#include <sys/stat.h>
+
+TString DataAnalysis::GetCalibrationTextOutputName(void) const {
+  const TString source = RootOutputName.IsNull() ? RootOutputNameHist : RootOutputName;
+  TString filename = source;
+  filename.ReplaceAll(".root", "_calib.txt");
+  if (filename == source) return "";
+  return filename;
+}
+
+bool DataAnalysis::ValidateRequest(std::string& error) const {
+  if (!RunQA && !RunSimpleQA) {
+    error = "select at least one QA mode (-Q or -q)";
+    return false;
+  }
+  if (!IsCalibSaveToFile()) return true;
+  const TString filename = GetCalibrationTextOutputName();
+  if (filename.IsNull()) {
+    error = "-a requires -o or -O containing .root so DataAna can derive the calibration text filename";
+    return false;
+  }
+  struct stat outputStatus;
+  if (stat(filename.Data(), &outputStatus) == 0) return true;
+
+  const Ssiz_t slash = filename.Last('/');
+  TString parent = ".";
+  if (slash == 0) parent = "/";
+  else if (slash > 0) parent = filename(0, slash);
+  struct stat parentStatus;
+  if (stat(parent.Data(), &parentStatus) != 0 || !S_ISDIR(parentStatus.st_mode)) {
+    error = "calibration text output parent '" + std::string(parent.Data()) +
+            "' does not exist or is not a directory";
+    return false;
+  }
+  return true;
+}
+
+bool DataAnalysis::WriteCalibrationTextOutput(void) {
+  const TString filename = GetCalibrationTextOutputName();
+  try {
+    calib.PrintCalibToFile(filename);
+  } catch (const std::exception& error) {
+    std::cerr << "DataAna: writing calibration text output '" << filename
+              << "' failed: " << error.what() << std::endl;
+    return false;
+  }
+  return true;
+}
 
 // ****************************************************************************
 // Checking and opening input and output files
@@ -120,17 +168,14 @@ bool DataAnalysis::CheckAndOpenIO(void){
 // Primary process function to start all calibrations
 // ****************************************************************************
 bool DataAnalysis::Process(void){
-  bool status;
   ROOT::EnableImplicitMT();
-  
-  if(RunQA){
-    status=QAData();
-  }  
-  
-  if(RunSimpleQA){
-    status=SimpleQAData();
-  }  
-  return status;
+  if (!RunQA && !RunSimpleQA) {
+    std::cerr << "DataAna: select at least one QA mode (-Q or -q)" << std::endl;
+    return false;
+  }
+  if (RunQA && !QAData()) return false;
+  if (RunSimpleQA && !SimpleQAData()) return false;
+  return true;
 }
 
 
@@ -283,7 +328,8 @@ bool DataAnalysis::QAData(void){
   std::map<int, TileSpectra>::iterator ithSpectra;
   std::map<int, TileSpectra>::iterator ithSpectraTrigg;
 
-  RootOutputHist->mkdir("IndividualCells");
+  if (!RootOutputHist->GetDirectory("IndividualCells"))
+    RootOutputHist->mkdir("IndividualCells");
   RootOutputHist->mkdir("IndividualCellsTrigg");
   
   //=============================================================================================
@@ -525,12 +571,8 @@ bool DataAnalysis::QAData(void){
   }
   
   if (IsCalibSaveToFile()){
-    TString fileCalibPrint = RootOutputName;
-    fileCalibPrint         = fileCalibPrint.ReplaceAll(".root","_calib.txt");
-    calib.PrintCalibToFile(fileCalibPrint);
+    if (!WriteCalibrationTextOutput()) return false;
   }
-  
-  RootInput->Close();      
   
   RootOutputHist->cd();
 
@@ -891,7 +933,6 @@ bool DataAnalysis::QAData(void){
     }
     std::cout << "done plotting" << std::endl;
   }
-  RootOutputHist->Close();
   return true;
 } // end QAData()
 
@@ -932,7 +973,8 @@ bool DataAnalysis::SimpleQAData(void){
   std::map<int,TileSpectra> hSpectra;
   std::map<int, TileSpectra>::iterator ithSpectra;
 
-  RootOutputHist->mkdir("IndividualCells");
+  if (!RootOutputHist->GetDirectory("IndividualCells"))
+    RootOutputHist->mkdir("IndividualCells");
   
   std::cout << "starting to run QA"<< std::endl;
   TcalibIn->GetEntry(0);
@@ -1031,12 +1073,8 @@ bool DataAnalysis::SimpleQAData(void){
     std::cerr<< "Number accepted: " << evts - rejected << std::endl;
   }
   if (IsCalibSaveToFile()){
-    TString fileCalibPrint = RootOutputName;
-    fileCalibPrint         = fileCalibPrint.ReplaceAll(".root","_calib.txt");
-    calib.PrintCalibToFile(fileCalibPrint);
+    if (!WriteCalibrationTextOutput()) return false;
   }
-  
-  RootInput->Close();      
   
   RootOutputHist->cd();
 
@@ -1135,7 +1173,6 @@ bool DataAnalysis::SimpleQAData(void){
                                   Form("%s/detailed/LGHG_Corr_%.0f_%.0f" ,outputDirPlots.Data(),timemin, timemax), plotSuffix.Data(), it->second, &calib);
     std::cout << "done plotting" << std::endl;
   }
-  RootOutputHist->Close();
   return true;
 }
 
