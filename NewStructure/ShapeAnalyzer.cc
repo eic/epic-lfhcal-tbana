@@ -24,22 +24,44 @@
 #include "TLatex.h"
 #include <chrono>
 #include <algorithm>
+#include <cctype>
+#include "TParameter.h"
+#include "TNamed.h"
+#include "TSystem.h"
 
 namespace {
-  // upper edge of all cluster-energy axes (sums of E_cell)
-  const double kMaxClusterE = 1000.;
-  // E_eff = E_cell/N_layers axes (1 mip per detector layer at the MIP peak):
-  // cell spectra 0-10 in 0.05 bins, max-cell spectra (seed cells, cells above threshold) 0-30 in 0.2 bins
-  const double kMaxCellEff     = 10.;
-  const int    kNBinsCellEff   = 200;
-  const double kMaxMaxCellEff  = 30.;
-  const int    kNBinsMaxCellEff = 150;
-  // tower energies (sums of E_cell over all readout layers)
-  const double kMaxTowerE = 300.;
-  // clusters with fewer cells per hit layer than this are classified as muon-like
-  const double kMuonCellsPerLayer = 1.5;
+  // Histogram ranges, chosen per run from the beam species and energy (see MakeHistRanges)
+  struct HistRanges{
+    double maxClusterE;      // upper edge of all cluster/event energy axes (sums of E_cell)
+    double maxTowerE;        // upper edge of tower energy axes (sums of E_cell over all readout layers)
+    double maxCellEff;       // E_eff = E_cell/N_layers cell spectra (all cells): 0 - maxCellEff
+    int    nBinsCellEff;
+    double maxZoomCellEff;   // cell spectra around the MIP peak (cluster, background, isolated cells): 0 - maxZoomCellEff
+    double minMaxCellEff;    // spectra of large cells (max cell of a cluster, cells above threshold): minMaxCellEff - maxMaxCellEff
+    double maxMaxCellEff;
+    int    nBinsMaxCellEff;
+  };
 
-  inline bool IsMuonLikeCluster(const Cluster& cl){ return cl.hitTowers < kMuonCellsPerLayer; }
+  // Muon and cosmics runs: MIP-like deposits, about 1 mip eq. per detector layer (E_eff ~ 1) and a cluster of about one
+  // mip eq. per layer traversed. Shower runs (electrons, pions, hadrons, ...): energy sums scale with the beam energy,
+  // reference 100 GeV pi- (Run 452) with the TOT slope fit (option -T): clusters up to ~9000 mip eq., towers up to
+  // ~7500, max-cell E_eff up to ~300 (ADC only: ~6000, ~5000, ~100). The ranges are the same with and without the
+  // TOT slope fit, so that "full" and "tot_fit" plots can be compared directly. The per-cell E_eff axes are set by the
+  // single-cell response and do not scale with the beam energy.
+  inline HistRanges MakeHistRanges(int species, double beamEGeV){
+    auto roundUp = [](double v, double step){ return step*std::ceil(v/step); };
+    if(species == 0 || species == 2)
+      return {300., 300., 10., 200, 2., 0., 10., 200};
+    const double eScale = (beamEGeV > 0 ? beamEGeV : 100.)/100.;
+    const double maxCl  = std::max(1500., roundUp(9000.*eScale, 500.));
+    const double maxTow = std::max(1500., roundUp(7500.*eScale, 500.));
+    return {maxCl, maxTow, 10., 2000, 2., 0.5, 300., 4500};
+  }
+  // clusters with at most this many towers of summed E_eff >= ClusteringSettings::minTowerEff (1 mip eq.) are
+  // classified as muon-like; lone low-energy cells in other towers do not count (they stay in the cluster)
+  const int kMuonMaxTowers = 2;
+
+  inline bool IsMuonLikeCluster(const Cluster& cl){ return cl.nTowers <= kMuonMaxTowers; }
 
   // In muon runs a real track leaves cells in many z-bins of one tower. Clusters whose deepest tower has
   // fewer hit z-bins than this are treated as background, and all their cells as background cells.
@@ -167,10 +189,21 @@ namespace {
       return l;
     }
 
+    // Comparison groups that get their own subdirectory Comparisons/<prefix>/; other comparisons stay in Comparisons/
+    const char* const kComparisonGroups[] = {"MuonVsNonMuon", "SaturatedVsNot", "SeededVsWindow", "FirstVsSecond"};
+    inline TString ComparisonDir(const std::string& prefix){
+      for(const char* g : kComparisonGroups)
+        if(prefix == g) return TString("Comparisons/")+g;
+      return "Comparisons";
+    }
+
     inline const char* SampleDir(int sample){
       switch(sample){
         case 1:  return "Muon";
         case 2:  return "nonMuon";
+        case 4:  return "Contains_Saturated";
+        case 5:  return "DoesNot_Contain_Saturated";
+        case 6:  return "TOTFit";
         default: return "Inclusive";
       }
     }
@@ -188,6 +221,7 @@ namespace {
     TH1D* maxZ;
     TH1D* sizeZ;
     TH1D* cellsPerLayer;
+    TH1D* nTowers;
     TH1D* towerImbalance;
     TH1D* cellImbalance;
     TH1D* zImbalance;
@@ -205,11 +239,13 @@ namespace {
     TH2D* e_maxZ;
     TH2D* e_sizeZ;
     TH2D* e_cellsPerLayer;
+    TH2D* e_nTowers;
 
     // eUnit: unit of the cell values (e.g. "mip eq."); nLayers: number of readout layers, all z observables
     // are in readout-layer index 1..nLayers (see ClusteringSettings::readoutZBins)
     // maxCellImbalance: upper edge of E_eff(max cell or max layer)/E_cluster = 1/(smallest N_layers)
-    ClusterHists(TString t, TString lab, TString eUnit, int nx, int ny, int nLayers, double maxCellImbalance)
+    ClusterHists(TString t, TString lab, TString eUnit, int nx, int ny, int nLayers, double maxCellImbalance,
+                 const HistRanges& R)
       : tag(t), label(lab) {
       auto n = [&](const char* base){ return TString(base)+tag; };
       const int    nz     = nLayers;
@@ -219,23 +255,25 @@ namespace {
       const TString tMaxZ   = "readout layer with max. energy";
       const TString tSizeZ  = "#it{N}_{readout layers} in cluster";
       const TString tCells  = "cells per hit layer";
+      const TString tNTow   = Form("#it{N}_{towers} with #Sigma#it{E}/#it{N}_{layers} #geq 1 %s", eUnit.Data());
       const TString tTowImb = "#it{E}_{max tower}/#it{E}_{cluster}";
       const TString tSeedC  = Form("#it{E}_{max cell}/#it{N}_{layers} (%s)", eUnit.Data());   // E_eff of the max cell
       const TString tSeedT  = Form("#it{E}_{max tower} (%s)", eUnit.Data());
       auto t1 = [](const TString& x){ return TString(";")+x+";counts"; };
       auto tE2 = [&](const TString& y){ return TString(";")+tE+";"+y+";counts"; };
 
-      energy           = new TH1D(n("Clusters_energy"),         t1(tE),      50, 0, kMaxClusterE);
+      energy           = new TH1D(n("Clusters_energy"),         t1(tE),      50, 0, R.maxClusterE);
       firstZ           = new TH1D(n("Clusters_firstZ"),         t1(tFirstZ), nz, 0.5, nz+0.5);
       lastZ            = new TH1D(n("Clusters_lastZ"),          t1(tLastZ),  nz, 0.5, nz+0.5);
       maxZ             = new TH1D(n("ClustersZ_max"),           t1(tMaxZ),   nz, 0.5, nz+0.5);
       sizeZ            = new TH1D(n("Clusters_sizeZ"),          t1(tSizeZ),  nLayers, 0.5, nLayers+0.5);
       cellsPerLayer    = new TH1D(n("Clusters_spreadX"),        t1(tCells),  12, -0.5, 11.5);
+      nTowers          = new TH1D(n("Clusters_nTowers"),        t1(tNTow),   nx*ny+1, -0.5, nx*ny+0.5);
       towerImbalance   = new TH1D(n("Clusters_imbalance"),      t1(tTowImb), 50, 0, 1);
       cellImbalance    = new TH1D(n("Clusters_cell_imbalance"), t1("(#it{E}_{max cell}/#it{N}_{layers})/#it{E}_{cluster}"), 50, 0, maxCellImbalance);
       zImbalance       = new TH1D(n("Clusters_z_imbalance"),    t1("(#it{E}_{max layer}/#it{N}_{layers})/#it{E}_{cluster}"), 50, 0, maxCellImbalance);
-      seedCellE        = new TH1D(n("SeedCells_energy"),        t1(tSeedC),  kNBinsMaxCellEff, 0, kMaxMaxCellEff);
-      seedTowerE       = new TH1D(n("SeedTowers_energy"),       t1(tSeedT),  100, 0, kMaxTowerE);
+      seedCellE        = new TH1D(n("SeedCells_energy"),        t1(tSeedC),  R.nBinsMaxCellEff, 0, R.maxMaxCellEff);
+      seedTowerE       = new TH1D(n("SeedTowers_energy"),       t1(tSeedT),  100, 0, R.maxTowerE);
 
       xy               = new TH2D(n("ClustersXY"),    ";#it{x}_{cluster} (tower);#it{y}_{cluster} (tower);counts",
                                   nx*10, 0.5, nx+0.5, ny*10, 0.5, ny+0.5);
@@ -244,17 +282,18 @@ namespace {
       maxCellXY        = new TH2D(n("MaxCellXY"),     ";#it{x}_{max cell} (tower);#it{y}_{max cell} (tower);counts",
                                   nx, 0.5, nx+0.5, ny, 0.5, ny+0.5);
 
-      e_towerImbalance = new TH2D(n("Clusters_Energy_Imbalance"),       tE2(tTowImb), 50, 0, kMaxClusterE, 50, 0, 1);
-      e_seedCellE      = new TH2D(n("Clusters_Energy_SeedCellsEnergy"), tE2(tSeedC),  50, 0, kMaxClusterE, kNBinsMaxCellEff, 0, kMaxMaxCellEff);
-      e_firstZ         = new TH2D(n("Clusters_Energy_FirstZ"),          tE2(tFirstZ), 50, 0, kMaxClusterE, nz, 0.5, nz+0.5);
-      e_lastZ          = new TH2D(n("Clusters_Energy_LastZ"),           tE2(tLastZ),  50, 0, kMaxClusterE, nz, 0.5, nz+0.5);
-      e_maxZ           = new TH2D(n("Clusters_Energy_MaxZ"),            tE2(tMaxZ),   50, 0, kMaxClusterE, nz, 0.5, nz+0.5);
-      e_sizeZ          = new TH2D(n("Clusters_Energy_SizeZ"),           tE2(tSizeZ),  50, 0, kMaxClusterE, nLayers, 0.5, nLayers+0.5);
-      e_cellsPerLayer  = new TH2D(n("Clusters_Energy_SpreadX"),         tE2(tCells),  50, 0, kMaxClusterE, 12, -0.5, 11.5);
+      e_towerImbalance = new TH2D(n("Clusters_Energy_Imbalance"),       tE2(tTowImb), 50, 0, R.maxClusterE, 50, 0, 1);
+      e_seedCellE      = new TH2D(n("Clusters_Energy_SeedCellsEnergy"), tE2(tSeedC),  50, 0, R.maxClusterE, R.nBinsMaxCellEff, 0, R.maxMaxCellEff);
+      e_firstZ         = new TH2D(n("Clusters_Energy_FirstZ"),          tE2(tFirstZ), 50, 0, R.maxClusterE, nz, 0.5, nz+0.5);
+      e_lastZ          = new TH2D(n("Clusters_Energy_LastZ"),           tE2(tLastZ),  50, 0, R.maxClusterE, nz, 0.5, nz+0.5);
+      e_maxZ           = new TH2D(n("Clusters_Energy_MaxZ"),            tE2(tMaxZ),   50, 0, R.maxClusterE, nz, 0.5, nz+0.5);
+      e_sizeZ          = new TH2D(n("Clusters_Energy_SizeZ"),           tE2(tSizeZ),  50, 0, R.maxClusterE, nLayers, 0.5, nLayers+0.5);
+      e_cellsPerLayer  = new TH2D(n("Clusters_Energy_SpreadX"),         tE2(tCells),  50, 0, R.maxClusterE, 12, -0.5, 11.5);
+      e_nTowers        = new TH2D(n("Clusters_Energy_NTowers"),         tE2(tNTow),   50, 0, R.maxClusterE, nx*ny+1, -0.5, nx*ny+0.5);
     }
 
     std::vector<TH2D*> EnergyCorrelations() const {
-      return {e_towerImbalance, e_seedCellE, e_firstZ, e_lastZ, e_maxZ, e_sizeZ, e_cellsPerLayer};
+      return {e_towerImbalance, e_seedCellE, e_firstZ, e_lastZ, e_maxZ, e_sizeZ, e_cellsPerLayer, e_nTowers};
     }
 
     void Fill(const Cluster& cl){
@@ -265,6 +304,7 @@ namespace {
       maxZ->Fill(cl.highestlayer);
       sizeZ->Fill(cl.sizez);
       cellsPerLayer->Fill(cl.hitTowers);
+      nTowers->Fill(cl.nTowers);
       towerImbalance->Fill(cl.highesttowerenergy/E);
       cellImbalance->Fill(cl.highestcellenergy/E);
       zImbalance->Fill(cl.highestzE/E);
@@ -282,6 +322,7 @@ namespace {
       e_maxZ->Fill(E, cl.highestlayer);
       e_sizeZ->Fill(E, cl.sizez);
       e_cellsPerLayer->Fill(E, cl.hitTowers);
+      e_nTowers->Fill(E, cl.nTowers);
     }
   };
 }
@@ -367,7 +408,34 @@ bool ShapeAnalyzer::Process(void){
   // copy full calibration to different file and calculate energy
   status=Plot();
 
+  if(histFile){
+    histFile->Close();
+    std::cout << "histograms written to " << histFileName << std::endl;
+    delete histFile;
+    histFile = nullptr;
+  }
   return status;
+}
+
+void ShapeAnalyzer::SaveHist(const TString& dir, const TString& key, const TObject* obj){
+  if(!histFile || !obj) return;
+  TDirectory* d = dir.Length() ? histFile->GetDirectory(dir) : (TDirectory*)histFile;
+  if(!d) d = histFile->mkdir(dir, "", true);
+  if(d) d->WriteTObject(obj, key, "Overwrite");
+}
+
+namespace {
+  // plot label -> part of a ROOT key (letters, digits and '_' only)
+  inline TString KeyLabel(const std::string& label){
+    TString out;
+    bool lastUnderscore = false;
+    for(char c : label){
+      if(std::isalnum((unsigned char)c)){ out += c; lastUnderscore = false; }
+      else if(!lastUnderscore && out.Length()){ out += '_'; lastUnderscore = true; }
+    }
+    if(out.EndsWith("_")) out.Remove(out.Length()-1);
+    return out;
+  }
 }
 
 
@@ -418,6 +486,7 @@ void ShapeAnalyzer::Plot1D(TH1D* hist, std::string Name, int sample, bool logY, 
   DrawHeader(plotHeader, label);
 
   canvas->SaveAs(Form("%s/%s/EventDisplay_%s.%s", GetPlotOutputDir().Data(), SampleDir(sample), Name.c_str(), plotSuffix.Data()));
+  SaveHist(SampleDir(sample), Form("EventDisplay_%s", Name.c_str()), hist);
   delete canvas;
 }
 
@@ -442,6 +511,8 @@ void ShapeAnalyzer::Plot1D_Compare(TH1D* hist, std::string label, TH1D* hist2, s
   DrawHeader(plotHeader, "");
 
   canvas->SaveAs(Form("%s/Comparisons/EventDisplay_%s.%s", GetPlotOutputDir().Data(), Name.c_str(), plotSuffix.Data()));
+  SaveHist("Comparisons", Form("EventDisplay_%s__0_%s", Name.c_str(), KeyLabel(label).Data()),  hist);
+  SaveHist("Comparisons", Form("EventDisplay_%s__1_%s", Name.c_str(), KeyLabel(label2).Data()), hist2);
   delete legend;
   delete canvas;
 }
@@ -481,7 +552,10 @@ void ShapeAnalyzer::Plot1D_Comparison(std::vector<TH1D*> hists, std::vector<std:
   legend->Draw();
   DrawHeader(plotHeader, label);
 
-  canvas->SaveAs(Form("%s/Comparisons/%s_%s.%s", GetPlotOutputDir().Data(), prefix.c_str(), Name.c_str(), plotSuffix.Data()));
+  canvas->SaveAs(Form("%s/%s/%s_%s.%s", GetPlotOutputDir().Data(), ComparisonDir(prefix).Data(), prefix.c_str(), Name.c_str(), plotSuffix.Data()));
+  // un-normalised originals
+  for(size_t i = 0; i < hists.size(); i++)
+    SaveHist(ComparisonDir(prefix), Form("%s_%s__%zu_%s", prefix.c_str(), Name.c_str(), i, KeyLabel(labels[i]).Data()), hists[i]);
   delete legend;
   delete canvas;
   for(TH1* c : clones) delete c;
@@ -510,7 +584,9 @@ void ShapeAnalyzer::Plot2D_Comparison(TH2D* h1, TH2D* h2, std::string label1, st
     hists[i]->Draw("colz");
     DrawHeader(plotHeader, Form("%s (%.0f %s)", labels[i].c_str(), entries[i], countLabel.c_str()));
   }
-  canvas->SaveAs(Form("%s/Comparisons/%s2D_%s.%s", GetPlotOutputDir().Data(), prefix.c_str(), Name.c_str(), plotSuffix.Data()));
+  canvas->SaveAs(Form("%s/%s/%s2D_%s.%s", GetPlotOutputDir().Data(), ComparisonDir(prefix).Data(), prefix.c_str(), Name.c_str(), plotSuffix.Data()));
+  SaveHist(ComparisonDir(prefix), Form("%s2D_%s__0_%s", prefix.c_str(), Name.c_str(), KeyLabel(label1).Data()), h1);
+  SaveHist(ComparisonDir(prefix), Form("%s2D_%s__1_%s", prefix.c_str(), Name.c_str(), KeyLabel(label2).Data()), h2);
   delete canvas;
   delete hists[0];
   delete hists[1];
@@ -528,7 +604,48 @@ void ShapeAnalyzer::Plot2D_Correlation(TH2D* hist, std::string Name, std::string
   hist->Draw("colz");
   DrawHeader(plotHeader, label);
 
-  canvas->SaveAs(Form("%s/Comparisons/%s.%s", GetPlotOutputDir().Data(), Name.c_str(), plotSuffix.Data()));
+  // grouped by the part of Name before the first '_' (e.g. SeededVsWindow_Corr_* -> Comparisons/SeededVsWindow/)
+  const TString dir = ComparisonDir(Name.substr(0, Name.find('_')));
+  canvas->SaveAs(Form("%s/%s/%s.%s", GetPlotOutputDir().Data(), dir.Data(), Name.c_str(), plotSuffix.Data()));
+  SaveHist(dir, Name.c_str(), hist);
+  delete canvas;
+}
+
+// Several 1D distributions overlaid without normalisation, optionally with curves (dashed), saved as <dir>/<Name>.
+void ShapeAnalyzer::Plot1D_Overlay(std::vector<TH1D*> hists, std::vector<std::string> labels, std::string dir, std::string Name,
+                                   bool logY, std::string label, std::vector<TF1*> curves, std::vector<std::string> curveLabels){
+  std::cout << "plotting overlay: " << Name << std::endl;
+  using namespace PlotStyle;
+  if(hists.empty() || hists.size() != labels.size()) return;
+
+  TCanvas* canvas = MakeCanvas(Form("cOverlay_%s", Name.c_str()), false);
+  canvas->SetLogy(logY);
+  std::vector<TH1*> hs(hists.begin(), hists.end());
+  for(size_t i = 0; i < hists.size(); i++) StyleMarkers(hists[i], i);
+  StyleAxes(hists[0]);
+  SetYRange(hs, logY, true);
+  TLegend* legend = MakeLegend(hists.size()+curves.size(), false);
+  for(size_t i = 0; i < hists.size(); i++){
+    hists[i]->Draw(i == 0 ? "p e1" : "p e1 same");
+    legend->AddEntry(hists[i], Form("%s (%.0f)", labels[i].c_str(), hists[i]->GetEntries()), "pl");
+  }
+  for(size_t i = 0; i < curves.size(); i++){
+    curves[i]->SetLineColor(kBlack);
+    curves[i]->SetLineStyle(2);
+    curves[i]->SetLineWidth(2);
+    curves[i]->SetNpx(500);
+    curves[i]->Draw("same");
+    legend->AddEntry(curves[i], i < curveLabels.size() ? curveLabels[i].c_str() : "", "l");
+  }
+  legend->Draw();
+  DrawHeader(plotHeader, label);
+
+  canvas->SaveAs(Form("%s/%s/%s.%s", GetPlotOutputDir().Data(), dir.c_str(), Name.c_str(), plotSuffix.Data()));
+  for(size_t i = 0; i < hists.size(); i++)
+    SaveHist(dir, Form("%s__%zu_%s", Name.c_str(), i, KeyLabel(labels[i]).Data()), hists[i]);
+  for(size_t i = 0; i < curves.size(); i++)
+    SaveHist(dir, Form("%s__curve%zu_%s", Name.c_str(), i, i < curveLabels.size() ? KeyLabel(curveLabels[i]).Data() : ""), curves[i]);
+  delete legend;
   delete canvas;
 }
 
@@ -546,6 +663,7 @@ void ShapeAnalyzer::Plot2D(TH2D* hist, std::string Name, int sample, std::string
 
   const TString subDir = (sample == 3) ? "Inclusive/Correlations_AltCluster" : Form("%s/Correlations", SampleDir(sample));
   canvas->SaveAs(Form("%s/%s/EventDisplay_%s.%s", GetPlotOutputDir().Data(), subDir.Data(), Name.c_str(), plotSuffix.Data()));
+  SaveHist(subDir, Form("EventDisplay_%s", Name.c_str()), hist);
   delete canvas;
 }
 
@@ -572,6 +690,11 @@ bool ShapeAnalyzer::Plot(){
       std::cout << "WARNING: species unknown: " << it->second.species.Data() << "  aborting"<< std::endl;
       return false;
   }
+  // histogram ranges for this beam (muon/cosmics vs shower, scaled with the beam energy)
+  const HistRanges R = MakeHistRanges(species, it->second.energy);
+  std::cout << ((species == 0 || species == 2) ? "muon-like beam" : "shower beam") << " (" << it->second.species.Data()
+            << ", " << it->second.energy << " GeV): cluster energy axes 0-" << R.maxClusterE << ", tower 0-" << R.maxTowerE
+            << ", max-cell E_eff " << R.minMaxCellEff << "-" << R.maxMaxCellEff << std::endl;
   
   std::cout << "debug level set to : " << debug << std::endl;
   
@@ -589,7 +712,7 @@ bool ShapeAnalyzer::Plot(){
 
   // clustering settings
   // The seeded clustering is the main method (Inclusive/, Muon/, nonMuon/ plots); the window clustering
-  // is run on the same events for the seeded vs window comparisons (Comparisons/SeededVsWindow_*).
+  // is run on the same events for the seeded vs window comparisons (Comparisons/SeededVsWindow/).
   // All thresholds come from clusterSettings (see ClusteringSettings in CommonHelperFunctions.h and the
   // SetCluster* methods in ShapeAnalyzer.h); the local names below are just shorthands.
   // per-event cell map, filled as (z, x, y)
@@ -672,25 +795,26 @@ bool ShapeAnalyzer::Plot(){
   const char*   tLayerCells = "layer cells";
 
   // event-level histograms (inclusive only)
-  TH1D* Cells_energy                    = new TH1D("Cells_energy",                    t1(tEff, tLayerCells),             kNBinsMaxCellEff,0,kMaxMaxCellEff);
-  TH1D* Towers_energy                   = new TH1D("Towers_energy",                   t1(eTitle("tower")),               100,0,kMaxTowerE);
+  TH1D* Cells_energy                    = new TH1D("Cells_energy",                    t1(tEff, tLayerCells),             R.nBinsMaxCellEff,R.minMaxCellEff,R.maxMaxCellEff);
+  TH1D* Towers_energy                   = new TH1D("Towers_energy",                   t1(eTitle("tower")),               100,0,R.maxTowerE);
   TH1D* Clusters_NClusters              = new TH1D("Clusters_NClusters",              t1("#it{N}_{clusters}"),           11,-0.5,10.5);
-  TH1D* Clusters_energy_first           = new TH1D("Clusters_energy_first",           t1(eTitle("1st cluster")),         50,0,kMaxClusterE);
-  TH1D* Clusters_energy_second          = new TH1D("Clusters_energy_second",          t1(eTitle("2nd cluster")),         50,0,kMaxClusterE);
-  TH1D* Clusters_eventenergy            = new TH1D("Clusters_eventenergy",            t1(eTitle("event")),               50,0,kMaxClusterE);
-  TH1D* Clusters_windowminuseventenergy = new TH1D("Clusters_windowminuseventenergy", t1(Form("#it{E}_{event} - #it{E}_{1st cluster} (%s)", eUnit.Data())), 50,0,kMaxClusterE);
-  TH1D* MuonPurity_Energy               = new TH1D("MuonPurity_energy",               t1(eTitle("cluster"), "muon-like fraction"), 50,0,kMaxClusterE);
+  TH1D* Clusters_energy_first           = new TH1D("Clusters_energy_first",           t1(eTitle("1st cluster")),         50,0,R.maxClusterE);
+  TH1D* Clusters_energy_second          = new TH1D("Clusters_energy_second",          t1(eTitle("2nd cluster")),         50,0,R.maxClusterE);
+  TH1D* Clusters_eventenergy            = new TH1D("Clusters_eventenergy",            t1(eTitle("event")),               50,0,R.maxClusterE);
+  TH1D* Clusters_windowminuseventenergy = new TH1D("Clusters_windowminuseventenergy", t1(Form("#it{E}_{event} - #it{E}_{1st cluster} (%s)", eUnit.Data())), 50,0,R.maxClusterE);
+  TH1D* MuonPurity_Energy               = new TH1D("MuonPurity_energy",               t1(eTitle("cluster"), "muon-like fraction"), 50,0,R.maxClusterE);
+  TH1D* SaturatedFraction_Energy        = new TH1D("SaturatedFraction_energy",        t1(eTitle("cluster"), "fraction with saturated cell"), 50,0,R.maxClusterE);
 
   // Background (muon runs only, see IsBackgroundCluster) vs inclusive seeded clusters, both without the
-  // minwindow cluster-energy cut. Cell spectra (E_eff) are booked over 0-kMaxCellEff, so the shape comparisons
+  // minwindow cluster-energy cut. Cell spectra (E_eff) are booked over 0-R.maxZoomCellEff, so the shape comparisons
   // are normalised in that range.
   const bool isMuonRun = (species == 2);
-  TH1D* ClusterCells_energy       = new TH1D("ClusterCells_energy",       t1(tEff, tLayerCells), kNBinsCellEff, 0, 2);
-  TH1D* BackgroundCells_energy    = new TH1D("BackgroundCells_energy",    t1(tEff, tLayerCells), kNBinsCellEff, 0, 2);
+  TH1D* ClusterCells_energy       = new TH1D("ClusterCells_energy",       t1(tEff, tLayerCells), R.nBinsCellEff, 0, R.maxZoomCellEff);
+  TH1D* BackgroundCells_energy    = new TH1D("BackgroundCells_energy",    t1(tEff, tLayerCells), R.nBinsCellEff, 0, R.maxZoomCellEff);
   // isolated cells (all runs): below seed threshold and no neighbouring cell with energy, see FindIsolatedCells
-  TH1D* IsolatedCells_energy      = new TH1D("IsolatedCells_energy",      t1(tEff, tLayerCells), kNBinsCellEff, 0, 2);
-  TH1D* InclusiveClusters_energy  = new TH1D("InclusiveClusters_energy",  t1(eTitle("cluster")), 100, 0, kMaxClusterE);
-  TH1D* BackgroundClusters_energy = new TH1D("BackgroundClusters_energy", t1(eTitle("cluster")), 100, 0, kMaxClusterE);
+  TH1D* IsolatedCells_energy      = new TH1D("IsolatedCells_energy",      t1(tEff, tLayerCells), R.nBinsCellEff, 0, R.maxZoomCellEff);
+  TH1D* InclusiveClusters_energy  = new TH1D("InclusiveClusters_energy",  t1(eTitle("cluster")), 100, 0, R.maxClusterE);
+  TH1D* BackgroundClusters_energy = new TH1D("BackgroundClusters_energy", t1(eTitle("cluster")), 100, 0, R.maxClusterE);
   int nBackgroundClusters = 0, nInclusiveClusters = 0;
 
   // every cell spectrum split by segment depth (one histogram per depth group), Comparisons/SegmentDepth_*
@@ -710,7 +834,7 @@ bool ShapeAnalyzer::Plot(){
     }
     return s;
   };
-  TH1D* AllCells_energy = new TH1D("AllCells_energy", t1(tEff, tLayerCells), kNBinsCellEff, 0, kMaxCellEff);   // every cell with E > 0
+  TH1D* AllCells_energy = new TH1D("AllCells_energy", t1(tEff, tLayerCells), R.nBinsCellEff,0, R.maxCellEff);   // every cell with E > 0
   SegHists SegAllCells        = bookSeg("AllCells_energy",        AllCells_energy);
   SegHists SegCells           = bookSeg("Cells_energy",           Cells_energy);
   SegHists SegClusterCells    = bookSeg("ClusterCells_energy",    ClusterCells_energy);
@@ -721,10 +845,23 @@ bool ShapeAnalyzer::Plot(){
   // E_eff(max cell)/E_cluster can reach at most 1/(smallest N_layers)
   const int    minNLayers  = segDepths.empty() ? 1 : std::max(1, segDepths.front());
   const double maxCellImb  = 1./minNLayers;
-  ClusterHists hAll    ("",         "seeded clustering, all clusters",  eUnit, towersx, towersy, nLayers, maxCellImb);
-  ClusterHists hMuon   ("_Muon",    "seeded clustering, muon-like",     eUnit, towersx, towersy, nLayers, maxCellImb);
-  ClusterHists hNonMuon("_nonMuon", "seeded clustering, non-muon-like", eUnit, towersx, towersy, nLayers, maxCellImb);
-  ClusterHists hWindow ("_Window",  "window clustering, all clusters",  eUnit, towersx, towersy, nLayers, maxCellImb);
+  ClusterHists hAll    ("",         "seeded clustering, all clusters",  eUnit, towersx, towersy, nLayers, maxCellImb, R);
+  ClusterHists hMuon   ("_Muon",    "seeded clustering, muon-like",     eUnit, towersx, towersy, nLayers, maxCellImb, R);
+  ClusterHists hNonMuon("_nonMuon", "seeded clustering, non-muon-like", eUnit, towersx, towersy, nLayers, maxCellImb, R);
+  // seeded clusters with / without at least one ADC-saturated cell (HGCROC only, Hgcroc::IsSaturatedADC)
+  ClusterHists hSat    ("_Saturated",   "seeded clustering, with saturated cell", eUnit, towersx, towersy, nLayers, maxCellImb, R);
+  ClusterHists hNoSat  ("_NoSaturated", "seeded clustering, no saturated cell",   eUnit, towersx, towersy, nLayers, maxCellImb, R);
+  // highest and second-highest energy seeded cluster, in events with at least two analysed clusters
+  ClusterHists hFirst  ("_First",       "seeded clustering, highest-energy cluster", eUnit, towersx, towersy, nLayers, maxCellImb, R);
+  ClusterHists hSecond ("_Second",      "seeded clustering, 2nd-highest-energy cluster", eUnit, towersx, towersy, nLayers, maxCellImb, R);
+  TH2D* FirstVsSecond_Energy = new TH2D("FirstVsSecond_Energy",
+                                        ";"+eTitle("1st cluster")+";"+eTitle("2nd cluster")+";events",
+                                        100,0,R.maxClusterE,100,0,R.maxClusterE);
+  TH2D* FirstVsSecond_PosDiff = new TH2D("FirstVsSecond_PosDiff",
+                                         ";#it{x}_{2nd} - #it{x}_{1st} (tower);#it{y}_{2nd} - #it{y}_{1st} (tower);events",
+                                         2*towersx*10, -towersx, towersx, 2*towersy*10, -towersy, towersy);
+  int nEvtsTwoClusters = 0;
+  ClusterHists hWindow ("_Window",  "window clustering, all clusters",  eUnit, towersx, towersy, nLayers, maxCellImb, R);
   SegHists SegMaxCell = bookSeg("SeedCells_energy", hAll.seedCellE);   // max cell of analysed seeded clusters
 
   // seeded vs window, per event (only clusters with energy > minwindow are counted)
@@ -732,19 +869,19 @@ bool ShapeAnalyzer::Plot(){
   const TString tLeadE = eTitle("lead cluster");
   TH1D* Clusters_NClusters_Seeded  = new TH1D("Clusters_NClusters_Seeded",  t1(tNCl),   11,-0.5,10.5);
   TH1D* Clusters_NClusters_Window  = new TH1D("Clusters_NClusters_Window",  t1(tNCl),   11,-0.5,10.5);
-  TH1D* Clusters_SumEnergy_Seeded  = new TH1D("Clusters_SumEnergy_Seeded",  t1(tSumE),  50,0,kMaxClusterE);
-  TH1D* Clusters_SumEnergy_Window  = new TH1D("Clusters_SumEnergy_Window",  t1(tSumE),  50,0,kMaxClusterE);
-  TH1D* Clusters_LeadEnergy_Seeded = new TH1D("Clusters_LeadEnergy_Seeded", t1(tLeadE), 50,0,kMaxClusterE);
-  TH1D* Clusters_LeadEnergy_Window = new TH1D("Clusters_LeadEnergy_Window", t1(tLeadE), 50,0,kMaxClusterE);
+  TH1D* Clusters_SumEnergy_Seeded  = new TH1D("Clusters_SumEnergy_Seeded",  t1(tSumE),  50,0,R.maxClusterE);
+  TH1D* Clusters_SumEnergy_Window  = new TH1D("Clusters_SumEnergy_Window",  t1(tSumE),  50,0,R.maxClusterE);
+  TH1D* Clusters_LeadEnergy_Seeded = new TH1D("Clusters_LeadEnergy_Seeded", t1(tLeadE), 50,0,R.maxClusterE);
+  TH1D* Clusters_LeadEnergy_Window = new TH1D("Clusters_LeadEnergy_Window", t1(tLeadE), 50,0,R.maxClusterE);
   TH2D* SeededVsWindow_NClusters   = new TH2D("SeededVsWindow_NClusters",
                                               ";#it{N}_{clusters}, seeded;#it{N}_{clusters}, window;events",
                                               11,-0.5,10.5,11,-0.5,10.5);
   TH2D* SeededVsWindow_LeadEnergy  = new TH2D("SeededVsWindow_LeadEnergy",
                                               ";"+tLeadE+", seeded;"+tLeadE+", window;events",
-                                              100,0,kMaxClusterE,100,0,kMaxClusterE);
+                                              100,0,R.maxClusterE,100,0,R.maxClusterE);
   TH2D* SeededVsWindow_SumEnergy   = new TH2D("SeededVsWindow_SumEnergy",
                                               ";"+tSumE+", seeded;"+tSumE+", window;events",
-                                              100,0,kMaxClusterE,100,0,kMaxClusterE);
+                                              100,0,R.maxClusterE,100,0,R.maxClusterE);
   TH2D* SeededVsWindow_LeadDist    = new TH2D("SeededVsWindow_LeadPosDiff",
                                               ";#it{x}_{lead, window} - #it{x}_{lead, seeded} (tower);#it{y}_{lead, window} - #it{y}_{lead, seeded} (tower);events",
                                               100,-3,3,100,-3,3);
@@ -754,17 +891,56 @@ bool ShapeAnalyzer::Plot(){
   PlotStyle::ApplyGlobal();
   plotHeader = Form("#bf{LFHCal TB} %s, Run %d", GetStringFromRunInfo(it->second, 2).Data(), runNr);
 
+  // ROOT file with all plotted histograms (option -H), plus the run info needed to compare runs
+  if(histFileName.Length()){
+    gSystem->mkdir(gSystem->GetDirName(histFileName), true);
+    histFile = TFile::Open(histFileName, "RECREATE");
+    if(!histFile || histFile->IsZombie()){
+      std::cout << "WARNING: could not create " << histFileName << ", histograms are not saved" << std::endl;
+      delete histFile;
+      histFile = nullptr;
+    } else {
+      TString energyType = "other";
+      if(plotHGCROC && dataTypeHGCROC == 4) energyType = useTOTSlopeFit ? "tot_fit" : "full";
+      else if(plotHGCROC && dataTypeHGCROC == 0) energyType = "adc";
+      else if(plotHGCROC && dataTypeHGCROC == 2) energyType = "tot";
+      TParameter<int>    pRun("runNumber", runNr);
+      TParameter<double> pE("beamEnergy", it->second.energy);
+      TParameter<int>    pSpecies("speciesInt", species);
+      TNamed nSpecies("species", it->second.species.Data());
+      TNamed nType("energyType", energyType.Data());
+      TNamed nUnit("energyUnit", eUnit.Data());
+      TNamed nHeader("plotHeader", plotHeader.Data());
+      for(const TObject* o : std::initializer_list<const TObject*>{&pRun, &pE, &pSpecies, &nSpecies, &nType, &nUnit, &nHeader})
+        histFile->WriteTObject(o, o->GetName());
+    }
+  }
+
   // creating plotting directory
   TString outputDirPlots = GetPlotOutputDir();
   gSystem->Exec("mkdir -p "+outputDirPlots);
   gSystem->Exec("mkdir -p "+outputDirPlots+"/Inclusive");
   gSystem->Exec("mkdir -p "+outputDirPlots+"/Comparisons");
+  for(const char* g : PlotStyle::kComparisonGroups)
+    gSystem->Exec("mkdir -p "+outputDirPlots+"/Comparisons/"+g);
   gSystem->Exec("mkdir -p "+outputDirPlots+"/Muon");
   gSystem->Exec("mkdir -p "+outputDirPlots+"/nonMuon");
   gSystem->Exec("mkdir -p "+outputDirPlots+"/Inclusive/Correlations");
   gSystem->Exec("mkdir -p "+outputDirPlots+"/Muon/Correlations");
   gSystem->Exec("mkdir -p "+outputDirPlots+"/nonMuon/Correlations");
   gSystem->Exec("mkdir -p "+outputDirPlots+"/Inclusive/Correlations_AltCluster");
+  gSystem->Exec("mkdir -p "+outputDirPlots+"/Contains_Saturated/Correlations");
+  gSystem->Exec("mkdir -p "+outputDirPlots+"/DoesNot_Contain_Saturated/Correlations");
+
+  // ADC-saturated cells of the current event, indexed by the global bin of hXYZMapEvt
+  std::vector<char> satMap(hXYZMapEvt->GetNcells(), 0);
+  std::vector<int>  satBins;   // bins set in satMap, to reset it per event
+  auto containsSaturated = [&](const Cluster& cl){
+    for(size_t k = 0; k < cl.cellZ.size(); k++)
+      if(satMap[hXYZMapEvt->GetBin(cl.cellZ[k], cl.cellX[k], cl.cellY[k])]) return true;
+    return false;
+  };
+  int nSatClusters = 0, nSatCells = 0;
    
   
   
@@ -785,7 +961,37 @@ bool ShapeAnalyzer::Plot(){
     eCutoff = calib.GetAveragePedestalSigHigh()*5.;
   std::cout << "setting energy cut-off to: " << eCutoff << std::endl;
   double Etottot = 0;
-  
+
+  // TOT slope fit for ADC-saturated cells (option -T, see TOTSlopeFit.h): pre-pass over the same events, per-channel
+  // fit, then the corrected energy (cellEnergy) is used everywhere below; diagnostics in TOTFit/
+  TOTSlopeFit totFit;
+  const bool applyTOTFit = useTOTSlopeFit && plotHGCROC && dataTypeHGCROC == 4;
+  if(useTOTSlopeFit && !applyTOTFit)
+    std::cout << "WARNING: the TOT slope fit needs calibrated HGCROC energies (-c -s), it is not applied" << std::endl;
+  if(applyTOTFit){
+    const int lastEvt = std::min(plotEvt+nEvts, evts);
+    for(int i = plotEvt; i < lastEvt; i++){
+      TdataIn->GetEntry(i);
+      for(int j = 0; j < event.GetNTiles(); j++){
+        Hgcroc* t = (Hgcroc*)event.GetTile(j);
+        if(calib.GetBadChannel(t->GetCellID()) != 3 && calib.GetBCCalib()) continue;
+        const bool sat = t->IsSaturatedADC();
+        if(!sat && t->GetE() <= eCutoff) continue;
+        totFit.AddHit(t->GetCellID(), t->GetE(), t->GetADCWaveform(), t->GetRawTOT(), sat);
+      }
+    }
+    totFit.Fit();
+    std::cout << "TOT slope fit: " << totFit.NChannels(1) << " channels with own fit, " << totFit.NChannels(2)
+              << " with the median slope k = " << totFit.MedianSlope() << " " << eUnit << " per TOT unit, "
+              << totFit.NChannels(0) << " channels with saturated TOT hits not corrected" << std::endl;
+    gSystem->Exec("mkdir -p "+outputDirPlots+"/TOTFit/Correlations");
+    totFit.WriteParameters(Form("%s/TOTFit/TOTSlopeFit_parameters.txt", outputDirPlots.Data()));
+  }
+  auto cellEnergy = [&](Hgcroc* t){
+    const double e = t->GetE();
+    return applyTOTFit ? totFit.Correct(t->GetCellID(), e, t->GetRawTOT(), t->IsSaturatedADC()) : e;
+  };
+
   //TPolyLine3D* testline = new TPolyLine3D();
   for(int i=plotEvt; i<plotEvt+nEvts; i++){
     if(i > evts ) {
@@ -830,8 +1036,8 @@ bool ShapeAnalyzer::Plot(){
             if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t ADC: " << aTile->GetIntegratedADC() << "\t scale (calib) " << calib.GetScaleHigh( aTile->GetCellID() ) << "\t energy " << energy << std::endl;
             break;
           case 4:
-            energy = aTile->GetE(); 
-            if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t E: " << aTile->GetE() << std::endl;
+            energy = cellEnergy(aTile);
+            if( debug>1 ) std::cout << "CellID: " << aTile->GetCellID() << "\t E: " << energy << std::endl;
             break;
         }
 
@@ -896,10 +1102,12 @@ bool ShapeAnalyzer::Plot(){
       Float_t maxE = 0;
       for(int j=0; j<event.GetNTiles(); j++){
         double energy  = 0;
-        double x, y, z; 
+        double x, y, z;
+        bool saturated = false;
         if(plotHGCROC){
           Hgcroc* aTile   = (Hgcroc*)event.GetTile(j);
           if( calib.GetBadChannel(aTile->GetCellID())!=3 && calib.GetBCCalib() == true) continue;
+          saturated = aTile->IsSaturatedADC();
           switch( dataTypeHGCROC ){
             case 0:
               energy = aTile->GetIntegratedADC();
@@ -914,7 +1122,7 @@ bool ShapeAnalyzer::Plot(){
               energy = aTile->GetIntegratedADC()/calib.GetScaleHigh(aTile->GetCellID());
               break;
             case 4:
-              energy = aTile->GetE();
+              energy = cellEnergy(aTile);
               break;
           }
           x = (double) aTile->GetX();
@@ -937,6 +1145,14 @@ bool ShapeAnalyzer::Plot(){
 	
         if(energy>eCutoff){
           hXYZMapEvt->Fill(z,x,y,energy);
+          if(saturated){
+            const int bin = hXYZMapEvt->FindFixBin(z,x,y);
+            if(bin >= 0 && bin < (int)satMap.size() && !satMap[bin]){
+              satMap[bin] = 1;
+              satBins.push_back(bin);
+              nSatCells++;
+            }
+          }
           if(debug > 2) std::cout << "Event, x, y, z, E: " << i << "\t" <<x<< "\t" <<y<< "\t" << z<< "\t" <<energy<<std::endl;
         }
 	
@@ -1053,6 +1269,8 @@ bool ShapeAnalyzer::Plot(){
       SegMaxCell.Fill(segGroupOfZ[cl.highestcellz], cl.highestcellenergy);
       if(IsMuonLikeCluster(cl)) hMuon.Fill(cl);
       else                      hNonMuon.Fill(cl);
+      if(containsSaturated(cl)){ hSat.Fill(cl); nSatClusters++; }
+      else                       hNoSat.Fill(cl);
 
 
       if(iCl == 0){
@@ -1060,6 +1278,21 @@ bool ShapeAnalyzer::Plot(){
         Clusters_windowminuseventenergy->Fill(cl.eventenergy-cl.energy);
       }
       if(iCl == 1) Clusters_energy_second->Fill(cl.energy);
+    }
+
+    // highest vs second-highest energy analysed cluster (ClusterVec is in seed order, not energy order)
+    {
+      std::vector<const Cluster*> good;
+      for(const Cluster& cl : ClusterVec) if(cl.energy > minwindow) good.push_back(&cl);
+      if(good.size() >= 2){
+        std::partial_sort(good.begin(), good.begin()+2, good.end(),
+                          [](const Cluster* a, const Cluster* b){ return a->energy > b->energy; });
+        hFirst.Fill(*good[0]);
+        hSecond.Fill(*good[1]);
+        FirstVsSecond_Energy->Fill(good[0]->energy, good[1]->energy);
+        FirstVsSecond_PosDiff->Fill(good[1]->x-good[0]->x, good[1]->y-good[0]->y);
+        nEvtsTwoClusters++;
+      }
     }
 
     // event-level spectra, for events with at least one analysed cluster
@@ -1084,6 +1317,8 @@ bool ShapeAnalyzer::Plot(){
 
     ClusterVec.clear();
     hXYZMapEvt->Reset();
+    for(int b : satBins) satMap[b] = 0;
+    satBins.clear();
   }
 
 
@@ -1091,13 +1326,15 @@ bool ShapeAnalyzer::Plot(){
 
   // fraction of analysed clusters that are muon-like, vs cluster energy
   MuonPurity_Energy->Divide(hMuon.energy, hAll.energy, 1., 1., "B");
+  // fraction of analysed clusters that contain an ADC-saturated cell, vs cluster energy
+  SaturatedFraction_Energy->Divide(hSat.energy, hAll.energy, 1., 1., "B");
 
   // 2D correlations: normalise each energy column to unit integral
-  for(ClusterHists* h : {&hAll, &hMuon, &hNonMuon, &hWindow})
+  for(ClusterHists* h : {&hAll, &hMuon, &hNonMuon, &hWindow, &hSat, &hNoSat, &hFirst, &hSecond})
     for(TH2D* h2 : h->EnergyCorrelations())
       Normalize2D(h2);
 
-  // all per-cluster comparisons between two histogram sets, saved as Comparisons/<prefix>[2D]_<name>
+  // all per-cluster comparisons between two histogram sets, saved as Comparisons/<prefix>/<prefix>[2D]_<name>
   auto compareSets = [&](ClusterHists& a, ClusterHists& b, std::string labelA, std::string labelB, std::string prefix){
     Plot1D_Comparison(a.energy,         b.energy,         labelA, labelB, prefix, "WindowEnergy",         true);
     Plot1D_Comparison(a.towerImbalance, b.towerImbalance, labelA, labelB, prefix, "ClusterImbalance",     true);
@@ -1108,7 +1345,8 @@ bool ShapeAnalyzer::Plot(){
     Plot1D_Comparison(a.maxZ,           b.maxZ,           labelA, labelB, prefix, "MaxZ",                 true);
     Plot1D_Comparison(a.sizeZ,          b.sizeZ,          labelA, labelB, prefix, "ZHits",                false);
     Plot1D_Comparison(a.cellsPerLayer,  b.cellsPerLayer,  labelA, labelB, prefix, "XYHits",               true);
-    Plot1D_Comparison(a.seedCellE,      b.seedCellE,      labelA, labelB, prefix, "SeedCellEnergy",       true);
+    Plot1D_Comparison(a.nTowers,        b.nTowers,        labelA, labelB, prefix, "NTowers",              true);
+    Plot1D_Comparison(a.seedCellE,     b.seedCellE,      labelA, labelB, prefix, "SeedCellEnergy",       true);
     Plot1D_Comparison(a.seedTowerE,     b.seedTowerE,     labelA, labelB, prefix, "SeedTowerEnergy",      true);
 
     Plot2D_Comparison(a.e_towerImbalance, b.e_towerImbalance, labelA, labelB, prefix, "Imbalance");
@@ -1118,20 +1356,40 @@ bool ShapeAnalyzer::Plot(){
     Plot2D_Comparison(a.e_maxZ,           b.e_maxZ,           labelA, labelB, prefix, "MaxZ");
     Plot2D_Comparison(a.e_sizeZ,          b.e_sizeZ,          labelA, labelB, prefix, "ZHits");
     Plot2D_Comparison(a.e_cellsPerLayer,  b.e_cellsPerLayer,  labelA, labelB, prefix, "XYHits");
-    Plot2D_Comparison(a.xy,               b.xy,               labelA, labelB, prefix, "ClusterXY");
+    Plot2D_Comparison(a.e_nTowers,        b.e_nTowers,        labelA, labelB, prefix, "NTowers");
+    Plot2D_Comparison(a.xy,              b.xy,               labelA, labelB, prefix, "ClusterXY");
     Plot2D_Comparison(a.maxCellXY,        b.maxCellXY,        labelA, labelB, prefix, "MaxCellXY");
     Plot2D_Comparison(a.subXY,            b.subXY,            labelA, labelB, prefix, "SubClusterXY");
   };
 
   //
-  // Muon-like vs non-muon-like (seeded clustering), Comparisons/MuonVsNonMuon_*
+  // Muon-like vs non-muon-like (seeded clustering), Comparisons/MuonVsNonMuon/
   //
   compareSets(hMuon, hNonMuon, "muon-like", "non-muon-like", "MuonVsNonMuon");
 
   //
-  // Seeded vs window clustering on the same events, Comparisons/SeededVsWindow_*
+  // Seeded vs window clustering on the same events, Comparisons/SeededVsWindow/
   //
   compareSets(hAll, hWindow, "seeded", "window", "SeededVsWindow");
+
+  //
+  // Clusters with vs without an ADC-saturated cell, Comparisons/SaturatedVsNot/
+  //
+  std::cout << "ADC-saturated cells: " << nSatCells << ", analysed seeded clusters containing one: " << nSatClusters
+            << " of " << hAll.energy->GetEntries() << std::endl;
+  if(nSatClusters > 0)
+    compareSets(hSat, hNoSat, "with saturated cell", "no saturated cell", "SaturatedVsNot");
+
+  //
+  // Highest vs second-highest energy cluster, events with >= 2 analysed clusters, Comparisons/FirstVsSecond/
+  //
+  std::cout << "events with at least two analysed clusters: " << nEvtsTwoClusters << std::endl;
+  if(nEvtsTwoClusters > 0){
+    compareSets(hFirst, hSecond, "1st cluster", "2nd cluster", "FirstVsSecond");
+    const std::string fsLabel = Form("events with #geq 2 clusters, #it{E}_{cluster} > %g %s", minwindow, eUnit.Data());
+    Plot2D_Correlation(FirstVsSecond_Energy,  "FirstVsSecond_Corr_ClusterEnergy", fsLabel);
+    Plot2D_Correlation(FirstVsSecond_PosDiff, "FirstVsSecond_ClusterPosDiff",     fsLabel);
+  }
   Plot1D_Comparison(Clusters_NClusters_Seeded,  Clusters_NClusters_Window,  "seeded", "window", "SeededVsWindow", "NClusters",         false);
   Plot1D_Comparison(Clusters_SumEnergy_Seeded,  Clusters_SumEnergy_Window,  "seeded", "window", "SeededVsWindow", "SumClusterEnergy",  true);
   Plot1D_Comparison(Clusters_LeadEnergy_Seeded, Clusters_LeadEnergy_Window, "seeded", "window", "SeededVsWindow", "LeadClusterEnergy", true);
@@ -1198,9 +1456,10 @@ bool ShapeAnalyzer::Plot(){
   Plot1D(Clusters_eventenergy,            "EventEnergy",                  0, true,  "events with a cluster");
   Plot1D(Clusters_windowminuseventenergy, "EventMinusFirstClusterEnergy", 0, true,  seededLabel);
   Plot1D(MuonPurity_Energy,               "MuonPurity",                   0, false, seededLabel);
+  Plot1D(SaturatedFraction_Energy,        "SaturatedFraction",            0, false, seededLabel);
 
   //
-  // Per-sample distributions (Inclusive/, Muon/, nonMuon/)
+  // Per-sample distributions (Inclusive/, Muon/, nonMuon/, Contains_Saturated/, DoesNot_Contain_Saturated/)
   //
   auto plotSample = [&](ClusterHists& h, int sample){
     const std::string s = h.tag.Data();
@@ -1214,7 +1473,8 @@ bool ShapeAnalyzer::Plot(){
     Plot1D(h.maxZ,           "MaxZ"+s,                 sample, true, l);
     Plot1D(h.sizeZ,          "ZHits"+s,                sample, true, l);
     Plot1D(h.cellsPerLayer,  "XYHits"+s,               sample, true, l);
-    Plot1D(h.seedCellE,      "SeedCellEnergy"+s,       sample, true, l);
+    Plot1D(h.nTowers,        "NTowers"+s,              sample, true, l);
+    Plot1D(h.seedCellE,     "SeedCellEnergy"+s,       sample, true, l);
     Plot1D(h.seedTowerE,     "SeedTowerEnergy"+s,      sample, true, l);
 
     Plot2D(h.e_towerImbalance, "Imbalance"+s,       sample, l);
@@ -1224,7 +1484,8 @@ bool ShapeAnalyzer::Plot(){
     Plot2D(h.e_maxZ,           "MaxZ"+s,            sample, l);
     Plot2D(h.e_sizeZ,          "ZHits"+s,           sample, l);
     Plot2D(h.e_cellsPerLayer,  "XYHits"+s,          sample, l);
-    Plot2D(h.xy,               "ClusterXY"+s,       sample, l);
+    Plot2D(h.e_nTowers,        "NTowers"+s,         sample, l);
+    Plot2D(h.xy,              "ClusterXY"+s,       sample, l);
     Plot2D(h.maxCellXY,        "MaxCellXY"+s,       sample, l);
     Plot2D(h.subXY,            "SubClusterXY"+s,    sample, l);
   };
@@ -1232,6 +1493,104 @@ bool ShapeAnalyzer::Plot(){
   plotSample(hMuon,    1);
   plotSample(hNonMuon, 2);
   plotSample(hWindow,  0);   // window clustering, *_Window in Inclusive/
+  plotSample(hSat,     4);   // Contains_Saturated/
+  plotSample(hNoSat,   5);   // DoesNot_Contain_Saturated/
+
+  //
+  // TOT slope fit diagnostics (TOTFit/): cell energies before (ADC) and after the fit, from the hits of the pre-pass
+  //
+  if(applyTOTFit){
+    const auto& fits = totFit.Fits();
+    std::vector<double> after, eSats;
+    for(const auto& kv : totFit.Data())
+      for(const auto& s : kv.second.sat) after.push_back(totFit.Correct(kv.first, s.e, s.tot, true));
+    for(const auto& kv : fits) if(kv.second.status > 0) eSats.push_back(kv.second.eSat);
+    const double eSatMed = TOTSlopeFit::Quantile(eSats, 0.5);
+    double eMax = std::max(1.1*TOTSlopeFit::Quantile(after, 0.999), 2.*eSatMed);
+    eMax = std::max(50., 50.*std::ceil(eMax/50.));
+    const TString tE   = Form("#it{E}_{cell} (%s)", eUnit.Data());
+    const TString tEB  = Form("#it{E}_{cell}, ADC (%s)", eUnit.Data());
+    const TString tEA  = Form("#it{E}_{cell}, TOT slope fit (%s)", eUnit.Data());
+    const char*   tTOT = "raw TOT";
+
+    TH1D* hSatBefore = new TH1D("TOTFit_SatCellE_Before", t1(tE, "cells"), 200, 0, eMax);
+    TH1D* hSatAfter  = new TH1D("TOTFit_SatCellE_After",  t1(tE, "cells"), 200, 0, eMax);
+    TH1D* hAllBefore = new TH1D("TOTFit_AllCellE_Before", t1(tE, "cells"), 200, 0, eMax);
+    TH1D* hAllAfter  = new TH1D("TOTFit_AllCellE_After",  t1(tE, "cells"), 200, 0, eMax);
+    TH1D* hRatio     = new TH1D("TOTFit_SatCellE_Ratio",  t1("#it{E}_{TOT slope fit}/#it{E}_{ADC}", "cells"), 100, 0, 10);
+    TH2D* hBA        = new TH2D("TOTFit_SatCellE_BeforeVsAfter", Form(";%s;%s;cells", tEB.Data(), tEA.Data()), 100, 0, eMax, 100, 0, eMax);
+    TH2D* hTB        = new TH2D("TOTFit_TOT_vs_EBefore", Form(";%s;%s;cells", tEB.Data(), tTOT), 100, 0, eMax, 128, 0, 4096);
+    TH2D* hTA        = new TH2D("TOTFit_TOT_vs_EAfter",  Form(";%s;%s;cells", tEA.Data(), tTOT), 100, 0, eMax, 128, 0, 4096);
+    double kMax = 0, totMax = 0;
+    for(const auto& kv : fits) if(kv.second.status == 1){ kMax = std::max(kMax, kv.second.k); totMax = std::max(totMax, kv.second.tot0); }
+    TH1D* hK     = new TH1D("TOTFit_Slope", t1(Form("slope #it{k} (%s per TOT unit)", eUnit.Data()), "channels"), 40, 0, std::max(0.1, 1.2*kMax));
+    TH1D* hESat  = new TH1D("TOTFit_ESat",  t1(Form("#it{E}_{sat} (%s)", eUnit.Data()), "channels"), 40, 0, std::max(50., 2.*eSatMed));
+    TH1D* hTOT0  = new TH1D("TOTFit_TOT0",  t1("TOT_{0} (TOT at #it{E}_{sat})", "channels"), 40, 0, std::max(100., 1.2*totMax));
+    for(TH1* h : std::initializer_list<TH1*>{hSatBefore, hSatAfter, hAllBefore, hAllAfter, hRatio, hBA, hTB, hTA, hK, hESat, hTOT0})
+      h->SetDirectory(nullptr);
+
+    for(const auto& kv : totFit.Data()){
+      for(float e : kv.second.eUnsat){ hAllBefore->Fill(e); hAllAfter->Fill(e); }
+      for(const auto& s : kv.second.sat){
+        const double ea = totFit.Correct(kv.first, s.e, s.tot, true);
+        hSatBefore->Fill(s.e);
+        hSatAfter->Fill(ea);
+        hAllBefore->Fill(s.e);
+        hAllAfter->Fill(ea);
+        if(s.e > 0) hRatio->Fill(ea/s.e);
+        hBA->Fill(s.e, ea);
+        if(s.tot > 0){ hTB->Fill(s.e, s.tot); hTA->Fill(ea, s.tot); }
+      }
+    }
+    for(const auto& kv : fits){
+      if(kv.second.status == 1){ hK->Fill(kv.second.k); hTOT0->Fill(kv.second.tot0); }
+      if(kv.second.status > 0)  hESat->Fill(kv.second.eSat);
+    }
+    const std::string fitLabel = Form("TOT slope fit: %d channels own fit, %d median slope", totFit.NChannels(1), totFit.NChannels(2));
+    Plot1D_Overlay({hSatBefore, hSatAfter}, {"ADC energy", "TOT slope fit"}, "TOTFit", "TOTFit_SatCellE_BeforeAfter", true,
+                   "ADC-saturated cells");
+    Plot1D_Overlay({hAllBefore, hAllAfter}, {"ADC energy", "TOT slope fit"}, "TOTFit", "TOTFit_AllCellE_BeforeAfter", true,
+                   Form("all cells (#it{E} > %.1f %s)", eCutoff, eUnit.Data()));
+    Plot1D(hRatio, "TOTFit_SatCellE_Ratio", 6, true,  "ADC-saturated cells");
+    Plot1D(hK,     "TOTFit_Slope",          6, false, fitLabel);
+    Plot1D(hESat,  "TOTFit_ESat",           6, false, fitLabel);
+    Plot1D(hTOT0,  "TOTFit_TOT0",           6, false, fitLabel);
+    Plot2D(hBA, "TOTFit_SatCellE_BeforeVsAfter", 6, "ADC-saturated cells");
+    Plot2D(hTB, "TOTFit_TOT_vs_EBefore",         6, "ADC-saturated cells with TOT");
+    Plot2D(hTA, "TOTFit_TOT_vs_EAfter",          6, "ADC-saturated cells with TOT");
+
+    // continuity of the cell spectrum across the saturation edge, for the channels with the most TOT hits
+    std::vector<std::pair<int,int>> byStat;   // (nSatTOT, cellID) of channels with their own fit
+    for(const auto& kv : fits) if(kv.second.status == 1) byStat.push_back({kv.second.nSatTOT, kv.first});
+    std::sort(byStat.rbegin(), byStat.rend());
+    for(size_t n = 0; n < byStat.size() && n < 4; n++){
+      const int id = byStat[n].second;
+      const TOTChannelFit& f = fits.at(id);
+      const auto& d = totFit.Data().at(id);
+      std::vector<double> afterCh;
+      for(const auto& s : d.sat) afterCh.push_back(totFit.Correct(id, s.e, s.tot, true));
+      const double xMax = std::max(1.5*f.eSat, 1.1*TOTSlopeFit::Quantile(afterCh, 0.995));
+      TH1D* hU  = new TH1D(Form("TOTFit_Ch%d_Unsat", id),     t1(tE, "cells"), 60, 0, xMax);
+      TH1D* hSB = new TH1D(Form("TOTFit_Ch%d_SatBefore", id), t1(tE, "cells"), 60, 0, xMax);
+      TH1D* hSA = new TH1D(Form("TOTFit_Ch%d_SatAfter", id),  t1(tE, "cells"), 60, 0, xMax);
+      for(TH1* h : std::initializer_list<TH1*>{hU, hSB, hSA}) h->SetDirectory(nullptr);
+      for(float e : d.eUnsat) hU->Fill(e);
+      for(const auto& s : d.sat){ hSB->Fill(s.e); hSA->Fill(totFit.Correct(id, s.e, s.tot, true)); }
+      // fitted unsaturated spectrum (counts per bin) below E_sat, and its slope continued above E_sat, normalised to
+      // the number of saturated hits (the spectrum the rank matching maps the TOT onto)
+      TF1* fx = new TF1(Form("TOTFit_Ch%d_Expo", id), "[2]*exp([0]-[1]*x)", f.eFitLo, f.eSat);
+      fx->SetParameters(f.lnA, f.b, hU->GetBinWidth(1));
+      TF1* fa = new TF1(Form("TOTFit_Ch%d_Above", id), "[0]*[1]*exp(-[1]*(x-[2]))*[3]", f.eSat, xMax);
+      fa->SetParameters(f.nSat, f.b, f.eSat, hU->GetBinWidth(1));
+      Plot1D_Overlay({hU, hSB, hSA}, {"unsaturated", "saturated, ADC energy", "saturated, TOT slope fit"}, "TOTFit",
+                     Form("TOTFit_Channel%d_Continuity", id), true,
+                     Form("cell %d: #it{k} = %.3f / TOT, TOT_{0} = %.0f, #it{E}_{sat} = %.0f", id, f.k, f.tot0, f.eSat),
+                     {fx, fa}, {"exp. fit below #it{E}_{sat}", "same slope, norm. to #it{N}_{sat}"});
+      delete fx; delete fa; delete hU; delete hSB; delete hSA;
+    }
+    for(TH1* h : std::initializer_list<TH1*>{hSatBefore, hSatAfter, hAllBefore, hAllAfter, hRatio, hBA, hTB, hTA, hK, hESat, hTOT0})
+      delete h;
+  }
 
   //DONE
 

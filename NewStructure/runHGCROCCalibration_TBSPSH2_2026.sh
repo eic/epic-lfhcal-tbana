@@ -18,9 +18,9 @@ if [ $1 = "fbockTB" ]; then
   dataDirOut=/media/fbock/ALICE2-4TB/202605_SPSH2/HGCROCData
   PlotBaseDir=/media/fbock/ALICE2-4TB/202605_SPSH2/
 elif [ $1 = "atamis" ]; then 
-  dataDirRaw=/home/drewtam20/Documents/eic/LFHCALDATA/Converted
-  dataDirOut=/home/drewtam20/Documents/eic/LFHCALDATA/Converted
-  PlotBaseDir=/home/drewtam20/Documents/eic/LFHCALDATA/Plots
+  dataDirRaw=/mnt/c/Users/tamis/Documents/eic/LFHCALDATA/Converted/SPS
+  dataDirOut=/mnt/c/Users/tamis/Documents/eic/LFHCALDATA/Converted/SPS
+  PlotBaseDir=/mnt/c/Users/tamis/Documents/eic/LFHCALDATA/Plots/SPS
 elif [ $1 = "ehagen" ]; then 
   dataDirRaw=/Users/hagen/Githubs/TB_data
   dataDirOut=/Users/hagen/Githubs/TB_data
@@ -215,7 +215,7 @@ if [ $2 == "calibMuon" ]; then
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetF.csv'
   elif [ $4 = "FullSetF_1" ]; then
     runPed='431'
-    runs='Muon_FullSetF_1'
+    runs='MuonFullSetF_1'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_FullSetF.csv'
   elif [ $4 = "FullSetF_2" ]; then
     runPed='471'
@@ -235,6 +235,13 @@ if [ $2 == "calibMuon" ]; then
 #     runs='202'
 #     runs='194'
     runs='194 195 196 197 198 199 200 201 202'
+    toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_HVScan.csv' 
+  elif [ $4 = "SpeciesScan" ]; then
+    runPed='431'
+#     runs='200 201'
+#     runs='202'
+#     runs='194'
+    runs='462 452 437'
     toaPhaseOffset='../configs/TB2026/ToAOffsets_TBSPS2026_HVScan.csv'
   else 
     echo "No run selected, exiting..."

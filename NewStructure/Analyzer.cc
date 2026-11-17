@@ -45,6 +45,8 @@ void PrintHelp(char* exe){
   std::cout<<"-N       setting number of events to plot, default:1"<<std::endl;
   std::cout<<"-M       plot only muon triggered events"<<std::endl;
   std::cout<<"-t qqqqq minumum number of hit tiles to generate a plot"<<std::endl;
+  std::cout<<"-H hhh   ROOT file to save all plotted histograms in (for comparisons across runs)"<<std::endl;
+  std::cout<<"-T       replace the energy of ADC-saturated cells by a per-channel TOT slope fit (with -c -s)"<<std::endl;
   std::cout<<"Examples:"<<std::endl;
   std::cout<<exe<<" -Q (-f) -P plotDir/ -i input.root"<<std::endl;
 }
@@ -57,7 +59,7 @@ int main(int argc, char* argv[]){
   }
   ShapeAnalyzer EvtDisplay;
   int c;
-  while((c=getopt(argc,argv,"F:P:r:d:i:y:e:N:cpoqshMt:"))!=-1){
+  while((c=getopt(argc,argv,"F:P:r:d:i:y:e:N:H:cpoqshMTt:"))!=-1){
     switch(c){
     case 'd':
       std::cout<<"enable debug " << optarg <<std::endl;
@@ -119,6 +121,14 @@ int main(int argc, char* argv[]){
     case 'M':
       std::cout<<"Plot only muon-triggered events in the range"<<std::endl;
       EvtDisplay.PlotMuonTriggeredEvents(true);
+      break;
+    case 'H':
+      std::cout<<"Saving plotted histograms to: "<<optarg<<std::endl;
+      EvtDisplay.SetHistOutputFile(Form("%s",optarg));
+      break;
+    case 'T':
+      std::cout<<"Correcting ADC-saturated cells with the TOT slope fit"<<std::endl;
+      EvtDisplay.EnableTOTSlopeFit(true);
       break;
     case 't':
       std::cout<<"Requiring minimum number of hit tiles: " << optarg << std::endl;

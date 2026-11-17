@@ -171,6 +171,17 @@ function Calib()
     time ./DataPrep -e -f -d 1 -a -C $2 -i $3/rawHGCROC_$5.root -o $4/calibratedHGCROC_Run_$5.root -O $6/$7$5 -r $runList -B $8 -G $9
   elif [ $1 == "fullMuon" ]; then
     time ./DataPrep -e -f -d 1 -a -C $2 -i $3/rawHGCROC_mipTrigg_wPedwMuon_wBC_$5.root -o $4/calibratedHGCROC_Run_$5.root -O $6/$7$5 -r $runList -B $8 -G $9
+
+  # 3-sample sum around the peak (-q/-Q 3): the calib file ($2) must come from the *_3Int muon chain
+  # (calibMuon default_3Int -> saveNewMuon_3Int -> imp1st_red3Int -> imp2nd_red3Int), as the calibration
+  # re-evaluates every waveform and the calib object does not record how many samples the mip scale used.
+  # Output: calibratedHGCROC_3Int_Run_<run>.root, so the max-sample calibrated files are kept.
+  elif [ $1 == "trigg_3Int" ]; then
+    time ./DataPrep -f -d 1 -Q 3 -T $2 -i $3/rawHGCROC_$5.root -o $3/rawHGCROCWithLocTrigg_3Int_$5.root -O $6/HGCROC_PlotsTriggerQA_3Int/Run_$5 -r $runList
+  elif [ $1 == "calibNoTrigg_3Int" ]; then
+    time ./DataPrep -t -e -f -d 1 -a -q 3 -C $2 -i $3/rawHGCROCWithLocTrigg_3Int_$5.root -o $4/calibratedHGCROC_3Int_Run_$5.root -O $6/3Int_$7$5 -r $runList -B $8 -G $9
+  elif [ $1 == "full_3Int" ]; then
+    time ./DataPrep -e -f -d 1 -a -q 3 -C $2 -i $3/rawHGCROC_$5.root -o $4/calibratedHGCROC_3Int_Run_$5.root -O $6/3Int_$7$5 -r $runList -B $8 -G $9
   fi
 }
 

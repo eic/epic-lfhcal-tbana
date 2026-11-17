@@ -20,15 +20,22 @@ fi
 
 runNrFile=../configs/TB2026/DataTakingDB_TBPST10_202604_HGCROC.csv
 
-runs='437'
-#runs = 'Muon_FullSetH_1'
+runs='Muon_FullSetH_1'
+#runs = '437'
 
-for runNr in $runs; do 
+# all plotted histograms of each run are also saved in $histDir/<mode>/ShapeAnalyzer_Run_<run>.root
+# (read by runCompareRuns_TBSPSH2_2026.sh / CompareRuns_ShapeAnalyzer.C)
+histDir=$plotDir/HistFiles
+for runNr in $runs; do
+  histFile=$histDir/$2/ShapeAnalyzer_Run_$runNr.root
   if [[ $2 = "tot" ]]; then
-    ./Analyzer -i $dataDirOut/rawHGCROC_wPed_wBC_$runNr.root -r $runNrFile -P $plotDir/Run_$runNr/ToT -d 0 -F pdf -N $3 -o
+    ./Analyzer -i $dataDirOut/rawHGCROC_wPed_wBC_$runNr.root -r $runNrFile -P $plotDir/Run_$runNr/ToT -d 0 -F pdf -N $3 -o -H $histFile
   elif [[ $2 = "adc" ]]; then
-    ./Analyzer -i $dataDirOut/rawHGCROC_wPed_wBC_$runNr.root -r $runNrFile -P $plotDir/Run_$runNr/ADC -d 1 -F pdf -N $3 -c 
+    ./Analyzer -i $dataDirOut/rawHGCROC_wPed_wBC_$runNr.root -r $runNrFile -P $plotDir/Run_$runNr/ADC -d 1 -F pdf -N $3 -c -H $histFile
   elif [[ $2 = "full" ]]; then
-      ./Analyzer -i $dataDirOut/calibratedHGCROC_Run_$runNr.root -r $runNrFile -P $plotDir/Run_$runNr/Calibrated -d 1 -F pdf -N $3 -c -s
+      ./Analyzer -i $dataDirOut/calibratedHGCROC_Run_$runNr.root -r $runNrFile -P $plotDir/Run_$runNr/Calibrated -d 1 -F pdf -N $3 -c -s -H $histFile
+  elif [[ $2 = "tot_fit" ]]; then
+      # as "full", but ADC-saturated cells get their energy from the per-channel TOT slope fit (diagnostics in TOTFit/)
+      ./Analyzer -i $dataDirOut/calibratedHGCROC_Run_$runNr.root -r $runNrFile -P $plotDir/Run_$runNr/Calibrated_TOTFit -d 1 -F pdf -N $3 -c -s -T -H $histFile
   fi
 done

@@ -136,6 +136,8 @@ struct ClusteringSettings{
   double minClusterE   = 20.;   // minimum cluster energy: window clustering stops below it, analysis cut on clusters
   int    windowSize    = 3;     // window size in towers for DoClustering_Window
   int    maxClusters   = 2;    // maximum number of clusters per event
+  double minTowerEff   = 1.;    // minimum summed E_eff of a tower (x,y) to count in Cluster::nTowers; towers below
+                                // it (e.g. a lone low-energy cell) stay in the cluster and its energy
   std::vector<int> readoutZBins; // z-bins (event-map X axis) that hold a readout layer, ascending; they define
                                  // the depth neighbours and the readout-layer index of the cluster observables.
                                  // Fill with FindReadoutZBins; empty = every z-bin is a readout layer.
@@ -189,7 +191,7 @@ struct Cluster{
   Cluster(): x(0), y(0), highestx(0), highesty(0), highestz(0), highestcellx(0), highestcelly(0), highestcellz(0),
              highesttowerenergy(0), highestcellenergy(0), highestzE(0), firstz(0), lastz(0), sizez(0),
              firstlayer(0), lastlayer(0), highestlayer(0),
-             hitTowers(0), maxTowerSizeZ(0), energy(0), eventenergy(0) {}
+             hitTowers(0), maxTowerSizeZ(0), nTowers(0), energy(0), eventenergy(0) {}
   float x;                  // energy-weighted centroid of the cluster cells (bin units)
   float y;
   int   highestx;           // tower (cluster cells summed over z) with the largest energy
@@ -209,10 +211,13 @@ struct Cluster{
   int   highestlayer;       // readout-layer index of highestz
   float hitTowers;          // average number of readout cells with E_eff >= cellThreshold per hit z-bin (nCells/sizez)
   int   maxTowerSizeZ;      // largest number of z-bins with a cell E_eff >= cellThreshold in any single tower (x,y)
+  int   nTowers;            // number of towers (x,y) whose summed cell E_eff is >= ClusteringSettings::minTowerEff
   float energy;             // total cluster energy (sum of E_cell)
   float eventenergy;        // total event energy before any clustering
   std::vector<float> cellEnergies; // E_eff of all readout cells in the cluster
   std::vector<int>   cellZ;        // z-bin of each entry of cellEnergies
+  std::vector<int>   cellX;        // x-bin of each entry of cellEnergies
+  std::vector<int>   cellY;        // y-bin of each entry of cellEnergies
   std::vector<int>   cellNLayers;  // N_layers of each entry of cellEnergies (weight in cell spectra)
 };
 
@@ -295,12 +300,13 @@ namespace ClusteringDetail {
 
   // Common definition of all cluster observables
   inline Cluster MakeCluster(const std::vector<Cell>& cells, double eventEnergy, double cellThreshold,
-                             const ReadoutLayers& layers){
+                             double minTowerEff, const ReadoutLayers& layers){
     Cluster cl;
     cl.eventenergy = eventEnergy;
     if(cells.empty()) return cl;
 
     std::map<std::pair<int,int>, double> towerE;
+    std::map<std::pair<int,int>, double> towerEff;   // sum of E_eff per tower (selects the towers counted in nTowers)
     std::map<std::pair<int,int>, int> towerSizeZ;   // cells >= cellThreshold per tower (one cell per z-bin)
     std::map<int, double> layerE;     // sum of E_cell per z-bin
     std::map<int, double> layerEff;   // sum of E_eff per z-bin (selects the max-energy layer)
@@ -309,6 +315,8 @@ namespace ClusteringDetail {
     const Cell* maxCell = &cells[0];
     cl.cellEnergies.reserve(cells.size());
     cl.cellZ.reserve(cells.size());
+    cl.cellX.reserve(cells.size());
+    cl.cellY.reserve(cells.size());
     cl.cellNLayers.reserve(cells.size());
     for(const Cell& c : cells){
       sumE += c.e;
@@ -320,13 +328,17 @@ namespace ClusteringDetail {
         towerSizeZ[std::make_pair(c.x, c.y)]++;
       }
       towerE[std::make_pair(c.x, c.y)] += c.e;
+      towerEff[std::make_pair(c.x, c.y)] += c.eff;
       layerE[c.z] += c.e;
       layerEff[c.z] += c.eff;
       cl.cellEnergies.push_back(c.eff);
       cl.cellZ.push_back(c.z);
+      cl.cellX.push_back(c.x);
+      cl.cellY.push_back(c.y);
       cl.cellNLayers.push_back(c.n);
     }
     for(const auto& t : towerSizeZ) cl.maxTowerSizeZ = std::max(cl.maxTowerSizeZ, t.second);
+    for(const auto& t : towerEff) if(t.second >= minTowerEff) cl.nTowers++;
 
     cl.energy = sumE;
     if(sumE > 0){
@@ -464,7 +476,7 @@ inline std::vector<Cluster> DoClustering_Seeded_3D(TH3F* hXYZMapEvt, const Clust
         }
       }
     }
-    clusters.push_back(ClusteringDetail::MakeCluster(members, grid.total, cellThreshold, layers));
+    clusters.push_back(ClusteringDetail::MakeCluster(members, grid.total, cellThreshold, settings.minTowerEff, layers));
   }
   return clusters;
 }
@@ -547,7 +559,7 @@ inline std::vector<Cluster> DoClustering_Window(TH3F* hXYZMapEvt, const Clusteri
     if(members.empty()) collect(bi, bi+wx-1, bj, bj+wy-1);   // re-centred window empty: use the best window
     if(members.empty()) break;
 
-    clusters.push_back(ClusteringDetail::MakeCluster(members, grid.total, cellThreshold, layers));
+    clusters.push_back(ClusteringDetail::MakeCluster(members, grid.total, cellThreshold, settings.minTowerEff, layers));
   }
   return clusters;
 }

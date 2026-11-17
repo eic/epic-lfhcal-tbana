@@ -10,6 +10,7 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TH3F.h"
+#include "TF1.h"
 
 #include "Setup.h"
 #include "RootSetupWrapper.h"
@@ -19,6 +20,7 @@
 #include "HGCROC.h"
 #include "Caen.h"
 #include "CommonHelperFunctions.h"
+#include "TOTSlopeFit.h"
     
 class ShapeAnalyzer{
 
@@ -63,6 +65,12 @@ class ShapeAnalyzer{
   inline void PlotHGCROC_TOTData()                {plotHGCROC = true; dataTypeHGCROC = 2; }
   inline void PlotHGCROC_ADCmipCorr()             {plotHGCROC = true; dataTypeHGCROC = 3; }
   inline void PlotHGCROC_E()                      {plotHGCROC = true; dataTypeHGCROC = 4; }
+  // replace the energy of ADC-saturated cells by the per-channel TOT slope fit (TOTSlopeFit.h); calibrated
+  // energies (PlotHGCROC_E) only
+  inline void EnableTOTSlopeFit(bool b)           {useTOTSlopeFit = b;};
+  // ROOT file that receives every plotted histogram (same directory structure as the plots) and the run info
+  // (runNumber, beamEnergy, species, energyType, energyUnit), for comparisons across runs (CompareRuns_ShapeAnalyzer.C)
+  inline void SetHistOutputFile(TString name)     {histFileName = name;};
 
   // clustering thresholds (defaults in ClusteringSettings, CommonHelperFunctions.h)
   inline void SetClusterCellThreshold(double e)   {clusterSettings.cellThreshold = e;};
@@ -71,6 +79,7 @@ class ShapeAnalyzer{
   inline void SetClusterMinEnergy(double e)       {clusterSettings.minClusterE = e;};
   inline void SetClusterWindowSize(int n)         {clusterSettings.windowSize = n;};
   inline void SetClusterMaxClusters(int n)        {clusterSettings.maxClusters = n;};
+  inline void SetClusterMinTowerEff(double e)     {clusterSettings.minTowerEff = e;};
   inline void SetClusteringSettings(const ClusteringSettings& s) {clusterSettings = s;};
   inline const ClusteringSettings& GetClusteringSettings() const {return clusterSettings;};
   
@@ -105,6 +114,9 @@ class ShapeAnalyzer{
   int minTilesHit             = 0;
   bool plotHGCROC             = false;
   int dataTypeHGCROC          = 0; // 0 - ADC, 1 - ADC-pedestal, 2 - ToT, 3 - ADC/mip-scale
+  bool useTOTSlopeFit         = false;    // TOT slope fit for ADC-saturated cells
+  TString histFileName;                   // output ROOT file with all plotted histograms (empty: none)
+  TFile* histFile             = nullptr;
   ClusteringSettings clusterSettings;     // clustering thresholds used throughout ShapeAnalyzer
   
   TTree* TsetupIn=nullptr;
@@ -129,6 +141,12 @@ class ShapeAnalyzer{
   void Plot2D_Comparison(TH2D* h1, TH2D* h2, std::string label1, std::string label2,
                          std::string prefix, std::string Name, std::string countLabel = "clusters");
   void Plot2D_Correlation(TH2D* hist, std::string Name, std::string label = "");
+  // unnormalised overlay of several 1D histograms (optionally with curves), saved as <dir>/<Name>
+  void Plot1D_Overlay(std::vector<TH1D*> hists, std::vector<std::string> labels, std::string dir, std::string Name,
+                      bool logY, std::string label = "", std::vector<TF1*> curves = {}, std::vector<std::string> curveLabels = {});
+
+  // write obj as <dir>/<key> into histFile (no-op without -H)
+  void SaveHist(const TString& dir, const TString& key, const TObject* obj);
 
   TString plotHeader;   // run description drawn on top of every plot, set in Plot()
  };
